@@ -1,0 +1,167 @@
+/* ========== 基础样式 ========== */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: linear-gradient(135deg, #2c2419 0%, #3d3224 50%, #2c2419 100%);
+  font-family: 'Noto Serif SC', serif;
+  color: #2c2419;
+  min-height: 100vh;
+}
+
+.hidden { display: none !important; }
+
+/* ========== 颜色系统 ========== */
+
+:root {
+  --parchment: #f5e6c8;
+  --parchment-dark: #e8d5a8;
+  --ink: #2c2419;
+  --ink-light: #5c4d3c;
+  --magic-blue: #4a7c9b;
+  --magic-gold: #c9a227;
+  --wood: #8b6914;
+}
+
+.text-ink { color: var(--ink); }
+.text-ink-light { color: var(--ink-light); }
+.text-magic-blue { color: var(--magic-blue); }
+.text-magic-gold { color: var(--magic-gold); }
+
+.bg-wood\/5 { background: rgba(139, 105, 20, 0.05); }
+.bg-wood\/10 { background: rgba(139, 105, 20, 0.1); }
+.bg-wood\/20 { background: rgba(139, 105, 20, 0.2); }
+.bg-magic-gold\/10 { background: rgba(201, 162, 39, 0.1); }
+.bg-magic-gold\/20 { background: rgba(201, 162, 39, 0.2); }
+
+.border-wood { border-color: var(--wood); }
+.border-wood\/10 { border-color: rgba(139, 105, 20, 0.1); }
+.border-wood\/20 { border-color: rgba(139, 105, 20, 0.2); }
+.border-wood\/30 { border-color: rgba(139, 105, 20, 0.3); }
+.border-magic-gold { border-color: var(--magic-gold); }
+.border-magic-gold\/30 { border-color: rgba(201, 162, 39, 0.3); }
+
+.bg-magic-gold { background: var(--magic-gold); }
+.bg-magic-blue { background: var(--magic-blue); }
+.bg-wood { background: var(--wood); }
+
+/* ========== 羊皮纸卡片 ========== */
+
+.parchment-bg {
+  background: linear-gradient(180deg, #f5e6c8 0%, #e8d5a8 100%);
+  box-shadow: inset 0 0 60px rgba(139, 105, 20, 0.2), 0 4px 20px rgba(0,0,0,0.3);
+  position: relative;
+}
+
+.magic-glow {
+  box-shadow: 0 0 20px rgba(74, 124, 155, 0.3), 0 0 40px rgba(201, 162, 39, 0.1);
+}
+
+/* ========== 纹理 ========== */
+
+.grain-texture {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.03;
+  pointer-events: none;
+}
+
+.star-filled { color: #c9a227; }
+.star-empty { color: #d4d4d4; }
+
+/* ========== 动画 ========== */
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 10px rgba(201, 162, 39, 0.3); }
+  50% { box-shadow: 0 0 25px rgba(201, 162, 39, 0.6); }
+}
+
+.animate-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out;
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-scale-in {
+  animation: scale-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* ========== 字体 ========== */
+
+.font-display { font-family: 'Cinzel', 'Noto Serif SC', serif; }
+.font-serif { font-family: 'Noto Serif SC', serif; }
+
+/* ========== 导航按钮 ========== */
+
+.nav-btn {
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.nav-btn:hover {
+  transform: translateY(-1px);
+}
+
+/* ========== 书籍卡片 ========== */
+
+.book-card {
+  transition: all 0.2s ease;
+}
+
+.book-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+/* ========== 章节阅读 ========== */
+
+.reading-page {
+  font-size: 1.05rem;
+  line-height: 2;
+}
+
+.reading-page p {
+  margin-bottom: 1.2em;
+  text-indent: 2em;
+}
+
+/* ========== 滚动条 ========== */
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f5e6c8;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #8b6914;
+  border-radius: 3px;
+}
+
+/* ========== 响应式 ========== */
+
+@media (max-width: 768px) {
+  .text-6xl { font-size: 3rem !important; }
+  .text-7xl { font-size: 3.5rem !important; }
+  .grid-cols-3 { grid-template-columns: repeat(2, 1fr); }
+  .grid-cols-5 { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 480px) {
+  .p-6 { padding: 1rem; }
+  .p-8 { padding: 1.5rem; }
+  .text-6xl { font-size: 2.5rem !important; }
+}
