@@ -47,6 +47,7 @@
 | 美术素材 | `visual/library_readingarea/library_reading_0X_*.jpg`（7张） |
 | 当前效果 | 纯装饰（数值暂不实现，标记技术债） |
 | 升级方式 | 消耗代币逐级升级 |
+| 价格 | `500 × 1.5^(n-1)` 取整 — Lv1:500, Lv2:750, Lv3:1125, Lv4:1688, Lv5:2531, Lv6:3797, Lv7:5695（技术债：数值测试后调优） |
 
 素材文件与等级对应：
 - Lv1: `library_reading_01_shell.jpg` — 外壳
@@ -70,7 +71,7 @@ UI 展示：当前等级插画 + 等级名称 + 升级按钮（显示价格）
 | 咖啡角 | ☕ | 延长访客停留时间 |
 | 研究区 | 🔬 | 深度研究书籍获得加成 |
 
-每个占位项：灰底 + 「🏗️ 装修中…」标识。
+每个占位项：灰底 + 「🏗️ 规划中…」标识。
 
 ---
 
@@ -111,8 +112,8 @@ export const SHARED_POOL = [
 ### 4.2 固定区
 
 - **数量**：5本
-- **选书逻辑**：从 SHARED_POOL 随机抽取 5 本，去重
-- **重复处理**：如果池中未拥有的书不足 5 本，空位填充「新书上架中…」占位
+- **选书逻辑**：从 SHARED_POOL 随机抽取 5 本，去重。当前池仅7本可用，固定区优先取满5本，剩余2本供给特价区，特价区第3位显示「新书上架中…」。以后池扩充后自动填满
+- **重复处理**：如果池中未拥有的书不足 5 本，空位填充「新书上架中…」占位。固定区和轮换区从同一个 shuffle 后的数组依次分配，**同一次刷新内不会产生重复**
 - **刷新机制**：每 24 小时（真实时间）全部重新随机
   - 时间源：`getNow()` = `window.__dev?.getNow?.() || Date.now()`
   - `getNow()` 封装让 Dev 面板的时间快进也能推进商店刷新
@@ -236,21 +237,26 @@ state.books[bookId] 不存在                         → 「可购买」
 
 ### 6.1 共享书籍池（`data/book_pool.js`）
 
-见 4.1 节。同时 `data/book_pool.js` 导出一个工具函数：
+`data/book_pool.js` 是纯数据模块，只导出 `SHARED_POOL` 常量，不依赖任何其他模块：
 
 ```js
-export function getAvailableBooks() {
-  return SHARED_POOL.filter(b => {
-    const bs = state.books[b.bookId];
-    return !bs || bs.status === 'locked';
-  });
-}
+export const SHARED_POOL = [
+  { bookId: 'book_003', title: '老人与海', ... },
+  // ... 共7本
+];
 ```
 
-### 6.2 商店运行时状态
+**依赖方向：** data 层 → 无依赖。`getAvailableBooks()` 过滤函数放在 `js/shop.js`（业务逻辑层），从 data 层 import `SHARED_POOL`，比对 `state.books` 后返回可用列表。
+
+### 6.2 商店运行时状态（`js/shop.js` — 业务逻辑层）
 
 ```js
-// js/render/shop.js 内部状态（模块级变量，不持久化）
+// js/shop.js — 商店业务逻辑（状态 + 刷新 + 购买），不碰 DOM
+import { SHARED_POOL } from '../data/book_pool.js';
+import { state, saveState } from './state.js';
+import { spendCoins, addHistory } from './storage.js';
+
+// 模块级变量，不持久化（技术债）
 let shopState = {
   fixed: [
     // { bookId, price, soldAt: timestamp|null }
@@ -260,7 +266,29 @@ let shopState = {
   ],
   lastRefresh: 0       // 上次全店刷新时间戳
 };
+
+function getNow() {
+  return window.__dev?.getNow?.() || Date.now();
+}
+
+export function getAvailableBooks() {
+  return SHARED_POOL.filter(b => {
+    const bs = state.books[b.bookId];
+    return !bs || bs.status === 'locked';
+  });
+}
+
+export function ensureShopState() { /* ... */ }
+export function purchaseBook(bookId, price) { /* ... */ }
+export function getShopState() { return shopState; }
 ```
+
+**职责分离：**
+- `js/shop.js` — 业务逻辑：状态管理、刷新判定、购买扣款
+- `js/render/shop.js` — 视图层：只接收 `shopState` 数据，纯渲染
+- `js/app.js` — 编排层：初始化时调用 `ensureShopState()`，购买动作由 render 的 actions 回调到 app → 调用 `purchaseBook()`
+
+**优先级：** 全刷新 > 单本补货。全刷新时所有 slot 重置，单本补货仅在两次全刷新之间的窗口内生效。
 
 **刷新/补货逻辑伪代码：**
 
@@ -303,12 +331,13 @@ function ensureShopState() {
 
 | 操作 | 文件 | 说明 |
 |------|------|------|
-| 新建 | `data/book_pool.js` | 共享书籍池 |
-| 新建 | `data/books/book_003.js` ~ `book_009.js` | 7本新书数据 |
+| 新建 | `data/book_pool.js` | 共享书籍池（纯数据，无依赖） |
+| 新建 | `js/shop.js` | 商店业务逻辑（状态管理、刷新判定、购买扣款） |
+| 新建 | `data/books/book_003.js` ~ `book_010.js` | 8本新书数据 |
 | 修改 | `data/books.js` | 引入新书模块，组装 BOOKS |
-| 重写 | `js/render/shop.js` | 完整商店 UI |
-| 修改 | `js/app.js` | 商店购买逻辑、初始化 |
-| 修改 | `js/state.js` | borrowLevel 从 0-3 扩展到 0-7 |
+| 重写 | `js/render/shop.js` | 完整商店 UI（纯渲染，不持状态） |
+| 修改 | `js/app.js` | 商店初始化 + 购买动作编排 |
+| 修改 | `js/state.js` | borrowLevel 从 0-3 扩展到 0-7 + 价格字段 |
 
 ---
 
@@ -331,6 +360,7 @@ function getNow() {
 每张已售出卡片显示倒计时：
 - 计算：`24h - (getNow() - soldAt)`
 - 显示格式：`HH:MM:SS`，每秒更新一次
+- **定时器清理：** 用户切走商店页时 `clearInterval`，防止内存泄漏
 - 倒计时归零 → 该位置自动补货（从可用池随机新书）
 - 如果池中无可用新书 → 显示「新书上架中…」
 
@@ -342,7 +372,7 @@ function getNow() {
 | 可用书不足8本（如只有3本未拥有） | 固定区填满未拥有的，剩余空位「新书上架中…」；特价区同理 |
 | 可用书为0本 | 整个新书区显示「🎉 你已收集了所有可购买的书！新书上架中…」 |
 | 代币不足 | 详情弹窗的「确认购买」按钮旁标红提示，点击弹 alert |
-| 同本书出现在固定区和特价区 | 允许并存，购买一处后两处同步变为「已拥有」 |
+| 同本书出现在固定区和特价区 | 同次刷新不会出现（shuffle 后顺序分配）。跨刷新周期可能出现：渲染时对每个 slot 实时检查 `state.books[bookId]` 判定，不依赖事件驱动更新 |
 | 用户连续打开页面（不关浏览器） | 每次 `renderShopPage()` 时检查 `ensureShopState()`，过期自动刷新 |
 | 用户关闭浏览器24h后重开 | `ensureShopState()` 检测过期 → 全刷新 |
 | Dev 面板时间加速24h | `getNow()` 返回值跳变 → `ensureShopState()` 判定过期 → 刷新 |
