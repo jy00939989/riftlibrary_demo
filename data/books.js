@@ -1,10 +1,26 @@
 // 书籍数据入口 —— 组装所有书籍 + 分类枚举 + 通用文案
 import { meta as b1, chapters as c1, quotes as q1 } from './books/book_001.js';
 import { meta as b2, chapters as c2, quotes as q2 } from './books/book_002.js';
+import { meta as b3, chapters as c3, quotes as q3 } from './books/book_003.js';
+import { meta as b4, chapters as c4, quotes as q4 } from './books/book_004.js';
+import { meta as b5, chapters as c5, quotes as q5 } from './books/book_005.js';
+import { meta as b6, chapters as c6, quotes as q6 } from './books/book_006.js';
+import { meta as b7, chapters as c7, quotes as q7 } from './books/book_007.js';
+import { meta as b8, chapters as c8, quotes as q8 } from './books/book_008.js';
+import { meta as b9, chapters as c9, quotes as q9 } from './books/book_009.js';
+import { meta as b10, chapters as c10, quotes as q10 } from './books/book_010.js';
 
 const ALL_BOOKS = [
   { meta: b1, chapters: c1, quotes: q1 },
-  { meta: b2, chapters: c2, quotes: q2 }
+  { meta: b2, chapters: c2, quotes: q2 },
+  { meta: b3, chapters: c3, quotes: q3 },
+  { meta: b4, chapters: c4, quotes: q4 },
+  { meta: b5, chapters: c5, quotes: q5 },
+  { meta: b6, chapters: c6, quotes: q6 },
+  { meta: b7, chapters: c7, quotes: q7 },
+  { meta: b8, chapters: c8, quotes: q8 },
+  { meta: b9, chapters: c9, quotes: q9 },
+  { meta: b10, chapters: c10, quotes: q10 }
 ];
 
 // 组装 BOOKS 对象（保持原有访问模式：BOOKS[id]）
