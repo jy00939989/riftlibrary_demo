@@ -1,6 +1,7 @@
 // 《庄子》
 export const meta = {
   id: 'book_006',
+  plane: 'astral',
   title: '庄子',
   author: '庄周',
   category: '哲学',

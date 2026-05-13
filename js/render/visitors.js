@@ -1,6 +1,7 @@
 // 访客中心页面渲染
 import { state } from '../state.js';
 import { el, actions } from './common.js';
+import { getBorrowLevelConfig, getVisitorCap } from '../visitors.js';
 
 function timeLeft(dueTime) {
   const now = Date.now();
@@ -22,12 +23,50 @@ export function renderVisitorsPage() {
 
   container.innerHTML = '';
 
+  // 当前借阅区等级背景图
+  const blv = state.library.borrowLevel || 0;
+  const blvNames = ['', 'shell','tidy','open','comfy','refined','elegant','sanctum'];
+  const bimgNum = String(blv === 0 ? 1 : blv).padStart(2, '0');
+  const bimgSrc = blv > 0
+    ? `visual/library_readingarea/library_reading_${bimgNum}_${blvNames[blv]}.jpg`
+    : 'visual/library_readingarea/library_reading_01_shell.jpg';
+  container.style.backgroundImage = `linear-gradient(rgba(44,36,25,0.92), rgba(44,36,25,0.92)), url('${bimgSrc}')`;
+  container.style.backgroundSize = 'cover';
+  container.style.backgroundPosition = 'center';
+  container.style.backgroundAttachment = 'fixed';
+
+  if (blv === 0) {
+    const emptyCard = el('div', 'parchment-bg rounded-2xl p-6 magic-glow text-center py-12');
+    emptyCard.innerHTML = `
+      <div class="text-6xl mb-4">🏚️</div>
+      <h2 class="font-display text-xl font-bold mb-3">这里还只是一片空荡荡的角落</h2>
+      <p class="text-ink-light text-sm leading-relaxed mb-4 max-w-md mx-auto">
+        阳光从高窗斜照进来，在石板地面上画出一方金色的池子。
+        你想象着将来有一天，这里会摆上柔软的扶手椅，壁炉里的火焰轻轻跳动，
+        访客们围坐在一起，低声交谈或安静阅读。
+      </p>
+      <p class="text-sm text-magic-blue mb-6">在那之前，你需要先建造一间借阅区。</p>
+      <button class="build-borrow-btn px-6 py-3 bg-magic-gold text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all">
+        🔨 建造借阅区 · 💰500
+      </button>
+    `;
+    container.appendChild(emptyCard);
+
+    const buildBtn = emptyCard.querySelector('.build-borrow-btn');
+    if (buildBtn) {
+      buildBtn.addEventListener('click', () => {
+        if (actions.upgradeBorrowLevel) actions.upgradeBorrowLevel();
+      });
+    }
+    return;
+  }
+
   const card = el('div', 'parchment-bg rounded-2xl p-6 magic-glow');
   card.innerHTML = `<h2 class="font-display text-xl font-bold mb-4">👥 访客中心</h2>`;
 
   // --- 在馆区 ---
   const section1 = el('div', 'mb-6');
-  section1.innerHTML = `<h3 class="font-bold text-sm text-ink-light mb-2">🛋️ 在馆阅览（${browsing.length}人）</h3>`;
+  section1.innerHTML = `<h3 class="font-bold text-sm text-ink-light mb-2">🛋️ 在馆阅览（${browsing.length}/${getVisitorCap()}人）</h3>`;
   if (browsing.length === 0) {
     section1.appendChild(el('div', 'text-sm text-ink-light py-4 text-center border border-dashed border-wood/30 rounded-lg', { text: '暂无访客在馆，完成专注可吸引访客到来' }));
   } else {
@@ -84,10 +123,11 @@ export function renderVisitorsPage() {
   }
   card.appendChild(section3);
 
-  // 借阅区等级
-  const blv = state.library.borrowLevel || 0;
+  // 借阅区等级信息
+  const bcfg = getBorrowLevelConfig();
+  const lvNames = ['','陋室','整洁','开放','舒适','精致','优雅','圣所'];
   card.appendChild(el('div', 'text-xs text-ink-light mt-4 pt-4 border-t border-wood/20', {
-    text: `借阅区 Lv.${blv} · 阅览氛围 +${blv * 10}%`
+    text: `借阅区 Lv.${blv} ${lvNames[blv]} · 在馆${bcfg.cap}人 · 还书+${bcfg.returnCoins}💰 +${bcfg.returnAtmo}氛围 · 好感+${bcfg.favorBonus}%`
   }));
 
   container.appendChild(card);
@@ -128,7 +168,7 @@ export function showVisitorEventModal(result, callback) {
         <p class="text-magic-gold font-bold mt-2">阿九推销一本书！</p>
         <p class="text-ink-light">《${ev.book.title}》${ev.book.emoji}</p>
         <p class="text-sm text-ink-light">${(ev.book.totalWords || ev.book.words || 0).toLocaleString()}字 · ${ev.book.category || ''}</p>
-        <p class="text-magic-blue font-bold mt-1">售价：${ev.book.price.toLocaleString()} 代币</p></div>`;
+        <p class="text-magic-blue font-bold mt-1">售价：${ev.book.price.toLocaleString()} 智慧之光</p></div>`;
     }
   }
 

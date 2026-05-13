@@ -1,6 +1,7 @@
 // 计时器模块 —— 只负责计时，完成逻辑交给 app.js
 import { state, saveState } from './state.js';
 import { addHistory, updateStreak } from './storage.js';
+import { getFocusSpeedMultiplier } from './shop.js';
 import { renderFocusPage, updateTimerDisplay, formatTime } from './render/index.js';
 
 let timerInterval = null;
@@ -56,7 +57,7 @@ function tick() {
   const isCountUp = sess.mode === 'stopwatch' || sess.targetMinutes === 0;
   const displaySeconds = isCountUp ? sess.elapsedSeconds : sess.targetMinutes * 60 - sess.elapsedSeconds;
   const timeStr = formatTime(Math.max(0, displaySeconds));
-  const words = state.focus.totalWords + sess.elapsedSeconds * 2;
+  const words = state.focus.totalWords + Math.round(sess.elapsedSeconds * 2 * getFocusSpeedMultiplier());
   updateTimerDisplay(timeStr, words);
 }
 
@@ -76,7 +77,7 @@ export function abandonTimer() {
 
   if (minutes > 1) {
     state.focus.totalMinutes += halfMinutes;
-    state.focus.totalWords += halfMinutes * 100;
+    state.focus.totalWords += Math.round(halfMinutes * 100 * getFocusSpeedMultiplier());
     updateStreak();
     addHistory('focus', `中断专注 (计入50%)`, `${halfMinutes} 分钟`);
   }

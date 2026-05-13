@@ -38,4 +38,9 @@ export function updateTimerDisplay(timeStr, words) {
   if (display) display.textContent = timeStr;
   const wordEl = document.querySelector('#page-focus .text-sm.text-ink-light.mt-1');
   if (wordEl) wordEl.textContent = `已誊抄 ${words.toLocaleString()} 字`;
+  // 活跃模式下的迷你计时器和字数
+  const miniTimer = document.getElementById('focus-mini-timer');
+  if (miniTimer) miniTimer.textContent = timeStr;
+  const activeWords = document.getElementById('focus-active-words');
+  if (activeWords) activeWords.textContent = words.toLocaleString();
 }

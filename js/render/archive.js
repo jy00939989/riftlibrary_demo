@@ -22,7 +22,7 @@ export function renderArchivePage() {
         </div>
         <div class="bg-white rounded-lg p-3 text-center shadow">
           <div class="text-2xl font-bold text-green-600">${state.coins}</div>
-          <div class="text-xs text-ink-light">累计代币</div>
+          <div class="text-xs text-ink-light">累计智慧之光</div>
         </div>
       </div>
       ${state.history.length > 0 ? `

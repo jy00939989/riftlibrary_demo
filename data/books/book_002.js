@@ -1,6 +1,7 @@
 // 《动物农场》
 export const meta = {
   id: 'book_002',
+  plane: 'astral',
   title: '动物农场',
   titleEn: 'Animal Farm',
   author: '乔治·奥威尔',

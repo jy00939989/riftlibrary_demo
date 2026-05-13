@@ -1,6 +1,7 @@
 // 《傲慢与偏见》
 export const meta = {
   id: 'book_005',
+  plane: 'astral',
   title: '傲慢与偏见',
   author: '简·奥斯汀',
   category: '小说',

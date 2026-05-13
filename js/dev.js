@@ -45,7 +45,7 @@ const PANEL_HTML = `
       <hr class="border-wood/20">
 
       <div class="grid grid-cols-2 gap-2">
-        <button id="dev-add-coins" class="px-3 py-2 bg-magic-gold/20 border border-magic-gold/50 rounded-lg text-sm hover:bg-magic-gold/30">💰 +500代币</button>
+        <button id="dev-add-coins" class="px-3 py-2 bg-magic-gold/20 border border-magic-gold/50 rounded-lg text-sm hover:bg-magic-gold/30">💰 +500智慧之光</button>
         <button id="dev-add-atmo" class="px-3 py-2 bg-magic-blue/20 border border-magic-blue/50 rounded-lg text-sm hover:bg-magic-blue/30">✨ +10氛围</button>
       </div>
 
@@ -55,6 +55,12 @@ const PANEL_HTML = `
 
       <button id="dev-complete-current" class="w-full px-3 py-2 bg-green-100 border border-green-300 rounded-lg text-sm font-bold hover:bg-green-200">
         ✅ 完成当前书籍
+      </button>
+
+      <hr class="border-red-200">
+
+      <button id="dev-reset-all" class="w-full px-3 py-2 bg-red-100 border border-red-400 rounded-lg text-sm font-bold text-red-700 hover:bg-red-200">
+        ⚠️ 重置所有数据
       </button>
     </div>
 
@@ -106,7 +112,7 @@ function accelerate(hours) {
 
 function addCoins500() {
   addCoins(500);
-  addHistory('system', '🔧 Dev: +500代币');
+  addHistory('system', '🔧 Dev: +500智慧之光');
   updateStatusBar();
   updateStatusLine();
 }
@@ -163,7 +169,7 @@ function completeCurrentBook() {
   bs.status = 'completed';
   bs.copyCount += 1;
   bs.masteryLevel = Math.min(5, bs.masteryLevel + 1);
-  addAtmosphere(5);
+  addAtmosphere(book.totalWords < 30000 ? 3 : book.totalWords < 100000 ? 6 : 10);
   addCoins(50);
   addHistory('system', `🔧 Dev: 完成《${book.title}》`);
   saveState();
@@ -205,6 +211,15 @@ function visitorReset() {
   addHistory('system', '🔧 Dev: 重置所有访客状态');
   renderVisitorsPage();
   updateStatusLine();
+}
+
+function resetAllData() {
+  if (!confirm('确定要清除所有存档数据吗？此操作不可撤销！')) return;
+  localStorage.removeItem('library_state');
+  localStorage.removeItem('library_achievements');
+  localStorage.removeItem('library_collection');
+  window.__devTimeOffset = 0;
+  location.reload();
 }
 
 // ========== 书籍数据引用 ==========
@@ -255,6 +270,7 @@ export function installDevPanel() {
   document.getElementById('dev-visitor-spawn').addEventListener('click', visitorSpawn);
   document.getElementById('dev-visitor-return').addEventListener('click', visitorForceReturn);
   document.getElementById('dev-visitor-reset').addEventListener('click', visitorReset);
+  document.getElementById('dev-reset-all').addEventListener('click', resetAllData);
 
   // 键盘快捷键 Ctrl+Shift+D 也可以开关
   document.addEventListener('keydown', (e) => {

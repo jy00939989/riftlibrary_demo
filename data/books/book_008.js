@@ -1,6 +1,7 @@
 // 《物种起源》
 export const meta = {
   id: 'book_008',
+  plane: 'astral',
   title: '物种起源',
   author: '达尔文（Charles Darwin）',
   category: '科学',

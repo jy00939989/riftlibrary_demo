@@ -3,7 +3,10 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  background: linear-gradient(135deg, #2c2419 0%, #3d3224 50%, #2c2419 100%);
+  background-color: #2c2419;
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
   font-family: 'Noto Serif SC', serif;
   color: #2c2419;
   min-height: 100vh;
@@ -97,6 +100,15 @@ body {
   animation: scale-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
 /* ========== 字体 ========== */
 
 .font-display { font-family: 'Cinzel', 'Noto Serif SC', serif; }
@@ -105,23 +117,43 @@ body {
 /* ========== 导航按钮 ========== */
 
 .nav-btn {
-  transition: all 0.2s ease;
+  position: relative;
+  transition: all 0.25s ease;
   cursor: pointer;
+  border-left: 3px solid transparent;
 }
 
 .nav-btn:hover {
   transform: translateY(-1px);
+  background: linear-gradient(135deg, rgba(245,230,200,0.4), rgba(232,213,168,0.2));
 }
 
-/* ========== 书籍卡片 ========== */
+/* 选中态：金色左边线 + 羊皮纸渐变 + 微光 */
+.nav-btn.bg-magic-gold {
+  border-left: 3px solid var(--magic-gold);
+  background: linear-gradient(135deg, var(--parchment), var(--parchment-dark)) !important;
+  box-shadow: 0 0 18px rgba(201,162,39,0.2), inset 0 1px 0 rgba(255,255,255,0.3);
+  color: var(--ink) !important;
+  text-shadow: none;
+}
+
+/* ========== 卡片微光 ========== */
 
 .book-card {
-  transition: all 0.2s ease;
+  transition: all 0.25s ease;
 }
 
 .book-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15), 0 0 20px rgba(201,162,39,0.08);
+}
+
+/* 羊皮纸卡片的通用 hover 微光 */
+.parchment-bg {
+  transition: box-shadow 0.3s ease;
+}
+.parchment-bg:hover {
+  box-shadow: inset 0 0 60px rgba(139,105,20,0.2), 0 4px 20px rgba(0,0,0,0.3), 0 0 24px rgba(201,162,39,0.06);
 }
 
 /* ========== 章节阅读 ========== */
@@ -164,4 +196,233 @@ body {
   .p-6 { padding: 1rem; }
   .p-8 { padding: 1.5rem; }
   .text-6xl { font-size: 2.5rem !important; }
+}
+
+/* ========== 缮写动画 ========== */
+
+.writing-anim-wrapper {
+  max-width: 720px;
+  width: 100%;
+}
+
+.writing-scene {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  max-height: 480px;
+}
+
+.writing-candle-glow {
+  position: absolute;
+  top: -20px;
+  right: 10%;
+  width: 30%;
+  height: 50%;
+  background: radial-gradient(circle, rgba(255,180,80,0.25) 0%, transparent 70%);
+  pointer-events: none;
+  animation: writing-candle-flicker 3s ease-in-out infinite;
+}
+
+@keyframes writing-candle-flicker {
+  0%, 100% { opacity: 0.7; transform: scale(1); }
+  25% { opacity: 0.9; transform: scale(1.08); }
+  50% { opacity: 0.65; transform: scale(0.95); }
+  75% { opacity: 0.85; transform: scale(1.04); }
+}
+
+.writing-book {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) perspective(1200px) rotateX(3deg);
+  width: 90%;
+  height: 85%;
+  display: flex;
+  transform-style: preserve-3d;
+}
+
+.writing-spine {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  transform: translateX(-50%);
+  background: linear-gradient(to right,
+    #3d2b1f 0%, #5a3d2e 30%, #8b6914 50%, #5a3d2e 70%, #3d2b1f 100%);
+  z-index: 10;
+  border-radius: 2px;
+}
+
+.writing-page {
+  flex: 1;
+  position: relative;
+  background: linear-gradient(175deg, #f5e6c8 0%, #ede0c1 30%, #f0e4ca 60%, #e8d5a8 100%);
+  overflow: hidden;
+}
+
+.writing-page-left {
+  border-radius: 10px 0 0 10px;
+  margin-right: 3px;
+  box-shadow: inset -3px 0 8px rgba(0,0,0,0.06);
+}
+
+.writing-page-right {
+  border-radius: 0 10px 10px 0;
+  margin-left: 3px;
+  box-shadow: inset 3px 0 8px rgba(0,0,0,0.06);
+}
+
+/* 纸页横线纹理 */
+.writing-page::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.07;
+  background-image: repeating-linear-gradient(
+    0deg, transparent, transparent 26px, rgba(139,105,20,0.3) 26px, rgba(139,105,20,0.3) 27px
+  );
+  pointer-events: none;
+}
+
+.writing-page-left::after {
+  content: '';
+  position: absolute;
+  right: 24px;
+  top: 20px;
+  bottom: 20px;
+  width: 1px;
+  background: rgba(139,105,20,0.1);
+}
+
+.writing-page-right::after {
+  content: '';
+  position: absolute;
+  left: 24px;
+  top: 20px;
+  bottom: 20px;
+  width: 1px;
+  background: rgba(139,105,20,0.1);
+}
+
+.writing-area {
+  position: absolute;
+  top: 24px;
+  bottom: 24px;
+  left: 32px;
+  right: 32px;
+  font-family: 'Zhi Mang Xing', 'Ma Shan Zheng', 'STKaiti', 'KaiTi', cursive, serif;
+  font-size: 17px;
+  line-height: 1.9;
+  letter-spacing: 0.04em;
+  color: #2c2419;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+.writing-written-line {
+  position: relative;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.writing-char {
+  display: inline;
+  transition: color 0.3s;
+}
+
+.writing-char.writing-fresh {
+  color: #ffd700;
+  text-shadow: 0 0 8px rgba(255,215,0,0.9), 0 0 18px rgba(255,215,0,0.5);
+  animation: writing-ink-dry 1.8s ease-out forwards;
+}
+
+@keyframes writing-ink-dry {
+  0% { color: #d4a017; text-shadow: 0 0 8px rgba(212,160,23,0.8), 0 0 16px rgba(212,160,23,0.4); }
+  30% { color: #b8860b; text-shadow: 0 0 4px rgba(184,134,11,0.4); }
+  100% { color: #3d2b1f; text-shadow: none; }
+}
+
+.writing-current-line {
+  position: relative;
+}
+
+/* 羽毛笔 */
+.writing-quill-container {
+  position: absolute;
+  pointer-events: none;
+  z-index: 20;
+  transition: left 0.12s ease-out, top 0.12s ease-out;
+}
+
+.writing-quill-inner {
+  font-size: 30px;
+  filter: drop-shadow(2px 3px 3px rgba(0,0,0,0.35));
+  animation: writing-quill-wobble 1.2s ease-in-out infinite;
+}
+
+@keyframes writing-quill-wobble {
+  0%, 100% { transform: rotate(-8deg) translateY(0); }
+  25% { transform: rotate(-4deg) translateY(-2px); }
+  50% { transform: rotate(-10deg) translateY(1px); }
+  75% { transform: rotate(-3deg) translateY(-1px); }
+}
+
+/* 金色粒子 */
+.writing-particle {
+  position: absolute;
+  pointer-events: none;
+  z-index: 25;
+  background: radial-gradient(circle, #ffd700, #c9a227);
+  border-radius: 50%;
+  animation: writing-particle-rise 0.9s ease-out forwards;
+}
+
+@keyframes writing-particle-rise {
+  0% { opacity: 1; transform: translate(0, 0) scale(1); }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0); }
+}
+
+/* 翻页过渡 */
+.writing-page-right .writing-area {
+  transition: opacity 0.35s ease;
+}
+
+.writing-page-right.writing-fading .writing-area {
+  opacity: 0;
+}
+
+/* 状态栏 */
+.writing-status-bar {
+  text-align: center;
+  color: rgba(201,162,39,0.7);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  margin-top: 6px;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .writing-scene { max-height: 340px; }
+  .writing-area { font-size: 14px; line-height: 1.8; }
+  .writing-page::before {
+    background-image: repeating-linear-gradient(
+      0deg, transparent, transparent 24px, rgba(139,105,20,0.3) 24px, rgba(139,105,20,0.3) 25px
+    );
+  }
+}
+
+@media (max-width: 480px) {
+  .writing-scene { max-height: 260px; }
+  .writing-area { font-size: 13px; line-height: 1.7; top: 16px; bottom: 16px; left: 20px; right: 20px; }
+  .writing-quill-inner { font-size: 22px; }
+}
+
+/* ========== 页面专属氛围背景（由 JS 动态设置 backgroundImage） ========== */
+
+.page-section {
+  position: relative;
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
 }

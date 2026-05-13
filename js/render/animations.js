@@ -43,7 +43,7 @@ export function showBookCompleteAnimation(bookTitle, bookEmoji, copyCount, callb
     <div class="flex justify-center gap-1 mb-4">
       ${Array(Math.min(copyCount, 5)).fill('<span class="text-magic-gold text-lg">⭐</span>').join('')}
     </div>
-    <p class="text-xs text-ink-light mb-1">+50代币 · +5氛围 · 成就解锁</p>
+    <p class="text-xs text-ink-light mb-1">+50智慧之光 · +5氛围 · 成就解锁</p>
     <button class="mt-2 px-6 py-3 bg-magic-gold text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all">太棒了 →</button>
   `;
 

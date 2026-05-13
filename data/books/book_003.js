@@ -1,5 +1,6 @@
 export const meta = {
   id: 'book_003',
+  plane: 'astral',
   title: '老人与海',
   author: '海明威',
   category: '小说',

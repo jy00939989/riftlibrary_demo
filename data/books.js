@@ -9,6 +9,20 @@ import { meta as b7, chapters as c7, quotes as q7 } from './books/book_007.js';
 import { meta as b8, chapters as c8, quotes as q8 } from './books/book_008.js';
 import { meta as b9, chapters as c9, quotes as q9 } from './books/book_009.js';
 import { meta as b10, chapters as c10, quotes as q10 } from './books/book_010.js';
+import { meta as b11, chapters as c11, quotes as q11 } from './books/book_011_道德经.js';
+import { meta as b12, chapters as c12, quotes as q12 } from './books/book_012_沉思录.js';
+import { meta as b13, chapters as c13, quotes as q13 } from './books/book_013_理想国.js';
+import { meta as b14, chapters as c14, quotes as q14 } from './books/book_014_史记.js';
+import { meta as b15, chapters as c15, quotes as q15 } from './books/book_015_诗经.js';
+import { meta as b16, chapters as c16, quotes as q16 } from './books/book_016_西游记.js';
+import { meta as b17, chapters as c17, quotes as q17 } from './books/book_017_鲁滨逊漂流记.js';
+import { meta as b18, chapters as c18, quotes as q18 } from './books/book_018_几何原本.js';
+import { meta as b19, chapters as c19, quotes as q19 } from './books/book_019_卡拉马佐夫兄弟.js';
+import { meta as b20, chapters as c20, quotes as q20 } from './books/book_020_社会契约论.js';
+import { meta as b21, chapters as c21, quotes as q21 } from './books/book_021_第一哲学沉思集.js';
+import { meta as b22, chapters as c22, quotes as q22 } from './books/book_022_传习录.js';
+import { meta as b23, chapters as c23, quotes as q23 } from './books/book_023_绿野仙踪.js';
+import { meta as b24, chapters as c24, quotes as q24 } from './books/book_024_爱丽丝梦游奇境.js';
 
 const ALL_BOOKS = [
   { meta: b1, chapters: c1, quotes: q1 },
@@ -20,7 +34,21 @@ const ALL_BOOKS = [
   { meta: b7, chapters: c7, quotes: q7 },
   { meta: b8, chapters: c8, quotes: q8 },
   { meta: b9, chapters: c9, quotes: q9 },
-  { meta: b10, chapters: c10, quotes: q10 }
+  { meta: b10, chapters: c10, quotes: q10 },
+  { meta: b11, chapters: c11, quotes: q11 },
+  { meta: b12, chapters: c12, quotes: q12 },
+  { meta: b13, chapters: c13, quotes: q13 },
+  { meta: b14, chapters: c14, quotes: q14 },
+  { meta: b15, chapters: c15, quotes: q15 },
+  { meta: b16, chapters: c16, quotes: q16 },
+  { meta: b17, chapters: c17, quotes: q17 },
+  { meta: b18, chapters: c18, quotes: q18 },
+  { meta: b19, chapters: c19, quotes: q19 },
+  { meta: b20, chapters: c20, quotes: q20 },
+  { meta: b21, chapters: c21, quotes: q21 },
+  { meta: b22, chapters: c22, quotes: q22 },
+  { meta: b23, chapters: c23, quotes: q23 },
+  { meta: b24, chapters: c24, quotes: q24 }
 ];
 
 // 组装 BOOKS 对象（保持原有访问模式：BOOKS[id]）

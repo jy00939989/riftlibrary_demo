@@ -1,6 +1,7 @@
 // 《东京梦华录》
 export const meta = {
   id: 'book_004',
+  plane: 'astral',
   title: '东京梦华录',
   author: '孟元老（宋代）',
   category: '历史',

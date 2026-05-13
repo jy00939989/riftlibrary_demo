@@ -2,6 +2,7 @@
 import { state, saveState } from './state.js';
 import { spendCoins, addHistory } from './storage.js';
 import { SHARED_POOL } from '../data/book_pool.js';
+import { SIGNBOARDS } from '../data/signboards.js';
 
 function getNow() {
   return window.__dev?.getNow?.() || Date.now();
@@ -127,7 +128,7 @@ export function purchaseBook(bookId, price) {
 
   const poolEntry = SHARED_POOL.find(b => b.bookId === bookId);
   const title = poolEntry ? poolEntry.title : bookId;
-  addHistory('purchase', `购买《${title}》`, `花费${price}代币`);
+  addHistory('purchase', `购买《${title}》`, `花费${price}智慧之光`);
 
   // 标记已售出
   const now = getNow();
@@ -154,7 +155,42 @@ export function upgradeBorrowLevel() {
   if (!spendCoins(price)) return false;
 
   state.library.borrowLevel += 1;
-  addHistory('purchase', `借阅区升至 Lv.${state.library.borrowLevel}`, `花费${price}代币`);
+  addHistory('purchase', `借阅区升至 Lv.${state.library.borrowLevel}`, `花费${price}智慧之光`);
+  saveState();
+  return true;
+}
+
+// 缮写室速率倍率：每级 +5%
+export function getFocusSpeedMultiplier() {
+  return 1 + (state.library.focusLevel || 0) * 0.05;
+}
+
+// 缮写室价格：400 × 1.45^(n-1)，封顶 5000
+export function getFocusLevelPrice() {
+  const n = state.library.focusLevel || 0;
+  return Math.min(5000, Math.round(400 * Math.pow(1.45, n)));
+}
+
+export function upgradeFocusLevel() {
+  const price = getFocusLevelPrice();
+  if (state.library.focusLevel >= 6) return false;
+  if (!spendCoins(price)) return false;
+
+  state.library.focusLevel += 1;
+  addHistory('purchase', `缮写室升至 Lv.${state.library.focusLevel}`, `花费${price}智慧之光`);
+  saveState();
+  return true;
+}
+
+// 标志牌购买
+export function purchaseSignboard(signboardId) {
+  const def = SIGNBOARDS[signboardId];
+  if (!def) return false;
+  if (state.signboards.includes(signboardId)) return false;
+  if (!spendCoins(def.price)) return false;
+
+  state.signboards.push(signboardId);
+  addHistory('purchase', `购置标志牌「${def.name}」`, `花费${def.price}智慧之光`);
   saveState();
   return true;
 }

@@ -1,6 +1,7 @@
 // 《纯粹理性批判》
 export const meta = {
   id: 'book_010',
+  plane: 'astral',
   title: '纯粹理性批判',
   titleEn: 'Critique of Pure Reason',
   author: '康德（Immanuel Kant）',

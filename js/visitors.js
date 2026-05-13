@@ -53,11 +53,30 @@ const POEMS = [
 
 // ========== 神秘书籍池（沈明远专属） ==========
 
-const MYSTERY_BOOKS = [
-  { title: '《遗忘之书》', words: 28000, emoji: '📕' },
-  { title: '《月下独白》', words: 21000, emoji: '📗' },
-  { title: '《时间的褶皱》', words: 35000, emoji: '📘' }
+// 沈明远专属书池 —— 全是真实可抄的书
+const SHENMINGYUAN_BOOKS = ['book_010', 'book_021', 'book_022'];
+
+// ========== 借阅区等级配置表 ==========
+
+const BORROW_LEVEL_TABLE = [
+  null, // 索引0占位(Lv0)
+  { cap:2, returnCoins:30, favorBonus:0,  returnAtmo:1 },  // Lv1 陋室
+  { cap:3, returnCoins:35, favorBonus:10, returnAtmo:1 },  // Lv2 整洁
+  { cap:6, returnCoins:40, favorBonus:20, returnAtmo:3 },  // Lv3 开放
+  { cap:7, returnCoins:45, favorBonus:30, returnAtmo:3 },  // Lv4 舒适
+  { cap:8, returnCoins:50, favorBonus:40, returnAtmo:5 },  // Lv5 精致
+  { cap:9, returnCoins:55, favorBonus:50, returnAtmo:5 },  // Lv6 优雅
+  { cap:10,returnCoins:60, favorBonus:60, returnAtmo:8 }   // Lv7 圣所
 ];
+
+export function getBorrowLevelConfig() {
+  const lv = state.library.borrowLevel || 0;
+  return BORROW_LEVEL_TABLE[lv] || { cap:0, returnCoins:30, favorBonus:0, returnAtmo:0 };
+}
+
+export function getVisitorCap() {
+  return getBorrowLevelConfig().cap;
+}
 
 // ========== 阿九推销书籍池 ==========
 
@@ -95,7 +114,7 @@ function addVisitorFavor(charId, amount) {
 
 export function spawnVisitor() {
   const browsing = state.visitors.filter(v => v.status === 'browsing' || v.status === 'borrowed');
-  if (browsing.length >= 3) return null; // 同时在馆上限 3 人
+  if (browsing.length >= getVisitorCap()) return null;
 
   const charIds = Object.keys(VISITOR_DEFS);
   const charId = pick(charIds);
@@ -126,15 +145,19 @@ export function spawnVisitor() {
 // ========== 借书逻辑 ==========
 
 export function tickVisitorBrowsing(now) {
+  const blvCfg = getBorrowLevelConfig();
+  if (blvCfg.cap === 0) return;
+
   const completedBooks = getCompletedBooks();
   if (completedBooks.length === 0) return;
 
   state.visitors.forEach(visitor => {
     if (visitor.status !== 'browsing') return;
 
-    // 浏览中缓慢增加好感度
-    visitor.favorability = (visitor.favorability || 0) + 1;
-    addVisitorFavor(visitor.charId, 1);
+    // 浏览中缓慢增加好感度（含等级加成）
+    const browseFavor = Math.round(1 * (1 + blvCfg.favorBonus / 100));
+    visitor.favorability = (visitor.favorability || 0) + browseFavor;
+    addVisitorFavor(visitor.charId, browseFavor);
 
     // 浏览随机时长后尝试借书（简化：每次 tick 有 40% 概率借书）
     if (Math.random() > 0.4) return;
@@ -176,8 +199,9 @@ function attemptBorrow(visitor, completedBooks, now) {
   visitor.bookTitle = book.title;
   visitor.borrowTime = now;
   visitor.dueTime = dueTime;
-  visitor.favorability = (visitor.favorability || 0) + 3;
-  addVisitorFavor(visitor.charId, 3);
+  const borrowFavor = Math.round(3 * (1 + getBorrowLevelConfig().favorBonus / 100));
+  visitor.favorability = (visitor.favorability || 0) + borrowFavor;
+  addVisitorFavor(visitor.charId, borrowFavor);
 
   addHistory('visitor', `${visitor.emoji} ${visitor.name} 借走了《${book.title}》`,
     `${borrowHours}小时后归还 · 好感+3`);
@@ -213,12 +237,17 @@ export function collectReturn(visitorId) {
   const charId = visitor.charId;
   const def = VISITOR_DEFS[charId];
 
-  // 基础收益
-  addCoins(30);
-  addAtmosphere(2);
-  visitor.favorability = (visitor.favorability || 0) + 5;
-  addVisitorFavor(charId, 5);
-  addHistory('visitor', `${visitor.emoji} ${visitor.name} 归还了《${bookTitle}》`, '获得30代币 +2氛围 · 好感+5');
+  // 基础收益（按借阅区等级）
+  const retCfg = getBorrowLevelConfig();
+  addCoins(retCfg.returnCoins);
+  if (retCfg.returnAtmo > 0) addAtmosphere(retCfg.returnAtmo);
+
+  const returnFavor = Math.round(5 * (1 + retCfg.favorBonus / 100));
+  visitor.favorability = (visitor.favorability || 0) + returnFavor;
+  addVisitorFavor(charId, returnFavor);
+
+  addHistory('visitor', `${visitor.emoji} ${visitor.name} 归还了《${bookTitle}》`,
+    `${retCfg.returnCoins}智慧之光 +${retCfg.returnAtmo}氛围 · 好感+${returnFavor}`);
 
   // 记录借阅历史
   state.borrowRecords.unshift({
@@ -282,9 +311,19 @@ function triggerEvent(charId, visitor) {
 // --- 沈明远事件 ---
 
 function eventGiftBook(visitor) {
-  const mystery = pick(MYSTERY_BOOKS);
-  // 生成唯一 book id
-  const bookId = 'mystery_' + Date.now().toString(36);
+  // 从沈明远专属池中选一本玩家尚未拥有的书
+  const available = SHENMINGYUAN_BOOKS.filter(id => !state.books[id] || state.books[id].status === 'locked');
+  if (available.length === 0) {
+    // 三本都送过了，改为批注事件
+    addAtmosphere(5);
+    addHistory('event', '📝 沈明远在书中留下了新的批注卡片', '三本专属书均已赠予 +5氛围');
+    saveState();
+    return { type: 'annotation', atmosphere: 5 };
+  }
+  const bookId = pick(available);
+  const book = BOOKS[bookId];
+
+  // 将真实书籍加入玩家状态
   state.books[bookId] = {
     unlockedChapters: [1],
     copyCount: 0,
@@ -295,19 +334,17 @@ function eventGiftBook(visitor) {
     damaged: false,
     repairWords: 0
   };
-  // 暂存书籍元数据（不加入 BOOKS，只存 meta）
-  if (!state._mysteryBooks) state._mysteryBooks = {};
-  state._mysteryBooks[bookId] = mystery;
-  addHistory('event', '📦 沈明远赠送了一本神秘书籍', `书名显示为"???"，抄完才知道内容`);
+
+  addHistory('event', `📦 沈明远赠送了一本《${book.title}》`, `${(book.totalWords || 0).toLocaleString()}字 · ${book.author} · ${book.category}`);
   saveState();
-  return { type: 'gift_book', bookId, mysteryTitle: mystery.title, emoji: mystery.emoji };
+  return { type: 'gift_book', bookId, mysteryTitle: book.title, emoji: book.emoji };
 }
 
 function eventAnnotation(visitor) {
-  addAtmosphere(5);
-  addHistory('event', '📝 沈明远在书中留下了批注卡片', '字迹工整，引经据典 +5氛围');
+  addAtmosphere(3);
+  addHistory('event', '📝 沈明远在书中留下了批注卡片', '字迹工整，引经据典 +3氛围');
   saveState();
-  return { type: 'annotation', atmosphere: 5 };
+  return { type: 'annotation', atmosphere: 3 };
 }
 
 // --- 小萤事件 ---
@@ -318,10 +355,10 @@ function eventTreasureMap(visitor) {
   if (roll < 0.5) {
     const coins = rand(20, 50);
     addCoins(coins);
-    reward = { type: 'coins', amount: coins, text: `${coins}代币` };
-    addHistory('event', '🗺️ 小萤发现了一张藏宝图！', `翻开获得${coins}代币`);
+    reward = { type: 'coins', amount: coins, text: `${coins}智慧之光` };
+    addHistory('event', '🗺️ 小萤发现了一张藏宝图！', `翻开获得${coins}智慧之光`);
   } else {
-    const atmo = rand(3, 8);
+    const atmo = rand(2, 5);
     addAtmosphere(atmo);
     reward = { type: 'atmosphere', amount: atmo, text: `${atmo}氛围值` };
     addHistory('event', '🗺️ 小萤发现了一张藏宝图！', `翻开获得${atmo}氛围值`);
@@ -334,7 +371,7 @@ function eventTreasureMap(visitor) {
 
 function eventPoem(visitor) {
   const poem = pick(POEMS);
-  const atmo = rand(5, 10);
+  const atmo = rand(2, 5);
   addAtmosphere(atmo);
   addHistory('event', '🎵 云游在还书时夹了一首诗', `"${poem}" +${atmo}氛围`);
   saveState();
@@ -347,7 +384,7 @@ function eventSalesPitch(visitor) {
   const book = pick(SALE_BOOKS);
   const price = rand(500, 5000);
   // 不自动扣款，把选择权交给 UI
-  addHistory('event', '📦 阿九推销一本书', `《${book.title}》售价${price.toLocaleString()}代币`);
+  addHistory('event', '📦 阿九推销一本书', `《${book.title}》售价${price.toLocaleString()}智慧之光`);
   saveState();
   return { type: 'sales_pitch', book: { ...book, price } };
 }

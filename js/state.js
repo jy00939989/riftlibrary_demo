@@ -49,10 +49,13 @@ export const state = {
 
   // 图书馆
   library: {
-    name: '星辉图书馆',
+    name: '归墟图书馆',
     atmosphere: 0,
     shelves: [1],
-    borrowLevel: 0   // 借阅区等级 0-3，0=未建造
+    borrowLevel: 0,  // 借阅区等级 0-7，0=未建造
+    focusLevel: 0,   // 缮写室等级 0-6，0=未建造
+    planePortals: {}, // 位面传送门状态 { magic: { unlocked: false, progress: 0 } }
+    nameLocked: false // 是否已使用铭牌命名（false=还可改名）
   },
 
   // 经济
@@ -70,7 +73,30 @@ export const state = {
   history: [],
 
   // 成就
-  achievements: []
+  achievements: [],
+
+  // 植物盆栽
+  plant: {
+    activeType: null,     // 当前种植的植物类型（null=空盆）
+    level: 0,             // 0=空盆，1~5=生长阶段
+    growthProgress: 0,    // 当前等级内的成长进度 0~100
+    waterAvailable: 0,    // 可用的浇水次数（专注获得）
+    lastCareTime: 0,      // 上次照料时间戳
+    plantedAt: 0,         // 开始种植的时间戳
+    harvested: false      // 是否已在Lv5收获过
+  },
+
+  // 种子收集
+  seeds: {
+    bird_of_paradise: 0,
+    magic_rose: 0
+  },
+
+  // 标志牌
+  signboards: [],
+
+  // 新手引导
+  introCompleted: false
 };
 
 // 默认书籍状态（新增/变更书籍时同步更新此处）
@@ -91,6 +117,26 @@ const DEFAULT_BOOKS = {
     masteryLevel: 1,
     copiedWords: 0,
     status: 'unlocked',
+    starred: false,
+    damaged: false,
+    repairWords: 0
+  },
+  'book_023': {
+    unlockedChapters: [1],
+    copyCount: 0,
+    masteryLevel: 0,
+    copiedWords: 0,
+    status: 'locked',
+    starred: false,
+    damaged: false,
+    repairWords: 0
+  },
+  'book_024': {
+    unlockedChapters: [1],
+    copyCount: 0,
+    masteryLevel: 0,
+    copiedWords: 0,
+    status: 'locked',
     starred: false,
     damaged: false,
     repairWords: 0
@@ -152,6 +198,42 @@ export function initState() {
       // 旧存档迁移：借阅区等级
       if (state.library.borrowLevel === undefined) {
         state.library.borrowLevel = 0;
+      }
+      // 旧存档迁移：缮写室等级
+      if (state.library.focusLevel === undefined) {
+        state.library.focusLevel = 0;
+      }
+      // 旧存档迁移：introCompleted
+      if (state.introCompleted === undefined) {
+        state.introCompleted = false;
+      }
+      // 旧存档迁移：位面传送门 + 命名状态 + 旧默认名
+      if (!state.library.planePortals) {
+        state.library.planePortals = {};
+      }
+      if (state.library.nameLocked === undefined) {
+        state.library.nameLocked = false;
+      }
+      if (state.library.name === '星辉图书馆') {
+        state.library.name = '归墟图书馆';
+      }
+      // 新版迁移：植物/种子/标志牌
+      if (!state.plant) {
+        state.plant = {
+          activeType: null,
+          level: 0,
+          growthProgress: 0,
+          waterAvailable: 0,
+          lastCareTime: 0,
+          plantedAt: 0,
+          harvested: false
+        };
+      }
+      if (!state.seeds) {
+        state.seeds = { bird_of_paradise: 0, magic_rose: 0 };
+      }
+      if (!state.signboards) {
+        state.signboards = [];
       }
       saveState(); // 迁移后立即持久化
       return true;

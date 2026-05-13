@@ -1,6 +1,7 @@
 // 《红楼梦》
 export const meta = {
   id: 'book_009',
+  plane: 'astral',
   title: '红楼梦',
   titleEn: 'Dream of the Red Chamber',
   author: '曹雪芹',

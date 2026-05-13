@@ -1,6 +1,7 @@
 // 《本草纲目·草部》
 export const meta = {
   id: 'book_007',
+  plane: 'astral',
   title: '本草纲目·草部',
   author: '李时珍（明代）',
   category: '科学',

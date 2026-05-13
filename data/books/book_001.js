@@ -1,6 +1,7 @@
 // 《小王子》
 export const meta = {
   id: 'book_001',
+  plane: 'astral',
   title: '小王子',
   titleEn: 'The Little Prince',
   author: '安托万·德·圣-埃克苏佩里',
