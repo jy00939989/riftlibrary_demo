@@ -188,6 +188,19 @@ function handleCompleteFocus(isAuto = false) {
     bookCompleted, bookTitle, bookEmoji, copyCount,
     newMilestones
   });
+
+  // 专注完成后概率吸引访客（~35%，受氛围加成）
+  if (!bookCompleted) {
+    const spawnChance = 0.30 + (state.library.atmosphere / 500) * 0.20;
+    if (Math.random() < spawnChance) {
+      const visitor = spawnVisitor();
+      if (visitor) {
+        const vAchResults = checkAchievements('visitor_arrive');
+        showAchievementBatch(vAchResults);
+        showVisitorArrivalCard(visitor);
+      }
+    }
+  }
 }
 
 // ========== 专注完成后弹窗链 ==========
@@ -387,6 +400,34 @@ function showAchievementBatch(results) {
   unique.forEach((ach, i) => {
     setTimeout(() => showAchievementToast(ach), i * 500);
   });
+}
+
+function showVisitorArrivalCard(visitor) {
+  const overlay = document.createElement('div');
+  overlay.className = 'fixed bottom-6 right-6 z-[120] animate-slide-in-right';
+  overlay.innerHTML = `
+    <div class="parchment-bg rounded-xl p-5 shadow-2xl border-2 border-magic-gold/30 max-w-xs">
+      <div class="flex items-start gap-3">
+        <div class="text-4xl">${visitor.emoji}</div>
+        <div>
+          <p class="text-xs text-magic-gold font-bold mb-1">访客到来</p>
+          <p class="text-ink font-bold">${visitor.name}</p>
+          <p class="text-ink-light text-xs">${visitor.title}</p>
+        </div>
+        <button class="text-ink-light/50 hover:text-ink ml-2 text-sm leading-none">&times;</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  const close = () => {
+    overlay.style.opacity = '0';
+    overlay.style.transition = 'opacity 0.3s';
+    setTimeout(() => overlay.remove(), 300);
+  };
+  overlay.querySelector('button').addEventListener('click', close);
+  // 8秒后自动消失
+  setTimeout(close, 8000);
 }
 
 // ========== 注入到 render ==========

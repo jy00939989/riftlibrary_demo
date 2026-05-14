@@ -98,6 +98,9 @@ const ACHIEVEMENTS = [
     check: (s, t) => t === 'library' && s.library.atmosphere > 300 },
 
   // ---- 访客 ----
+  { id: 'V03', name: '墨香来客', rarity: '青铜', category: '访客',
+    desc: '第一位访客来到图书馆',
+    check: (s, t) => t === 'visitor_arrive' },
   { id: 'V01', name: '门庭若市', rarity: '白银', category: '访客',
     desc: '累计迎接20位访客',
     check: (s, t) => t === 'visitor' && countTotalVisitors(s) >= 20 },
@@ -223,7 +226,7 @@ export function checkAchievements(trigger, payload) {
 // ========== 批量检测（启动时调用） ==========
 
 export function checkAllOnInit() {
-  const triggers = ['focus', 'book', 'library', 'visitor'];
+  const triggers = ['focus', 'book', 'library', 'visitor', 'visitor_arrive'];
   const all = [];
   triggers.forEach(t => {
     const result = checkAchievements(t);
