@@ -4,7 +4,8 @@ import { addCoins, spendCoins, addHistory, updateStreak, addAtmosphere, updateBo
 import {
   renderFocusPage, renderBookshelfPage, renderLibraryPage,
   renderVisitorsPage, renderArchivePage, renderShopPage,
-  showUnlockAnimation, showBookCompleteAnimation, showCompletionCard, setActions
+  showUnlockAnimation, showBookCompleteAnimation, showCompletionCard, setActions,
+  updateStatusBar
 } from './render/index.js';
 import { startTimer, togglePauseTimer, abandonTimer, setCompleteCallback } from './timer.js';
 import { BOOKS } from '../data/books.js';
@@ -14,6 +15,8 @@ import { upgradeBorrowLevel, getFocusSpeedMultiplier } from './shop.js';
 import { checkAchievements, checkAllOnInit } from './achievements.js';
 import { showAchievementToast } from './render/achievements.js';
 import { addWaterOpportunity, checkWither } from './plants.js';
+import { addDiaryEntry, tryGenerateDailySummary } from './diary.js';
+import { initAudio, toggleMusic, onFirstInteraction } from './audio.js';
 
 function getNow() {
   return window.__dev && window.__dev.getNow ? window.__dev.getNow() : Date.now();
@@ -38,14 +41,56 @@ function handleStartFocus() {
     alert('请先选择一本要誊抄的书 📖');
     return;
   }
-  // 检测是否为首次誊抄该书
   const bs = state.books[state.currentSession.bookId];
   const isFirstCopy = bs && bs.copiedWords === 0;
-  startTimer();
-  if (isFirstCopy) {
-    const achResults = checkAchievements('copy_start');
-    showAchievementBatch(achResults);
+  const isFirstFocusEver = state.focus.totalMinutes === 0;
+
+  function doStart() {
+    startTimer();
+    if (isFirstCopy) {
+      const achResults = checkAchievements('copy_start');
+      showAchievementBatch(achResults);
+    }
   }
+
+  // 首次专注：墨墨出场
+  if (isFirstFocusEver) {
+    showMomoIntro(doStart);
+  } else {
+    doStart();
+  }
+}
+
+function showMomoIntro(callback) {
+  const overlay = document.createElement('div');
+  overlay.className = 'fixed inset-0 bg-black/70 z-[150] flex items-center justify-center p-4';
+  overlay.innerHTML = `
+    <div class="parchment-bg rounded-2xl p-8 max-w-sm w-full text-center magic-glow animate-scale-in">
+      <div class="text-6xl mb-4">📚</div>
+      <div class="text-xs text-magic-gold mb-2 font-bold tracking-wider">？？？</div>
+      <p class="text-ink leading-relaxed mb-2 text-sm">好不容易有个人来了……</p>
+      <p class="text-ink leading-relaxed mb-4 text-sm">不能让他没耐心跑了！让我用魔法给他加加速——</p>
+      <p class="text-xs text-ink-light mb-6">✨ 书架深处传来一声低语，空气中泛起金色的微光 ✨</p>
+      <button class="px-6 py-3 bg-magic-gold text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all">✨ 开始誊抄</button>
+    </div>
+  `;
+
+  overlay.querySelector('button').addEventListener('click', () => {
+    overlay.style.opacity = '0';
+    overlay.style.transition = 'opacity 0.3s';
+    setTimeout(() => {
+      overlay.remove();
+      callback();
+    }, 300);
+  });
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) {
+      overlay.querySelector('button').click();
+    }
+  });
+
+  document.body.appendChild(overlay);
 }
 
 function handleTogglePause() {
@@ -72,6 +117,7 @@ function handleCompleteFocus(isAuto = false) {
   state.focus.totalMinutes += minutes;
   state.focus.totalWords += wordsGained;
   updateStreak();
+  onFirstInteraction(); // 首次专注完成后激活BGM
 
   // 植物浇水机会：番茄钟25分钟模式完成给一次浇水
   if (sess.mode === 'pomodoro' && minutes >= 20) {
@@ -106,6 +152,7 @@ function handleCompleteFocus(isAuto = false) {
       addAtmosphere(book.totalWords < 30000 ? 3 : book.totalWords < 100000 ? 6 : 10);
       addCoins(50);
       addHistory('achievement', `完成《${book.title}》誊抄！`, `第${bookState.copyCount}次誊抄`);
+      addDiaryEntry('book_complete', { title: book.title });
       bookCompleted = true;
       bookTitle = book.title;
       bookEmoji = book.emoji;
@@ -155,9 +202,15 @@ function handlePostFocusEffects(effects) {
 
   // 构建回调链（从后往前串联）
   let next = () => {
-    // 最后一步：结算卡片
+    // 最后一步：结算卡片（含留存钩子数据）
     const book = state.currentSession.bookId ? BOOKS[state.currentSession.bookId] : null;
-    showCompletionCard({ minutes, words: wordsGained, coins: coinsEarned, book }, () => {
+    const nextMs = getNextMilestone(state.focus.totalWords);
+    showCompletionCard({
+      minutes, words: wordsGained, coins: coinsEarned, book,
+      streak: state.focus.streak,
+      totalWords: state.focus.totalWords,
+      nextMilestone: nextMs
+    }, () => {
       renderFocusPage();
       updateStatusBar();
     });
@@ -194,6 +247,13 @@ function handlePostFocusEffects(effects) {
 
 // ========== 里程碑 ==========
 
+function getNextMilestone(totalWords) {
+  for (const ms of MILESTONES) {
+    if (totalWords < ms.words) return ms.words;
+  }
+  return null;
+}
+
 function checkMilestones(prevWords, newWords) {
   if (!state.focus.claimedMilestones) {
     state.focus.claimedMilestones = [];
@@ -226,6 +286,7 @@ function showMilestoneReward(milestones, callback) {
     addCoins(100);
     addAtmosphere(3);
     addHistory('milestone', `🎯 累计誊抄突破 ${ms.words.toLocaleString()} 字！`, '获得100智慧之光 +3氛围');
+    addDiaryEntry('milestone', { words: ms.words.toLocaleString() });
 
     const overlay = document.createElement('div');
     overlay.className = 'fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4';
@@ -273,7 +334,8 @@ function handleBuyShelf() {
   const price = Math.min(4800, 300 * Math.pow(2, n - 1));
   if (spendCoins(price)) {
     state.library.shelves.push(state.library.shelves.length + 1);
-    addHistory('purchase', '购买新书架', `花费${price}智慧之光`);
+    addAtmosphere(5);
+    addHistory('purchase', '购买新书架', `花费${price}智慧之光 · +5氛围`);
     saveState();
     const achResults = checkAchievements('purchase_shelf');
     showAchievementBatch(achResults);
@@ -304,6 +366,8 @@ function handleBuySalesBook(bookMeta) {
     updateStatusBar();
     saveState();
     renderBookshelfPage();
+    const bookAch = checkAchievements('purchase_book');
+    showAchievementBatch(bookAch);
   } else {
     alert('智慧之光不足 💰');
   }
@@ -383,18 +447,7 @@ window.switchTab = function(tabName) {
   renderCurrentTab();
 };
 
-// ========== 状态栏 ==========
-
-function updateStatusBar() {
-  const coinsEl = document.getElementById('status-coins');
-  const atmosEl = document.getElementById('status-atmosphere');
-  const nameEl = document.getElementById('nav-library-name');
-  if (coinsEl) coinsEl.textContent = state.coins.toLocaleString();
-  if (atmosEl) atmosEl.textContent = `${state.library.atmosphere}/500`;
-  if (nameEl) nameEl.textContent = state.library.name;
-}
-
-export { updateStatusBar };
+// updateStatusBar 已移至 render/common.js，由 import 引入
 
 // ========== 新手引导 ==========
 
@@ -403,7 +456,8 @@ function showIntro() {
     {
       emoji: '🏚️',
       title: '欢迎来到异世界图书馆',
-      text: '你推开沉重的橡木门，灰尘在从破洞屋顶洒下的光柱中飞舞。曾经辉煌的大厅如今只剩断壁残垣，书架倒塌如墓碑，破损的书籍散落一地。但空气中残留着某种古老魔法的气息——这里曾经有人守护，而那个人，现在是你。'
+      text: '你推开沉重的橡木门，灰尘在从破洞屋顶洒下的光柱中飞舞。曾经辉煌的大厅如今只剩断壁残垣，书架倒塌如墓碑，破损的书籍散落一地。但空气中残留着某种古老魔法的气息——这里曾经有人守护，而那个人，现在是你。',
+      isOpening: true
     },
     {
       emoji: '📖',
@@ -423,18 +477,107 @@ function showIntro() {
   ];
 
   let currentStep = 0;
+  let phase = 'loading'; // 'loading' → 'video' → 'active'
+  let videoEl = null;
 
   const overlay = document.createElement('div');
-  overlay.className = 'fixed inset-0 bg-black/70 z-[200] flex items-center justify-center p-4';
+  overlay.className = 'fixed inset-0 z-[200] flex items-center justify-center p-4';
   overlay.id = 'intro-overlay';
+  overlay.style.background = "url('visual/background/library_bg_01_abandoned.jpg') center/cover no-repeat";
+  overlay.style.transition = 'background 0.8s ease';
+
+  // 右下角跳过按钮（loading阶段也可见）
+  let skipBtn = document.createElement('button');
+  skipBtn.className = 'absolute bottom-8 right-8 text-white/50 hover:text-white/80 text-sm z-10 transition-all';
+  skipBtn.textContent = '跳过 →';
+  skipBtn.addEventListener('click', dismissIntro);
+  overlay.appendChild(skipBtn);
+
+  function enterActivePhase() {
+    if (phase === 'active') return;
+    phase = 'active';
+    overlay.style.background =`linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.7)), url('visual/background/library_bg_01_abandoned.jpg') center/cover no-repeat`;
+    const cardSkipBtn = skipBtn.cloneNode(true);
+    skipBtn.replaceWith(cardSkipBtn);
+    skipBtn = cardSkipBtn;
+    skipBtn.textContent = '✕';
+    skipBtn.className = 'absolute top-4 right-4 text-white/70 hover:text-white text-lg leading-none z-20 transition-all';
+    skipBtn.addEventListener('click', dismissIntro);
+    renderStep();
+  }
+
+  function enterVideoPhase() {
+    if (phase === 'video' || phase === 'active') return;
+    phase = 'video';
+
+    // 清理 overlay 内容，保留背景和 skipBtn
+    overlay.innerHTML = '';
+    overlay.appendChild(skipBtn);
+
+    // 创建视频元素
+    videoEl = document.createElement('video');
+    videoEl.src = 'audio/异世界图书馆宣传PV.mp4';
+    videoEl.className = 'absolute inset-0 w-full h-full object-cover z-0';
+    videoEl.playsInline = true;
+    videoEl.addEventListener('ended', () => enterActivePhase());
+
+    // 双击跳过
+    videoEl.addEventListener('dblclick', (e) => {
+      e.stopPropagation();
+      videoEl.pause();
+      enterActivePhase();
+    });
+
+    overlay.appendChild(videoEl);
+
+    // 播放提示覆盖层
+    const playHint = document.createElement('div');
+    playHint.className = 'absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/40 cursor-pointer';
+    playHint.id = 'video-play-hint';
+    playHint.innerHTML = `
+      <div class="text-6xl mb-4 animate-pulse">▶️</div>
+      <p class="text-white text-lg font-bold mb-2">点击观看开场动画</p>
+      <p class="text-white/60 text-sm">双击可跳过</p>
+    `;
+    playHint.addEventListener('click', () => {
+      playHint.remove();
+      videoEl.play().catch(() => {});
+    });
+    overlay.appendChild(playHint);
+
+    // 替换跳过按钮（移除旧 listener），视频阶段点击进入卡片引导
+    const newSkipBtn = skipBtn.cloneNode(true);
+    skipBtn.replaceWith(newSkipBtn);
+    skipBtn = newSkipBtn;
+    skipBtn.addEventListener('click', () => {
+      if (videoEl) videoEl.pause();
+      enterActivePhase();
+    });
+  }
+
+  // Phase 1: 纯图3秒
+  const loadingTimer = setTimeout(enterVideoPhase, 3000);
+
+  // 点击任意位置也可提前进入
+  overlay.addEventListener('click', function quickEnter(e) {
+    if (phase === 'loading' && e.target === overlay) {
+      clearTimeout(loadingTimer);
+      enterVideoPhase();
+    }
+  });
 
   function renderStep() {
     const step = steps[currentStep];
     const isLast = currentStep === steps.length - 1;
 
-    overlay.innerHTML = `
-      <div class="parchment-bg rounded-2xl p-8 max-w-md w-full magic-glow animate-scale-in text-center relative">
-        <button class="absolute top-3 right-3 text-ink-light hover:text-ink text-lg leading-none" id="intro-skip" title="跳过引导">✕</button>
+    overlay.innerHTML = '';
+    overlay.appendChild(skipBtn);
+
+    const card = document.createElement('div');
+    card.className = `${step.isOpening ? 'bg-white/85 backdrop-blur-sm' : 'parchment-bg'} rounded-2xl p-8 max-w-md w-full magic-glow animate-scale-in text-center relative`;
+
+    if (isLast) {
+      card.innerHTML = `
         <div class="text-5xl mb-4">${step.emoji}</div>
         <h2 class="font-display text-xl font-bold mb-4">${step.title}</h2>
         <p class="text-ink-light leading-relaxed mb-6 text-sm">${step.text}</p>
@@ -442,28 +585,43 @@ function showIntro() {
           <div class="flex gap-1">
             ${steps.map((_, i) => `<span class="w-2 h-2 rounded-full ${i === currentStep ? 'bg-magic-gold' : 'bg-wood/30'}"></span>`).join('')}
           </div>
-          <button class="intro-next-btn px-6 py-3 bg-magic-gold text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all">
-            ${isLast ? '✨ 开始冒险' : '继续 →'}
-          </button>
+          <button class="intro-next-btn px-6 py-3 bg-magic-gold text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all">✨ 开始冒险</button>
         </div>
-      </div>
-    `;
+      `;
+    } else {
+      card.innerHTML = `
+        <div class="text-5xl mb-4">${step.emoji}</div>
+        <h2 class="font-display text-xl font-bold mb-4">${step.title}</h2>
+        <p class="text-ink-light leading-relaxed mb-6 text-sm">${step.text}</p>
+        <div class="flex items-center justify-between">
+          <div class="flex gap-1">
+            ${steps.map((_, i) => `<span class="w-2 h-2 rounded-full ${i === currentStep ? 'bg-magic-gold' : 'bg-wood/30'}"></span>`).join('')}
+          </div>
+          <button class="intro-next-btn px-6 py-3 bg-magic-gold text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all">继续 →</button>
+        </div>
+      `;
+    }
 
-    const nextBtn = overlay.querySelector('.intro-next-btn');
+    overlay.appendChild(card);
+
+    const nextBtn = card.querySelector('.intro-next-btn');
     nextBtn.addEventListener('click', () => {
       if (isLast) {
         dismissIntro();
       } else {
         currentStep++;
+        // 离开开场步骤后切暗色背景
+        if (!steps[currentStep].isOpening) {
+          overlay.style.background = 'rgba(0,0,0,0.75)';
+        }
         renderStep();
       }
     });
-
-    const skipBtn = overlay.querySelector('#intro-skip');
-    skipBtn.addEventListener('click', dismissIntro);
   }
 
   function dismissIntro() {
+    clearTimeout(loadingTimer);
+    if (videoEl) { videoEl.pause(); videoEl.src = ''; }
     overlay.style.opacity = '0';
     overlay.style.transition = 'opacity 0.3s';
     setTimeout(() => {
@@ -473,11 +631,7 @@ function showIntro() {
     }, 300);
   }
 
-  renderStep();
-  // 点击遮罩背景也可关闭
-  overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) dismissIntro();
-  });
+  // loading阶段点击遮罩背景可提前进入（skipBtn已处理跳过）
   document.body.appendChild(overlay);
 }
 
@@ -498,16 +652,32 @@ function init() {
     if (firstBook) state.currentSession.bookId = firstBook;
   }
 
+  // 首次专注默认1分钟快速体验
+  if (state.focus.totalMinutes === 0) {
+    state.currentSession.mode = 'countdown';
+    state.currentSession.targetMinutes = 1;
+  }
+
   // 设置标签按钮
   ['focus', 'bookshelf', 'library', 'visitors', 'archive', 'shop'].forEach(tab => {
     const btn = document.getElementById('tab-' + tab);
     if (btn) btn.addEventListener('click', () => window.switchTab(tab));
   });
 
+  // 音乐开关
+  const musicBtn = document.getElementById('music-toggle');
+  if (musicBtn) musicBtn.addEventListener('click', toggleMusic);
+  initAudio();
+  // 回头客自动播放BGM，新用户等首次专注完成后触发
+  if (state.focus.totalMinutes > 0) {
+    onFirstInteraction();
+  }
+
   renderCurrentTab();
   updateStatusBar();
   updateBodyBackground();
   checkWither(); // 72小时离线凋谢检测
+  tryGenerateDailySummary(); // 每日回顾：昨天有活动则生成一篇墨墨日志
 
   // 新手引导
   if (!state.introCompleted) {

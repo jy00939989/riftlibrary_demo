@@ -2,10 +2,12 @@
 import { state, saveState } from '../state.js';
 import { BOOKS } from '../../data/books.js';
 import { SHARED_POOL } from '../../data/book_pool.js';
-import { el, h, actions } from './common.js';
+import { el, h, actions, updateStatusBar } from './common.js';
 import { ensureShopState, getShopState, purchaseBook, getBorrowLevelPrice, upgradeBorrowLevel, getFocusLevelPrice, upgradeFocusLevel, purchaseSignboard } from '../shop.js';
 import { getBorrowLevelConfig } from '../visitors.js';
 import { PLANT_TYPES } from '../../data/plants.js';
+import { checkAchievements } from '../achievements.js';
+import { showAchievementToast } from './achievements.js';
 import { SIGNBOARDS } from '../../data/signboards.js';
 import { plantSeed, canFertilize, fertilizePlant, canWater, waterPlant, canHarvest, harvestPlant } from '../plants.js';
 
@@ -34,10 +36,10 @@ export function renderShopPage() {
 
   container.appendChild(wrapper);
 
-  // 启动倒计时定时器
+  // 启动倒计时定时器（仅更新倒计时文本，不重建DOM）
   const hasCountdown = [...shopState.fixed, ...shopState.rotating].some(s => s.soldAt);
   if (hasCountdown) {
-    countdownInterval = setInterval(() => renderShopPage(), 1000);
+    countdownInterval = setInterval(updateCountdowns, 1000);
   }
 }
 
@@ -90,8 +92,7 @@ function renderLibraryUpgrades() {
   if (upgradeBtn) {
     upgradeBtn.addEventListener('click', () => {
       if (upgradeBorrowLevel()) {
-        const coinsEl = document.getElementById('status-coins');
-        if (coinsEl) coinsEl.textContent = state.coins.toLocaleString();
+        updateStatusBar();
         renderShopPage();
       } else {
         alert('智慧之光不足 💰');
@@ -103,7 +104,7 @@ function renderLibraryUpgrades() {
 
   // === 缮写室升级 ===
   const flv = state.library.focusLevel || 0;
-  const flvNames = ['未建造', '陋室', '整洁', '明亮', '静雅', '华美', '缮写圣堂'];
+  const flvNames = ['残破', '陋室', '整洁', '明亮', '静雅', '华美', '缮写圣堂'];
   const fprice = getFocusLevelPrice();
   const fmaxed = flv >= 6;
 
@@ -133,7 +134,7 @@ function renderLibraryUpgrades() {
         <span class="text-xs bg-magic-gold/20 text-magic-gold px-2 py-0.5 rounded-full">Lv.${flv} · ${flvNames[flv]}</span>
       </div>
       <p class="text-xs text-ink-light mb-2">${
-        flv === 0 ? '建造缮写室，开启誊抄之旅'
+        flv === 0 ? '残破的缮写室，修缮可提升誊抄速度'
         : `誊抄速度 +${flv * 5}%`
       }</p>
       ${fmaxed
@@ -147,8 +148,7 @@ function renderLibraryUpgrades() {
   if (fUpgradeBtn) {
     fUpgradeBtn.addEventListener('click', () => {
       if (upgradeFocusLevel()) {
-        const coinsEl = document.getElementById('status-coins');
-        if (coinsEl) coinsEl.textContent = state.coins.toLocaleString();
+        updateStatusBar();
         renderShopPage();
       } else {
         alert('智慧之光不足 💰');
@@ -180,7 +180,10 @@ function renderLibraryUpgrades() {
   const placeholders = [
     { icon: '📜', name: '古籍修复室', desc: '修复损毁珍本' },
     { icon: '☕', name: '咖啡角', desc: '延长访客停留时间' },
-    { icon: '🔬', name: '研究区', desc: '深度研究书籍获得加成' }
+    { icon: '🔬', name: '研究区', desc: '深度研究书籍获得加成' },
+    { icon: '🚪', name: '位面串门', desc: '参观其他馆长的图书馆' },
+    { icon: '📨', name: '书籍漂流', desc: '将誊抄的书复印赠予友人' },
+    { icon: '🌟', name: '联合修复', desc: '全服馆长协力解锁限定书籍' }
   ];
 
   placeholders.forEach(p => {
@@ -259,7 +262,7 @@ function renderBookCard(slot, poolEntry, owned, isRotating) {
         <div class="text-3xl mb-2">${poolEntry.emoji}</div>
         <div class="font-bold text-sm mb-1">${poolEntry.title}</div>
         <div class="text-xs text-ink-light mb-2">${poolEntry.author}</div>
-        <div class="text-xs text-magic-blue">⏰ ${soldText}</div>
+        <div class="text-xs text-magic-blue shop-countdown" data-soldat="${slot.soldAt}">⏰ ${soldText}</div>
       </div>
     `;
     return card;
@@ -328,11 +331,11 @@ function showPurchaseModal(poolEntry, price, originalPrice, discount) {
       return;
     }
     if (purchaseBook(poolEntry.bookId, price)) {
-      // 更新顶部状态栏
-      const coinsEl = document.getElementById('status-coins');
-      if (coinsEl) coinsEl.textContent = state.coins.toLocaleString();
+      updateStatusBar();
       overlay.remove();
       renderShopPage();
+      const bookAch = checkAchievements('purchase_book');
+      bookAch.forEach(a => showAchievementToast(a));
     }
   });
 }
@@ -598,11 +601,36 @@ function getPageName(page) {
 }
 
 function updateStatusAndRefresh() {
-  const coinsEl = document.getElementById('status-coins');
-  const atmosEl = document.getElementById('status-atmosphere');
-  if (coinsEl) coinsEl.textContent = state.coins.toLocaleString();
-  if (atmosEl) atmosEl.textContent = `${state.library.atmosphere}/500`;
+  updateStatusBar();
   renderShopPage();
+}
+
+// 仅更新倒计时文本，避免每秒重建整个商店DOM
+function updateCountdowns() {
+  const els = document.querySelectorAll('.shop-countdown');
+  if (els.length === 0) {
+    cleanupTimer();
+    return;
+  }
+  let anyExpired = false;
+  els.forEach(el => {
+    const soldAt = parseInt(el.dataset.soldat, 10);
+    if (!soldAt) return;
+    const remaining = 24 * 3600 * 1000 - (Date.now() - soldAt);
+    if (remaining <= 0) {
+      anyExpired = true;
+    } else {
+      const h = Math.floor(remaining / 3600000);
+      const m = Math.floor((remaining % 3600000) / 60000);
+      const s = Math.floor((remaining % 60000) / 1000);
+      el.textContent = `⏰ 补货中 ${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
+  });
+  // 有倒计时归零时触发一次完整刷新（补货逻辑在 ensureShopState 中）
+  if (anyExpired) {
+    cleanupTimer();
+    renderShopPage();
+  }
 }
 
 function cleanupTimer() {

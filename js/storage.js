@@ -1,5 +1,6 @@
 // 存储工具
 import { state, saveState } from './state.js';
+import { refreshBGM } from './audio.js';
 
 export function addHistory(type, title, detail = '') {
   state.history.unshift({
@@ -30,6 +31,7 @@ export function spendCoins(amount) {
 export function addAtmosphere(points) {
   state.library.atmosphere = Math.min(500, state.library.atmosphere + points);
   updateBodyBackground();
+  refreshBGM();
   saveState();
 }
 

@@ -2,6 +2,7 @@
 import { state, saveState } from './state.js';
 import { addCoins, addAtmosphere, addHistory } from './storage.js';
 import { BOOKS } from '../data/books.js';
+import { addDiaryEntry } from './diary.js';
 
 // ========== 访客角色定义 ==========
 
@@ -139,6 +140,10 @@ export function spawnVisitor() {
   state.visitors.push(visitor);
   saveState();
   addHistory('visitor', `${def.emoji} ${def.name} 来到图书馆`, def.title);
+  if (!state.diaryFirsts.visitorArrive) {
+    state.diaryFirsts.visitorArrive = true;
+    addDiaryEntry('visitor_arrive', { emoji: def.emoji, name: def.name, title: def.title });
+  }
   return visitor;
 }
 
@@ -205,6 +210,10 @@ function attemptBorrow(visitor, completedBooks, now) {
 
   addHistory('visitor', `${visitor.emoji} ${visitor.name} 借走了《${book.title}》`,
     `${borrowHours}小时后归还 · 好感+3`);
+  if (!state.diaryFirsts.visitorBorrow) {
+    state.diaryFirsts.visitorBorrow = true;
+    addDiaryEntry('visitor_borrow', { emoji: visitor.emoji, name: visitor.name, bookTitle: book.title });
+  }
   saveState();
 }
 
@@ -248,6 +257,10 @@ export function collectReturn(visitorId) {
 
   addHistory('visitor', `${visitor.emoji} ${visitor.name} 归还了《${bookTitle}》`,
     `${retCfg.returnCoins}智慧之光 +${retCfg.returnAtmo}氛围 · 好感+${returnFavor}`);
+  if (!state.diaryFirsts.visitorReturn) {
+    state.diaryFirsts.visitorReturn = true;
+    addDiaryEntry('visitor_return', { emoji: visitor.emoji, name: visitor.name, bookTitle });
+  }
 
   // 记录借阅历史
   state.borrowRecords.unshift({
@@ -266,9 +279,16 @@ export function collectReturn(visitorId) {
   let damaged = false;
   if (Math.random() < 0.03 && bookId && state.books[bookId]) {
     const bs = state.books[bookId];
+    const book = BOOKS[bookId];
     bs.damaged = true;
     bs.repairWords = Math.round(bs.copiedWords * 0.25);
-    addHistory('damage', `⚠️ 《${bookTitle}》在归还时发现损毁`, `需专注修复${bs.repairWords.toLocaleString()}字`);
+    if (bs.repairWords > 0) {
+      bs.copiedWords = Math.max(0, bs.copiedWords - bs.repairWords);
+      if (bs.status === 'completed' && book && bs.copiedWords < book.totalWords) {
+        bs.status = 'copying';
+      }
+    }
+    addHistory('damage', `⚠️ 《${bookTitle}》在归还时发现损毁`, `损失${bs.repairWords.toLocaleString()}字，需专注修复`);
     damaged = true;
   }
 
@@ -317,6 +337,7 @@ function eventGiftBook(visitor) {
     // 三本都送过了，改为批注事件
     addAtmosphere(5);
     addHistory('event', '📝 沈明远在书中留下了新的批注卡片', '三本专属书均已赠予 +5氛围');
+    addDiaryEntry('special_event', { detail: '沈明远在书中留下了新的批注卡片，三本专属书都已赠予。' });
     saveState();
     return { type: 'annotation', atmosphere: 5 };
   }
@@ -336,6 +357,7 @@ function eventGiftBook(visitor) {
   };
 
   addHistory('event', `📦 沈明远赠送了一本《${book.title}》`, `${(book.totalWords || 0).toLocaleString()}字 · ${book.author} · ${book.category}`);
+  addDiaryEntry('special_event', { detail: `沈明远赠送了一本《${book.title}》，说是自己珍藏多年的版本。` });
   saveState();
   return { type: 'gift_book', bookId, mysteryTitle: book.title, emoji: book.emoji };
 }
@@ -343,6 +365,7 @@ function eventGiftBook(visitor) {
 function eventAnnotation(visitor) {
   addAtmosphere(3);
   addHistory('event', '📝 沈明远在书中留下了批注卡片', '字迹工整，引经据典 +3氛围');
+  addDiaryEntry('special_event', { detail: '沈明远在借阅的书中留下了工整的批注，引经据典。' });
   saveState();
   return { type: 'annotation', atmosphere: 3 };
 }
@@ -363,6 +386,7 @@ function eventTreasureMap(visitor) {
     reward = { type: 'atmosphere', amount: atmo, text: `${atmo}氛围值` };
     addHistory('event', '🗺️ 小萤发现了一张藏宝图！', `翻开获得${atmo}氛围值`);
   }
+  addDiaryEntry('special_event', { detail: '小萤在图书馆里发现了一张藏宝图！不知道她找到了什么。' });
   saveState();
   return { type: 'treasure_map', reward };
 }
@@ -374,6 +398,7 @@ function eventPoem(visitor) {
   const atmo = rand(2, 5);
   addAtmosphere(atmo);
   addHistory('event', '🎵 云游在还书时夹了一首诗', `"${poem}" +${atmo}氛围`);
+  addDiaryEntry('special_event', { detail: `云游在还书时夹了一首诗："${poem}"` });
   saveState();
   return { type: 'poem', poem, atmosphere: atmo };
 }
@@ -385,6 +410,7 @@ function eventSalesPitch(visitor) {
   const price = rand(500, 5000);
   // 不自动扣款，把选择权交给 UI
   addHistory('event', '📦 阿九推销一本书', `《${book.title}》售价${price.toLocaleString()}智慧之光`);
+  addDiaryEntry('special_event', { detail: `阿九带来了一本《${book.title}》，售价${price.toLocaleString()}智慧之光。要不要买呢？` });
   saveState();
   return { type: 'sales_pitch', book: { ...book, price } };
 }

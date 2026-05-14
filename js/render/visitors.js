@@ -13,6 +13,18 @@ function timeLeft(dueTime) {
   return `${m}分钟后`;
 }
 
+// 借阅区素材（Lv1~Lv7 各对应一张图，Lv0 不显示）
+const READING_IMG_NAMES = [
+  'library_reading_01_shell.jpg',    // Lv1 陋室
+  'library_reading_02_tidy.jpg',     // Lv2 整洁
+  'library_reading_03_open.jpg',     // Lv3 开放
+  'library_reading_04_comfy.jpg',    // Lv4 舒适
+  'library_reading_05_refined.jpg',  // Lv5 精致
+  'library_reading_06_elegant.jpg',  // Lv6 优雅
+  'library_reading_07_sanctum.jpg'   // Lv7 圣所
+];
+const READING_LV_NAMES = ['', '陋室', '整洁', '开放', '舒适', '精致', '优雅', '圣所'];
+
 export function renderVisitorsPage() {
   const container = document.getElementById('page-visitors');
   if (!container) return;
@@ -23,17 +35,28 @@ export function renderVisitorsPage() {
 
   container.innerHTML = '';
 
-  // 当前借阅区等级背景图
   const blv = state.library.borrowLevel || 0;
-  const blvNames = ['', 'shell','tidy','open','comfy','refined','elegant','sanctum'];
-  const bimgNum = String(blv === 0 ? 1 : blv).padStart(2, '0');
-  const bimgSrc = blv > 0
-    ? `visual/library_readingarea/library_reading_${bimgNum}_${blvNames[blv]}.jpg`
-    : 'visual/library_readingarea/library_reading_01_shell.jpg';
-  container.style.backgroundImage = `linear-gradient(rgba(44,36,25,0.92), rgba(44,36,25,0.92)), url('${bimgSrc}')`;
-  container.style.backgroundSize = 'cover';
-  container.style.backgroundPosition = 'center';
-  container.style.backgroundAttachment = 'fixed';
+  const bcfg = getBorrowLevelConfig();
+
+  // 背景图（Lv1 起才显示）
+  if (blv > 0) {
+    container.style.backgroundImage = `linear-gradient(rgba(44,36,25,0.92), rgba(44,36,25,0.92)), url('visual/library_readingarea/${READING_IMG_NAMES[blv - 1]}')`;
+    container.style.backgroundSize = 'cover';
+    container.style.backgroundPosition = 'center';
+    container.style.backgroundAttachment = 'fixed';
+  }
+
+  // 借阅区全景图 banner（建造后显示）
+  if (blv > 0) {
+    const banner = el('div', 'mb-6 rounded-xl overflow-hidden border-2 border-wood/30 shadow-lg');
+    banner.innerHTML = `
+      <img src="visual/library_readingarea/${READING_IMG_NAMES[blv - 1]}" alt="借阅区 · ${READING_LV_NAMES[blv]}" class="w-full h-48 object-cover">
+      <div class="bg-ink/70 text-white text-center py-2 text-sm">
+        📚 借阅区 · ${READING_LV_NAMES[blv]} · 容纳${bcfg.cap}人 · 还书+${bcfg.returnCoins}💰
+      </div>
+    `;
+    container.appendChild(banner);
+  }
 
   if (blv === 0) {
     const emptyCard = el('div', 'parchment-bg rounded-2xl p-6 magic-glow text-center py-12');
@@ -124,10 +147,8 @@ export function renderVisitorsPage() {
   card.appendChild(section3);
 
   // 借阅区等级信息
-  const bcfg = getBorrowLevelConfig();
-  const lvNames = ['','陋室','整洁','开放','舒适','精致','优雅','圣所'];
   card.appendChild(el('div', 'text-xs text-ink-light mt-4 pt-4 border-t border-wood/20', {
-    text: `借阅区 Lv.${blv} ${lvNames[blv]} · 在馆${bcfg.cap}人 · 还书+${bcfg.returnCoins}💰 +${bcfg.returnAtmo}氛围 · 好感+${bcfg.favorBonus}%`
+    text: `借阅区 Lv.${blv} ${READING_LV_NAMES[blv]} · 在馆${bcfg.cap}人 · 还书+${bcfg.returnCoins}💰 +${bcfg.returnAtmo}氛围 · 好感+${bcfg.favorBonus}%`
   }));
 
   container.appendChild(card);

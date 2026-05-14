@@ -27,9 +27,9 @@ export const state = {
   books: {
     'book_001': {
       unlockedChapters: [1],
-      copyCount: 1,
-      masteryLevel: 1,
-      copiedWords: 2240,
+      copyCount: 0,
+      masteryLevel: 0,
+      copiedWords: 26600,
       status: 'copying',
       starred: false,
       damaged: false,
@@ -88,7 +88,7 @@ export const state = {
 
   // 种子收集
   seeds: {
-    bird_of_paradise: 0,
+    bird_of_paradise: 4,  // demo预置，方便展示种子兑换
     magic_rose: 0
   },
 
@@ -96,16 +96,23 @@ export const state = {
   signboards: [],
 
   // 新手引导
-  introCompleted: false
+  introCompleted: false,
+
+  // 墨墨日志首遇标记
+  diaryFirsts: {
+    visitorArrive: false,
+    visitorBorrow: false,
+    visitorReturn: false
+  }
 };
 
 // 默认书籍状态（新增/变更书籍时同步更新此处）
 const DEFAULT_BOOKS = {
   'book_001': {
     unlockedChapters: [1],
-    copyCount: 1,
-    masteryLevel: 1,
-    copiedWords: 2240,
+    copyCount: 0,
+    masteryLevel: 0,
+    copiedWords: 26600,
     status: 'copying',
     starred: false,
     damaged: false,
@@ -234,6 +241,12 @@ export function initState() {
       }
       if (!state.signboards) {
         state.signboards = [];
+      }
+      if (!state.diaryLastSummaryDate) {
+        state.diaryLastSummaryDate = '';
+      }
+      if (!state.diaryFirsts) {
+        state.diaryFirsts = { visitorArrive: false, visitorBorrow: false, visitorReturn: false };
       }
       saveState(); // 迁移后立即持久化
       return true;

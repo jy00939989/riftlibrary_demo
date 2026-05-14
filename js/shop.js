@@ -1,6 +1,6 @@
 // 商店业务逻辑 —— 状态管理 + 刷新判定 + 购买操作（不碰 DOM）
 import { state, saveState } from './state.js';
-import { spendCoins, addHistory } from './storage.js';
+import { spendCoins, addHistory, addAtmosphere } from './storage.js';
 import { SHARED_POOL } from '../data/book_pool.js';
 import { SIGNBOARDS } from '../data/signboards.js';
 
@@ -155,7 +155,8 @@ export function upgradeBorrowLevel() {
   if (!spendCoins(price)) return false;
 
   state.library.borrowLevel += 1;
-  addHistory('purchase', `借阅区升至 Lv.${state.library.borrowLevel}`, `花费${price}智慧之光`);
+  addAtmosphere(15);
+  addHistory('purchase', `借阅区升至 Lv.${state.library.borrowLevel}`, `花费${price}智慧之光 · +15氛围`);
   saveState();
   return true;
 }
@@ -177,7 +178,8 @@ export function upgradeFocusLevel() {
   if (!spendCoins(price)) return false;
 
   state.library.focusLevel += 1;
-  addHistory('purchase', `缮写室升至 Lv.${state.library.focusLevel}`, `花费${price}智慧之光`);
+  addAtmosphere(15);
+  addHistory('purchase', `缮写室升至 Lv.${state.library.focusLevel}`, `花费${price}智慧之光 · +15氛围`);
   saveState();
   return true;
 }

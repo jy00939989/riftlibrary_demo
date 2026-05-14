@@ -1,15 +1,8 @@
 // Dev Panel —— 隐藏在右下角齿轮图标，点击打开调试面板
 import { state, saveState } from './state.js';
 import { addCoins, addAtmosphere, addHistory } from './storage.js';
-import { renderFocusPage, showBookCompleteAnimation, renderVisitorsPage } from './render/index.js';
+import { renderFocusPage, showBookCompleteAnimation, renderVisitorsPage, updateStatusBar } from './render/index.js';
 import { spawnVisitor, onTimeSkip, visitorForceReturn as doForceReturn, visitorReset as doReset } from './visitors.js';
-
-function updateStatusBar() {
-  const coinsEl = document.getElementById('status-coins');
-  const atmosEl = document.getElementById('status-atmosphere');
-  if (coinsEl) coinsEl.textContent = state.coins.toLocaleString();
-  if (atmosEl) atmosEl.textContent = `${state.library.atmosphere}/100`;
-}
 
 window.__devTimeOffset = window.__devTimeOffset || 0;
 window.__dev = {};

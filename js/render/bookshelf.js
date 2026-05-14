@@ -1,12 +1,12 @@
 // 书架页面渲染
 import { state } from '../state.js';
 import { BOOKS, CATEGORIES } from '../../data/books.js';
-import { el, h, actions } from './common.js';
+import { el, actions } from './common.js';
 
 const SHELF_CAPACITY = 5;
-let currentFilter = 'all';      // 'all' | 'copying' | 'completed' | 'starred'
+let currentFilter = 'all';
 let currentCategory = 'all';
-let currentSort = 'default';   // 'default' | 'words-asc' | 'words-desc'
+let currentSort = 'default';
 
 export function renderBookshelfPage() {
   const container = document.getElementById('page-bookshelf');
@@ -301,6 +301,7 @@ export function showMasteryDetail(book) {
         `;
       }).join('')}
     </div>
+    <button class="read-chapters-btn w-full mt-4 px-4 py-2 bg-magic-gold text-white rounded-lg font-bold text-sm hover:shadow-lg transition-all">📖 阅读章节</button>
   `;
 
   modal.appendChild(content);
@@ -309,5 +310,15 @@ export function showMasteryDetail(book) {
       modal.remove();
     }
   });
+
+  // "阅读章节" 按钮：关闭 mastery 弹窗，打开章节列表
+  content.querySelector('.read-chapters-btn').addEventListener('click', () => {
+    modal.remove();
+    renderChapterList(book);
+  });
+
   container.appendChild(modal);
 }
+
+// 跨模块引用：供 plants.js 种子兑换后刷新书架
+window.renderBookshelfPage = renderBookshelfPage;

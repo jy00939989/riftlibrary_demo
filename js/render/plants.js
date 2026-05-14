@@ -1,8 +1,9 @@
 // 馆内布置子标签渲染 —— 植物状态 + 标志牌展示 + 种子库存
 import { state, saveState } from '../state.js';
+import { updateStatusBar } from './common.js';
 import { PLANT_TYPES, SEED_EXCHANGE } from '../../data/plants.js';
 import { SIGNBOARDS } from '../../data/signboards.js';
-import { canWater, waterPlant, canFertilize, fertilizePlant, canHarvest, harvestPlant, canExchangeSeed, exchangeSeed, getActivePlantDef } from '../plants.js';
+import { canHarvest, harvestPlant, canExchangeSeed, exchangeSeed, getActivePlantDef } from '../plants.js';
 
 export function renderDecorationPage() {
   const container = document.getElementById('decoration-content');
@@ -75,14 +76,8 @@ function renderPlantArea() {
       <div class="flex gap-2 flex-wrap">
         ${canHarvestNow
           ? `<button id="dec-harvest-btn" class="px-4 py-2 bg-yellow-500 text-white rounded-lg text-sm font-bold hover:shadow-lg transition-all">🌾 收获 (氛围+${def.harvestAtmosphere} 💰+${def.harvestCoins})</button>`
-          : `
-            <button id="dec-water-btn" class="px-3 py-1.5 bg-blue-500 text-white rounded-lg text-sm font-bold hover:shadow-lg transition-all ${!canWaterNow ? 'opacity-50 cursor-not-allowed' : ''}"
-              ${!canWaterNow ? 'disabled' : ''}>💧 浇水 (+${def.waterGrowth})</button>
-            <button id="dec-fertilize-btn" class="px-3 py-1.5 bg-amber-600 text-white rounded-lg text-sm font-bold hover:shadow-lg transition-all ${!canFertNow ? 'opacity-50 cursor-not-allowed' : ''}"
-              ${!canFertNow ? 'disabled' : ''}>
-              🧪 施肥 (+${def.fertilizeGrowth} · 💰${def.fertilizeCosts[plant.level + 1] || 0})
-            </button>
-          `}
+          : `<p class="text-xs text-ink-light">💧 前往 <span class="text-magic-gold font-bold cursor-pointer underline" onclick="window.switchTab('shop')">位面商店 → 馆内装潢</span> 进行浇水和施肥</p>`
+        }
       </div>
       ${canHarvestNow
         ? `<p class="text-xs text-yellow-600 mt-3">✨ 可以收获了！将以${Math.round(def.seedDropRate * 100)}%概率获得种子</p>`
@@ -91,29 +86,15 @@ function renderPlantArea() {
     </div>
   `;
 
-  // 绑定按钮事件
+  // 绑定按钮事件（布置页仅保留收获操作）
   const refresh = () => renderDecorationPage();
-
-  const waterBtn = card.querySelector('#dec-water-btn');
-  if (waterBtn && canWaterNow) {
-    waterBtn.addEventListener('click', () => { waterPlant(); refresh(); });
-  }
-
-  const fertBtn = card.querySelector('#dec-fertilize-btn');
-  if (fertBtn && canFertNow) {
-    fertBtn.addEventListener('click', () => { fertilizePlant(); refresh(); });
-  }
 
   const harvestBtn = card.querySelector('#dec-harvest-btn');
   if (harvestBtn) {
     harvestBtn.addEventListener('click', () => {
       harvestPlant();
-      // 刷新商店和状态栏
+      updateStatusBar();
       if (typeof window.renderShopPage === 'function') window.renderShopPage();
-      const coinsEl = document.getElementById('status-coins');
-      const atmosEl = document.getElementById('status-atmosphere');
-      if (coinsEl) coinsEl.textContent = state.coins.toLocaleString();
-      if (atmosEl) atmosEl.textContent = `${state.library.atmosphere}/500`;
       refresh();
     });
   }

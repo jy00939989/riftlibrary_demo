@@ -10,6 +10,11 @@ let timerInterval = null;
 let onComplete = null;
 export function setCompleteCallback(fn) { onComplete = fn; }
 
+// 是否为墨墨魔法加速中
+let momoAccelerating = false;
+
+export function isMomoAccelerating() { return momoAccelerating; }
+
 export function startTimer() {
   const sess = state.currentSession;
   if (sess.active) return;
@@ -20,7 +25,10 @@ export function startTimer() {
   sess.quoteIndex = 0;
   sess.startTime = Date.now();
 
-  timerInterval = setInterval(() => tick(), 1000);
+  // 首次专注：墨墨的魔法加速（10倍速）
+  momoAccelerating = state.focus.totalMinutes === 0;
+  const interval = momoAccelerating ? 100 : 1000;
+  timerInterval = setInterval(() => tick(), interval);
   sess.intervalId = timerInterval;
   saveState();
   renderFocusPage();
@@ -57,11 +65,16 @@ function tick() {
   const isCountUp = sess.mode === 'stopwatch' || sess.targetMinutes === 0;
   const displaySeconds = isCountUp ? sess.elapsedSeconds : sess.targetMinutes * 60 - sess.elapsedSeconds;
   const timeStr = formatTime(Math.max(0, displaySeconds));
-  const words = state.focus.totalWords + Math.round(sess.elapsedSeconds * 2 * getFocusSpeedMultiplier());
-  updateTimerDisplay(timeStr, words);
+  const sessionEstimate = Math.round(sess.elapsedSeconds * 2 * getFocusSpeedMultiplier());
+  const totalWords = state.focus.totalWords + sessionEstimate;
+  const bookWords = sess.bookId && state.books[sess.bookId]
+    ? state.books[sess.bookId].copiedWords + sessionEstimate
+    : 0;
+  updateTimerDisplay(timeStr, totalWords, bookWords);
 }
 
 function stopTimer() {
+  momoAccelerating = false;
   if (timerInterval) {
     clearInterval(timerInterval);
     timerInterval = null;

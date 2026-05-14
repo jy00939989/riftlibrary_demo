@@ -3,6 +3,7 @@ import { state } from '../state.js';
 import { BOOKS, COPY_TEMPLATES } from '../../data/books.js';
 import { el, h, formatTime, actions } from './common.js';
 import { startWriting, pauseWriting, resumeWriting, stopWriting, isWriting } from './writing.js';
+import { isMomoAccelerating } from '../timer.js';
 
 // 缮写室素材
 const FOCUS_IMG_NAMES = [
@@ -14,7 +15,7 @@ const FOCUS_IMG_NAMES = [
   'focusroom_lv5_final_1.jpg',
   'focusroom_lv6_sanctuary_16x9_1.jpg'
 ];
-const FOCUS_LV_NAMES = ['未建造', '陋室', '整洁', '明亮', '静雅', '华美', '缮写圣堂'];
+const FOCUS_LV_NAMES = ['残破', '陋室', '整洁', '明亮', '静雅', '华美', '缮写圣堂'];
 
 // ========== 主入口 ==========
 
@@ -97,11 +98,14 @@ function renderTimerOrAnimation(sess, book) {
   wrapper.id = 'focus-display-area';
 
   if (sess.active && book) {
+    const bookWords = book ? state.books[book.id]?.copiedWords || 0 : 0;
     wrapper.innerHTML = `
       <div id="writing-anim-container" class="writing-anim-wrapper mx-auto"></div>
       <div class="writing-status-bar" id="writing-status-bar">🖋️ 缮写中… 第1页</div>
+      ${isMomoAccelerating() ? '<div class="text-xs text-magic-gold mt-1 animate-pulse">✨ 墨墨的魔法加速中……</div>' : ''}
       <div class="text-xs text-ink-light mt-1">
-        已誊抄 <span id="focus-active-words">${state.focus.totalWords.toLocaleString()}</span> 字
+        本书 <span id="focus-book-words">${bookWords.toLocaleString()}</span> 字
+        · 累计 <span id="focus-active-words">${state.focus.totalWords.toLocaleString()}</span> 字
         · <span id="focus-mini-timer">${formatTime(0)}</span>
       </div>
     `;
@@ -114,7 +118,7 @@ function renderTimerOrAnimation(sess, book) {
     wrapper.innerHTML = `
       <div class="text-6xl md:text-7xl font-display font-bold text-ink mb-2">00:00</div>
       ${sess.bookId && book ? `<div class="text-magic-blue font-medium">缮写《${book.title}》</div>` : ''}
-      <div class="text-sm text-ink-light mt-1">已誊抄 ${state.focus.totalWords.toLocaleString()} 字</div>
+      <div class="text-sm text-ink-light mt-1">本书 ${book ? (state.books[book.id]?.copiedWords || 0).toLocaleString() : 0} 字 · 累计 ${state.focus.totalWords.toLocaleString()} 字</div>
     `;
   }
 
@@ -125,9 +129,9 @@ function renderTimerOrAnimation(sess, book) {
 
 function renderModeSelector(sess) {
   const modes = [
-    { id: 'pomodoro', name: '番茄钟', icon: '🍅', desc: '25分钟', target: 25 },
-    { id: 'countdown', name: '倒计时', icon: '⏲️', desc: '45分钟', target: 45 },
-    { id: 'stopwatch', name: '正计时', icon: '⏱️', desc: '无限制', target: 0 }
+    { id: 'pomodoro', name: '番茄钟', icon: '🍅', target: 25 },
+    { id: 'countdown', name: '倒计时', icon: '⏲️', target: 45 },
+    { id: 'stopwatch', name: '正计时', icon: '⏱️', target: 0 }
   ];
 
   const div = el('div', 'mb-6');
@@ -136,14 +140,17 @@ function renderModeSelector(sess) {
 
   modes.forEach(m => {
     const active = sess.mode === m.id;
+    const desc = m.id === 'stopwatch' ? '无限制' : `${sess.mode === m.id ? sess.targetMinutes : m.target}分钟`;
     const btn = el('button', `mode-btn p-3 border-2 rounded-lg text-center transition-all ${
       active ? 'border-magic-gold bg-magic-gold/20 ring-2 ring-magic-gold' : 'border-wood bg-wood/10 hover:bg-wood/20'
     }${sess.active ? ' opacity-50 cursor-not-allowed' : ''}`);
-    btn.innerHTML = `<div class="text-2xl mb-1">${m.icon}</div><div class="font-bold text-sm">${m.name}</div><div class="text-xs text-ink-light">${m.desc}</div>`;
+    btn.innerHTML = `<div class="text-2xl mb-1">${m.icon}</div><div class="font-bold text-sm">${m.name}</div><div class="text-xs text-ink-light">${desc}</div>`;
     btn.addEventListener('click', () => {
       if (!state.currentSession.active) {
         state.currentSession.mode = m.id;
-        state.currentSession.targetMinutes = m.target;
+        if (m.id !== 'stopwatch' && state.currentSession.targetMinutes === 0) {
+          state.currentSession.targetMinutes = m.target;
+        }
         renderFocusPage();
       }
     });
@@ -151,6 +158,30 @@ function renderModeSelector(sess) {
   });
 
   div.appendChild(grid);
+
+  // 倒计时/番茄钟模式：自定义分钟输入
+  if (!sess.active && sess.mode !== 'stopwatch') {
+    const row = el('div', 'flex items-center gap-2 mt-3 justify-center');
+    row.innerHTML = `
+      <label class="text-sm text-ink-light">设定时间：</label>
+      <input type="number" id="custom-target-minutes"
+        class="w-16 px-2 py-1 text-center border border-wood rounded bg-white text-ink font-bold text-sm"
+        value="${sess.targetMinutes}" min="1" max="180" step="5">
+      <span class="text-sm text-ink-light">分钟</span>
+    `;
+    row.querySelector('input').addEventListener('input', (e) => {
+      const v = Math.max(1, Math.min(180, parseInt(e.target.value) || 1));
+      state.currentSession.targetMinutes = v;
+      e.target.value = v;
+    });
+    row.querySelector('input').addEventListener('change', (e) => {
+      const v = Math.max(1, Math.min(180, parseInt(e.target.value) || 1));
+      state.currentSession.targetMinutes = v;
+      e.target.value = v;
+    });
+    div.appendChild(row);
+  }
+
   return div;
 }
 
@@ -262,7 +293,7 @@ function renderCopyPreview(book) {
 
 // ========== 专注完成结算卡片 ==========
 
-export function showCompletionCard({ minutes, words, coins, book }, callback) {
+export function showCompletionCard({ minutes, words, coins, book, streak, totalWords, nextMilestone }, callback) {
   let quoteText = '';
   let quoteSource = '';
   if (book && book.quotes) {
@@ -278,6 +309,21 @@ export function showCompletionCard({ minutes, words, coins, book }, callback) {
       '文字因你的笔触而重生。'
     ];
     quoteText = generalQuotes[Math.floor(Math.random() * generalQuotes.length)];
+  }
+
+  // 下一里程碑进度
+  let milestoneHtml = '';
+  if (nextMilestone && totalWords) {
+    const pct = Math.min(99, Math.round(totalWords / nextMilestone * 100));
+    milestoneHtml = `
+      <div class="bg-white/60 rounded-lg p-2 mb-1">
+        <div class="text-xs text-ink-light mb-1">🎯 下一里程碑：${nextMilestone.toLocaleString()} 字</div>
+        <div class="h-1.5 bg-wood/20 rounded-full overflow-hidden">
+          <div class="h-full bg-magic-gold rounded-full" style="width:${pct}%"></div>
+        </div>
+        <div class="text-xs text-ink-light mt-0.5">进度 ${pct}%</div>
+      </div>
+    `;
   }
 
   const overlay = el('div', 'fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4');
@@ -300,6 +346,11 @@ export function showCompletionCard({ minutes, words, coins, book }, callback) {
         <div class="text-xs text-ink-light">智慧之光</div>
       </div>
     </div>
+    ${streak !== undefined ? `<div class="flex justify-center gap-4 mb-3 text-sm">
+      <span>🔥 连续专注 <span class="font-bold text-purple-600">${streak}</span> 天</span>
+      ${totalWords !== undefined ? `<span>📝 累计 <span class="font-bold text-magic-blue">${totalWords.toLocaleString()}</span> 字</span>` : ''}
+    </div>` : ''}
+    ${milestoneHtml}
     <div class="italic text-ink-light mb-4 text-sm">「${quoteText}」${quoteSource}</div>
     <button class="px-6 py-3 bg-magic-gold text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all">继续 →</button>
   `;
