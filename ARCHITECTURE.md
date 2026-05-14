@@ -1,6 +1,6 @@
 # 异世界图书馆 · 架构文档
 
-最后更新：2026-05-13
+最后更新：2026-05-14
 
 ---
 
@@ -13,16 +13,25 @@
 ## 文件结构
 
 ```
-├── index.html                   ← 页面骨架（6个标签页 + Tailwind配置）
+├── index.html                   ← 页面骨架（6个标签页 + Tailwind配置 + 音乐开关）
 ├── css/style.css                ← 羊皮纸/魔法主题自定义样式 + 缮写动画
 │
 ├── data/                        ← 静态数据层（不依赖任何模块）
 │   ├── books.js                 ← 入口：组装 BOOKS + 导出 CATEGORIES 枚举
-│   ├── books/                   ← 每本书独立文件（book_001 ~ book_022）
+│   ├── books/                   ← 每本书独立文件（book_001 ~ book_024）
 │   │   ├── book_001.js          ← 各书 meta + chapters + quotes + mastery内容
 │   │   └── ...
 │   ├── book_pool.js             ← 共享书籍池（商店/里程碑/阿九推销共用，17本，含plane字段）
+│   ├── plants.js                ← 植物盆栽定义（5级成长 + 种子掉落）
+│   ├── signboards.js            ← 标志牌定义（5种）
 │   └── atmosphere.js            ← 5个氛围阶段描述文字库 + 阶段判定
+│
+├── audio/                       ← 音频素材
+│   ├── 图书馆 demo 荒废图书馆 2.mp3     ← 废墟/破败/陈旧阶段BGM
+│   ├── 图书馆 demo2 城镇风格.mp3        ← 温暖阶段BGM
+│   ├── 图书馆 demo 星辰图书馆.mp3       ← 星辰阶段BGM
+│   └── 异世界图书馆宣传PV.mp4           ← 开场动画
+│   （每种2个变奏，共7个音频文件）
 │
 ├── visual/                      ← 美术素材
 │   ├── background/              ← 5张图书馆背景（废墟→华丽）
@@ -32,8 +41,10 @@
 ├── js/                          ← 逻辑层
 │   ├── app.js                   ← 应用入口：初始化 + 页面切换 + 全局编排 + 里程碑
 │   ├── state.js                 ← 单一数据源：全局状态 + 存档序列化 + 旧档迁移
-│   ├── timer.js                 ← 计时器：番茄钟(25min) / 倒计时(45min) / 正计时
+│   ├── timer.js                 ← 计时器：番茄钟(25min) / 倒计时 / 正计时 + 墨墨首次加速
 │   ├── storage.js               ← 工具：智慧之光(代币)/氛围/历史/连击的原子读写
+│   ├── audio.js                 ← 音频引擎：3层氛围BGM曲目 + 交叉淡入淡出
+│   ├── diary.js                 ← 墨墨日志：每日回顾 + 特殊事件记录
 │   ├── visitors.js              ← 访客逻辑：刷新/借书/还书/事件/好感度（纯逻辑）
 │   ├── shop.js                  ← 商店逻辑：借阅区/缮写室升级 + 书籍刷新/购买（纯逻辑）
 │   ├── books.js                 ← 书籍解锁/进度计算
@@ -49,7 +60,7 @@
 │       ├── bookshelf.js         ← 大书库 + 筛选 + mastery详情弹窗
 │       ├── visitors.js          ← 读者沙龙 + 事件弹窗
 │       ├── library.js           ← 馆长办公室（子标签：概况/成就柜/收藏室）
-│       ├── archive.js           ← 馆史档案：统计面板 + 事件历史
+│       ├── archive.js           ← 馆史档案：统计面板 + 事件历史 + 墨墨日志子标签
 │       ├── shop.js              ← 位面商店：借阅区/缮写室升级 + 固定区/特价区
 │       ├── achievements.js      ← 成就柜 UI：网格展示 + 稀有度边框 + 详情
 │       ├── collection.js        ← 收藏室 UI：分类图鉴 + 进度百分比
@@ -190,9 +201,45 @@ checkAchievement(triggerType, payload)
 showToast(achievement)  ← 右下角 toast 通知，不强制确认
 ```
 
-30 个成就，分 6 类：修复启蒙(4) / 智慧之光(8) / 书籍收集(8) / 图书馆重建(7) / 访客(2) / 彩蛋(2)
+31 个成就，分 6 类：修复启蒙(4) / 智慧之光(8) / 书籍收集(8) / 图书馆重建(7) / 访客(3) / 彩蛋(2)
 
 稀有度按目标难度自动推算：青铜(>70%) / 白银(40-70%) / 黄金(15-40%) / 铂金(<15%)
+
+### diary.js — 墨墨日志系统
+
+墨墨（书架精灵）每日回顾 + 特殊事件记录，存档到 `state.diary`。
+
+```
+每日首次访问 → tryGenerateDailySummary()
+    ↓ 扫描昨日 history 记录
+    ↓ 统计专注次数/分钟/字数、完成书籍、里程碑、访客事件
+    ↓ 模板库拼装（OPENINGS/MIDDLES/ENDINGS 三段式）
+    ↓ 日期 + 天气 + 开头 + 正文 + 结尾
+    ↓ 写入 state.diary + 设置 diaryLastSummaryDate
+```
+
+特殊事件实时记录：
+- 访客首次到来/借书/还书（仅首次）
+- 访客特殊事件（赠书、批注、藏宝图、诗句、推销）
+- 里程碑达成
+- 书籍完成
+
+馆史档案页新增「墨墨日志」子标签，展示墨墨与玩家之间的魔法羁绊等级 + 日记列表。
+
+### audio.js — 音频引擎
+
+三层氛围 BGM 系统，音乐随图书馆氛围变化自动切换：
+
+| 氛围阶段 | 对应曲目组 | 文件 |
+|----------|-----------|------|
+| 废墟/破败/陈旧 (0-160) | ruined | 荒废图书馆 ×2 |
+| 温暖 (161-300) | cozy | 城镇风格 ×2 |
+| 星辰 (301-500) | stellar | 星辰图书馆 ×2 |
+
+- **交叉淡入淡出**：10步音量渐变（0.05/步），每步120ms，总过渡1.2s
+- **首次激活**：BGM 在首次专注完成后启动（避免开场视频音画重叠），回头客页面加载即播
+- **音乐开关**：右上角按钮 🔈/🔇，状态持久化到 `library_music`（localStorage）
+- **浏览器自动播放**：利用用户交互事件（点击/视频播放）解除限制
 
 ### 氛围系统
 
@@ -215,8 +262,11 @@ showToast(achievement)  ← 右下角 toast 通知，不强制确认
 | 完成中篇书籍（3-10万字） | +6 | |
 | 完成长篇书籍（>10万字） | +10 | 鸿篇巨制 |
 | 里程碑（每个） | +3 | 共 7 个阈值 |
-| 访客还书 | +1 | |
+| 访客还书 | +1~8 | 按借阅区等级递增 |
 | 访客事件 | +2~5 | 诗句/批注/藏宝图等 |
+| 借阅区升级 | +15 | 每次升级 |
+| 缮写室升级 | +15 | 每次升级 |
+| 购买书架 | +5 | 每次购买 |
 
 ### timer.js — 计时器
 
@@ -234,9 +284,16 @@ showToast(achievement)  ← 右下角 toast 通知，不强制确认
 
 4 位访客角色：沈明远(文学教授) / 小萤(冒险少女) / 云游(吟游诗人) / 阿九(书贩)
 
+刷新机制：
+- **专注完成后概率**：30%~50%（氛围0→500线性加成），不依赖完成整本书
+- **完成书籍固定触发**：每完成一本书必吸引一位访客
+- **初始补充**：页面加载时若访客列表为空，自动刷新一位
+
+借阅区 Lv0 时容量为 0（需先购买升级），Lv1~Lv7 容量 2~10 人。
+
 生命周期：
 ```
-spawnVisitor() → status: 'browsing'（在馆，上限3人）
+spawnVisitor() → status: 'browsing'（右下角卡片提醒，8s自消）
     ↓ tickVisitorBrowsing() → 40%概率 + 有completed书籍
 attemptBorrow() → status: 'borrowed'（借出中）
     ↓ checkDueVisitors() → now >= dueTime
@@ -246,6 +303,8 @@ status: 'due'（等待收取）
 ```
 
 五种事件：gift_book / annotation / treasure_map / poem / sales_pitch
+
+首次访客到来触发成就「墨香来客」（V03）。
 
 ### shop.js — 商店系统
 
@@ -420,6 +479,9 @@ tick() 循环（150ms/字 + 40ms 羽笔延迟）：
 - `nameLocked: false` — 铭牌命名状态
 - `achievements: []` — 成就数组
 - `introCompleted: false` — 新手引导标记
+- `diary: []` — 墨墨日志条目
+- `diaryFirsts: { visitorArrive, visitorBorrow, visitorReturn }` — 访客首次事件标记
+- `diaryLastSummaryDate: ''` — 上次每日回顾日期
 - 旧默认名 `星辉图书馆` → `归墟图书馆`
 
 ---
@@ -438,6 +500,15 @@ tick() 循环（150ms/字 + 40ms 羽笔延迟）：
 - `SESSION_2026-05-12*.md` — 会话日志
 - `boosfordemo1/` — 书籍原始草稿，已删除
 - 画廊、音乐收集、Lv5 封面独立收集 — 与现有系统重复或过度设计，已砍
+
+---
+
+## 部署
+
+- **平台**：腾讯云 EdgeOne Pages（自动 HTTPS + CDN + Git 推送自动部署）
+- **代码托管**：Gitee（`sallyshen1987/library_demo`，分支 `refactor-book-system`）
+- **域名**：`riftlib.com` + `riftlib.cn` + `riftlib.cloud`（待 ICP 备案后绑定自定义域名）
+- **访问地址**：`https://riftlibdemo-5tyvfdz4.edgeone.cool`
 
 ---
 
