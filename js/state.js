@@ -29,21 +29,23 @@ export const state = {
       unlockedChapters: [1],
       copyCount: 0,
       masteryLevel: 0,
-      copiedWords: 26600,
-      status: 'copying',
-      starred: false,
-      damaged: false,
-      repairWords: 0
-    },
-    'book_002': {
-      unlockedChapters: [1],
-      copyCount: 0,
-      masteryLevel: 1,
       copiedWords: 0,
       status: 'unlocked',
       starred: false,
       damaged: false,
-      repairWords: 0
+      repairWords: 0,
+      readChapters: []
+    },
+    'book_002': {
+      unlockedChapters: [1],
+      copyCount: 0,
+      masteryLevel: 0,
+      copiedWords: 0,
+      status: 'unlocked',
+      starred: false,
+      damaged: false,
+      repairWords: 0,
+      readChapters: []
     }
   },
 
@@ -103,7 +105,49 @@ export const state = {
     visitorArrive: false,
     visitorBorrow: false,
     visitorReturn: false
-  }
+  },
+
+  // 新手引导情境触发标记
+  tutorialFlags: {
+    maxAtmoStageSeen: 1,       // 已见过的最高氛围阶段 1-5
+    firstFocusComplete: false,  // 首次专注完成
+    firstVisitorArrive: false,  // 首次访客到来
+    firstShopOpen: false,       // 首次打开位面商店
+    firstLibraryOpen: false,    // 首次打开馆长办公室
+    firstBookComplete: false    // 首次完成一本书
+  },
+
+  // 今日馆务
+  dailyTasks: {
+    date: '',         // YYYY-MM-DD，与今日不同则重置
+    focusDone: false, // 专注 ≥25 分钟
+    returnDone: false,// 收取一本还书
+    waterDone: false, // 给植物浇水
+    allClaimed: false // 全勤奖励是否已领取
+  },
+
+  // 位面任务进度
+  quests: {
+    pastoral: {
+      unlocked: false,         // 传送门是否已购买
+      stage: 0,                // 当前位面阶段 0-5
+      stagesCompleted: [],     // 已完成的位面阶段
+      portalPurchasedAt: null, // 传送门购买时间戳
+      characters: {
+        pastoral_child:     { met: false, stage: 1, activeTasks: [], completedTasks: [], pendingComplete: [], favor: 0 },
+        pastoral_herbalist: { met: false, stage: 1, activeTasks: [], completedTasks: [], pendingComplete: [], favor: 0 },
+        pastoral_lord:      { met: false, stage: 1, activeTasks: [], completedTasks: [], pendingComplete: [], favor: 0 },
+        pastoral_scholar:   { met: false, stage: 1, activeTasks: [], completedTasks: [], pendingComplete: [], favor: 0 },
+        pastoral_nun:       { met: false, stage: 1, activeTasks: [], completedTasks: [], pendingComplete: [], favor: 0 }
+      },
+      mementos: [],
+      letters: [],
+      storyLog: []
+    }
+  },
+
+  // 熟客池：位面完成后注册的访客（visitors.js 和 quests.js 通过此字段桥接）
+  familiarVisitors: {}
 };
 
 // 默认书籍状态（新增/变更书籍时同步更新此处）
@@ -112,21 +156,23 @@ const DEFAULT_BOOKS = {
     unlockedChapters: [1],
     copyCount: 0,
     masteryLevel: 0,
-    copiedWords: 26600,
-    status: 'copying',
-    starred: false,
-    damaged: false,
-    repairWords: 0
-  },
-  'book_002': {
-    unlockedChapters: [1],
-    copyCount: 0,
-    masteryLevel: 1,
     copiedWords: 0,
     status: 'unlocked',
     starred: false,
     damaged: false,
-    repairWords: 0
+    repairWords: 0,
+    readChapters: []
+  },
+  'book_002': {
+    unlockedChapters: [1],
+    copyCount: 0,
+    masteryLevel: 0,
+    copiedWords: 0,
+    status: 'unlocked',
+    starred: false,
+    damaged: false,
+    repairWords: 0,
+    readChapters: []
   },
   'book_023': {
     unlockedChapters: [1],
@@ -136,7 +182,8 @@ const DEFAULT_BOOKS = {
     status: 'locked',
     starred: false,
     damaged: false,
-    repairWords: 0
+    repairWords: 0,
+    readChapters: []
   },
   'book_024': {
     unlockedChapters: [1],
@@ -146,7 +193,8 @@ const DEFAULT_BOOKS = {
     status: 'locked',
     starred: false,
     damaged: false,
-    repairWords: 0
+    repairWords: 0,
+    readChapters: []
   }
 };
 
@@ -178,6 +226,9 @@ export function initState() {
           }
           if (state.books[id].starred === undefined) {
             state.books[id].starred = false;
+          }
+          if (state.books[id].readChapters === undefined) {
+            state.books[id].readChapters = [];
           }
         }
       });
@@ -247,6 +298,58 @@ export function initState() {
       }
       if (!state.diaryFirsts) {
         state.diaryFirsts = { visitorArrive: false, visitorBorrow: false, visitorReturn: false };
+      }
+      if (!state.tutorialFlags) {
+        state.tutorialFlags = {
+          maxAtmoStageSeen: 1,
+          firstFocusComplete: false,
+          firstVisitorArrive: false,
+          firstShopOpen: false,
+          firstLibraryOpen: false,
+          firstBookComplete: false
+        };
+      }
+      if (state.tutorialFlags.maxAtmoStageSeen === undefined) {
+        state.tutorialFlags.maxAtmoStageSeen = 1;
+      }
+      if (state.tutorialFlags.firstLibraryOpen === undefined) {
+        state.tutorialFlags.firstLibraryOpen = false;
+      }
+      if (state.tutorialFlags.firstBookComplete === undefined) {
+        state.tutorialFlags.firstBookComplete = false;
+      }
+      if (!state.dailyTasks) {
+        state.dailyTasks = { date: '', focusDone: false, returnDone: false, waterDone: false, allClaimed: false };
+      }
+      if (!state.quests) {
+        state.quests = { pastoral: { unlocked: false, stage: 0, stagesCompleted: [], portalPurchasedAt: null, characters: {
+          pastoral_child: { met: false, stage: 1, activeTasks: [], completedTasks: [], pendingComplete: [], favor: 0 },
+          pastoral_herbalist: { met: false, stage: 1, activeTasks: [], completedTasks: [], pendingComplete: [], favor: 0 },
+          pastoral_lord: { met: false, stage: 1, activeTasks: [], completedTasks: [], pendingComplete: [], favor: 0 },
+          pastoral_scholar: { met: false, stage: 1, activeTasks: [], completedTasks: [], pendingComplete: [], favor: 0 },
+          pastoral_nun: { met: false, stage: 1, activeTasks: [], completedTasks: [], pendingComplete: [], favor: 0 }
+        }, mementos: [], letters: [], storyLog: [] } };
+      } else {
+        // 旧存档迁移：补全新字段
+        const p = state.quests.pastoral;
+        if (p.unlocked === undefined) p.unlocked = false;
+        if (p.stagesCompleted === undefined) p.stagesCompleted = [];
+        if (p.portalPurchasedAt === undefined) p.portalPurchasedAt = null;
+        if (p.letters === undefined) p.letters = [];
+        if (!p.characters) p.characters = {};
+        const defaultChar = (stage) => ({ met: false, stage, activeTasks: [], completedTasks: [], pendingComplete: [], favor: 0 });
+        ['pastoral_child','pastoral_herbalist','pastoral_lord','pastoral_scholar','pastoral_nun'].forEach(cid => {
+          if (!p.characters[cid]) p.characters[cid] = defaultChar(1);
+          const c = p.characters[cid];
+          if (c.activeTasks === undefined) c.activeTasks = [];
+          if (c.completedTasks === undefined) c.completedTasks = [];
+          if (c.pendingComplete === undefined) c.pendingComplete = [];
+        });
+        // 清理旧字段
+        if (p.plagueProgress !== undefined) delete p.plagueProgress;
+      }
+      if (!state.familiarVisitors) {
+        state.familiarVisitors = {};
       }
       saveState(); // 迁移后立即持久化
       return true;

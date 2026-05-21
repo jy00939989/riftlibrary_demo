@@ -3,6 +3,7 @@ import { state, saveState } from './state.js';
 import { addCoins, addAtmosphere, addHistory } from './storage.js';
 import { BOOKS } from '../data/books.js';
 import { addDiaryEntry } from './diary.js';
+import { isBookCapacityFull } from './shop.js';
 
 // ========== 访客角色定义 ==========
 
@@ -41,7 +42,115 @@ export const VISITOR_DEFS = {
   }
 };
 
-// ========== 云游诗句库 ==========
+// ========== 还书语录池 ==========
+
+const RETURN_QUOTES = {
+  shenmingyuan: {
+    book: [
+      '《{book}》……好书。我教了四十年文学，这本书每年重读都有新的感悟。',
+      '这本《{book}》的批注我写了三页纸。有些句子值得反复咀嚼。',
+      '《{book}》让我想起在牛津访学的日子。那图书馆的穹顶很高，但灵魂是一样的。',
+      '你知道《{book}》最妙的地方在哪吗？在于它从不直接告诉你答案。',
+      '我已经很久没有像读《{book}》这样，在深夜对着书页发呆了。',
+      '《{book}》里的这段话，我在博士论文里引用过。到现在依然觉得它是真理。'
+    ],
+    library: [
+      '这图书馆越来越有样子了——虽然离它全盛时期还差得远，但灵魂已经回来了。',
+      '废墟不可怕，可怕的是无人问津。有人翻书的地方，就是圣殿。',
+      '我见过许多图书馆，但这一座……它有自己的心跳。',
+      '书架上的灰尘少了很多，空气也清新了。你在用心经营这里。'
+    ],
+    personal: [
+      '退休那天，学生们送了我一本手抄的诗集。说实话，那是我这辈子收到的最珍贵的礼物。',
+      '我妻子不喜欢我熬夜看书。但八十岁的人了，不熬夜还能熬什么呢？',
+      '你知道吗，我年轻时为了找一本绝版的《纯粹理性批判》，跑遍了整个伦敦的旧书店。',
+      '哲学不是用来学的，是用来活的。我花了六十年才明白这个道理。',
+      '我最遗憾的事？没能在我父亲活着的时候给他读一本书。'
+    ]
+  },
+  xiaoying: {
+    book: [
+      '《{book}》太棒了！我最喜欢冒险故事了——虽然有些字我还不认识。',
+      '这本书里有好多我想去的地方！等我长大了，我要把书里的地方都走一遍。',
+      '《{book}》里的主人公好勇敢啊。我以后也要像他/她一样！',
+      '我把《{book}》读给外婆听了。她说我读得比以前好很多。',
+      '这本书我看懂了一半……但我会再读一遍的！',
+      '《{book}》的故事让我昨晚兴奋得睡不着！'
+    ],
+    library: [
+      '这里比以前亮多了！以前进来的时候我还挺害怕的，现在不会了。',
+      '我喜欢墙上的那些画——是馆长你画的吗？',
+      '我有一个自己的秘密阅览角落了，不告诉你具体在哪！',
+      '下次可以带同学来吗？我可以给他们当小导游！'
+    ],
+    personal: [
+      '我的大帆布包里什么都有：零食、手电筒、还有防身的弹弓。但最重要的位置留给书。',
+      '妈妈说图书馆闹鬼——但我跟她说，鬼也是要看书的！',
+      '上次我掉了一颗牙，就藏在图书馆的某个书架后面。如果哪天你找到了，可以许个愿。',
+      '我在学校不太爱说话，但在这里我可以和书说话。书不会打断我。',
+      '我的探险日记已经写到第三本了——前两本都是关于这座图书馆的。'
+    ]
+  },
+  yunyou: {
+    book: [
+      '《{book}》——啊，这本书的节奏像一首古老的歌谣，翻页就是呼吸。',
+      '我在月光下读完了《{book}》。露水打湿了书页，但我不舍得合上。',
+      '这本《{book}》里有一句话，我把它抄下来，夹在了随身的乐谱里。',
+      '《{book}》让我的手指在琴弦上找到了新的旋律。每一本好书都是一段未写的曲。',
+      '你知道吗，《{book}》的作者曾经也是个流浪者。所以他的文字里有风的声音。'
+    ],
+    library: [
+      '这座图书馆的声学很好——我在角落里弹琴的时候，回声像有人在轻轻和声。',
+      '现在这里终于有了一点「家」的气息。但还差一盆花和一只猫。',
+      '风从破窗吹进来的时候，书架上的书页沙沙作响——那是图书馆在唱自己的歌。',
+      '我在很多地方唱过歌：酒馆、广场、废墟。但在这个图书馆里唱歌，感觉最对。'
+    ],
+    personal: [
+      '我的家乡没有图书馆。我们靠吟游诗人传递故事，一首诗就是一个世界。',
+      '我在北方的森林里遇见了一位老诗人——他已经一百岁了，还能背出三千首歌。',
+      '这把琴跟了我二十年。它的木头来自一棵被闪电击中的老树，声音里有风暴的记忆。',
+      '上一次我在一个繁华的城市唱歌，人们往我的帽子里扔铜板。但我觉得他们没听懂。',
+      '我见过最美的日落是在一座废弃的灯塔上。风很大，但天空像着了火。'
+    ]
+  },
+  ajiu: {
+    book: [
+      '《{book}》——这本书品相不错，不过如果你想要更好的版本，我下次可以帮你留意。',
+      '说实话，《{book}》在市面上卖得不太好，但我是真的喜欢。好东西不见得人人都识货。',
+      '这本《{book}》让我想起了我在另一个位面见过的类似版本。不过那个版本缺了最后三页。',
+      '你知道吗，《{book}》的初版现在很难找。这本虽然是抄本，但誊写得很用心。',
+      '读《{book}》的时候我在想：如果我在自己的书摊上看到这本书，我该标什么价。'
+    ],
+    library: [
+      '你这图书馆开始像个样子了。不过我建议在入口处摆一个显眼的书架——吸引路人的注意。',
+      '以商人的眼光来看，这里的书籍品类还需要扩充。但馆长品味不错，这是最重要的。',
+      '我走南闯北见过不少图书馆，但愿意收留一个流浪书贩的，你是第一个。',
+      '这些书架的木料不错——是什么木头？我可以帮你联系更便宜的供应商。'
+    ],
+    personal: [
+      '我的书摊在七个位面都有分号——不，不是连锁店，就是我把书背过去卖的。',
+      '有一次我为了收一批书，跟一个老巫师赌了三局牌。赢了两局，输了一局，但书全到手了。',
+      '我卖书有个原则：不把好书卖给不懂它的人。利润不重要，书得去对的地方。',
+      '你以为我是书贩？不，我只是在帮书找到属于它们的人。',
+      '最值钱的书不是最贵的，是你读完会在扉页上写满批注的那本。'
+    ]
+  }
+};
+
+function pickReturnQuote(charId, bookTitle, atmosphere) {
+  const pool = RETURN_QUOTES[charId];
+  if (!pool) return '谢谢。';
+
+  // 选择语录类型：40% 聊书 / 30% 聊图书馆 / 30% 聊自己
+  const roll = Math.random();
+  let type = 'book';
+  if (roll > 0.7) type = 'personal';
+  else if (roll > 0.4) type = 'library';
+
+  const quotes = pool[type] || pool.book;
+  const quote = quotes[Math.floor(Math.random() * quotes.length)];
+  return quote.replace('{book}', bookTitle || '这本书');
+}
 
 const POEMS = [
   '风从远方来，翻开书中某一页，像你的手拂过我的眉间。',
@@ -195,8 +304,8 @@ function attemptBorrow(visitor, completedBooks, now) {
   if (!book) return;
 
   const bookWords = book.totalWords || 28000;
-  // 还书时间：60分钟 ~ 24小时，书籍越长借阅越久
-  const borrowHours = Math.max(1, Math.min(24, Math.round(bookWords / 2000)));
+  // 还书时间：3小时 ~ 120小时（5天），每2500字=1小时，大部头拉出层次
+  const borrowHours = Math.max(3, Math.min(120, Math.round(bookWords / 2500)));
   const dueTime = now + borrowHours * 3600000;
 
   visitor.status = 'borrowed';
@@ -275,6 +384,9 @@ export function collectReturn(visitorId) {
     status: 'returned'
   });
 
+  // 还书语录
+  const quote = pickReturnQuote(charId, bookTitle, state.library.atmosphere);
+
   // 判定 1：损毁（~3%）
   let damaged = false;
   if (Math.random() < 0.03 && bookId && state.books[bookId]) {
@@ -303,7 +415,12 @@ export function collectReturn(visitorId) {
   state.visitors.splice(idx, 1);
   saveState();
 
-  return { damaged, event: eventResult, bookId, bookTitle, charId };
+  return {
+    damaged, event: eventResult, bookId, bookTitle, charId,
+    visitorName: visitor.name, visitorEmoji: visitor.emoji,
+    coins: retCfg.returnCoins, atmosphere: retCfg.returnAtmo, favor: returnFavor,
+    quote
+  };
 }
 
 // ========== 随机事件 ==========
@@ -419,6 +536,7 @@ function eventSalesPitch(visitor) {
 
 export function buySalesBook(bookMeta) {
   if (state.coins < bookMeta.price) return false;
+  if (isBookCapacityFull()) return false;
   addCoins(-bookMeta.price);
 
   const bookId = 'sale_' + Date.now().toString(36);

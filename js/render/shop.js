@@ -3,7 +3,9 @@ import { state, saveState } from '../state.js';
 import { BOOKS } from '../../data/books.js';
 import { SHARED_POOL } from '../../data/book_pool.js';
 import { el, h, actions, updateStatusBar } from './common.js';
-import { ensureShopState, getShopState, purchaseBook, getBorrowLevelPrice, upgradeBorrowLevel, getFocusLevelPrice, upgradeFocusLevel, purchaseSignboard } from '../shop.js';
+import { ensureShopState, getShopState, purchaseBook, getBorrowLevelPrice, upgradeBorrowLevel, getFocusLevelPrice, upgradeFocusLevel, purchaseSignboard, purchasePlanePortal, getPlanePortalPrice } from '../shop.js';
+import { PLANES, canUnlockPlane } from '../../data/planes.js';
+import { showFocusRoomUpgrade } from './tutorial-ui.js';
 import { getBorrowLevelConfig } from '../visitors.js';
 import { PLANT_TYPES } from '../../data/plants.js';
 import { checkAchievements } from '../achievements.js';
@@ -27,12 +29,12 @@ export function renderShopPage() {
   // ========== 图书馆升级区 ==========
   wrapper.appendChild(renderLibraryUpgrades());
 
-  // ========== 馆内装潢区 ==========
-  wrapper.appendChild(renderDecorationShop());
-
   // ========== 新书区 ==========
   wrapper.appendChild(renderBookSection('📚 新书上架', shopState.fixed, false));
   wrapper.appendChild(renderBookSection('🔥 限时特惠', shopState.rotating, true));
+
+  // ========== 馆内装潢区 ==========
+  wrapper.appendChild(renderDecorationShop());
 
   container.appendChild(wrapper);
 
@@ -150,6 +152,7 @@ function renderLibraryUpgrades() {
       if (upgradeFocusLevel()) {
         updateStatusBar();
         renderShopPage();
+        showFocusRoomUpgrade(state.library.focusLevel);
       } else {
         alert('智慧之光不足 💰');
       }
@@ -157,6 +160,59 @@ function renderLibraryUpgrades() {
   }
 
   grid.appendChild(focusCard);
+
+  // === 位面传送门 ===
+  const pastoral = PLANES.pastoral;
+  if (pastoral && pastoral.unlock) {
+    const portalKey = pastoral.unlock.shopUpgrade;
+    const portalPurchased = state.library.planePortals && state.library.planePortals[portalKey];
+    const canPurchase = canUnlockPlane('pastoral', state) && !portalPurchased;
+    const meetsReqs = (state.library.atmosphere || 0) >= pastoral.unlock.atmo
+      && Object.values(state.books || {}).filter(b => b && b.status !== 'locked').length >= pastoral.unlock.books;
+
+    if (!portalPurchased || canPurchase) {
+      const portalCard = el('div', `bg-white rounded-xl p-4 border-2 flex gap-4 items-center ${
+        canPurchase ? 'border-magic-gold/50 hover:shadow-lg transition-all cursor-pointer' : 'border-dashed border-gray-300 opacity-70'
+      }`);
+      const price = getPlanePortalPrice('pastoral');
+
+      portalCard.innerHTML = `
+        <span class="text-3xl">${pastoral.emoji}</span>
+        <div class="flex-1">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="font-bold">${pastoral.name}</span>
+            ${portalPurchased
+              ? '<span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">已解锁</span>'
+              : meetsReqs
+                ? '<span class="text-xs bg-magic-gold/20 text-magic-gold px-2 py-0.5 rounded-full">可建造</span>'
+                : '<span class="text-xs bg-gray-200 text-gray-500 px-2 py-0.5 rounded-full">条件不足</span>'
+            }
+          </div>
+          <p class="text-xs text-ink-light mb-2">${pastoral.desc}</p>
+          ${!meetsReqs
+            ? `<p class="text-xs text-ink-light/60">需要：氛围 ≥${pastoral.unlock.atmo} · 拥有 ≥${pastoral.unlock.books} 本书</p>`
+            : canPurchase
+              ? `<button class="portal-purchase-btn px-4 py-1.5 bg-magic-gold text-white rounded-lg text-sm font-bold hover:shadow-lg transition-all">开启传送门 💰${price.toLocaleString()}</button>`
+              : ''
+          }
+        </div>
+      `;
+
+      const purchaseBtn = portalCard.querySelector('.portal-purchase-btn');
+      if (purchaseBtn) {
+        purchaseBtn.addEventListener('click', () => {
+          if (purchasePlanePortal('pastoral')) {
+            updateStatusBar();
+            renderShopPage();
+          } else {
+            alert('智慧之光不足 💰');
+          }
+        });
+      }
+
+      grid.appendChild(portalCard);
+    }
+  }
 
   // === 空白铭牌（氛围≥80 时可命名） ===
   const atmo = state.library.atmosphere || 0;

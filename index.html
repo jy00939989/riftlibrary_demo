@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="css/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Zhi+Mang+Xing&family=Noto+Serif+SC:wght@400;600;700&family=Cinzel:wght@400;600&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script>
     tailwind.config = {
       theme: {
@@ -55,14 +56,14 @@
   </nav>
 
   <!-- 标签导航 -->
-  <div class="max-w-6xl mx-auto px-4 py-4">
-    <div class="flex flex-wrap gap-2 mb-6">
-      <button id="tab-focus" class="nav-btn px-4 py-2 bg-magic-gold text-white rounded-lg shadow-lg">🖋️ 缮写室</button>
-      <button id="tab-bookshelf" class="nav-btn px-4 py-2 bg-parchment-dark text-ink rounded-lg shadow">📖 大书库</button>
-      <button id="tab-library" class="nav-btn px-4 py-2 bg-parchment-dark text-ink rounded-lg shadow">🏛️ 馆长办公室</button>
-      <button id="tab-visitors" class="nav-btn px-4 py-2 bg-parchment-dark text-ink rounded-lg shadow">☕ 读者沙龙</button>
-      <button id="tab-archive" class="nav-btn px-4 py-2 bg-parchment-dark text-ink rounded-lg shadow">📜 馆史档案</button>
-      <button id="tab-shop" class="nav-btn px-4 py-2 bg-parchment-dark text-ink rounded-lg shadow">🌌 位面商店</button>
+  <div class="max-w-6xl mx-auto px-4 pt-4">
+    <div class="flex flex-wrap gap-1 mb-6" id="nav-tabs">
+      <button id="tab-focus" class="nav-btn active">🖋️ 缮写室</button>
+      <button id="tab-bookshelf" class="nav-btn">📖 大书库</button>
+      <button id="tab-library" class="nav-btn">🏛️ 馆长办公室</button>
+      <button id="tab-visitors" class="nav-btn">☕ 读者沙龙</button>
+      <button id="tab-archive" class="nav-btn">📜 馆史档案</button>
+      <button id="tab-shop" class="nav-btn">🌌 位面商店</button>
     </div>
 
     <!-- 页面容器 -->

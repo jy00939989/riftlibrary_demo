@@ -42,6 +42,8 @@ export function renderCollection(container) {
       html += renderBooksCategory(cat, p);
     } else if (cat.id === 'milestones') {
       html += renderMilestonesCategory(cat, p);
+    } else if (cat.id === 'plane_archive') {
+      html += renderPlaneArchive(cat, p);
     }
   });
 
@@ -113,6 +115,56 @@ function renderMilestonesCategory(cat, p) {
       `;
     });
   }
+
+  html += '</div></div>';
+  return html;
+}
+
+function renderPlaneArchive(cat, p) {
+  const planes = p.planes || [];
+  const unlocked = planes.filter(pl => pl.stage >= 0);
+  const locked = planes.filter(pl => pl.stage < 0);
+
+  let html = `
+    <div class="bg-white border-2 border-wood/20 rounded-xl p-5">
+      <div class="flex items-center justify-between mb-3">
+        <h4 class="font-bold flex items-center gap-2">
+          <span class="text-2xl">${cat.emoji}</span> ${cat.name}
+        </h4>
+        <span class="text-sm font-bold text-magic-blue">${p.acquired}/${p.total} 已开启</span>
+      </div>
+
+      <div class="space-y-3">
+  `;
+
+  // 已解锁位面
+  planes.forEach(pl => {
+    html += `
+      <div class="bg-wood/5 rounded-lg p-3 cursor-pointer hover:shadow transition-all border border-wood/10">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="text-xl">${pl.emoji}</span>
+            <div>
+              <div class="font-bold text-sm">${pl.name}</div>
+              <div class="text-xs text-ink-light">
+                ${pl.charsMet > 0 ? `📖 角色 ${pl.charsMet}/${pl.charsTotal}` : '传送门已开启'}
+                ${pl.mementoCount > 0 ? ` · 🏛️ 纪念品 ${pl.mementoCount}件` : ''}
+              </div>
+            </div>
+          </div>
+          <span class="text-xs text-magic-gold">第${pl.stage || 1}幕 →</span>
+        </div>
+      </div>
+    `;
+  });
+
+  // 预留位面
+  html += `
+    <div class="bg-gray-50 rounded-lg p-3 border-2 border-dashed border-gray-200 opacity-60 text-center">
+      <span class="text-xl">🔒</span>
+      <div class="text-xs text-ink-light mt-1">新的传送门尚未开启…</div>
+    </div>
+  `;
 
   html += '</div></div>';
   return html;

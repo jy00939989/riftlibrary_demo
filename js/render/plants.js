@@ -3,7 +3,7 @@ import { state, saveState } from '../state.js';
 import { updateStatusBar } from './common.js';
 import { PLANT_TYPES, SEED_EXCHANGE } from '../../data/plants.js';
 import { SIGNBOARDS } from '../../data/signboards.js';
-import { canHarvest, harvestPlant, canExchangeSeed, exchangeSeed, getActivePlantDef } from '../plants.js';
+import { canHarvest, harvestPlant, canExchangeSeed, exchangeSeed, getActivePlantDef, canWater, canFertilize } from '../plants.js';
 
 export function renderDecorationPage() {
   const container = document.getElementById('decoration-content');

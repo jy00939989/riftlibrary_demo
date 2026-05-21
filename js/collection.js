@@ -1,6 +1,7 @@
 // 收集系统 —— 收集品状态管理（纯逻辑，不碰 DOM）
 import { state } from './state.js';
 import { BOOKS } from '../data/books.js';
+import { PLANES, canUnlockPlane } from '../data/planes.js';
 
 const STORAGE_KEY = 'library_collection';
 
@@ -11,12 +12,8 @@ export const COLLECTION_CATEGORIES = [
     getProgress: () => getProgress() },
   { id: 'milestones',  name: '图书馆里程碑',   emoji: '📊', mvp: true,
     getProgress: () => getMilestoneProgress() },
-  { id: 'visitor_keepsakes', name: '访客信物', emoji: '🎁', mvp: false,
-    getProgress: () => ({ acquired: 0, total: 0, percent: 0 }) },
-  { id: 'dimension_souvenirs', name: '位面纪念品', emoji: '🌍', mvp: false,
-    getProgress: () => ({ acquired: 0, total: 0, percent: 0 }) },
-  { id: 'dimension_stories', name: '位面剧情', emoji: '📜', mvp: false,
-    getProgress: () => ({ acquired: 0, total: 0, percent: 0 }) }
+  { id: 'plane_archive', name: '位面档案', emoji: '🌍', mvp: true,
+    getProgress: () => getPlaneArchiveProgress() }
 ];
 
 // ========== 书籍收集进度 ==========
@@ -102,6 +99,25 @@ function countFocusDays() {
     }
   });
   return days.size;
+}
+
+// ========== 位面档案进度 ==========
+
+function getPlaneArchiveProgress() {
+  const unlocked = Object.values(PLANES).filter(p => !p.isPlaceholder && (p.unlocked || canUnlockPlane(p.id, state)));
+  const total = Object.values(PLANES).filter(p => !p.isPlaceholder).length;
+  const acquired = unlocked.length;
+
+  // 各已解锁位面的简要信息
+  const planes = unlocked.map(p => {
+    const quest = state.quests && state.quests[p.id];
+    const charsMet = quest ? Object.values(quest.characters).filter(c => c && c.met).length : 0;
+    const charsTotal = p.characters ? p.characters.length : 0;
+    const mementoCount = quest ? quest.mementos.length : 0;
+    return { id: p.id, name: p.name, emoji: p.emoji, stage: quest ? quest.stage : 0, charsMet, charsTotal, mementoCount };
+  });
+
+  return { acquired, total, percent: Math.round((acquired / total) * 100), planes };
 }
 
 // ========== 全量获取 ==========

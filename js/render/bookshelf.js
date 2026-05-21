@@ -1,7 +1,8 @@
 // 书架页面渲染
-import { state } from '../state.js';
+import { state, saveState } from '../state.js';
 import { BOOKS, CATEGORIES } from '../../data/books.js';
 import { el, actions } from './common.js';
+import { checkTaskCompletion } from '../quests.js';
 
 const SHELF_CAPACITY = 5;
 let currentFilter = 'all';
@@ -44,7 +45,7 @@ export function renderBookshelfPage() {
   const totalSlots = state.library.shelves.length * SHELF_CAPACITY;
   const emptySlots = Math.max(0, totalSlots - books.length);
   for (let i = 0; i < emptySlots; i++) {
-    const empty = el('div', 'book-card p-3 border-2 border-dashed border-wood/30 rounded-lg flex items-center justify-center min-h-[150px]');
+    const empty = el('div', 'min-h-[200px] p-3 border-2 border-dashed border-wood/30 rounded-lg flex items-center justify-center');
     empty.innerHTML = '<span class="text-wood/30 text-2xl">+</span>';
     gridDiv.appendChild(empty);
   }
@@ -131,20 +132,38 @@ function renderBookCard(book) {
   const bookState = state.books[book.id];
   const progress = book.totalWords > 0 ? Math.round((bookState.copiedWords / book.totalWords) * 100) : 0;
   const masteryNames = ['', '初识', '熟悉', '精通', '大师', '传承'];
+  const masteryName = masteryNames[bookState.masteryLevel] || '';
+  const isCompleted = bookState.status === 'completed';
+  const isCopying = bookState.status === 'copying' || (bookState.copiedWords > 0 && !isCompleted);
+  const isUnstarted = !isCompleted && !isCopying;
   const starIcon = bookState.starred ? '⭐' : '☆';
-
-  const cardDiv = el('div', 'book-card p-3 bg-white rounded-lg shadow border-l-4 border-magic-blue/30 hover:shadow-lg transition-all relative');
+  const cardDiv = el('div', `book-spine ${isCompleted ? 'completed' : isCopying ? 'copying' : 'unstarted'} flex flex-col min-h-[200px]`);
 
   cardDiv.innerHTML = `
-    <button class="star-btn absolute top-1 right-1 text-sm w-6 h-6 flex items-center justify-center rounded-full hover:bg-magic-gold/20 z-10" data-book-id="${book.id}">${starIcon}</button>
-    <div class="text-2xl mb-2">${book.emoji}</div>
-    <div class="font-bold text-sm mb-1">${book.title}</div>
-    <div class="text-xs text-ink-light mb-2">${book.author} · ${book.totalWords.toLocaleString()}字</div>
-    <div class="text-xs text-magic-blue mb-2">${masteryNames[bookState.masteryLevel] || '未开始'} | 再抄${Math.max(0, 3 - bookState.copyCount)}次升级</div>
-    <div class="mt-2 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-      <div class="h-full bg-magic-blue" style="width:${progress}%"></div>
+    <button class="star-btn absolute top-1.5 right-1.5 text-sm w-7 h-7 flex items-center justify-center rounded-full bg-white/60 hover:bg-white z-10 transition-all" data-book-id="${book.id}">${starIcon}</button>
+
+    <!-- 封面区 -->
+    <div class="book-cover flex-1 flex flex-col items-center justify-center p-4 relative min-h-[130px]">
+      <div class="text-5xl mb-2 drop-shadow-sm">${book.emoji}</div>
+      <div class="font-bold text-sm text-center text-ink leading-tight">${book.title}</div>
+      <div class="text-[10px] text-ink-light/60 mt-1">${book.author}</div>
+      ${isCompleted ? '<div class="absolute top-2 left-2 text-xs">🏆</div>' : ''}
     </div>
-    <div class="text-xs text-ink-light mt-1">${bookState.status === 'completed' ? '已完成 ✓' : progress > 0 ? '誊抄中 ' + progress + '%' : '未开始'}</div>
+
+    <!-- 书脊信息区 -->
+    <div class="bg-white/80 px-3 py-2.5 border-t border-wood/10">
+      <div class="flex items-center justify-between mb-1.5">
+        <span class="text-[10px] text-ink-light">${book.totalWords.toLocaleString()}字</span>
+        ${masteryName ? `<span class="text-[10px] font-bold text-magic-gold">✦ ${masteryName}</span>` : ''}
+        ${isUnstarted ? '<span class="text-[10px] text-ink-light/50">点击开始</span>' : ''}
+      </div>
+      <div class="h-2 bg-wood/10 rounded-full overflow-hidden">
+        <div class="h-full rounded-full transition-all duration-700 ${isCompleted ? 'bg-magic-gold' : 'bg-magic-blue'}" style="width:${Math.min(100, progress)}%"></div>
+      </div>
+      <div class="text-[10px] text-ink-light/60 mt-1">
+        ${isCompleted ? '已完成 ✓' : isCopying ? '誊抄中 ' + progress + '%' : '待誊抄'}
+      </div>
+    </div>
   `;
 
   // 星标点击
@@ -155,10 +174,10 @@ function renderBookCard(book) {
     renderBookshelfPage();
   });
 
-  // 整卡点击 → 章节列表 or mastery 详情
+  // 整卡点击
   cardDiv.addEventListener('click', (e) => {
     if (e.target.classList.contains('star-btn')) return;
-    if (bookState.status === 'completed' && bookState.masteryLevel >= 1) {
+    if (isCompleted && bookState.masteryLevel >= 1) {
       showMasteryDetail(book);
     } else {
       renderChapterList(book);
@@ -185,12 +204,13 @@ function renderChapterList(book) {
     <div class="space-y-2">
       ${book.chapters.map((ch, i) => {
         const unlocked = bookState.unlockedChapters.includes(i + 1);
+        const isRead = bookState.readChapters && bookState.readChapters.includes(i);
         return `
           <div class="chapter-item p-3 rounded-lg border ${unlocked ? 'bg-white border-wood cursor-pointer hover:shadow' : 'bg-gray-100 border-gray-200 opacity-60'}">
             <div class="flex items-center justify-between">
-              <div class="font-bold text-sm">${ch.title}</div>
-              <div class="text-xs ${unlocked ? 'text-green-600' : 'text-gray-500'}">
-                ${unlocked ? '🔓 已解锁' : '🔒 需誊抄' + ch.unlockAt.toLocaleString() + '字'}
+              <div class="font-bold text-sm">${isRead ? '✓ ' : ''}${ch.title}</div>
+              <div class="text-xs ${unlocked ? (isRead ? 'text-magic-gold' : 'text-green-600') : 'text-gray-500'}">
+                ${unlocked ? (isRead ? '📖 已读' : '🔓 已解锁') : '🔒 需誊抄' + ch.unlockAt.toLocaleString() + '字'}
               </div>
             </div>
             ${unlocked ? `<div class="text-xs text-ink-light mt-1">${ch.preview}</div>` : ''}
@@ -232,32 +252,216 @@ function renderChapterList(book) {
 
 function renderReadingPage(book, chapter) {
   const container = document.getElementById('page-bookshelf');
-  const modal = el('div', 'fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4');
-  const content = el('div', 'parchment-bg rounded-2xl p-6 max-w-2xl w-full max-h-[85vh] overflow-y-auto magic-glow reading-page');
+  const bookState = state.books[book.id];
+  if (!bookState) return;
 
-  content.innerHTML = `
-    <div class="flex items-center justify-between mb-4">
-      <div>
-        <h2 class="font-display text-xl font-bold">${book.title}</h2>
-        <div class="text-sm text-ink-light">${chapter.title}</div>
-      </div>
-      <button class="text-2xl text-ink-light hover:text-ink close-modal">✕</button>
-    </div>
-    <div class="prose prose-sm max-w-none leading-relaxed text-ink whitespace-pre-line font-serif">
-      ${chapter.content}
-    </div>
-    <div class="mt-6 pt-4 border-t border-wood/20 text-center text-sm text-ink-light">
-      — 本章完 · 感谢你的专注 —
-    </div>
-  `;
+  const chapterIndex = book.chapters.indexOf(chapter);
+  const prevChapter = chapterIndex > 0 ? book.chapters[chapterIndex - 1] : null;
+  const nextChapter = chapterIndex < book.chapters.length - 1 ? book.chapters[chapterIndex + 1] : null;
 
-  modal.appendChild(content);
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal || e.target.classList.contains('close-modal')) {
-      modal.remove();
+  // 分页：按 ---page--- 切分，无标记则全文为 1 页
+  const rawPages = chapter.content.split('---page---').map(p => p.trim()).filter(p => p);
+  const pages = rawPages.length > 0 ? rawPages : [chapter.content.trim()];
+  const totalPages = pages.length;
+
+  let currentPage = 0;
+  let fontSizeLevel = 0; // 0=正常, 1=大, 2=很大
+  const fontClasses = ['reading-font-normal', 'reading-font-large', 'reading-font-xlarge'];
+  const fontLabels = ['A', 'A', 'A'];
+
+  function isChapterUnlocked(idx) {
+    return bookState.unlockedChapters.includes(idx + 1);
+  }
+
+  function markChapterRead() {
+    if (!bookState.readChapters.includes(chapterIndex)) {
+      bookState.readChapters.push(chapterIndex);
+      checkTaskCompletion('chapter_read', { bookId: book.id, chapterIdx: chapterIndex });
+      saveState();
     }
+  }
+
+  // ========== 构建 DOM ==========
+
+  const overlay = el('div', 'fixed inset-0 z-[100] flex flex-col items-center justify-center reading-overlay');
+
+  // 关闭按钮
+  const closeBtn = el('button', 'reading-close-btn');
+  closeBtn.textContent = '✕';
+  closeBtn.addEventListener('click', closeReading);
+  overlay.appendChild(closeBtn);
+
+  // 书籍容器
+  const bookContainer = el('div', 'reading-book flex-col items-center');
+
+  // 标题区
+  const header = el('div', 'text-center mb-3');
+  header.innerHTML = `
+    <h2 class="font-display text-lg font-bold" style="color:#c9a227">${book.emoji} ${book.title}</h2>
+    <p class="text-xs mt-1" style="color:rgba(245,230,200,0.5)">${chapter.title}</p>
+  `;
+  bookContainer.appendChild(header);
+
+  // 页面板（首次渲染用入场动画）
+  const panel = el('div', 'reading-panel w-full max-w-xl reading-page-enter');
+  bookContainer.appendChild(panel);
+
+  // 页脚控制栏
+  const footer = el('div', 'reading-footer');
+
+  const prevPageBtn = el('button', 'reading-font-btn');
+  prevPageBtn.textContent = '◀';
+  prevPageBtn.addEventListener('click', goPrev);
+
+  const pageIndicator = el('span', 'reading-page-indicator');
+
+  const fontSizeBtns = fontLabels.map((label, i) => {
+    const btn = el('button', `reading-font-btn ${i === fontSizeLevel ? 'active' : ''}`);
+    btn.textContent = label;
+    btn.style.fontSize = ['0.7rem', '0.85rem', '1rem'][i];
+    btn.addEventListener('click', () => {
+      fontSizeLevel = i;
+      renderPageContent();
+      updateControls();
+    });
+    return btn;
   });
-  container.appendChild(modal);
+
+  const nextPageBtn = el('button', 'reading-font-btn');
+  nextPageBtn.textContent = '▶';
+  nextPageBtn.addEventListener('click', goNext);
+
+  footer.appendChild(prevPageBtn);
+  footer.appendChild(pageIndicator);
+  fontSizeBtns.forEach(b => footer.appendChild(b));
+  footer.appendChild(nextPageBtn);
+  bookContainer.appendChild(footer);
+
+  // 章间导航
+  const chapterNav = el('div', 'reading-chapter-nav');
+  bookContainer.appendChild(chapterNav);
+
+  overlay.appendChild(bookContainer);
+
+  // ========== 渲染函数 ==========
+
+  function renderPageContent() {
+    const pageContent = pages[currentPage];
+    const fontClass = fontClasses[fontSizeLevel];
+    const mainIllus = (currentPage === 0 && chapter.illustrations && chapter.illustrations.main)
+      ? `<img src="${chapter.illustrations.main}" class="reading-main-illustration" alt="">` : '';
+
+    panel.innerHTML = `
+      ${mainIllus}
+      <div class="reading-content ${fontClass}">
+        ${pageContent.split('\n\n').filter(p => p.trim()).map(p => `<p>${p.trim()}</p>`).join('')}
+      </div>
+    `;
+
+    // 左右点击区域
+    if (currentPage > 0) {
+      const tapL = el('div', 'reading-tap-zone reading-tap-left');
+      tapL.addEventListener('click', goPrev);
+      panel.appendChild(tapL);
+    }
+    if (currentPage < totalPages - 1) {
+      const tapR = el('div', 'reading-tap-zone reading-tap-right');
+      tapR.addEventListener('click', goNext);
+      panel.appendChild(tapR);
+    }
+  }
+
+  function updateControls() {
+    pageIndicator.textContent = `第 ${currentPage + 1}/${totalPages} 页`;
+    prevPageBtn.style.visibility = currentPage > 0 ? 'visible' : 'hidden';
+    nextPageBtn.style.visibility = currentPage < totalPages - 1 ? 'visible' : 'hidden';
+
+    // 字号按钮激活态
+    const allFontBtns = footer.querySelectorAll('.reading-font-btn');
+    const fontOnly = Array.from(allFontBtns).filter(b =>
+      !b.textContent.includes('◀') && !b.textContent.includes('▶')
+    );
+    fontOnly.forEach((b, i) => {
+      b.classList.toggle('active', i === fontSizeLevel);
+    });
+
+    // 章间导航
+    renderChapterNav();
+  }
+
+  function renderChapterNav() {
+    chapterNav.innerHTML = '';
+    if (prevChapter && isChapterUnlocked(chapterIndex - 1)) {
+      const prevBtn = el('button', '');
+      prevBtn.textContent = `← ${prevChapter.title}`;
+      prevBtn.addEventListener('click', () => {
+        markChapterRead();
+        closeReading();
+        setTimeout(() => renderReadingPage(book, prevChapter), 200);
+      });
+      chapterNav.appendChild(prevBtn);
+    }
+
+    const label = el('span', 'reading-chapter-label');
+    const readMark = bookState.readChapters.includes(chapterIndex) ? ' ✓已读' : '';
+    label.textContent = `${chapterIndex + 1}/${book.chapters.length}${readMark}`;
+    chapterNav.appendChild(label);
+
+    if (nextChapter && isChapterUnlocked(chapterIndex + 1)) {
+      const nextBtn = el('button', '');
+      nextBtn.textContent = `${nextChapter.title} →`;
+      nextBtn.addEventListener('click', () => {
+        markChapterRead();
+        closeReading();
+        setTimeout(() => renderReadingPage(book, nextChapter), 200);
+      });
+      chapterNav.appendChild(nextBtn);
+    }
+  }
+
+  // ========== 翻页 ==========
+
+  function goNext() {
+    if (currentPage >= totalPages - 1) return;
+    currentPage++;
+    renderPageContent();
+    updateControls();
+    if (currentPage === totalPages - 1) markChapterRead();
+  }
+
+  function goPrev() {
+    if (currentPage <= 0) return;
+    currentPage--;
+    renderPageContent();
+    updateControls();
+  }
+
+  // ========== 键盘 ==========
+
+  function onKeyDown(e) {
+    if (e.key === 'ArrowRight') goNext();
+    if (e.key === 'ArrowLeft') goPrev();
+    if (e.key === 'Escape') closeReading();
+  }
+  document.addEventListener('keydown', onKeyDown);
+
+  // ========== 关闭 ==========
+
+  function closeReading() {
+    document.removeEventListener('keydown', onKeyDown);
+    overlay.remove();
+    renderBookshelfPage();
+  }
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) closeReading();
+  });
+
+  // ========== 初始渲染 ==========
+
+  renderPageContent();
+  updateControls();
+  container.appendChild(overlay);
 }
 
 // ========== Mastery 详情弹窗 ==========

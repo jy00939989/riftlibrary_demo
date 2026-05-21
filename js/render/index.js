@@ -7,5 +7,5 @@ export { renderVisitorsPage, showVisitorEventModal } from './visitors.js';
 export { renderLibraryPage } from './library.js';
 export { renderArchivePage } from './archive.js';
 export { renderShopPage } from './shop.js';
-export { showUnlockAnimation, showBookCompleteAnimation } from './animations.js';
+export { showUnlockAnimation, showBookCompleteAnimation, showBookShelvingAnimation } from './animations.js';
 export { renderAchievements, showAchievementToast } from './achievements.js';

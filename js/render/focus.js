@@ -1,9 +1,10 @@
 // 缮写室（专注页面）渲染
 import { state } from '../state.js';
 import { BOOKS, COPY_TEMPLATES } from '../../data/books.js';
-import { el, h, formatTime, actions } from './common.js';
+import { el, h, formatTime, actions, updateStatusBar } from './common.js';
 import { startWriting, pauseWriting, resumeWriting, stopWriting, isWriting } from './writing.js';
 import { isMomoAccelerating } from '../timer.js';
+import { ensureDailyTasks, claimAllDoneBonus } from '../dailytasks.js';
 
 // 缮写室素材
 const FOCUS_IMG_NAMES = [
@@ -49,6 +50,10 @@ export function renderFocusPage() {
   `;
   container.appendChild(banner);
 
+  // 今日馆务
+  ensureDailyTasks();
+  container.appendChild(renderDailyTasks());
+
   const card = el('div', 'parchment-bg rounded-2xl p-6 md:p-8 magic-glow relative overflow-hidden');
   card.appendChild(el('div', 'grain-texture absolute inset-0 pointer-events-none'));
 
@@ -62,6 +67,11 @@ export function renderFocusPage() {
 
   // 控制按钮
   card.appendChild(renderControls(sess));
+
+  // 本书誊抄进度条
+  if (sess.bookId && book) {
+    card.appendChild(renderBookProgress(sess, book));
+  }
 
   container.appendChild(card);
 
@@ -79,6 +89,41 @@ function updateActiveControlsDOM(sess) {
     pauseBtn.innerHTML = sess.paused ? '▶️ 继续' : '⏸️ 暂停';
   }
   if (sess.paused) pauseWriting(); else resumeWriting();
+  // 实时更新进度条和字数显示
+  if (sess.bookId) updateBookProgressDOM(sess);
+}
+
+function updateBookProgressDOM(sess) {
+  const book = sess.bookId ? BOOKS[sess.bookId] : null;
+  if (!book) return;
+
+  const copiedWords = state.books[sess.bookId]?.copiedWords || 0;
+  const totalWords = book.totalWords || 1;
+  const pct = Math.min(100, Math.round((copiedWords / totalWords) * 100));
+
+  // 进度条
+  const bar = document.getElementById('book-progress-bar');
+  if (bar) {
+    bar.innerHTML = `
+      <div class="flex items-center justify-between mb-1.5">
+        <span class="text-xs font-bold text-ink">📖 《${book.title}》誊抄进度</span>
+        <span class="text-xs text-ink-light">${copiedWords.toLocaleString()} / ${totalWords.toLocaleString()} 字</span>
+      </div>
+      <div class="h-2.5 bg-wood/20 rounded-full overflow-hidden">
+        <div class="h-full bg-gradient-to-r from-amber-600 to-magic-gold rounded-full transition-all duration-500" style="width:${pct}%"></div>
+      </div>
+      <div class="text-right text-xs text-ink-light mt-0.5">${pct}%</div>
+    `;
+  }
+
+  // 字数显示（timer 区底下的 span）
+  const wordsEl = document.getElementById('focus-book-words');
+  if (wordsEl) wordsEl.textContent = copiedWords.toLocaleString();
+
+  const miniTimer = document.getElementById('focus-mini-timer');
+  if (miniTimer && sess.active) {
+    miniTimer.textContent = formatTime(sess.elapsedSeconds);
+  }
 }
 
 function updateFocusBackground() {
@@ -112,7 +157,7 @@ function renderTimerOrAnimation(sess, book) {
     // 延迟启动，等 DOM 挂载后动画引擎可以测量容器尺寸
     setTimeout(() => {
       const animContainer = document.getElementById('writing-anim-container');
-      if (animContainer) startWriting(animContainer, book);
+      if (animContainer) startWriting(animContainer, book, { copiedWords: state.books[book.id]?.copiedWords || 0 });
     }, 50);
   } else {
     wrapper.innerHTML = `
@@ -195,7 +240,8 @@ function renderBookSelector(sess) {
   const eligibleBooks = Object.values(BOOKS).filter(book => {
     const bs = state.books[book.id];
     if (!bs || bs.status === 'locked') return false;
-    return bs.copiedWords > 0 && bs.masteryLevel < 5;
+    // 已开始抄写 / 已解锁 / 抄写中（结算前 copiedWords 为 0）
+    return (bs.copiedWords > 0 || bs.status === 'unlocked' || bs.status === 'copying') && bs.masteryLevel < 5;
   });
 
   if (eligibleBooks.length === 0) {
@@ -224,6 +270,81 @@ function renderBookSelector(sess) {
 
   div.appendChild(flex);
   return div;
+}
+
+// ========== 今日馆务 ==========
+
+function renderDailyTasks() {
+  const dt = state.dailyTasks;
+  const done = (dt.focusDone ? 1 : 0) + (dt.returnDone ? 1 : 0) + (dt.waterDone ? 1 : 0);
+  const allDone = done === 3;
+
+  const tasks = [
+    { icon: '🖋️', label: '专注 25 分钟', done: dt.focusDone, reward: '💰 30' },
+    { icon: '📥', label: '收取一本还书', done: dt.returnDone, reward: '✨ 5' },
+    { icon: '🌱', label: '给植物浇水', done: dt.waterDone, reward: '💰 10' }
+  ];
+
+  const card = el('div', 'mb-4 rounded-xl overflow-hidden border border-wood/20');
+  card.style.background = 'linear-gradient(180deg, rgba(245,230,200,0.75) 0%, rgba(232,213,168,0.55) 100%)';
+  card.style.boxShadow = 'inset 0 0 30px rgba(139,105,20,0.06), 0 1px 4px rgba(0,0,0,0.08)';
+
+  card.innerHTML = `
+    <div class="flex items-center gap-2 px-4 pt-3 pb-1">
+      <span class="text-sm">📜</span>
+      <span class="text-xs font-bold tracking-wider" style="color:#6b5010">今日馆务</span>
+      <span class="text-[11px] ml-auto font-bold" style="color:${allDone ? '#c9a227' : '#2c2419'}">${allDone ? '✦ 全数了却' : `${done}/3`}</span>
+    </div>
+    <div class="px-3 pb-1">
+      ${tasks.map((t, i) => `
+        <div class="flex items-center gap-3 px-2 py-2 rounded-lg transition-all duration-500 ${t.done ? '' : ''}"
+             style="${t.done
+               ? 'background:linear-gradient(90deg, rgba(201,162,39,0.1) 0%, transparent 100%);'
+               : ''}${i < 2 ? 'margin-bottom:2px;' : ''}">
+          <div class="flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center text-base transition-all duration-500"
+               style="${t.done
+                 ? 'background:rgba(201,162,39,0.18); box-shadow:0 0 8px rgba(201,162,39,0.12);'
+                 : 'background:rgba(44,36,25,0.06);'}">
+            ${t.icon}
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="text-[13px] font-bold transition-all duration-500"
+                 style="color:${t.done ? '#6b5010' : '#2c2419'}">
+              ${t.done ? '✓ ' : ''}${t.label}
+            </div>
+          </div>
+          <div class="text-[11px] transition-all duration-500 font-bold"
+               style="color:${t.done ? '#b08818' : '#5c4d3c'}">
+            ${t.done ? t.reward : t.reward}
+          </div>
+        </div>
+      `).join('')}
+    </div>
+    ${allDone && !dt.allClaimed ? `
+      <button class="claim-all-btn w-full px-4 py-2.5 text-xs font-bold tracking-wider transition-all duration-300"
+              style="background:linear-gradient(135deg, rgba(201,162,39,0.85) 0%, rgba(180,140,20,0.9) 100%); color:#fff; letter-spacing:0.06em;">
+        🎁 领取全勤奖励 · 💰20 + ✨3
+      </button>
+    ` : allDone ? `
+      <div class="text-center py-2 text-[11px] tracking-wider font-bold" style="color:#6b5010;">✦ 今日馆务已悉数完成 ✦</div>
+    ` : ''}
+  `;
+
+  // 全勤领取
+  if (allDone && !dt.allClaimed) {
+    const claimBtn = card.querySelector('.claim-all-btn');
+    claimBtn.addEventListener('click', () => {
+      const bonus = claimAllDoneBonus(state);
+      if (bonus) {
+        claimBtn.textContent = '✓ 已领取';
+        claimBtn.disabled = true;
+        claimBtn.style.opacity = '0.6';
+        updateStatusBar();
+      }
+    });
+  }
+
+  return card;
 }
 
 // ========== 控制按钮 ==========
@@ -261,6 +382,30 @@ function renderControls(sess) {
     div.appendChild(doneBtn);
     div.appendChild(abandonBtn);
   }
+
+  return div;
+}
+
+// ========== 本书誊抄进度条 ==========
+
+function renderBookProgress(sess, book) {
+  const copiedWords = state.books[sess.bookId]?.copiedWords || 0;
+  const totalWords = book.totalWords || 1;
+  const pct = Math.min(100, Math.round((copiedWords / totalWords) * 100));
+
+  const div = el('div', 'mt-4 pt-4 border-t border-wood/20');
+  div.id = 'book-progress-bar';
+
+  div.innerHTML = `
+    <div class="flex items-center justify-between mb-1.5">
+      <span class="text-xs font-bold text-ink">📖 《${book.title}》誊抄进度</span>
+      <span class="text-xs text-ink-light">${copiedWords.toLocaleString()} / ${totalWords.toLocaleString()} 字</span>
+    </div>
+    <div class="h-2.5 bg-wood/20 rounded-full overflow-hidden">
+      <div class="h-full bg-gradient-to-r from-amber-600 to-magic-gold rounded-full transition-all duration-500" style="width:${pct}%"></div>
+    </div>
+    <div class="text-right text-xs text-ink-light mt-0.5">${pct}%</div>
+  `;
 
   return div;
 }

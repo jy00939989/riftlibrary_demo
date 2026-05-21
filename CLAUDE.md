@@ -20,10 +20,15 @@ index.html              ← 页面骨架 + Tailwind 配置
 css/style.css           ← 羊皮纸/魔法主题样式 + 缮写动画样式
 
 data/                   ← 静态数据（不依赖任何模块）
-  books.js              ← BOOKS 入口，组装 22 本书 + CATEGORIES 枚举
-  books/book_001~022.js ← 每本书 meta/chapters/quotes/mastery内容
+  books.js              ← BOOKS 入口，组装 24 本书 + CATEGORIES 枚举
+  books/book_001~024.js ← 每本书 meta/chapters/quotes/mastery内容
   book_pool.js          ← 商店/里程碑共享池（17本，含 plane 字段）
   atmosphere.js         ← 5 阶段氛围描述（废墟→星辰，0~500）
+  planes.js             ← 位面定义（星界归墟 + 田园瘟疫纪事 + 占位）
+  plants.js             ← 植物类型 + 种子兑换
+  signboards.js         ← 标志牌定义
+  quests/               ← 位面任务静态数据
+    pastoral_tasks.js   ← 田园瘟疫纪事任务（Phase 1：小艾拉 Stage 1）
 
 audio/                  ← 音频素材
   7 首 BGM（3层氛围 ×2变奏）+ 1 部开场PV
@@ -35,16 +40,20 @@ visual/                 ← 美术素材
 
 js/                     ← 逻辑层
   app.js                ← 入口：初始化/页面切换/全局编排/新手引导/PV开场/成就检测接入
-  state.js              ← 全局状态 + localStorage 序列化 + 旧档迁移
+  state.js              ← 全局状态 + localStorage 序列化 + 旧档迁移（含 tutorialFlags）
   timer.js              ← 计时器（番茄钟25min/倒计时/正计时 + 墨墨首次加速）
   storage.js            ← 智慧之光/氛围/历史/连击 原子读写 + 氛围→BGM联动
   audio.js              ← 音频引擎：3层氛围BGM + 交叉淡入淡出
   diary.js              ← 墨墨日志：每日回顾 + 特殊事件
+  tutorial.js           ← 教程引擎：情境触发检测 + 首遇标记管理（纯逻辑，不碰DOM）
+  intro.js              ← 开场引导：5步卡片式引导 + PV开场（从 app.js 提取）
   visitors.js           ← 访客逻辑（纯逻辑，不碰DOM）
-  shop.js               ← 商店逻辑：借阅区/缮写室升级 + 书籍刷新/购买
+  shop.js               ← 商店逻辑：借阅区/缮写室升级 + 书籍刷新/购买 + 书架容量
   books.js              ← 书籍解锁/进度计算
+  quests.js             ← 位面任务引擎：访客队列/任务生命周期/Stage推进
   achievements.js       ← 成就引擎：31 成就定义 + 条件判定 + toast
-  collection.js         ← 收集系统：5 类收集品进度
+  collection.js         ← 收集系统：4 类收集品（含位面档案）
+  dailytasks.js         ← 今日馆务：每日三任务 + 全勤奖励
   dev.js                ← Dev 面板（右下角齿轮，Ctrl+Shift+D）
   render/               ← 渲染层（唯一操作 DOM 的模块）
     index.js            ← 统一 re-export
@@ -53,11 +62,15 @@ js/                     ← 逻辑层
     writing.js          ← 缮写动画引擎（canvas排版 + 羽笔效果 + 左右翻页）
     bookshelf.js        ← 大书库 + 筛选 + mastery 弹窗
     visitors.js         ← 读者沙龙 + 事件弹窗
-    library.js          ← 馆长办公室（子标签：概况/成就柜/收藏室）
-    archive.js          ← 馆史档案 + 墨墨日志子标签
-    shop.js             ← 位面商店（借阅区/缮写室升级 + 新书购买）
+    library.js          ← 馆长办公室（子标签：概况/成就柜/收藏室/布置/馆长手册）
+    archive.js          ← 馆史档案 + 墨墨日志 + 位面子标签
+    shop.js             ← 位面商店（借阅区/缮写室升级 + 新书购买 + 传送门）
+    plane.js            ← 位面详情页（时间线 + 角色 + 信物 + 墨墨评论）
+    quests.js           ← 角色卡片 + 信函弹窗（任务接取/回信提交）
     achievements.js     ← 成就柜 UI 网格 + toast 通知
     collection.js       ← 收藏室 UI
+    tutorial-ui.js      ← 教程 UI：情境引导卡片 + 氛围/缮写室/借阅区升级弹窗
+    certificate.js      ← 典藏证书：书籍完成仪式感分享卡片（html2canvas 导出）
     animations.js       ← 弹窗动画
 ```
 
@@ -157,7 +170,12 @@ state.js (单一数据源) → app.js (编排层) → render/ (DOM层)
 - `initAudio()` / `refreshBGM()` / `toggleMusic()` / `onFirstInteraction()` — 音频管理
 - `addDiaryEntry(type, payload)` / `tryGenerateDailySummary()` — 墨墨日志
 - `getDiaryEntries()` / `getDiaryBindingLevel()` — 日志读取
-- `getActivePlantDef()` / `waterPlant()` / `fertilizePlant()` / `harvestPlant()` — 植物盆栽操作
+- `checkAndShowTutorial(event, payload)` / `markTutorialSeen(event)` — 情境引导触发与标记
+- `showIntro()` — 3步开场引导（intro.js）
+- `dispatchTutorialUI(trigger, callback)` — 引导 UI 统一入口（tutorial-ui.js）
+- `showCertificate(book, callback)` — 典藏证书弹窗
+- `showAtmosphereStagePopup(stage, callback)` — 氛围阶段升级弹窗
+- `showFocusRoomUpgrade(newLevel)` / `showBorrowAreaUpgrade(newLevel)` — 设施升级弹窗
 - `canExchangeSeed(type)` / `exchangeSeed(type)` — 种子兑换
 - `addWaterOpportunity()` — 浇水机会（专注完成触发）
 - `checkWither()` — 72h 凋谢检测
@@ -206,24 +224,69 @@ state.js (单一数据源) → app.js (编排层) → render/ (DOM层)
 - **清理**：删除 `js/render.js`（旧单体渲染）、`demo/writing-animation.html`（原型）、`VISITOR_SYSTEM.md`、`MODIFY_BORROWING_AREA.md`、`BORROWING_AREA_DESIGN.md`、`BOOK_SYSTEM_REDESIGN.md`、`二期架构增量.md`、会话日志
 - **三期增量（2026-05-13）**：新建 `data/plants.js`、`data/signboards.js`、`js/plants.js`、`js/render/plants.js`、`data/books/book_023_绿野仙踪.js`、`data/books/book_024_爱丽丝梦游奇境.js`；修改 `js/state.js`（plant/seeds/signboards 状态 + 迁移）、`js/shop.js`（标志牌购买）、`js/render/shop.js`（馆内装潢区）、`js/render/library.js`（布置子标签）、`js/app.js`（浇水机会 + 凋谢检测）、`data/books.js`（注册新书）
 - **四期增量（2026-05-14）**：新建 `audio/`（7首BGM + 1部PV）、`js/audio.js`（3层氛围BGM + 交叉淡入淡出）、`js/diary.js`（墨墨日志系统）；修改 `js/app.js`（PV开场引导 + 墨墨加速叙事 + BGM首次专注激活 + 访客概率刷新 + 访客到来卡片）、`index.html`（音乐开关按钮 + 导航标签）、`js/storage.js`（氛围→BGM联动）、`js/achievements.js`（V03墨香来客）、`js/visitors.js`（访客首次事件日志）、`js/state.js`（diary字段 + diaryFirsts迁移）、`js/render/archive.js`（重写：馆史档案 + 墨墨日志子标签）、`js/render/visitors.js`（借阅区等级Banner）、`js/shop.js`（氛围奖励 + 墨香初遇成就）、`js/render/shop.js`（成就触发）
+- **五期增量（2026-05-15）**：新建 `js/tutorial.js`（情境触发引擎）、`js/intro.js`（5步开场引导，从app.js提取）、`js/render/tutorial-ui.js`（引导卡片 + 氛围/缮写室/借阅区升级弹窗）、`js/render/certificate.js`（典藏证书）；修改 `js/app.js`（提取showIntro到intro.js、接入情境触发检测点、升级弹窗接入、访客/商店/馆长办公室引导接入）、`js/state.js`（tutorialFlags + 迁移）、`js/storage.js`（addAtmosphere返回prevLevel）、`js/render/library.js`（馆长手册子标签）、`js/render/shop.js`（缮写室升级弹窗接入）、`index.html`（html2canvas CDN）、`css/style.css`（证书样式 + 引导卡片样式 + 升级弹窗动画）
+- **六期增量（2026-05-16）**：
+  - **UI 优化**：Tab 导航 CSS 重写（三态+金色底线）、书架卡片改为竖式书脊卡片（封面区+书脊区，三类状态视觉差异）、卡片 hover 微光、页面切换淡入动画
+  - **访客还书体验**：还书反馈卡始终弹出（语录+收益摘要）、4位角色各15条还书语录池（聊书/图书馆/自己）、`updateVisitorBadge` 作用域修复
+  - **今日馆务**：新建 `js/dailytasks.js`（每日三任务+全勤奖励）、缮写室顶部任务卡片
+  - **位面骨架**：新建 `data/planes.js`（位面定义）、`state.quests` 状态+迁移、收藏室三个占位合并为「位面档案」入口
+  - **修复**：缮写室书籍筛选覆盖 `copying` 状态、成就「墨香来客」移除启动扫描误触发、开始专注时 `unlocked→copying` 状态转换、小王子初始 copiedWords 改为 11500
+  - 修改：`js/app.js`、`js/state.js`、`js/visitors.js`、`js/plants.js`、`js/render/focus.js`、`js/render/visitors.js`、`js/render/bookshelf.js`、`js/render/collection.js`、`js/render/shop.js`、`js/collection.js`、`css/style.css`、`index.html`
+- **七期增量（2026-05-21）**：位面系统 Phase 1 框架搭建
+  - **新建**：`data/quests/pastoral_tasks.js`（小艾拉 Stage 1 的 4 条任务）、`js/quests.js`（任务引擎：独立访客队列 + 任务生命周期 + Stage 推进 + 防重入）、`js/render/plane.js`（位面详情页：时间线 + 角色列表 + 信物 + 墨墨评论）、`js/render/quests.js`（角色卡片 + 信函弹窗）
+  - **改造**：`js/render/archive.js`（新增「🌍 位面」子标签 + 位面列表）、`js/state.js`（quests.pastoral 完整字段 + 旧档迁移补丁）、`js/app.js`（tickPlaneVisitors + checkTaskCompletion 接入）、`js/shop.js`（purchasePlanePortal → unlockPlane + 书架容量检查）、`js/visitors.js`（buySalesBook 容量检查）、`js/plants.js`（exchangeSeed 容量检查）、`js/dev.js`（一键解锁田园位面按钮）、`data/planes.js`（characters/mementos 补充 unlockStage 字段 + canUnlockPlane 修复）
+  - **文档**：`docs/design/PLANE_SYSTEM_FEEDBACK_2026-05-21.md`（测试反馈三个问题）、`docs/changelog/CHANGELOG_2026-05-21.md`
 
 ## 待实现
 
 - 访客好感度等级系统及信物收集
-- 位面系统（传送门、多位面内容）
-- 店占位升级项实体化（古籍修复室、咖啡角、研究区）
+- 位面系统后续内容（田园瘟疫纪事全角色全阶段任务、信件收藏、传送门升级、角色到访动画），详见 `docs/design/PLANE_SYSTEM_FEEDBACK_2026-05-21.md`
+- 店占位升级项实体化（古籍修复室、咖啡角、研究区、位面串门、书籍漂流、联合修复）
 - 阿九推销书池改造（SALE_BOOKS 仍为虚构空壳书）
-- 古修复室（damaged/repairWords 机制尚未接入游戏循环）
+- 古籍修复机制（damaged/repairWords 尚未接入游戏循环）
+- 氛围升级全屏特效
+- 章节插图制作（AI生成，每章1大图+2-3小图，每本书风格独立）
+- 章节手动分页（在每章 content 中加入 `---page---` 标记）
+- 馆长导读（首次完成书籍解锁，图南推荐语+译本指南+外部阅读链接）
+- 墨墨"当前建议"持久可见（馆长手册入口旁）
+- 书籍上架后墨墨建议去商店/沙龙
+- 回到缮写室时墨墨"要继续誊抄吗？"
+- 成就弹出时墨墨顺带评论
 
 ## 文档索引
 
-| 文档 | 用途 |
-|------|------|
-| `ARCHITECTURE.md` | 完整架构文档 |
-| `成就系统设计.md` | 30 成就详细条目 |
-| `成就与收集系统设计文档.md` | 成就与收集总设计（框架+砍项决策） |
-| `成就系统调研报告.md` | 同类游戏成就调研 |
-| `SHOP_SYSTEM_DESIGN.md` | 商店系统完整设计 |
-| `BOOK_TEMPLATE.md` | 书籍数据模板（Agent 用） |
-| `CHANGELOG_2026-05-10.md` | 变更记录 |
-| `DESIGN.md` | 早期 Demo Day 设计（部分过时） |
+```
+docs/
+├── architecture/     ← 架构文档
+│   ├── ARCHITECTURE.md
+│   └── ARCHITECTURE_REVIEW_2026-05-15.md
+├── design/           ← 系统设计
+│   ├── DESIGN.md                  （早期 Demo Day 设计，部分过时）
+│   ├── AUDIO_SYSTEM_DESIGN.md
+│   ├── SHOP_SYSTEM_DESIGN.md
+│   ├── BOOK_TEMPLATE.md           （Agent 用书籍数据模板）
+│   ├── MODIFY_AUDIO_SYSTEM.md
+│   ├── PLANE_SYSTEM_DESIGN.md     （位面系统架构设计）
+│   ├── PLANE_SYSTEM_REVIEW.md     （位面系统设计审查报告）
+│   └── PLANE_SYSTEM_FEEDBACK_2026-05-21.md  （位面系统测试反馈）
+├── changelog/        ← 变更日志
+│   ├── CHANGELOG_2026-05-10.md
+│   ├── CHANGELOG_2026-05-14.md
+│   ├── CHANGELOG_2026-05-15.md    （五期：教程系统）
+│   ├── CHANGELOG_2026-05-16.md    （六期：UI优化+还书+今日馆务+位面骨架）
+│   └── CHANGELOG_2026-05-21.md    （七期：位面系统Phase 1框架）
+├── demo/             ← Demo 演示
+│   └── DEMO_SCRIPT_5MIN.md
+├── diary/            ← 工作日志
+│   ├── CLAUDE_DIARY.md
+│   └── CLAUDE_DIARY_2026-05-15.md
+├── discussion/       ← 讨论记录
+│   └── DISCUSSION_2026-05-17.md
+└── reports/          ← 分析报告
+    ├── 成就系统设计.md
+    ├── 成就与收集系统设计文档.md
+    ├── 成就系统调研报告.md
+    ├── 游戏可玩性与商业化诊断建议.md
+    ├── 留存设计方案_v1.0.md
+    └── 美术UI诊断和建议.md
+```

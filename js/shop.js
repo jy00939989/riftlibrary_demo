@@ -3,6 +3,8 @@ import { state, saveState } from './state.js';
 import { spendCoins, addHistory, addAtmosphere } from './storage.js';
 import { SHARED_POOL } from '../data/book_pool.js';
 import { SIGNBOARDS } from '../data/signboards.js';
+import { PLANES, canUnlockPlane } from '../data/planes.js';
+import { unlockPlane } from './quests.js';
 
 function getNow() {
   return window.__dev?.getNow?.() || Date.now();
@@ -112,6 +114,7 @@ export function ensureShopState() {
 export function purchaseBook(bookId, price) {
   if (state.coins < price) return false;
   if (state.books[bookId] && state.books[bookId].status !== 'locked') return false;
+  if (isBookCapacityFull()) return false;
 
   spendCoins(price);
 
@@ -184,6 +187,39 @@ export function upgradeFocusLevel() {
   return true;
 }
 
+// 位面传送门价格
+export function getPlanePortalPrice(planeId) {
+  const plane = PLANES[planeId];
+  if (!plane || !plane.unlock) return 0;
+  if (state.library.planePortals && state.library.planePortals[plane.unlock.shopUpgrade]) return 0;
+  const bookPrice = 800;
+  return bookPrice * 2 + 400;
+}
+
+// 位面传送门购买
+export function purchasePlanePortal(planeId) {
+  const plane = PLANES[planeId];
+  if (!plane || !plane.unlock) return false;
+
+  const portalKey = plane.unlock.shopUpgrade;
+  if (state.library.planePortals && state.library.planePortals[portalKey]) return false;
+
+  if (!canUnlockPlane(planeId, state)) return false;
+
+  const price = getPlanePortalPrice(planeId);
+  if (!spendCoins(price)) return false;
+
+  if (!state.library.planePortals) state.library.planePortals = {};
+  state.library.planePortals[portalKey] = { purchased: true, purchasedAt: getNow() };
+
+  addAtmosphere(10);
+  addHistory('purchase', `🌌 开启位面传送门：${plane.name}`, `花费${price}智慧之光 · +10氛围`);
+
+  unlockPlane(planeId);
+  saveState();
+  return true;
+}
+
 // 标志牌购买
 export function purchaseSignboard(signboardId) {
   const def = SIGNBOARDS[signboardId];
@@ -195,4 +231,20 @@ export function purchaseSignboard(signboardId) {
   addHistory('purchase', `购置标志牌「${def.name}」`, `花费${def.price}智慧之光`);
   saveState();
   return true;
+}
+
+// ========== 书架容量 ==========
+
+const SHELF_CAPACITY = 5;
+
+export function getBookCapacity() {
+  return (state.library.shelves || [1]).length * SHELF_CAPACITY;
+}
+
+export function getOwnedBookCount() {
+  return Object.values(state.books || {}).filter(b => b && b.status !== 'locked').length;
+}
+
+export function isBookCapacityFull() {
+  return getOwnedBookCount() >= getBookCapacity();
 }

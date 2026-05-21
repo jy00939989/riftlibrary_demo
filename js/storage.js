@@ -29,10 +29,12 @@ export function spendCoins(amount) {
 }
 
 export function addAtmosphere(points) {
+  const prevLevel = getAtmosphereLevel().level;
   state.library.atmosphere = Math.min(500, state.library.atmosphere + points);
   updateBodyBackground();
   refreshBGM();
   saveState();
+  return prevLevel;
 }
 
 // 根据氛围阶段动态切换 body 背景图

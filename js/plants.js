@@ -1,7 +1,9 @@
 // 植物逻辑模块 —— 浇水/施肥/成长/收获/凋谢/种子兑换（纯逻辑，不碰DOM）
 import { state, saveState } from './state.js';
 import { spendCoins, addCoins, addAtmosphere, addHistory } from './storage.js';
+import { markTaskDone } from './dailytasks.js';
 import { PLANT_TYPES, SEED_EXCHANGE } from '../data/plants.js';
+import { isBookCapacityFull } from './shop.js';
 
 function getNow() {
   return window.__dev?.getNow?.() || Date.now();
@@ -36,6 +38,12 @@ export function waterPlant() {
 
   // 检查是否升到下一级（或可收获）
   checkLevelUp(def);
+
+  // 今日馆务
+  const taskResult = markTaskDone('water', state);
+  if (taskResult) {
+    addHistory('task', `📜 今日馆务：${taskResult.name}`, taskResult.reward);
+  }
 
   saveState();
   return true;
@@ -187,6 +195,7 @@ export function canExchangeSeed(seedType) {
 // 种子兑换书籍
 export function exchangeSeed(seedType) {
   if (!canExchangeSeed(seedType)) return false;
+  if (isBookCapacityFull()) return false;
 
   const config = SEED_EXCHANGE[seedType];
   state.seeds[seedType] -= config.required;

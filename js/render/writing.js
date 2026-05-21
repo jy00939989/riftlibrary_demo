@@ -9,7 +9,7 @@ let currentAnim = null;
 export function startWriting(container, book, options) {
   stopWriting();
   currentAnim = new WritingAnim(container, book, options);
-  currentAnim.start();
+  currentAnim.start(options);
   return currentAnim;
 }
 export function pauseWriting() { if (currentAnim) currentAnim.pause(); }
@@ -78,10 +78,20 @@ class WritingAnim {
 
   // ========== 生命周期 ==========
 
-  start() {
+  start(opts = {}) {
     this.buildDOM();
     this.recalcLayout();
-    this.loadChapter(0);
+
+    // 根据 copiedWords 定位当前章节
+    const copiedWords = opts.copiedWords || 0;
+    let startIdx = 0;
+    for (let i = this.chapters.length - 1; i >= 0; i--) {
+      if (copiedWords >= (this.chapters[i].unlockAt || 0)) {
+        startIdx = i;
+        break;
+      }
+    }
+    this.loadChapter(startIdx);
     this.running = true;
     window.addEventListener('resize', this._onResize);
     this.updateStatus(`🖋️ 缮写中… 第${this.pageNumber}页`);

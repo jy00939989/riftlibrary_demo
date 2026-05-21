@@ -1,4 +1,4 @@
-// 图书馆 & 收藏室页面渲染（子标签页：概况 / 成就柜 / 收藏室）
+// 图书馆 & 收藏室页面渲染（子标签页：概况 / 成就柜 / 收藏室 / 布置 / 攻略）
 import { state } from '../state.js';
 import { getAtmosphereStage, getRandomDescription } from '../../data/atmosphere.js';
 import { getAtmosphereLevel } from '../storage.js';
@@ -56,6 +56,10 @@ export function renderLibraryPage() {
           ${activeSubTab === 'decoration' ? 'bg-white text-magic-gold border-b-2 border-magic-gold -mb-0.5' : 'text-ink-light hover:text-ink hover:bg-white/50'}">
           🏺 布置
         </button>
+        <button data-subtab="guide" class="subtab-btn px-5 py-3 text-sm font-bold transition-all
+          ${activeSubTab === 'guide' ? 'bg-white text-magic-gold border-b-2 border-magic-gold -mb-0.5' : 'text-ink-light hover:text-ink hover:bg-white/50'}">
+          📖 馆长手册
+        </button>
       </div>
 
       <!-- 子标签内容区 -->
@@ -79,6 +83,7 @@ export function renderLibraryPage() {
       case 'achievements': renderAchievementsTab(contentArea); break;
       case 'collection': renderCollectionTab(contentArea); break;
       case 'decoration': renderDecorationTab(contentArea); break;
+      case 'guide': renderGuideTab(contentArea); break;
     }
   }
 }
@@ -149,6 +154,80 @@ function renderDecorationTab(container) {
     console.error('布置页面渲染失败:', e);
     content.innerHTML = `<p class="text-center text-red-500 py-8">布置页面加载失败: ${e.message}</p>`;
   }
+}
+
+// ========== 馆长手册子标签 ==========
+
+function renderGuideTab(container) {
+  container.innerHTML = `
+    <div class="space-y-6 max-w-2xl">
+
+      <!-- 5个子标签说明 -->
+      <section class="bg-white/60 rounded-xl p-5 border border-wood/20">
+        <h3 class="font-display text-lg font-bold mb-3">🏛️ 馆长办公室指南</h3>
+        <div class="space-y-2 text-sm text-ink-light">
+          <div class="bg-white rounded-lg p-3 flex items-start gap-2">
+            <span class="text-lg">📊</span>
+            <div><strong>概况</strong> — 图书馆数据总览、氛围进度条、修改馆名</div>
+          </div>
+          <div class="bg-white rounded-lg p-3 flex items-start gap-2">
+            <span class="text-lg">🏆</span>
+            <div><strong>成就柜</strong> — 查看已解锁成就和未达成条件</div>
+          </div>
+          <div class="bg-white rounded-lg p-3 flex items-start gap-2">
+            <span class="text-lg">📦</span>
+            <div><strong>收藏室</strong> — 浏览收集品进度</div>
+          </div>
+          <div class="bg-white rounded-lg p-3 flex items-start gap-2">
+            <span class="text-lg">🏺</span>
+            <div><strong>布置</strong> — 植物盆栽、种子库存、标志牌</div>
+          </div>
+          <div class="bg-white rounded-lg p-3 flex items-start gap-2">
+            <span class="text-lg">📖</span>
+            <div><strong>馆长手册</strong> — 你正在看这里</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 核心循环 -->
+      <section class="bg-magic-gold/10 border border-magic-gold/30 rounded-xl p-5 text-center">
+        <p class="font-bold text-ink mb-1">🖋️ 专注誊抄 → 💰 赚智慧之光 → 🏛️ 升级设施 → 👥 吸引访客 → 📚 解锁更多书籍</p>
+        <p class="text-xs text-ink-light">这是图书馆复苏的核心循环，一切操作都围绕它展开。</p>
+      </section>
+
+      <!-- 常见问题 -->
+      <section class="bg-white/60 rounded-xl p-5 border border-wood/20">
+        <h3 class="font-display text-lg font-bold mb-3">❓ 常见问题</h3>
+        <div class="space-y-3 text-sm">
+          <div class="bg-white rounded-lg p-3">
+            <div class="font-bold mb-1">Q: 忘了收归还的书怎么办？</div>
+            <p class="text-ink-light">不会有损失。访客会一直等待，直到你去收取。</p>
+          </div>
+          <div class="bg-white rounded-lg p-3">
+            <div class="font-bold mb-1">Q: 氛围怎么涨？</div>
+            <p class="text-ink-light">完成书籍、访客还书、里程碑和成就奖励都会提升氛围。</p>
+          </div>
+          <div class="bg-white rounded-lg p-3">
+            <div class="font-bold mb-1">Q: 智慧之光怎么赚？</div>
+            <p class="text-ink-light">专注结算（每分钟 0.8）、访客还书、成就奖励、连续 7 天专注奖励。</p>
+          </div>
+          <div class="bg-white rounded-lg p-3">
+            <div class="font-bold mb-1">Q: 如何修改图书馆名字？</div>
+            <p class="text-ink-light">馆长办公室 → 概况页，点击馆名即可修改。</p>
+          </div>
+          <div class="bg-white rounded-lg p-3">
+            <div class="font-bold mb-1">Q: 存档在哪里？</div>
+            <p class="text-ink-light">保存在浏览器的 localStorage 中，清除浏览器数据会导致存档丢失。</p>
+          </div>
+          <div class="bg-white rounded-lg p-3">
+            <div class="font-bold mb-1">Q: 怎么关背景音乐？</div>
+            <p class="text-ink-light">点击顶部导航栏右侧的 🔈 按钮即可。</p>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  `;
 }
 
 // ========== 收藏室子标签 ==========

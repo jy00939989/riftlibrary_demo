@@ -226,7 +226,7 @@ export function checkAchievements(trigger, payload) {
 // ========== 批量检测（启动时调用） ==========
 
 export function checkAllOnInit() {
-  const triggers = ['focus', 'book', 'library', 'visitor', 'visitor_arrive'];
+  const triggers = ['focus', 'book', 'library', 'visitor'];
   const all = [];
   triggers.forEach(t => {
     const result = checkAchievements(t);

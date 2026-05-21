@@ -1,10 +1,10 @@
 // 应用入口 —— 初始化 + 页面切换 + 全局操作
 import { state, initState, saveState } from './state.js';
-import { addCoins, spendCoins, addHistory, updateStreak, addAtmosphere, updateBodyBackground } from './storage.js';
+import { addCoins, spendCoins, addHistory, updateStreak, addAtmosphere, updateBodyBackground, getAtmosphereLevel } from './storage.js';
 import {
   renderFocusPage, renderBookshelfPage, renderLibraryPage,
   renderVisitorsPage, renderArchivePage, renderShopPage,
-  showUnlockAnimation, showBookCompleteAnimation, showCompletionCard, setActions,
+  showUnlockAnimation, showBookCompleteAnimation, showBookShelvingAnimation, showCompletionCard, setActions,
   updateStatusBar
 } from './render/index.js';
 import { startTimer, togglePauseTimer, abandonTimer, setCompleteCallback } from './timer.js';
@@ -16,7 +16,13 @@ import { checkAchievements, checkAllOnInit } from './achievements.js';
 import { showAchievementToast } from './render/achievements.js';
 import { addWaterOpportunity, checkWither } from './plants.js';
 import { addDiaryEntry, tryGenerateDailySummary } from './diary.js';
+import { tickPlaneVisitors, checkTaskCompletion } from './quests.js';
 import { initAudio, toggleMusic, onFirstInteraction } from './audio.js';
+import { showIntro } from './intro.js';
+import { checkAndShowTutorial } from './tutorial.js';
+import { dispatchTutorialUI, showBorrowAreaUpgrade } from './render/tutorial-ui.js';
+import { showCertificate } from './render/certificate.js';
+import { ensureDailyTasks, markTaskDone, claimAllDoneBonus } from './dailytasks.js';
 
 function getNow() {
   return window.__dev && window.__dev.getNow ? window.__dev.getNow() : Date.now();
@@ -44,6 +50,12 @@ function handleStartFocus() {
   const bs = state.books[state.currentSession.bookId];
   const isFirstCopy = bs && bs.copiedWords === 0;
   const isFirstFocusEver = state.focus.totalMinutes === 0;
+
+  // 首次誊抄此书：状态从 unlocked → copying
+  if (bs && bs.status === 'unlocked') {
+    bs.status = 'copying';
+    saveState();
+  }
 
   function doStart() {
     startTimer();
@@ -130,6 +142,7 @@ function handleCompleteFocus(isAuto = false) {
   let bookTitle = '';
   let bookEmoji = '';
   let copyCount = 0;
+  let completedBook = null;
 
   if (sess.bookId && state.books[sess.bookId]) {
     const bookState = state.books[sess.bookId];
@@ -137,12 +150,15 @@ function handleCompleteFocus(isAuto = false) {
     bookState.copiedWords += wordsGained;
 
     // 检查章节解锁
+    const newlyUnlocked = [];
     book.chapters.forEach((ch, idx) => {
       if (!bookState.unlockedChapters.includes(idx + 1) && bookState.copiedWords >= ch.unlockAt) {
         bookState.unlockedChapters.push(idx + 1);
+        newlyUnlocked.push({ bookId: sess.bookId, chapterIdx: idx });
         if (!unlockedChapter) unlockedChapter = ch;
       }
     });
+    newlyUnlocked.forEach(u => checkTaskCompletion('chapter_unlocked', u));
 
     // 检查书籍完成
     if (bookState.copiedWords >= book.totalWords && bookState.status !== 'completed') {
@@ -157,6 +173,8 @@ function handleCompleteFocus(isAuto = false) {
       bookTitle = book.title;
       bookEmoji = book.emoji;
       copyCount = bookState.copyCount;
+      completedBook = book;
+      checkTaskCompletion('book_completed', { bookId: sess.bookId });
     }
   }
 
@@ -168,6 +186,14 @@ function handleCompleteFocus(isAuto = false) {
   sess.elapsedSeconds = 0;
   sess.paused = false;
   saveState();
+
+  // 今日馆务：专注 ≥25 分钟
+  if (minutes >= 25) {
+    const taskResult = markTaskDone('focus', state);
+    if (taskResult) {
+      addHistory('task', `📜 今日馆务：${taskResult.name}`, taskResult.reward);
+    }
+  }
 
   // 成就检测
   const achResults = [];
@@ -182,10 +208,12 @@ function handleCompleteFocus(isAuto = false) {
   const newMilestones = checkMilestones(prevTotalWords, state.focus.totalWords);
 
   // 弹窗链：书籍完成 > 章节解锁 > 里程碑 > 结算卡片
+  const isFirstBookComplete = bookCompleted && !state.tutorialFlags.firstBookComplete;
   handlePostFocusEffects({
     minutes, wordsGained, coinsEarned,
     unlockedChapter,
-    bookCompleted, bookTitle, bookEmoji, copyCount,
+    bookCompleted, bookTitle, bookEmoji, copyCount, completedBook,
+    isFirstBookComplete,
     newMilestones
   });
 
@@ -209,7 +237,8 @@ function handlePostFocusEffects(effects) {
   const {
     minutes, wordsGained, coinsEarned,
     unlockedChapter,
-    bookCompleted, bookTitle, bookEmoji, copyCount,
+    bookCompleted, bookTitle, bookEmoji, copyCount, completedBook,
+    isFirstBookComplete,
     newMilestones
   } = effects;
 
@@ -226,6 +255,8 @@ function handlePostFocusEffects(effects) {
     }, () => {
       renderFocusPage();
       updateStatusBar();
+      // 结算后检查教程触发
+      checkAndShowPostFocusTutorials();
     });
   };
 
@@ -245,17 +276,70 @@ function handlePostFocusEffects(effects) {
     };
   }
 
-  // 书籍完成动画（最先弹出）
+  // 书籍完成动画/证书 → 上架动画（最先弹出）
   if (bookCompleted) {
     const prevNext = next;
-    next = () => {
-      showBookCompleteAnimation(bookTitle, bookEmoji, copyCount, prevNext);
-    };
+    if (isFirstBookComplete && completedBook) {
+      next = () => {
+        showCertificate(completedBook, () => {
+          showBookShelvingAnimation(completedBook, prevNext);
+        });
+      };
+    } else {
+      next = () => {
+        showBookCompleteAnimation(bookTitle, bookEmoji, copyCount, () => {
+          showBookShelvingAnimation(completedBook, prevNext);
+        });
+      };
+    }
     // 完成时吸引访客
     spawnVisitor();
   }
 
   next();
+}
+
+// 结算后检查教程触发（氛围阶段跨越 + 首次专注完成）
+function checkAndShowPostFocusTutorials() {
+  const currStage = getAtmosphereLevel().level;
+  const maxSeen = state.tutorialFlags.maxAtmoStageSeen || 1;
+
+  if (currStage > maxSeen) {
+    // 一次可能跨多个阶段，逐个弹出
+    let stageQueue = [];
+    for (let s = maxSeen + 1; s <= currStage; s++) {
+      stageQueue.push(s);
+    }
+    showAtmoStageChain(stageQueue, () => {
+      checkAndShowFocusCompleteTutorial();
+    });
+  } else {
+    checkAndShowFocusCompleteTutorial();
+  }
+}
+
+function showAtmoStageChain(queue, callback) {
+  if (queue.length === 0) { callback(); return; }
+  const stage = queue.shift();
+  const stageNames = ['', '废墟', '破败', '陈旧', '温暖', '星辰'];
+  const stageName = stageNames[stage] || `阶段${stage}`;
+
+  addHistory('atmosphere', `✨ 图书馆氛围升至「${stageName}」`, `阶段 ${stage}/5`);
+  addDiaryEntry('special_event', { detail: `图书馆的氛围进入了「${stageName}」阶段——每个角落都充盈着灵光。` });
+
+  const trigger = checkAndShowTutorial(`atmosphere_stage_${stage}`);
+  if (trigger) {
+    dispatchTutorialUI(trigger, () => showAtmoStageChain(queue, callback));
+  } else {
+    showAtmoStageChain(queue, callback);
+  }
+}
+
+function checkAndShowFocusCompleteTutorial() {
+  const trigger = checkAndShowTutorial('focus_complete');
+  if (trigger) {
+    dispatchTutorialUI(trigger);
+  }
 }
 
 // ========== 里程碑 ==========
@@ -368,6 +452,12 @@ function handleCollectReturn(visitorId) {
     achResults.push(...checkAchievements('visitor'));
     showAchievementBatch(achResults);
     updateStatusBar();
+    updateVisitorBadge();
+    // 今日馆务：收取还书
+    const taskResult = markTaskDone('return', state);
+    if (taskResult) {
+      addHistory('task', `📜 今日馆务：${taskResult.name}`, taskResult.reward);
+    }
     saveState();
   }
   return result;
@@ -428,6 +518,14 @@ function showVisitorArrivalCard(visitor) {
   overlay.querySelector('button').addEventListener('click', close);
   // 8秒后自动消失
   setTimeout(close, 8000);
+
+  // 首次访客到来时触发教学（卡片消失后弹出）
+  const trigger = checkAndShowTutorial('visitor_arrive');
+  if (trigger) {
+    setTimeout(() => {
+      dispatchTutorialUI(trigger);
+    }, 9000); // 等访客卡片自动消失后
+  }
 }
 
 // ========== 注入到 render ==========
@@ -440,6 +538,7 @@ function handleUpgradeBorrowLevel() {
   updateStatusBar();
   renderShopPage();
   renderVisitorsPage();
+  showBorrowAreaUpgrade(state.library.borrowLevel);
 }
 
 setActions({
@@ -471,210 +570,29 @@ function renderCurrentTab() {
 window.switchTab = function(tabName) {
   currentTab = tabName;
 
-  document.querySelectorAll('.nav-btn').forEach(btn => {
-    btn.classList.remove('bg-magic-gold', 'text-white', 'shadow-lg');
-    btn.classList.add('bg-parchment-dark', 'text-ink');
-  });
+  document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
   const activeBtn = document.getElementById('tab-' + tabName);
-  if (activeBtn) {
-    activeBtn.classList.remove('bg-parchment-dark', 'text-ink');
-    activeBtn.classList.add('bg-magic-gold', 'text-white', 'shadow-lg');
-  }
+  if (activeBtn) activeBtn.classList.add('active');
 
   document.querySelectorAll('.page-section').forEach(s => s.classList.add('hidden'));
   const page = document.getElementById('page-' + tabName);
   if (page) page.classList.remove('hidden');
 
   renderCurrentTab();
+
+  // 首次打开商店/馆长办公室时触发教学
+  if (tabName === 'shop' || tabName === 'library') {
+    const event = tabName === 'shop' ? 'shop_open' : 'library_open';
+    const trigger = checkAndShowTutorial(event);
+    if (trigger) {
+      setTimeout(() => dispatchTutorialUI(trigger), 400);
+    }
+  }
 };
 
 // updateStatusBar 已移至 render/common.js，由 import 引入
 
-// ========== 新手引导 ==========
-
-function showIntro() {
-  const steps = [
-    {
-      emoji: '🏚️',
-      title: '欢迎来到异世界图书馆',
-      text: '你推开沉重的橡木门，灰尘在从破洞屋顶洒下的光柱中飞舞。曾经辉煌的大厅如今只剩断壁残垣，书架倒塌如墓碑，破损的书籍散落一地。但空气中残留着某种古老魔法的气息——这里曾经有人守护，而那个人，现在是你。',
-      isOpening: true
-    },
-    {
-      emoji: '📖',
-      title: '选择一本书，开始誊抄',
-      text: '在「我的书架」中选择一本书，点击「开始誊抄此书」。你的每一笔誊抄，都是对图书馆的修复。专注的时间越长，誊抄的字数越多。'
-    },
-    {
-      emoji: '⏱️',
-      title: '专注计时，积攒智慧之光',
-      text: '启动专注模式后，计时器开始运转。完成的专注时间会转化为智慧之光——这座图书馆的通用货币。用它在商店购买新书、升级设施。'
-    },
-    {
-      emoji: '👥',
-      title: '迎接访客，重建社区',
-      text: '随着图书馆逐渐复苏，访客会慕名而来。他们借阅书籍、触发事件、留下礼物。每一位访客的互动，都是图书馆复兴的见证。'
-    }
-  ];
-
-  let currentStep = 0;
-  let phase = 'loading'; // 'loading' → 'video' → 'active'
-  let videoEl = null;
-
-  const overlay = document.createElement('div');
-  overlay.className = 'fixed inset-0 z-[200] flex items-center justify-center p-4';
-  overlay.id = 'intro-overlay';
-  overlay.style.background = "url('visual/background/library_bg_01_abandoned.jpg') center/cover no-repeat";
-  overlay.style.transition = 'background 0.8s ease';
-
-  // 右下角跳过按钮（loading阶段也可见）
-  let skipBtn = document.createElement('button');
-  skipBtn.className = 'absolute bottom-8 right-8 text-white/50 hover:text-white/80 text-sm z-10 transition-all';
-  skipBtn.textContent = '跳过 →';
-  skipBtn.addEventListener('click', dismissIntro);
-  overlay.appendChild(skipBtn);
-
-  function enterActivePhase() {
-    if (phase === 'active') return;
-    phase = 'active';
-    overlay.style.background =`linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.7)), url('visual/background/library_bg_01_abandoned.jpg') center/cover no-repeat`;
-    const cardSkipBtn = skipBtn.cloneNode(true);
-    skipBtn.replaceWith(cardSkipBtn);
-    skipBtn = cardSkipBtn;
-    skipBtn.textContent = '✕';
-    skipBtn.className = 'absolute top-4 right-4 text-white/70 hover:text-white text-lg leading-none z-20 transition-all';
-    skipBtn.addEventListener('click', dismissIntro);
-    renderStep();
-  }
-
-  function enterVideoPhase() {
-    if (phase === 'video' || phase === 'active') return;
-    phase = 'video';
-
-    // 清理 overlay 内容，保留背景和 skipBtn
-    overlay.innerHTML = '';
-    overlay.appendChild(skipBtn);
-
-    // 创建视频元素
-    videoEl = document.createElement('video');
-    videoEl.src = 'audio/异世界图书馆宣传PV.mp4';
-    videoEl.className = 'absolute inset-0 w-full h-full object-cover z-0';
-    videoEl.playsInline = true;
-    videoEl.addEventListener('ended', () => enterActivePhase());
-
-    // 双击跳过
-    videoEl.addEventListener('dblclick', (e) => {
-      e.stopPropagation();
-      videoEl.pause();
-      enterActivePhase();
-    });
-
-    overlay.appendChild(videoEl);
-
-    // 播放提示覆盖层
-    const playHint = document.createElement('div');
-    playHint.className = 'absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/40 cursor-pointer';
-    playHint.id = 'video-play-hint';
-    playHint.innerHTML = `
-      <div class="text-6xl mb-4 animate-pulse">▶️</div>
-      <p class="text-white text-lg font-bold mb-2">点击观看开场动画</p>
-      <p class="text-white/60 text-sm">双击可跳过</p>
-    `;
-    playHint.addEventListener('click', () => {
-      playHint.remove();
-      videoEl.play().catch(() => {});
-    });
-    overlay.appendChild(playHint);
-
-    // 替换跳过按钮（移除旧 listener），视频阶段点击进入卡片引导
-    const newSkipBtn = skipBtn.cloneNode(true);
-    skipBtn.replaceWith(newSkipBtn);
-    skipBtn = newSkipBtn;
-    skipBtn.addEventListener('click', () => {
-      if (videoEl) videoEl.pause();
-      enterActivePhase();
-    });
-  }
-
-  // Phase 1: 纯图3秒
-  const loadingTimer = setTimeout(enterVideoPhase, 3000);
-
-  // 点击任意位置也可提前进入
-  overlay.addEventListener('click', function quickEnter(e) {
-    if (phase === 'loading' && e.target === overlay) {
-      clearTimeout(loadingTimer);
-      enterVideoPhase();
-    }
-  });
-
-  function renderStep() {
-    const step = steps[currentStep];
-    const isLast = currentStep === steps.length - 1;
-
-    overlay.innerHTML = '';
-    overlay.appendChild(skipBtn);
-
-    const card = document.createElement('div');
-    card.className = `${step.isOpening ? 'bg-white/85 backdrop-blur-sm' : 'parchment-bg'} rounded-2xl p-8 max-w-md w-full magic-glow animate-scale-in text-center relative`;
-
-    if (isLast) {
-      card.innerHTML = `
-        <div class="text-5xl mb-4">${step.emoji}</div>
-        <h2 class="font-display text-xl font-bold mb-4">${step.title}</h2>
-        <p class="text-ink-light leading-relaxed mb-6 text-sm">${step.text}</p>
-        <div class="flex items-center justify-between">
-          <div class="flex gap-1">
-            ${steps.map((_, i) => `<span class="w-2 h-2 rounded-full ${i === currentStep ? 'bg-magic-gold' : 'bg-wood/30'}"></span>`).join('')}
-          </div>
-          <button class="intro-next-btn px-6 py-3 bg-magic-gold text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all">✨ 开始冒险</button>
-        </div>
-      `;
-    } else {
-      card.innerHTML = `
-        <div class="text-5xl mb-4">${step.emoji}</div>
-        <h2 class="font-display text-xl font-bold mb-4">${step.title}</h2>
-        <p class="text-ink-light leading-relaxed mb-6 text-sm">${step.text}</p>
-        <div class="flex items-center justify-between">
-          <div class="flex gap-1">
-            ${steps.map((_, i) => `<span class="w-2 h-2 rounded-full ${i === currentStep ? 'bg-magic-gold' : 'bg-wood/30'}"></span>`).join('')}
-          </div>
-          <button class="intro-next-btn px-6 py-3 bg-magic-gold text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all">继续 →</button>
-        </div>
-      `;
-    }
-
-    overlay.appendChild(card);
-
-    const nextBtn = card.querySelector('.intro-next-btn');
-    nextBtn.addEventListener('click', () => {
-      if (isLast) {
-        dismissIntro();
-      } else {
-        currentStep++;
-        // 离开开场步骤后切暗色背景
-        if (!steps[currentStep].isOpening) {
-          overlay.style.background = 'rgba(0,0,0,0.75)';
-        }
-        renderStep();
-      }
-    });
-  }
-
-  function dismissIntro() {
-    clearTimeout(loadingTimer);
-    if (videoEl) { videoEl.pause(); videoEl.src = ''; }
-    overlay.style.opacity = '0';
-    overlay.style.transition = 'opacity 0.3s';
-    setTimeout(() => {
-      overlay.remove();
-      state.introCompleted = true;
-      saveState();
-    }, 300);
-  }
-
-  // loading阶段点击遮罩背景可提前进入（skipBtn已处理跳过）
-  document.body.appendChild(overlay);
-}
+// showIntro() 已提取至 js/intro.js
 
 // ========== 启动 ==========
 
@@ -742,22 +660,35 @@ function init() {
   function tickVisitors() {
     const now = getNow();
     tickVisitorBrowsing(now);
+    tickPlaneVisitors(now);
     const due = checkDueVisitors(now);
     if (currentTab === 'visitors') {
       renderVisitorsPage();
     }
-    if (due && due.length > 0 && currentTab !== 'visitors') {
-      const btn = document.getElementById('tab-visitors');
-      if (btn && !btn.textContent.includes('🔔')) {
-        btn.textContent = '🔔 访客中心';
-      }
-    }
+    updateVisitorBadge();
   }
   setInterval(tickVisitors, 60000);
 
   // 初始没有访客时预先刷新一位
   if (state.visitors.length === 0) {
     spawnVisitor();
+  }
+}
+
+// 访客到期徽章（模块级，供 handleCollectReturn 和 tickVisitors 共享）
+function updateVisitorBadge() {
+  const btn = document.getElementById('tab-visitors');
+  if (!btn) return;
+  const oldBadge = btn.querySelector('.visitor-badge');
+  if (oldBadge) oldBadge.remove();
+
+  const dueCount = state.visitors.filter(v => v.status === 'due').length;
+  if (dueCount > 0 && currentTab !== 'visitors') {
+    const badge = document.createElement('span');
+    badge.className = 'visitor-badge absolute -top-1.5 -right-1.5 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-md animate-scale-in';
+    badge.textContent = dueCount > 9 ? '9+' : dueCount;
+    btn.style.position = 'relative';
+    btn.appendChild(badge);
   }
 }
 

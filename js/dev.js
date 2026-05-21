@@ -1,8 +1,13 @@
 // Dev Panel —— 隐藏在右下角齿轮图标，点击打开调试面板
 import { state, saveState } from './state.js';
 import { addCoins, addAtmosphere, addHistory } from './storage.js';
-import { renderFocusPage, showBookCompleteAnimation, renderVisitorsPage, updateStatusBar } from './render/index.js';
+import { addDiaryEntry } from './diary.js';
+import { renderFocusPage, showBookCompleteAnimation, showBookShelvingAnimation, renderVisitorsPage, updateStatusBar } from './render/index.js';
+import { showCertificate } from './render/certificate.js';
 import { spawnVisitor, onTimeSkip, visitorForceReturn as doForceReturn, visitorReset as doReset } from './visitors.js';
+import { SHARED_POOL } from '../data/book_pool.js';
+import { purchasePlanePortal, getBookCapacity, getOwnedBookCount } from './shop.js';
+import { PLANES, canUnlockPlane } from '../data/planes.js';
 
 window.__devTimeOffset = window.__devTimeOffset || 0;
 window.__dev = {};
@@ -48,6 +53,12 @@ const PANEL_HTML = `
 
       <button id="dev-complete-current" class="w-full px-3 py-2 bg-green-100 border border-green-300 rounded-lg text-sm font-bold hover:bg-green-200">
         ✅ 完成当前书籍
+      </button>
+
+      <hr class="border-magic-gold/30">
+
+      <button id="dev-unlock-plane" class="w-full px-3 py-2 bg-amber-100 border border-amber-400 rounded-lg text-sm font-bold hover:bg-amber-200">
+        🌾 一键解锁田园位面
       </button>
 
       <hr class="border-red-200">
@@ -165,15 +176,26 @@ function completeCurrentBook() {
   addAtmosphere(book.totalWords < 30000 ? 3 : book.totalWords < 100000 ? 6 : 10);
   addCoins(50);
   addHistory('system', `🔧 Dev: 完成《${book.title}》`);
+  addDiaryEntry('book_complete', { title: book.title });
   saveState();
 
-  // 关闭 dev 面板，展示完成动画
+  // 关闭 dev 面板，展示完成动画/证书 → 上架动画
   const panel = document.getElementById('dev-overlay');
   if (panel) panel.classList.add('hidden');
-  showBookCompleteAnimation(book.title, book.emoji, bs.copyCount, () => {
-    renderFocusPage();
-    updateStatusBar();
-  });
+
+  const isFirstBook = !state.tutorialFlags.firstBookComplete;
+  const afterCeremony = () => {
+    showBookShelvingAnimation(book, () => {
+      renderFocusPage();
+      updateStatusBar();
+    });
+  };
+
+  if (isFirstBook) {
+    showCertificate(book, afterCeremony);
+  } else {
+    showBookCompleteAnimation(book.title, book.emoji, bs.copyCount, afterCeremony);
+  }
   updateStatusLine();
 }
 
@@ -204,6 +226,67 @@ function visitorReset() {
   addHistory('system', '🔧 Dev: 重置所有访客状态');
   renderVisitorsPage();
   updateStatusLine();
+}
+
+function unlockPastoralPlane() {
+  const plane = PLANES.pastoral;
+  if (!plane) return;
+
+  // 1. 确保氛围 ≥80
+  if ((state.library.atmosphere || 0) < 80) {
+    const needed = 80 - (state.library.atmosphere || 0);
+    addAtmosphere(needed);
+    addHistory('system', `🔧 Dev: 氛围 +${needed}（达到80）`);
+  }
+
+  // 2. 确保拥有 ≥12 本书
+  const ownedBooks = Object.values(state.books || {}).filter(b => b && b.status !== 'locked');
+  if (ownedBooks.length < 12) {
+    const needed = 12 - ownedBooks.length;
+    const available = SHARED_POOL.filter(b => {
+      const bs = state.books[b.bookId];
+      return !bs || bs.status === 'locked';
+    });
+    let added = 0;
+    for (const entry of available) {
+      if (added >= needed) break;
+      state.books[entry.bookId] = {
+        unlockedChapters: [1],
+        copyCount: 0, masteryLevel: 0, copiedWords: 0,
+        status: 'unlocked', starred: false, damaged: false, repairWords: 0
+      };
+      added++;
+    }
+    addHistory('system', `🔧 Dev: 解锁 ${added} 本书（总数达到12本）`);
+  }
+
+  // 3. 确保足够智慧之光购买传送门
+  if (state.coins < 2000) {
+    const needed = 2000 - state.coins;
+    addCoins(needed);
+    addHistory('system', `🔧 Dev: +${needed}智慧之光`);
+  }
+
+  saveState();
+
+  // 4. 购买传送门
+  if (!state.library.planePortals || !state.library.planePortals[plane.unlock.shopUpgrade]) {
+    const result = purchasePlanePortal('pastoral');
+    if (result) {
+      addHistory('system', '🔧 Dev: 田园位面传送门已开启！');
+    }
+  } else {
+    addHistory('system', '🔧 Dev: 田园位面传送门已存在，跳过购买');
+  }
+
+  updateStatusLine();
+  // 关闭面板
+  const panel = document.getElementById('dev-overlay');
+  if (panel) panel.classList.add('hidden');
+  // 切换到档案→位面
+  if (typeof window.switchTab === 'function') {
+    window.switchTab('archive');
+  }
 }
 
 function resetAllData() {
@@ -263,6 +346,7 @@ export function installDevPanel() {
   document.getElementById('dev-visitor-spawn').addEventListener('click', visitorSpawn);
   document.getElementById('dev-visitor-return').addEventListener('click', visitorForceReturn);
   document.getElementById('dev-visitor-reset').addEventListener('click', visitorReset);
+  document.getElementById('dev-unlock-plane').addEventListener('click', unlockPastoralPlane);
   document.getElementById('dev-reset-all').addEventListener('click', resetAllData);
 
   // 键盘快捷键 Ctrl+Shift+D 也可以开关
