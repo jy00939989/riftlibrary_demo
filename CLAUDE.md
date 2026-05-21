@@ -25,6 +25,10 @@ data/                   ← 静态数据（不依赖任何模块）
   book_pool.js          ← 商店/里程碑共享池（17本，含 plane 字段）
   atmosphere.js         ← 5 阶段氛围描述（废墟→星辰，0~500）
   planes.js             ← 位面定义（星界归墟 + 田园瘟疫纪事 + 占位）
+  plants.js             ← 植物类型 + 种子兑换
+  signboards.js         ← 标志牌定义
+  quests/               ← 位面任务静态数据
+    pastoral_tasks.js   ← 田园瘟疫纪事任务（Phase 1：小艾拉 Stage 1）
 
 audio/                  ← 音频素材
   7 首 BGM（3层氛围 ×2变奏）+ 1 部开场PV
@@ -44,8 +48,9 @@ js/                     ← 逻辑层
   tutorial.js           ← 教程引擎：情境触发检测 + 首遇标记管理（纯逻辑，不碰DOM）
   intro.js              ← 开场引导：5步卡片式引导 + PV开场（从 app.js 提取）
   visitors.js           ← 访客逻辑（纯逻辑，不碰DOM）
-  shop.js               ← 商店逻辑：借阅区/缮写室升级 + 书籍刷新/购买
+  shop.js               ← 商店逻辑：借阅区/缮写室升级 + 书籍刷新/购买 + 书架容量
   books.js              ← 书籍解锁/进度计算
+  quests.js             ← 位面任务引擎：访客队列/任务生命周期/Stage推进
   achievements.js       ← 成就引擎：31 成就定义 + 条件判定 + toast
   collection.js         ← 收集系统：4 类收集品（含位面档案）
   dailytasks.js         ← 今日馆务：每日三任务 + 全勤奖励
@@ -58,8 +63,10 @@ js/                     ← 逻辑层
     bookshelf.js        ← 大书库 + 筛选 + mastery 弹窗
     visitors.js         ← 读者沙龙 + 事件弹窗
     library.js          ← 馆长办公室（子标签：概况/成就柜/收藏室/布置/馆长手册）
-    archive.js          ← 馆史档案 + 墨墨日志子标签
-    shop.js             ← 位面商店（借阅区/缮写室升级 + 新书购买）
+    archive.js          ← 馆史档案 + 墨墨日志 + 位面子标签
+    shop.js             ← 位面商店（借阅区/缮写室升级 + 新书购买 + 传送门）
+    plane.js            ← 位面详情页（时间线 + 角色 + 信物 + 墨墨评论）
+    quests.js           ← 角色卡片 + 信函弹窗（任务接取/回信提交）
     achievements.js     ← 成就柜 UI 网格 + toast 通知
     collection.js       ← 收藏室 UI
     tutorial-ui.js      ← 教程 UI：情境引导卡片 + 氛围/缮写室/借阅区升级弹窗
@@ -225,11 +232,15 @@ state.js (单一数据源) → app.js (编排层) → render/ (DOM层)
   - **位面骨架**：新建 `data/planes.js`（位面定义）、`state.quests` 状态+迁移、收藏室三个占位合并为「位面档案」入口
   - **修复**：缮写室书籍筛选覆盖 `copying` 状态、成就「墨香来客」移除启动扫描误触发、开始专注时 `unlocked→copying` 状态转换、小王子初始 copiedWords 改为 11500
   - 修改：`js/app.js`、`js/state.js`、`js/visitors.js`、`js/plants.js`、`js/render/focus.js`、`js/render/visitors.js`、`js/render/bookshelf.js`、`js/render/collection.js`、`js/render/shop.js`、`js/collection.js`、`css/style.css`、`index.html`
+- **七期增量（2026-05-21）**：位面系统 Phase 1 框架搭建
+  - **新建**：`data/quests/pastoral_tasks.js`（小艾拉 Stage 1 的 4 条任务）、`js/quests.js`（任务引擎：独立访客队列 + 任务生命周期 + Stage 推进 + 防重入）、`js/render/plane.js`（位面详情页：时间线 + 角色列表 + 信物 + 墨墨评论）、`js/render/quests.js`（角色卡片 + 信函弹窗）
+  - **改造**：`js/render/archive.js`（新增「🌍 位面」子标签 + 位面列表）、`js/state.js`（quests.pastoral 完整字段 + 旧档迁移补丁）、`js/app.js`（tickPlaneVisitors + checkTaskCompletion 接入）、`js/shop.js`（purchasePlanePortal → unlockPlane + 书架容量检查）、`js/visitors.js`（buySalesBook 容量检查）、`js/plants.js`（exchangeSeed 容量检查）、`js/dev.js`（一键解锁田园位面按钮）、`data/planes.js`（characters/mementos 补充 unlockStage 字段 + canUnlockPlane 修复）
+  - **文档**：`docs/design/PLANE_SYSTEM_FEEDBACK_2026-05-21.md`（测试反馈三个问题）、`docs/changelog/CHANGELOG_2026-05-21.md`
 
 ## 待实现
 
 - 访客好感度等级系统及信物收集
-- 位面系统完整实现（田园瘟疫纪事剧情链、任务系统、信件收藏）
+- 位面系统后续内容（田园瘟疫纪事全角色全阶段任务、信件收藏、传送门升级、角色到访动画），详见 `docs/design/PLANE_SYSTEM_FEEDBACK_2026-05-21.md`
 - 店占位升级项实体化（古籍修复室、咖啡角、研究区、位面串门、书籍漂流、联合修复）
 - 阿九推销书池改造（SALE_BOOKS 仍为虚构空壳书）
 - 古籍修复机制（damaged/repairWords 尚未接入游戏循环）
@@ -254,12 +265,16 @@ docs/
 │   ├── AUDIO_SYSTEM_DESIGN.md
 │   ├── SHOP_SYSTEM_DESIGN.md
 │   ├── BOOK_TEMPLATE.md           （Agent 用书籍数据模板）
-│   └── MODIFY_AUDIO_SYSTEM.md
+│   ├── MODIFY_AUDIO_SYSTEM.md
+│   ├── PLANE_SYSTEM_DESIGN.md     （位面系统架构设计）
+│   ├── PLANE_SYSTEM_REVIEW.md     （位面系统设计审查报告）
+│   └── PLANE_SYSTEM_FEEDBACK_2026-05-21.md  （位面系统测试反馈）
 ├── changelog/        ← 变更日志
 │   ├── CHANGELOG_2026-05-10.md
 │   ├── CHANGELOG_2026-05-14.md
 │   ├── CHANGELOG_2026-05-15.md    （五期：教程系统）
-│   └── CHANGELOG_2026-05-16.md    （六期：UI优化+还书+今日馆务+位面骨架）
+│   ├── CHANGELOG_2026-05-16.md    （六期：UI优化+还书+今日馆务+位面骨架）
+│   └── CHANGELOG_2026-05-21.md    （七期：位面系统Phase 1框架）
 ├── demo/             ← Demo 演示
 │   └── DEMO_SCRIPT_5MIN.md
 ├── diary/            ← 工作日志
