@@ -1,0 +1,250 @@
+// 商店业务逻辑 —— 状态管理 + 刷新判定 + 购买操作（不碰 DOM）
+import { state, saveState } from './state.js';
+import { spendCoins, addHistory, addAtmosphere } from './storage.js';
+import { SHARED_POOL } from '../data/book_pool.js';
+import { SIGNBOARDS } from '../data/signboards.js';
+import { PLANES, canUnlockPlane } from '../data/planes.js';
+import { unlockPlane } from './quests.js';
+
+function getNow() {
+  return window.__dev?.getNow?.() || Date.now();
+}
+
+// 模块级状态，不持久化（技术债）
+const shopState = {
+  fixed: [],
+  rotating: [],
+  lastRefresh: 0
+};
+
+function rand(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+export function getAvailableBooks() {
+  return SHARED_POOL.filter(b => {
+    const bs = state.books[b.bookId];
+    return !bs || bs.status === 'locked';
+  });
+}
+
+export function getShopState() {
+  return shopState;
+}
+
+export function ensureShopState() {
+  const now = getNow();
+  const expired = !shopState.lastRefresh || (now - shopState.lastRefresh) >= 24 * 3600 * 1000;
+
+  if (expired) {
+    const available = getAvailableBooks();
+    const shuffled = shuffle(available);
+
+    // 固定区5本
+    shopState.fixed = shuffled.slice(0, 5).map(b => ({
+      bookId: b.bookId,
+      price: rand(500, 800),
+      soldAt: null
+    }));
+
+    // 特价区3本（从 shuffle 里取，与固定区不重复）
+    shopState.rotating = shuffled.slice(5, 8).map(b => {
+      const originalPrice = rand(500, 800);
+      const discount = rand(30, 70) / 100;
+      return {
+        bookId: b.bookId,
+        originalPrice,
+        discount,
+        price: Math.floor(originalPrice * discount),
+        soldAt: null
+      };
+    });
+
+    shopState.lastRefresh = now;
+  }
+
+  // 单本补货检查（全刷新后的补货窗口）
+  shopState.fixed.forEach(slot => {
+    if (slot.soldAt && (now - slot.soldAt) >= 24 * 3600 * 1000) {
+      const available = getAvailableBooks();
+      const usedIds = [...shopState.fixed, ...shopState.rotating]
+        .filter(s => s.bookId && !s.soldAt)
+        .map(s => s.bookId);
+      const newBook = available.find(b => !usedIds.includes(b.bookId));
+      if (newBook) {
+        Object.assign(slot, { bookId: newBook.bookId, price: rand(500, 800), soldAt: null });
+      }
+    }
+  });
+
+  // 轮换区单本补货同理
+  shopState.rotating.forEach(slot => {
+    if (slot.soldAt && (now - slot.soldAt) >= 24 * 3600 * 1000) {
+      const available = getAvailableBooks();
+      const usedIds = [...shopState.fixed, ...shopState.rotating]
+        .filter(s => s.bookId && !s.soldAt)
+        .map(s => s.bookId);
+      const newBook = available.find(b => !usedIds.includes(b.bookId));
+      if (newBook) {
+        const originalPrice = rand(500, 800);
+        const discount = rand(30, 70) / 100;
+        Object.assign(slot, {
+          bookId: newBook.bookId,
+          originalPrice,
+          discount,
+          price: Math.floor(originalPrice * discount),
+          soldAt: null
+        });
+      } else {
+        slot.bookId = null; // 池空，占位
+      }
+    }
+  });
+}
+
+export function purchaseBook(bookId, price) {
+  if (state.coins < price) return false;
+  if (state.books[bookId] && state.books[bookId].status !== 'locked') return false;
+  if (isBookCapacityFull()) return false;
+
+  spendCoins(price);
+
+  state.books[bookId] = {
+    unlockedChapters: [1],
+    copyCount: 0,
+    masteryLevel: 0,
+    copiedWords: 0,
+    status: 'unlocked',
+    starred: false,
+    damaged: false,
+    repairWords: 0
+  };
+
+  const poolEntry = SHARED_POOL.find(b => b.bookId === bookId);
+  const title = poolEntry ? poolEntry.title : bookId;
+  addHistory('purchase', `购买《${title}》`, `花费${price}智慧之光`);
+
+  // 标记已售出
+  const now = getNow();
+  shopState.fixed.forEach(slot => {
+    if (slot.bookId === bookId && !slot.soldAt) slot.soldAt = now;
+  });
+  shopState.rotating.forEach(slot => {
+    if (slot.bookId === bookId && !slot.soldAt) slot.soldAt = now;
+  });
+
+  saveState();
+  return true;
+}
+
+// 借阅区价格：500 × 1.5^(n-1)，封顶 5700
+export function getBorrowLevelPrice() {
+  const n = state.library.borrowLevel || 0; // n = 当前等级，升级到 n+1
+  return Math.min(5700, Math.round(500 * Math.pow(1.5, n)));
+}
+
+export function upgradeBorrowLevel() {
+  const price = getBorrowLevelPrice();
+  if (state.library.borrowLevel >= 7) return false;
+  if (!spendCoins(price)) return false;
+
+  state.library.borrowLevel += 1;
+  addAtmosphere(15);
+  addHistory('purchase', `借阅区升至 Lv.${state.library.borrowLevel}`, `花费${price}智慧之光 · +15氛围`);
+  saveState();
+  return true;
+}
+
+// 缮写室速率倍率：每级 +5%
+export function getFocusSpeedMultiplier() {
+  return 1 + (state.library.focusLevel || 0) * 0.05;
+}
+
+// 缮写室价格：400 × 1.45^(n-1)，封顶 5000
+export function getFocusLevelPrice() {
+  const n = state.library.focusLevel || 0;
+  return Math.min(5000, Math.round(400 * Math.pow(1.45, n)));
+}
+
+export function upgradeFocusLevel() {
+  const price = getFocusLevelPrice();
+  if (state.library.focusLevel >= 6) return false;
+  if (!spendCoins(price)) return false;
+
+  state.library.focusLevel += 1;
+  addAtmosphere(15);
+  addHistory('purchase', `缮写室升至 Lv.${state.library.focusLevel}`, `花费${price}智慧之光 · +15氛围`);
+  saveState();
+  return true;
+}
+
+// 位面传送门价格
+export function getPlanePortalPrice(planeId) {
+  const plane = PLANES[planeId];
+  if (!plane || !plane.unlock) return 0;
+  if (state.library.planePortals && state.library.planePortals[plane.unlock.shopUpgrade]) return 0;
+  const bookPrice = 800;
+  return bookPrice * 2 + 400;
+}
+
+// 位面传送门购买
+export function purchasePlanePortal(planeId) {
+  const plane = PLANES[planeId];
+  if (!plane || !plane.unlock) return false;
+
+  const portalKey = plane.unlock.shopUpgrade;
+  if (state.library.planePortals && state.library.planePortals[portalKey]) return false;
+
+  if (!canUnlockPlane(planeId, state)) return false;
+
+  const price = getPlanePortalPrice(planeId);
+  if (!spendCoins(price)) return false;
+
+  if (!state.library.planePortals) state.library.planePortals = {};
+  state.library.planePortals[portalKey] = { purchased: true, purchasedAt: getNow() };
+
+  addAtmosphere(10);
+  addHistory('purchase', `🌌 开启位面传送门：${plane.name}`, `花费${price}智慧之光 · +10氛围`);
+
+  unlockPlane(planeId);
+  saveState();
+  return true;
+}
+
+// 标志牌购买
+export function purchaseSignboard(signboardId) {
+  const def = SIGNBOARDS[signboardId];
+  if (!def) return false;
+  if (state.signboards.includes(signboardId)) return false;
+  if (!spendCoins(def.price)) return false;
+
+  state.signboards.push(signboardId);
+  addHistory('purchase', `购置标志牌「${def.name}」`, `花费${def.price}智慧之光`);
+  saveState();
+  return true;
+}
+
+// ========== 书架容量 ==========
+
+const SHELF_CAPACITY = 5;
+
+export function getBookCapacity() {
+  return (state.library.shelves || [1]).length * SHELF_CAPACITY;
+}
+
+export function getOwnedBookCount() {
+  return Object.values(state.books || {}).filter(b => b && b.status !== 'locked').length;
+}
+
+export function isBookCapacityFull() {
+  return getOwnedBookCount() >= getBookCapacity();
+}
