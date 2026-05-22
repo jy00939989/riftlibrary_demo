@@ -1,0 +1,14 @@
+{
+  "name": "isekai-library",
+  "version": "1.0.0",
+  "description": "异世界图书馆 —— 番茄钟专注计时 + 书籍收集 + NPC 访客模拟 + 位面系统",
+  "private": true,
+  "scripts": {
+    "dev": "python3 -m http.server 8080",
+    "dev:node": "npx serve . -p 8080 --no-clipboard"
+  },
+  "keywords": ["game", "pomodoro", "library", "frontend", "fantasy"],
+  "author": "图南",
+  "license": "UNLICENSED",
+  "devDependencies": {}
+}
