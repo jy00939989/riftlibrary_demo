@@ -799,3 +799,23 @@ body {
     gap: 0.5rem;
   }
 }
+
+/* ========== 新手引导任务卡片 ========== */
+
+#guide-quest-widget {
+  font-family: 'Noto Serif SC', serif;
+}
+
+#guide-quest-widget .parchment-bg {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+@keyframes quest-glow {
+  0%, 100% { box-shadow: 0 4px 24px rgba(201,162,39,0.15); }
+  50% { box-shadow: 0 4px 36px rgba(201,162,39,0.35); }
+}
+
+#guide-quest-widget.quest-complete {
+  animation: quest-glow 1.5s ease-in-out 3;
+}

@@ -23,6 +23,8 @@ import { checkAndShowTutorial } from './tutorial.js';
 import { dispatchTutorialUI, showBorrowAreaUpgrade } from './render/tutorial-ui.js';
 import { showCertificate } from './render/certificate.js';
 import { ensureDailyTasks, markTaskDone, claimAllDoneBonus } from './dailytasks.js';
+import { ensureGuideQuests, checkGuideQuest, tryCompleteAllDone, getQuestProgress } from './guidequests.js';
+import { renderGuideQuestWidget, showQuestCompleteToast } from './render/index.js';
 
 function getNow() {
   return window.__dev && window.__dev.getNow ? window.__dev.getNow() : Date.now();
@@ -39,6 +41,24 @@ const MILESTONES = [
   { words: 800000 },
   { words: 1200000 }
 ];
+
+// ========== 引导任务检测辅助 ==========
+
+function triggerQuestCheck(event) {
+  const result = checkGuideQuest(event);
+  if (result && result.completed) {
+    showQuestCompleteToast(result.completed);
+  }
+  renderGuideQuestWidget();
+  // 如果刚完成了第9个任务，检查第10个
+  if (result && result.completed && result.completed.id === 'q09') {
+    const finalResult = tryCompleteAllDone();
+    if (finalResult && finalResult.completed) {
+      showQuestCompleteToast(finalResult.completed);
+      renderGuideQuestWidget();
+    }
+  }
+}
 
 // ========== 全局操作 ==========
 
@@ -67,9 +87,13 @@ function handleStartFocus() {
 
   // 首次专注：墨墨出场
   if (isFirstFocusEver) {
-    showMomoIntro(doStart);
+    showMomoIntro(() => {
+      doStart();
+      triggerQuestCheck('focus_start');
+    });
   } else {
     doStart();
+    triggerQuestCheck('focus_start');
   }
 }
 
@@ -226,8 +250,15 @@ function handleCompleteFocus(isAuto = false) {
         const vAchResults = checkAchievements('visitor_arrive');
         showAchievementBatch(vAchResults);
         showVisitorArrivalCard(visitor);
+        triggerQuestCheck('visitor_arrive');
       }
     }
+  }
+
+  // 引导任务检测
+  triggerQuestCheck('focus_complete');
+  if (bookCompleted) {
+    triggerQuestCheck('book_complete');
   }
 }
 
@@ -293,7 +324,8 @@ function handlePostFocusEffects(effects) {
       };
     }
     // 完成时吸引访客
-    spawnVisitor();
+    const bv = spawnVisitor();
+    if (bv) triggerQuestCheck('visitor_arrive');
   }
 
   next();
@@ -539,6 +571,7 @@ function handleUpgradeBorrowLevel() {
   renderShopPage();
   renderVisitorsPage();
   showBorrowAreaUpgrade(state.library.borrowLevel);
+  triggerQuestCheck('borrow_upgrade');
 }
 
 setActions({
@@ -579,6 +612,13 @@ window.switchTab = function(tabName) {
   if (page) page.classList.remove('hidden');
 
   renderCurrentTab();
+
+  // 引导任务：首次进入大书库 / 商店
+  if (tabName === 'bookshelf') {
+    triggerQuestCheck('tab_bookshelf');
+  } else if (tabName === 'shop') {
+    triggerQuestCheck('tab_shop');
+  }
 
   // 首次打开商店/馆长办公室时触发教学
   if (tabName === 'shop' || tabName === 'library') {
@@ -638,9 +678,15 @@ function init() {
   checkWither(); // 72小时离线凋谢检测
   tryGenerateDailySummary(); // 每日回顾：昨天有活动则生成一篇墨墨日志
 
-  // 新手引导
+  // 引导任务初始化
+  ensureGuideQuests();
+  renderGuideQuestWidget();
+
+  // 新手开场引导
   if (!state.introCompleted) {
-    showIntro();
+    showIntro(() => {
+      triggerQuestCheck('intro_complete');
+    });
   }
 
   // 启动后全量检测一次成就（氛围、累计天数等）并弹通知

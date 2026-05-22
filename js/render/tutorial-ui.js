@@ -45,15 +45,15 @@ function makeOverlay(innerHTML, opts = {}) {
 export function showFocusCompleteGuide(callback) {
   const { overlay, card, dismiss } = makeOverlay(`
     <div class="text-5xl mb-4">💰</div>
-    <h3 class="font-display text-xl font-bold mb-2">专注完成！</h3>
-    <p class="text-ink-light leading-relaxed mb-3 text-sm">
+    <h3 class="font-display text-2xl font-bold mb-2">专注完成！</h3>
+    <p class="text-ink-light leading-relaxed mb-3 text-base">
       每次专注誊抄都会获得<strong class="text-magic-gold">智慧之光</strong>——这座图书馆的通用货币，
       用来买书、升级设施。<br>
       完成整本书籍、达成里程碑、访客还书等成就会积累
       <strong class="text-magic-blue">氛围值</strong>——代表图书馆的复苏程度。
       氛围达到一定阶段，图书馆会<strong>发生可见的变化</strong>。
     </p>
-    <p class="text-xs text-ink-light mb-4">✨ 连续专注天数越多，成就和惊喜越多</p>
+    <p class="text-sm text-ink-light mb-4">✨ 连续专注天数越多，成就和惊喜越多</p>
     <button class="px-6 py-3 bg-magic-gold text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all">知道了 →</button>
   `);
 
@@ -71,14 +71,14 @@ export function showFocusCompleteGuide(callback) {
 export function showVisitorArriveGuide(callback) {
   const { overlay, card, dismiss } = makeOverlay(`
     <div class="text-5xl mb-4">👥</div>
-    <h3 class="font-display text-xl font-bold mb-2">第一位访客来了！</h3>
-    <p class="text-ink-light leading-relaxed mb-3 text-sm">
+    <h3 class="font-display text-2xl font-bold mb-2">第一位访客来了！</h3>
+    <p class="text-ink-light leading-relaxed mb-3 text-base">
       访客会在图书馆里<strong>浏览书架</strong>，借走你已完成的书。<br>
       还书时他们会带来<strong class="text-magic-gold">智慧之光</strong>、
       <strong class="text-magic-blue">氛围值</strong>，
       还可能触发<strong>特殊事件</strong>——赠书、藏宝图、诗篇……
     </p>
-    <p class="text-xs text-ink-light mb-4">☕ 在「读者沙龙」查看访客状态，及时收取归还的书籍</p>
+    <p class="text-sm text-ink-light mb-4">☕ 在「读者沙龙」查看访客状态，及时收取归还的书籍</p>
     <button class="px-6 py-3 bg-magic-gold text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all">去看看 →</button>
   `);
 
@@ -97,11 +97,11 @@ export function showVisitorArriveGuide(callback) {
 export function showShopOpenGuide(callback) {
   const { overlay, card, dismiss } = makeOverlay(`
     <div class="text-5xl mb-4">🌌</div>
-    <h3 class="font-display text-xl font-bold mb-2">位面商店</h3>
-    <p class="text-ink-light leading-relaxed mb-3 text-sm">
+    <h3 class="font-display text-2xl font-bold mb-2">位面商店</h3>
+    <p class="text-ink-light leading-relaxed mb-3 text-base">
       在这里你可以用智慧之光<strong>升级图书馆设施</strong>：
     </p>
-    <div class="text-left text-sm text-ink-light mb-3 space-y-1">
+    <div class="text-left text-base text-ink-light mb-3 space-y-1">
       <div>🏛️ <strong>借阅区升级</strong> — 增加访客容量，提升还书收益</div>
       <div>🖋️ <strong>缮写室升级</strong> — 提升誊抄速度</div>
       <div>🏺 <strong>馆内装潢</strong> — 植物盆栽、标志牌</div>
@@ -124,11 +124,11 @@ export function showShopOpenGuide(callback) {
 export function showLibraryOpenGuide(callback) {
   const { overlay, card, dismiss } = makeOverlay(`
     <div class="text-5xl mb-4">🏛️</div>
-    <h3 class="font-display text-xl font-bold mb-2">馆长办公室</h3>
-    <p class="text-ink-light leading-relaxed mb-3 text-sm">
+    <h3 class="font-display text-2xl font-bold mb-2">馆长办公室</h3>
+    <p class="text-ink-light leading-relaxed mb-3 text-base">
       这里是你的管理中枢，顶部有 5 个子标签：
     </p>
-    <div class="text-left text-sm text-ink-light mb-3 space-y-1.5">
+    <div class="text-left text-base text-ink-light mb-3 space-y-1.5">
       <div>📊 <strong>概况</strong> — 图书馆数据总览，氛围进度，修改馆名</div>
       <div>🏆 <strong>成就柜</strong> — 查看已解锁成就和未达成条件</div>
       <div>📦 <strong>收藏室</strong> — 浏览收集品进度</div>
@@ -166,8 +166,8 @@ function showUpgradeCard({ imageUrl, badge, title, narrative, footer, onDismiss 
     <div class="px-6 pb-6 pt-2 text-center">
       <h2 class="font-display text-2xl font-bold mb-3">${title}</h2>
       <div class="w-12 h-1 bg-magic-gold mx-auto mb-4 rounded-full"></div>
-      <div class="text-ink leading-relaxed mb-5 text-sm text-left">${narrative}</div>
-      ${footer ? `<div class="text-xs text-ink-light mb-4">${footer}</div>` : ''}
+      <div class="text-ink leading-relaxed mb-5 text-base text-left">${narrative}</div>
+      ${footer ? `<div class="text-sm text-ink-light mb-4">${footer}</div>` : ''}
       <button class="px-8 py-3 bg-magic-gold text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all text-base">继续 →</button>
     </div>
   `;

@@ -147,7 +147,13 @@ export const state = {
   },
 
   // 熟客池：位面完成后注册的访客（visitors.js 和 quests.js 通过此字段桥接）
-  familiarVisitors: {}
+  familiarVisitors: {},
+
+  // 新手引导任务链（10步线性任务）
+  guideQuests: {
+    completed: [],
+    allCompleted: false
+  }
 };
 
 // 默认书籍状态（新增/变更书籍时同步更新此处）
@@ -350,6 +356,9 @@ export function initState() {
       }
       if (!state.familiarVisitors) {
         state.familiarVisitors = {};
+      }
+      if (!state.guideQuests) {
+        state.guideQuests = { completed: [], allCompleted: false };
       }
       saveState(); // 迁移后立即持久化
       return true;

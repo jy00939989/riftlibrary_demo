@@ -1,7 +1,7 @@
 // 新手开场引导 —— 3 步卡片式引导 + PV 开场
 import { state, saveState } from './state.js';
 
-export function showIntro() {
+export function showIntro(onComplete) {
   const steps = [
     {
       emoji: '🏚️',
@@ -184,6 +184,7 @@ export function showIntro() {
       state.introCompleted = true;
       saveState();
       showExploreHint();
+      if (onComplete) onComplete();
     }, 300);
   }
 
