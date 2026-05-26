@@ -5,6 +5,7 @@ import { el, h, formatTime, actions, updateStatusBar } from './common.js';
 import { startWriting, pauseWriting, resumeWriting, stopWriting, isWriting } from './writing.js';
 import { isMomoAccelerating } from '../timer.js';
 import { ensureDailyTasks, claimAllDoneBonus } from '../dailytasks.js';
+import { getActiveChapterTaskForBook } from '../quests.js';
 
 // 缮写室素材
 const FOCUS_IMG_NAMES = [
@@ -68,6 +69,12 @@ export function renderFocusPage() {
   // 控制按钮
   card.appendChild(renderControls(sess));
 
+  // 位面任务章节指示器
+  if (sess.bookId && book) {
+    const indicator = renderQuestChapterIndicator(sess, book);
+    if (indicator) card.appendChild(indicator);
+  }
+
   // 本书誊抄进度条
   if (sess.bookId && book) {
     card.appendChild(renderBookProgress(sess, book));
@@ -90,7 +97,10 @@ function updateActiveControlsDOM(sess) {
   }
   if (sess.paused) pauseWriting(); else resumeWriting();
   // 实时更新进度条和字数显示
-  if (sess.bookId) updateBookProgressDOM(sess);
+  if (sess.bookId) {
+    updateBookProgressDOM(sess);
+    updateQuestChapterIndicatorDOM(sess);
+  }
 }
 
 function updateBookProgressDOM(sess) {
@@ -384,6 +394,77 @@ function renderControls(sess) {
   }
 
   return div;
+}
+
+// ========== 位面任务章节指示器 ==========
+
+function renderQuestChapterIndicator(sess, book) {
+  const questInfo = getActiveChapterTaskForBook(sess.bookId);
+  if (!questInfo) return null;
+
+  const bs = state.books[sess.bookId];
+  const copiedWords = bs?.copiedWords || 0;
+  const chapter = book.chapters[questInfo.chapterIdx];
+  if (!chapter) return null;
+
+  const chapterNum = questInfo.chapterIdx + 1;
+  const alreadyUnlocked = bs?.unlockedChapters?.includes(chapterNum);
+  const wordsNeeded = Math.max(0, (chapter.unlockAt || 0) - copiedWords);
+
+  const div = el('div', 'mt-3 mb-1');
+  div.id = 'quest-chapter-indicator';
+
+  if (alreadyUnlocked) {
+    div.innerHTML = `
+      <div class="flex items-center gap-2 text-xs bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+        <span>✅</span>
+        <span class="text-green-800">第${chapterNum}章「${chapter.title}」已解锁！去<a href="#" class="underline font-bold text-magic-blue" onclick="window.switchTab('archive')">位面页面</a>回信提交吧</span>
+      </div>
+    `;
+  } else {
+    div.innerHTML = `
+      <div class="flex items-center gap-2 text-xs bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+        <span>✉️</span>
+        <span class="text-amber-900">正在为 <b>${questInfo.characterEmoji} ${questInfo.characterName}</b> 誊抄第${chapterNum}章「${chapter.title}」 · 还需约 <b>${wordsNeeded.toLocaleString()}</b> 字解锁</span>
+      </div>
+    `;
+  }
+
+  return div;
+}
+
+function updateQuestChapterIndicatorDOM(sess) {
+  const div = document.getElementById('quest-chapter-indicator');
+  if (!div) return;
+  const book = sess.bookId ? BOOKS[sess.bookId] : null;
+  if (!book) return;
+  const questInfo = getActiveChapterTaskForBook(sess.bookId);
+  if (!questInfo) { div.innerHTML = ''; return; }
+
+  const bs = state.books[sess.bookId];
+  const copiedWords = bs?.copiedWords || 0;
+  const chapter = book.chapters[questInfo.chapterIdx];
+  if (!chapter) return;
+
+  const chapterNum = questInfo.chapterIdx + 1;
+  const alreadyUnlocked = bs?.unlockedChapters?.includes(chapterNum);
+  const wordsNeeded = Math.max(0, (chapter.unlockAt || 0) - copiedWords);
+
+  if (alreadyUnlocked) {
+    div.innerHTML = `
+      <div class="flex items-center gap-2 text-xs bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+        <span>✅</span>
+        <span class="text-green-800">第${chapterNum}章「${chapter.title}」已解锁！去<a href="#" class="underline font-bold text-magic-blue" onclick="window.switchTab('archive')">位面页面</a>回信提交吧</span>
+      </div>
+    `;
+  } else {
+    div.innerHTML = `
+      <div class="flex items-center gap-2 text-xs bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+        <span>✉️</span>
+        <span class="text-amber-900">正在为 <b>${questInfo.characterEmoji} ${questInfo.characterName}</b> 誊抄第${chapterNum}章「${chapter.title}」 · 还需约 <b>${wordsNeeded.toLocaleString()}</b> 字解锁</span>
+      </div>
+    `;
+  }
 }
 
 // ========== 本书誊抄进度条 ==========

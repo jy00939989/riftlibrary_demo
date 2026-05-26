@@ -236,11 +236,17 @@ state.js (单一数据源) → app.js (编排层) → render/ (DOM层)
   - **新建**：`data/quests/pastoral_tasks.js`（小艾拉 Stage 1 的 4 条任务）、`js/quests.js`（任务引擎：独立访客队列 + 任务生命周期 + Stage 推进 + 防重入）、`js/render/plane.js`（位面详情页：时间线 + 角色列表 + 信物 + 墨墨评论）、`js/render/quests.js`（角色卡片 + 信函弹窗）
   - **改造**：`js/render/archive.js`（新增「🌍 位面」子标签 + 位面列表）、`js/state.js`（quests.pastoral 完整字段 + 旧档迁移补丁）、`js/app.js`（tickPlaneVisitors + checkTaskCompletion 接入）、`js/shop.js`（purchasePlanePortal → unlockPlane + 书架容量检查）、`js/visitors.js`（buySalesBook 容量检查）、`js/plants.js`（exchangeSeed 容量检查）、`js/dev.js`（一键解锁田园位面按钮）、`data/planes.js`（characters/mementos 补充 unlockStage 字段 + canUnlockPlane 修复）
   - **文档**：`docs/design/PLANE_SYSTEM_FEEDBACK_2026-05-21.md`（测试反馈三个问题）、`docs/changelog/CHANGELOG_2026-05-21.md`
+	- **八期增量（2026-05-26）**：田园位面全角色全阶段任务内容 + 三合一修复
+	  - **任务内容**：`data/quests/pastoral_tasks.js` 扩充至 100 条任务（5 角色 × 5 阶段 × 4 任务），200 封书信约 24,000 字
+	  - **任务兜底（Part A）**：`js/quests.js` 新增 `isTaskConditionMet()`，旧档已满足条件自动完成
+	  - **章节指示器（Part B）**：`js/render/focus.js` 新增章节指示器组件，显示誊抄进度和任务目标
+	  - **书信修复（Part C）**：重写 8 封关键书信，角色以"发现"口吻引用书籍
 
 ## 待实现
 
 - 访客好感度等级系统及信物收集
-- 位面系统后续内容（田园瘟疫纪事全角色全阶段任务、信件收藏、传送门升级、角色到访动画），详见 `docs/design/PLANE_SYSTEM_FEEDBACK_2026-05-21.md`
+- 传送门升级模型（购买后保留入口 + 升级解锁更多位面）
+- 角色到访出场动画（PLANE_SYSTEM_FEEDBACK 问题3）
 - 店占位升级项实体化（古籍修复室、咖啡角、研究区、位面串门、书籍漂流、联合修复）
 - 阿九推销书池改造（SALE_BOOKS 仍为虚构空壳书）
 - 古籍修复机制（damaged/repairWords 尚未接入游戏循环）

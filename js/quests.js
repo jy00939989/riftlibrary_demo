@@ -4,6 +4,7 @@
 import { state, saveState } from './state.js';
 import { PLANES } from '../data/planes.js';
 import { PASTORAL_TASKS } from '../data/quests/pastoral_tasks.js';
+import { BOOKS } from '../data/books.js';
 import { addCoins, addAtmosphere, addHistory } from './storage.js';
 
 const ALL_TASKS = { pastoral: PASTORAL_TASKS };
@@ -43,11 +44,17 @@ export function tickPlaneVisitors(now) {
       if (cd.activeTasks.length === 0 && cd.pendingComplete.length === 0) {
         const nextTask = findNextAvailableTask(planeId, char.id, cd);
         if (nextTask) {
-          cd.activeTasks.push(nextTask.id);
           // 首次见面
           if (!cd.met) {
             cd.met = true;
             addHistory('plane', `🌾 ${char.name} 第一次到访`, '田园瘟疫纪事 · 第一位访客');
+          }
+          // 兜底：如果任务条件已满足（旧档中已解锁/完成），直接标记为可提交
+          if (isTaskConditionMet(nextTask)) {
+            cd.pendingComplete.push(nextTask.id);
+            addHistory('plane', `📝 任务已完成：${nextTask.summary}`, '条件已满足，可直接回信');
+          } else {
+            cd.activeTasks.push(nextTask.id);
           }
         }
       }
@@ -70,6 +77,27 @@ function findNextAvailableTask(planeId, charId, charData) {
   );
   candidates.sort((a, b) => a.order - b.order);
   return candidates[0] || null;
+}
+
+// 检查任务条件是否已满足（旧档兜底：玩家接任务前已解锁/读完/完成对应内容）
+function isTaskConditionMet(taskDef) {
+  const cond = taskDef.condition;
+  if (!cond) return false;
+  const bs = state.books[cond.bookId];
+  if (!bs) return false;
+
+  switch (taskDef.type) {
+    case 'copy_chapter':
+      return bs.unlockedChapters && bs.unlockedChapters.includes(cond.chapterIdx + 1);
+    case 'copy_book':
+      return bs.status === 'completed';
+    case 'read_chapter':
+      return bs.readChapters && bs.readChapters.includes(cond.chapterIdx);
+    case 'collect_seed':
+      return (state.seeds && state.seeds[cond.seedType] || 0) >= (cond.count || 1);
+    default:
+      return false;
+  }
 }
 
 // ========== 任务完成检测 ——— app.js 专注完成 / 阅读章节后调用 ==========
@@ -170,7 +198,12 @@ export function submitTask(planeId, charId, taskId) {
   if (cd.activeTasks.length === 0 && cd.pendingComplete.length === 0) {
     const nextTask = findNextAvailableTask(planeId, charId, cd);
     if (nextTask) {
-      cd.activeTasks.push(nextTask.id);
+      if (isTaskConditionMet(nextTask)) {
+        cd.pendingComplete.push(nextTask.id);
+        addHistory('plane', `📝 任务已完成：${nextTask.summary}`, '条件已满足，可直接回信');
+      } else {
+        cd.activeTasks.push(nextTask.id);
+      }
     }
   }
 
@@ -295,4 +328,34 @@ export function getTaskById(planeId, taskId) {
 
 export function getAllTasks(planeId) {
   return ALL_TASKS[planeId] || [];
+}
+
+// 查询当前某本书是否有位面 copy_chapter 活跃任务（供缮写室指示器使用）
+export function getActiveChapterTaskForBook(bookId) {
+  if (!bookId) return null;
+  for (const planeId of Object.keys(state.quests)) {
+    const pq = state.quests[planeId];
+    if (!pq || !pq.unlocked) continue;
+    const tasks = ALL_TASKS[planeId] || [];
+    for (const charId of Object.keys(pq.characters)) {
+      const cd = pq.characters[charId];
+      if (!cd) continue;
+      for (const taskId of cd.activeTasks) {
+        const taskDef = tasks.find(t => t.id === taskId);
+        if (taskDef && taskDef.type === 'copy_chapter' && taskDef.condition.bookId === bookId) {
+          const plane = PLANES[planeId];
+          const charDef = plane ? plane.characters.find(c => c.id === charId) : null;
+          return {
+            taskId: taskDef.id,
+            characterName: charDef ? charDef.name : charId,
+            characterEmoji: charDef ? charDef.emoji : '',
+            bookTitle: bookId,
+            chapterIdx: taskDef.condition.chapterIdx,
+            summary: taskDef.summary
+          };
+        }
+      }
+    }
+  }
+  return null;
 }
