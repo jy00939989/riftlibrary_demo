@@ -10,7 +10,7 @@ import {
 import { startTimer, togglePauseTimer, abandonTimer, setCompleteCallback } from './timer.js';
 import { BOOKS } from '../data/books.js';
 import { installDevPanel } from './dev.js';
-import { spawnVisitor, tickVisitorBrowsing, checkDueVisitors, collectReturn, buySalesBook, removeVisitor, getVisitorDef } from './visitors.js';
+import { spawnVisitor, tickVisitorBrowsing, checkDueVisitors, collectReturn, buySalesBook, removeVisitor, getVisitorDef, getAuraSpeedBonus, getAuraCoinsMultiplier, getAuraSpawnBonus } from './visitors.js';
 import { upgradeBorrowLevel, getFocusSpeedMultiplier } from './shop.js';
 import { checkAchievements, checkAllOnInit } from './achievements.js';
 import { showAchievementToast } from './render/achievements.js';
@@ -146,7 +146,9 @@ function handleCompleteFocus(isAuto = false) {
   if (!isAuto && sess.intervalId) {
     clearInterval(sess.intervalId);
   }
-  const wordsGained = Math.round(minutes * 100 * getFocusSpeedMultiplier());
+  const bookCategory = sess.bookId ? BOOKS[sess.bookId]?.category : null;
+  const auraSpeed = getAuraSpeedBonus(bookCategory);
+  const wordsGained = Math.round(minutes * 100 * getFocusSpeedMultiplier() * (1 + auraSpeed));
 
   // 更新统计
   const prevTotalWords = state.focus.totalWords;
@@ -202,7 +204,8 @@ function handleCompleteFocus(isAuto = false) {
     }
   }
 
-  const coinsEarned = Math.round(minutes * 0.8);
+  const auraCoinsMult = getAuraCoinsMultiplier();
+  const coinsEarned = Math.round(minutes * 0.8 * (1 + auraCoinsMult));
   addCoins(coinsEarned);
   addHistory('focus', `专注 ${minutes} 分钟`, `誊抄 ${wordsGained.toLocaleString()} 字 · +${coinsEarned}智慧之光`);
 
@@ -253,7 +256,7 @@ function handleCompleteFocus(isAuto = false) {
       }
     } else if (state.tutorialFlags.firstVisitorEventDone) {
       // 后续访客：概率触发（~35%，受氛围加成）
-      const spawnChance = 0.30 + (state.library.atmosphere / 500) * 0.20;
+      const spawnChance = 0.30 + (state.library.atmosphere / 500) * 0.20 + getAuraSpawnBonus();
       if (Math.random() < spawnChance) {
         const visitor = spawnVisitor();
         if (visitor) {
@@ -635,6 +638,11 @@ function showMomoBorrowReadyCard() {
 // ========== 访客到来卡片 ==========
 
 function showVisitorArrivalCard(visitor) {
+  const def = getVisitorDef(visitor.charId);
+  const auraHtml = def?.aura
+    ? `<div class="mt-2 pt-2 border-t border-magic-gold/20"><p class="text-xs text-magic-gold font-bold">✨ ${def.aura.name}</p><p class="text-xs text-ink-light">${def.aura.desc}</p></div>`
+    : '';
+
   const overlay = document.createElement('div');
   overlay.className = 'fixed bottom-6 right-6 z-[120] animate-slide-in-right';
   overlay.innerHTML = `
@@ -645,6 +653,7 @@ function showVisitorArrivalCard(visitor) {
           <p class="text-xs text-magic-gold font-bold mb-1">访客到来</p>
           <p class="text-ink font-bold">${visitor.name}</p>
           <p class="text-ink-light text-xs">${visitor.title}</p>
+          ${auraHtml}
         </div>
         <button class="text-ink-light/50 hover:text-ink ml-2 text-sm leading-none">&times;</button>
       </div>

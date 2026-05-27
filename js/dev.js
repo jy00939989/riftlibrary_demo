@@ -4,7 +4,7 @@ import { addCoins, addAtmosphere, addHistory } from './storage.js';
 import { addDiaryEntry } from './diary.js';
 import { renderFocusPage, showBookCompleteAnimation, showBookShelvingAnimation, renderVisitorsPage, updateStatusBar } from './render/index.js';
 import { showCertificate } from './render/certificate.js';
-import { spawnVisitor, onTimeSkip, visitorForceReturn as doForceReturn, visitorReset as doReset } from './visitors.js';
+import { spawnVisitor, onTimeSkip, visitorForceReturn as doForceReturn, visitorReset as doReset, VISITOR_DEFS } from './visitors.js';
 import { SHARED_POOL } from '../data/book_pool.js';
 import { purchasePlanePortal, getBookCapacity, getOwnedBookCount } from './shop.js';
 import { PLANES, canUnlockPlane } from '../data/planes.js';
@@ -34,10 +34,16 @@ const PANEL_HTML = `
 
       <hr class="border-wood/20">
 
-      <div class="grid grid-cols-2 gap-2">
-        <button id="dev-visitor-spawn" class="px-3 py-2 bg-wood/10 border border-wood/30 rounded-lg text-sm hover:bg-wood/20">👤 刷新访客</button>
-        <button id="dev-visitor-return" class="px-3 py-2 bg-wood/10 border border-wood/30 rounded-lg text-sm hover:bg-wood/20">📥 强制还书</button>
-        <button id="dev-visitor-reset" class="px-3 py-2 bg-wood/10 border border-wood/30 rounded-lg text-sm hover:bg-wood/20">🔄 重置访客</button>
+      <div>
+        <p class="text-xs text-ink-light mb-1">👤 召唤指定访客</p>
+        <div class="grid grid-cols-5 gap-1 mb-2" id="dev-summon-grid">
+          <!-- 动态生成 -->
+        </div>
+        <div class="grid grid-cols-3 gap-2">
+          <button id="dev-visitor-spawn" class="px-3 py-2 bg-wood/10 border border-wood/30 rounded-lg text-xs hover:bg-wood/20">🎲 随机刷新</button>
+          <button id="dev-visitor-return" class="px-3 py-2 bg-wood/10 border border-wood/30 rounded-lg text-xs hover:bg-wood/20">📥 强制还书</button>
+          <button id="dev-visitor-reset" class="px-3 py-2 bg-wood/10 border border-wood/30 rounded-lg text-xs hover:bg-wood/20">🔄 重置访客</button>
+        </div>
       </div>
 
       <hr class="border-wood/20">
@@ -320,6 +326,26 @@ export function installDevPanel() {
   panelRoot = document.getElementById('dev-overlay');
 
   // 事件绑定
+  // —— 填充召唤访客网格 ——
+  const summonGrid = document.getElementById('dev-summon-grid');
+  if (summonGrid) {
+    Object.values(VISITOR_DEFS).forEach(def => {
+      const btn = document.createElement('button');
+      btn.className = 'px-1 py-1.5 bg-white/70 border border-wood/20 rounded text-sm hover:bg-magic-gold/20 hover:border-magic-gold/40 transition-all';
+      btn.title = `${def.name} · ${def.title}`;
+      btn.innerHTML = `<span class="text-lg leading-none">${def.emoji}</span>`;
+      btn.addEventListener('click', () => {
+        const v = spawnVisitor(def.id);
+        if (v) {
+          addHistory('system', `🔧 Dev: 召唤 ${v.name}`);
+          renderVisitorsPage();
+        }
+        updateStatusLine();
+      });
+      summonGrid.appendChild(btn);
+    });
+  }
+
   document.getElementById('dev-gear').addEventListener('click', () => {
     panelRoot.classList.remove('hidden');
     updateStatusLine();

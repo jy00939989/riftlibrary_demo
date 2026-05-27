@@ -80,7 +80,7 @@ export const state = {
   borrowRecords: [],
 
   // 访客好感度（全局累计）
-  visitorFavors: { shenmingyuan: 0, xiaoying: 0, yunyou: 0, ajiu: 0 },
+  visitorFavors: {}, // 动态按 VISITOR_DEFS 初始化
 
   // 事件历史
   history: [],
@@ -264,7 +264,19 @@ export function initState() {
       });
       // 旧存档迁移：visitorFavors
       if (!state.visitorFavors) {
-        state.visitorFavors = { shenmingyuan: 0, xiaoying: 0, yunyou: 0, ajiu: 0 };
+        // 旧版访客好感度迁移（4 人 → 10 人）
+      if (!state.visitorFavors || Object.keys(state.visitorFavors).length <= 4) {
+        state.visitorFavors = {
+          shenmingyuan: state.visitorFavors?.shenmingyuan || 0,
+          chengyuan: 0, peizhou: state.visitorFavors?.ajiu || 0,
+          jianan: 0, jiangyoushu: 0,
+          guyu: 0,
+          qiaoyiyi: state.visitorFavors?.xiaoying || 0,
+          xierugui: 0,
+          xiachan: 0,
+          wangxiaolei: state.visitorFavors?.yunyou || 0
+        };
+      }
       }
       // 确保 currentSession 不会从上次恢复
       state.currentSession = {

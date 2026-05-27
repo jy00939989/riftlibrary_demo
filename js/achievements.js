@@ -174,8 +174,7 @@ function countTotalVisitors(s) {
 function allVisitorsTriggered(s) {
   const triggered = new Set();
   s.borrowRecords.forEach(r => { if (r.event) triggered.add(r.charId); });
-  return triggered.has('shenmingyuan') && triggered.has('xiaoying')
-      && triggered.has('yunyou') && triggered.has('ajiu');
+  return triggered.size >= 6; // 10位中至少触发过6位的事件
 }
 
 function countFocusDays(s) {

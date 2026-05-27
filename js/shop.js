@@ -5,6 +5,7 @@ import { SHARED_POOL } from '../data/book_pool.js';
 import { SIGNBOARDS } from '../data/signboards.js';
 import { PLANES, canUnlockPlane } from '../data/planes.js';
 import { unlockPlane } from './quests.js';
+import { getAuraShopDiscount, getAuraFocusUpgradeDiscount } from './visitors.js';
 
 function getNow() {
   return window.__dev?.getNow?.() || Date.now();
@@ -128,11 +129,15 @@ export function ensureShopState() {
 }
 
 export function purchaseBook(bookId, price) {
-  if (state.coins < price) return false;
+  // 裴舟光环：商店买书 9 折
+  const discount = getAuraShopDiscount();
+  const actualPrice = Math.round(price * (1 - discount));
+
+  if (state.coins < actualPrice) return false;
   if (state.books[bookId] && state.books[bookId].status !== 'locked') return false;
   if (isBookCapacityFull()) return false;
 
-  spendCoins(price);
+  spendCoins(actualPrice);
 
   state.books[bookId] = {
     unlockedChapters: [1],
@@ -147,7 +152,8 @@ export function purchaseBook(bookId, price) {
 
   const poolEntry = SHARED_POOL.find(b => b.bookId === bookId);
   const title = poolEntry ? poolEntry.title : bookId;
-  addHistory('purchase', `购买《${title}》`, `花费${price}智慧之光`);
+  const discountNote = discount > 0 ? ` (裴舟光环9折)` : '';
+  addHistory('purchase', `购买《${title}》${discountNote}`, `花费${actualPrice}智慧之光`);
 
   // 标记已售出
   const now = getNow();
@@ -188,7 +194,8 @@ export function getFocusSpeedMultiplier() {
 // 缮写室价格：400 × 1.45^(n-1)，封顶 5000
 export function getFocusLevelPrice() {
   const n = state.library.focusLevel || 0;
-  return Math.min(5000, Math.round(400 * Math.pow(1.45, n)));
+  const base = Math.min(5000, Math.round(400 * Math.pow(1.45, n)));
+  return Math.round(base * (1 - getAuraFocusUpgradeDiscount()));
 }
 
 export function upgradeFocusLevel() {

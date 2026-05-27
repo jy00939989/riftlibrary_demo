@@ -5,7 +5,7 @@ import { BOOKS } from '../data/books.js';
 import { addDiaryEntry } from './diary.js';
 import { isBookCapacityFull } from './shop.js';
 
-// ========== 访客角色定义 ==========
+// ========== 访客角色定义（10位，2026-05-27 重构） ==========
 
 export const VISITOR_DEFS = {
   shenmingyuan: {
@@ -13,36 +13,100 @@ export const VISITOR_DEFS = {
     name: '沈明远',
     emoji: '👨‍🏫',
     title: '退休文学教授 · 白发圆框眼镜',
-    category: ['寓言', '哲学'],
-    events: ['gift_book', 'annotation'],
-    firstImpression: '这里……曾经是一座很好的图书馆。但现在连一张像样的书桌都没有，真是可惜。'
+    category: ['哲学', '历史', '诗歌'],
+    events: ['gift_book'],
+    firstImpression: '这里……曾经是一座很好的图书馆。但现在连一张像样的书桌都没有，真是可惜。',
+    aura: { name: '学者之风', desc: '哲学/历史/诗歌类誊抄速度 +10%', type: 'speed', category: ['哲学', '历史', '诗歌'], value: 0.10 }
   },
-  xiaoying: {
-    id: 'xiaoying',
-    name: '小萤',
-    emoji: '🧒',
-    title: '12岁冒险少女 · 大帆布包',
-    category: ['童话', '奇幻'],
-    events: ['treasure_map'],
-    firstImpression: '哇，好暗哦……椅子也歪歪的。不过我喜欢这里！等我找到宝藏就帮你修。'
+  chengyuan: {
+    id: 'chengyuan',
+    name: '程远',
+    emoji: '💻',
+    title: '焦虑程序员 · 中年危机',
+    category: ['哲学', '科学', '小说'],
+    events: ['anxiety_boost'],
+    firstImpression: '这里……比我想象的安静。外面的世界太快了，快得让人喘不过气。',
+    aura: { name: '焦虑解药', desc: '连续专注(streak≥2)时誊抄速度 +10%', type: 'streak_speed', value: 0.10 }
   },
-  yunyou: {
-    id: 'yunyou',
-    name: '云游',
-    emoji: '🎵',
-    title: '流浪吟游诗人 · 浪漫忧郁',
-    category: [],
-    events: ['poem'],
-    firstImpression: '废墟中的图书馆……倒是个写诗的好地方。可惜，似乎还容不下一杯安静的茶。'
-  },
-  ajiu: {
-    id: 'ajiu',
-    name: '阿九',
-    emoji: '📦',
-    title: '年轻书贩 · 精明善良',
-    category: [],
+  peizhou: {
+    id: 'peizhou',
+    name: '裴舟',
+    emoji: '📚',
+    title: '前独立书店老板 · 旧书摊主',
+    category: ['小说', '诗歌', '散文'],
     events: ['sales_pitch'],
-    firstImpression: '这装修……嗯，说实话，比我想象的还破。不过书是好书，我先走了，下次再来看看。'
+    firstImpression: '这地方……让我想起我那家关掉的书店。书是好书，但缺了点人气。',
+    aura: { name: '书商嗅觉', desc: '商店买书 9 折', type: 'shop_discount', value: 0.10 }
+  },
+  jianan: {
+    id: 'jianan',
+    name: '简安',
+    emoji: '📋',
+    title: '基层公务员 · 公文背面写诗',
+    category: ['小说', '历史', '散文'],
+    events: ['poem_memo'],
+    firstImpression: '原来公文背面还可以写诗……这里让我想起大学时的图书馆。',
+    aura: { name: '公文背面', desc: '每次专注智慧之光 +15%', type: 'focus_coins', value: 0.15 }
+  },
+  jiangyoushu: {
+    id: 'jiangyoushu',
+    name: '江有树',
+    emoji: '🎓',
+    title: '待业大学生 · 全职儿女',
+    category: ['哲学', '小说', '诗歌'],
+    events: ['resume_boost'],
+    firstImpression: '比学校图书馆破多了……但书比学校多了几百万字的沉默。',
+    aura: { name: '年轻气盛', desc: '缮写室升级消耗 -5%', type: 'focus_discount', value: 0.05 }
+  },
+  guyu: {
+    id: 'guyu',
+    name: '谷雨',
+    emoji: '🌾',
+    title: '农村初中女孩 · 野花标本收藏家',
+    category: ['童话', '寓言', '诗歌'],
+    events: ['wildflower_gift'],
+    firstImpression: '这里的书比我村小的多好多……我可以每天都来吗？',
+    aura: { name: '野花的力量', desc: '植物成长速度 +30%（技术债：植物系统待改）', type: 'plant_growth', value: 0.30 }
+  },
+  qiaoyiyi: {
+    id: 'qiaoyiyi',
+    name: '乔一一',
+    emoji: '🎨',
+    title: '叛逆富家少女 · 自绘藏书票',
+    category: ['小说', '诗歌', '戏剧'],
+    events: ['bookplate'],
+    firstImpression: '切，比我家的书房破多了……不过比我家有人味。',
+    aura: { name: '叛逆灵感', desc: '还书好感度 +30%', type: 'return_favor', value: 0.30 }
+  },
+  xierugui: {
+    id: 'xierugui',
+    name: '谢如归',
+    emoji: '🏭',
+    title: 'I人富二代 · 家族工厂继承人',
+    category: ['历史', '传记', '哲学'],
+    events: ['reading_note'],
+    firstImpression: '这里……很安静。比工厂的办公室舒服多了。',
+    aura: { name: '继承者', desc: '访客容量临时 +1', type: 'visitor_cap', value: 1 }
+  },
+  xiachan: {
+    id: 'xiachan',
+    name: '夏蝉',
+    emoji: '💃',
+    title: '大龄练习生 · 追梦第十年',
+    category: ['诗歌', '小说', '散文'],
+    events: ['lyric_drop'],
+    firstImpression: '哇，这个灯光好有氛围！像我们排练室的后台——不过是书版的。',
+    aura: { name: '舞台之光', desc: '专注中随机飘歌词 + 访客到来概率 +15%', type: 'visual_spawn', value: 0.15 }
+  },
+  wangxiaolei: {
+    id: 'wangxiaolei',
+    name: '王小磊',
+    emoji: '📦',
+    title: '快递员诗人 · 波浪线诗笺',
+    category: ['诗歌', '小说', '散文'],
+    events: ['wave_poem'],
+    firstImpression: '这地方好……等红灯的时候我总想找地方写东西，这里刚好。',
+    aura: { name: '波浪诗笺', desc: '还书获得诗笺，集齐10张解锁王小磊诗集', type: 'poem_collect', value: 10 }
   }
 };
 
@@ -53,90 +117,141 @@ const RETURN_QUOTES = {
     book: [
       '《{book}》……好书。我教了四十年文学，这本书每年重读都有新的感悟。',
       '这本《{book}》的批注我写了三页纸。有些句子值得反复咀嚼。',
-      '《{book}》让我想起在牛津访学的日子。那图书馆的穹顶很高，但灵魂是一样的。',
-      '你知道《{book}》最妙的地方在哪吗？在于它从不直接告诉你答案。',
-      '我已经很久没有像读《{book}》这样，在深夜对着书页发呆了。',
-      '《{book}》里的这段话，我在博士论文里引用过。到现在依然觉得它是真理。'
+      '《{book}》让我想起在牛津访学的日子。那图书馆的穹顶很高，但灵魂是一样的。'
     ],
     library: [
       '这图书馆越来越有样子了——虽然离它全盛时期还差得远，但灵魂已经回来了。',
-      '废墟不可怕，可怕的是无人问津。有人翻书的地方，就是圣殿。',
-      '我见过许多图书馆，但这一座……它有自己的心跳。',
-      '书架上的灰尘少了很多，空气也清新了。你在用心经营这里。'
+      '废墟不可怕，可怕的是无人问津。有人翻书的地方，就是圣殿。'
     ],
     personal: [
-      '退休那天，学生们送了我一本手抄的诗集。说实话，那是我这辈子收到的最珍贵的礼物。',
-      '我妻子不喜欢我熬夜看书。但八十岁的人了，不熬夜还能熬什么呢？',
-      '你知道吗，我年轻时为了找一本绝版的《纯粹理性批判》，跑遍了整个伦敦的旧书店。',
-      '哲学不是用来学的，是用来活的。我花了六十年才明白这个道理。',
-      '我最遗憾的事？没能在我父亲活着的时候给他读一本书。'
+      '退休那天，学生们送了我一本手抄的诗集。那是我这辈子收到的最珍贵的礼物。',
+      '哲学不是用来学的，是用来活的。我花了六十年才明白这个道理。'
     ]
   },
-  xiaoying: {
+  chengyuan: {
     book: [
-      '《{book}》太棒了！我最喜欢冒险故事了——虽然有些字我还不认识。',
-      '这本书里有好多我想去的地方！等我长大了，我要把书里的地方都走一遍。',
-      '《{book}》里的主人公好勇敢啊。我以后也要像他/她一样！',
-      '我把《{book}》读给外婆听了。她说我读得比以前好很多。',
-      '这本书我看懂了一半……但我会再读一遍的！',
-      '《{book}》的故事让我昨晚兴奋得睡不着！'
+      '《{book}》让我在深夜找到了比刷手机更好的逃避方式。',
+      '读这本《{book}》的时候，我第一次觉得慢下来不是犯罪。'
     ],
     library: [
-      '这里比以前亮多了！以前进来的时候我还挺害怕的，现在不会了。',
-      '我喜欢墙上的那些画——是馆长你画的吗？',
-      '我有一个自己的秘密阅览角落了，不告诉你具体在哪！',
-      '下次可以带同学来吗？我可以给他们当小导游！'
+      '这里的安静和公司的安静不一样——公司的安静里有恐惧，这里没有。',
+      '如果办公室有这里一半的氛围，我的焦虑症可能早就好了。'
     ],
     personal: [
-      '我的大帆布包里什么都有：零食、手电筒、还有防身的弹弓。但最重要的位置留给书。',
-      '妈妈说图书馆闹鬼——但我跟她说，鬼也是要看书的！',
-      '上次我掉了一颗牙，就藏在图书馆的某个书架后面。如果哪天你找到了，可以许个愿。',
-      '我在学校不太爱说话，但在这里我可以和书说话。书不会打断我。',
-      '我的探险日记已经写到第三本了——前两本都是关于这座图书馆的。'
+      '亲眼看到两轮AI裁员之后，我开始读斯多葛哲学。控制能控制的，接受不能控制的。',
+      '35岁之后投简历，回复率不到十分之一。但读书不会拒绝你。'
     ]
   },
-  yunyou: {
+  peizhou: {
     book: [
-      '《{book}》——啊，这本书的节奏像一首古老的歌谣，翻页就是呼吸。',
-      '我在月光下读完了《{book}》。露水打湿了书页，但我不舍得合上。',
-      '这本《{book}》里有一句话，我把它抄下来，夹在了随身的乐谱里。',
-      '《{book}》让我的手指在琴弦上找到了新的旋律。每一本好书都是一段未写的曲。',
-      '你知道吗，《{book}》的作者曾经也是个流浪者。所以他的文字里有风的声音。'
+      '《{book}》——品相不错。好书应该去有人的地方，这是我最深的信念。',
+      '这本《{book}》让我想起我书店里最后一本卖掉的书。那个顾客是个教书的。'
     ],
     library: [
-      '这座图书馆的声学很好——我在角落里弹琴的时候，回声像有人在轻轻和声。',
-      '现在这里终于有了一点「家」的气息。但还差一盆花和一只猫。',
-      '风从破窗吹进来的时候，书架上的书页沙沙作响——那是图书馆在唱自己的歌。',
-      '我在很多地方唱过歌：酒馆、广场、废墟。但在这个图书馆里唱歌，感觉最对。'
+      '你这儿比我那家书店有前途——书店要租金，图书馆只需要书和人气。',
+      '书脊朝外摆，别堆着。我在书店行业学的唯一真理：书要能被看见。'
     ],
     personal: [
-      '我的家乡没有图书馆。我们靠吟游诗人传递故事，一首诗就是一个世界。',
-      '我在北方的森林里遇见了一位老诗人——他已经一百岁了，还能背出三千首歌。',
-      '这把琴跟了我二十年。它的木头来自一棵被闪电击中的老树，声音里有风暴的记忆。',
-      '上一次我在一个繁华的城市唱歌，人们往我的帽子里扔铜板。但我觉得他们没听懂。',
-      '我见过最美的日落是在一座废弃的灯塔上。风很大，但天空像着了火。'
+      '关店那天我没哭。但看到最后一箱书被拉走的时候，我在路边站了很久。',
+      '电商可以卖书，但它卖不了你从书架上拿起一本书时的那种偶然。'
     ]
   },
-  ajiu: {
+  jianan: {
     book: [
-      '《{book}》——这本书品相不错，不过如果你想要更好的版本，我下次可以帮你留意。',
-      '说实话，《{book}》在市面上卖得不太好，但我是真的喜欢。好东西不见得人人都识货。',
-      '这本《{book}》让我想起了我在另一个位面见过的类似版本。不过那个版本缺了最后三页。',
-      '你知道吗，《{book}》的初版现在很难找。这本虽然是抄本，但誊写得很用心。',
-      '读《{book}》的时候我在想：如果我在自己的书摊上看到这本书，我该标什么价。'
+      '《{book}》——我在公文背面记了两页笔记。正面是会议纪要，背面才是我自己。',
+      '这本《{book}》让我想起大学时通宵读书的日子。那时候觉得未来什么都有可能。'
     ],
     library: [
-      '你这图书馆开始像个样子了。不过我建议在入口处摆一个显眼的书架——吸引路人的注意。',
-      '以商人的眼光来看，这里的书籍品类还需要扩充。但馆长品味不错，这是最重要的。',
-      '我走南闯北见过不少图书馆，但愿意收留一个流浪书贩的，你是第一个。',
-      '这些书架的木料不错——是什么木头？我可以帮你联系更便宜的供应商。'
+      '如果能在这里办公就好了——我是说，如果公文也能在这样的地方写。',
+      '图书馆比办公室安静，但比家里热闹。恰恰好的程度。'
     ],
     personal: [
-      '我的书摊在七个位面都有分号——不，不是连锁店，就是我把书背过去卖的。',
-      '有一次我为了收一批书，跟一个老巫师赌了三局牌。赢了两局，输了一局，但书全到手了。',
-      '我卖书有个原则：不把好书卖给不懂它的人。利润不重要，书得去对的地方。',
-      '你以为我是书贩？不，我只是在帮书找到属于它们的人。',
-      '最值钱的书不是最贵的，是你读完会在扉页上写满批注的那本。'
+      '基层八年，写过的公文能装满一面墙。但背面写过的诗只有我自己记得。',
+      '有时候我觉得，公文背面的那几句话，才是我真正想说的。'
+    ]
+  },
+  jiangyoushu: {
+    book: [
+      '《{book}》比我想象的好看。学校没教过这本，我自己也不会去找。',
+      '我在《{book}》里划了好多线——比刷短视频有用多了。'
+    ],
+    library: [
+      '这里比学校图书馆舒服。学校图书馆有deadline的味道，这里没有。',
+      '如果可以在这里投简历就好了——至少被拒的时候旁边有本书可以翻。'
+    ],
+    personal: [
+      '每次亲戚问"找到工作了吗"，我就想躲到这里来。书不会问这种问题。',
+      '专科的简历很多公司看都不看。但读了《庄子》之后，我觉得他们错过的是个人才。'
+    ]
+  },
+  guyu: {
+    book: [
+      '《{book}》太好看了！我给我们班同学讲了里面的故事，他们都说好。',
+      '这本《{book}》里有一页夹了一朵野花，是我从村口采的。'
+    ],
+    library: [
+      '这里的书比我村小的书架多了好多好多倍。我可以每天都来吗？',
+      '墙上那些画真好看。我以后也想学画画，给我们村小画一个图书馆。'
+    ],
+    personal: [
+      '我弟弟不用读书，家里说男娃以后出去打工就行。但我觉得他也应该看看这些书。',
+      '老师说女孩子读太多书没用。但我在书上读到了好多人——她们都是女孩子。'
+    ]
+  },
+  qiaoyiyi: {
+    book: [
+      '《{book}》——我撕了封底重新画了一张。原来的太丑了，我的版本更好看。',
+      '这本《{book}》让我哭了一整晚。不是因为有谁死了，是因为有人懂了。'
+    ],
+    library: [
+      '比我家书房破多了——但至少在这里看书不会被问"你在读什么没用的东西"。',
+      '这里没有监控吧？我在家的时候我妈会用iPad看我在房间干什么。'
+    ],
+    personal: [
+      '我妈说"为你好"，但她从来没问过我在读什么书。',
+      '染头发不是因为叛逆，是因为我不想看起来像个可以被随便安排的洋娃娃。'
+    ]
+  },
+  xierugui: {
+    book: [
+      '《{book}》里的领袖和我想象的不一样。历史书上写的和我父亲讲的也不一样。',
+      '我把《{book}》的要点做成了SWOT分析。这是我唯一会的读书方式，抱歉。'
+    ],
+    library: [
+      '这里很安静。我需要安静的地方想事情——工厂太吵、家里太空。',
+      '如果董事会在这里开，可能决议会温和一点。'
+    ],
+    personal: [
+      '父亲觉得温和是缺点。但我觉得，强硬的人不需要证明自己强硬。',
+      '我研究了很多历史领袖。最厉害的那些人，没有一个是我父亲那样的。'
+    ]
+  },
+  xiachan: {
+    book: [
+      '《{book}》的节奏感太好了。我感觉每一页都可以编一支舞。',
+      '如果给这本《{book}》写一首歌，副歌部分我已经有旋律了。'
+    ],
+    library: [
+      '这里的灯光好适合拍照！不是那种刻意的美，是安静的美。',
+      '练功房关了之后我就来这里。书的陪伴和镜子的陪伴不一样，镜子只有你自己。'
+    ],
+    personal: [
+      '二十三岁在练习生行业已经算老了。但二十三岁在诗歌的世界里还是个孩子。',
+      '换了三家公司，参加了两档选秀。同期姐妹有的转了幕后、有的去了直播。我还在练。'
+    ]
+  },
+  wangxiaolei: {
+    book: [
+      '《{book}》——我在等红灯的时候读了三页。后面的车按喇叭，我没理。',
+      '我把《{book}》里最喜欢的那句话抄在了便签纸上。署名画了一道波浪线。'
+    ],
+    library: [
+      '送快递的时候我经过了十七家书店。但只有这家图书馆的门是对我开着的。',
+      '这座图书馆的风里有纸的味道——不是快递单的纸，是老书的纸。'
+    ],
+    personal: [
+      '我的便签上从不写名字，只画一道波浪线。有人在读者群里叫我"波浪先生"。',
+      '一天跑80单，爬楼梯的时候改句子。腿在送快递，脑子在写诗。'
     ]
   }
 };
@@ -189,12 +304,116 @@ export function getBorrowLevelConfig() {
 }
 
 export function getVisitorCap() {
-  return getBorrowLevelConfig().cap;
+  return getBorrowLevelConfig().cap + getAuraVisitorCapBonus();
 }
 
-// ========== 阿九推销书籍池 ==========
+// ========== 光环引擎 ==========
 
-const SALE_BOOKS = [
+function getActiveBrowsingVisitors() {
+  return state.visitors.filter(v => v.status === 'browsing');
+}
+
+export function getActiveAuras() {
+  return getActiveBrowsingVisitors()
+    .map(v => VISITOR_DEFS[v.charId])
+    .filter(def => def && def.aura)
+    .map(def => def.aura);
+}
+
+export function getAuraSpeedBonus(bookCategory) {
+  let bonus = 0;
+  const visitors = getActiveBrowsingVisitors();
+  for (const v of visitors) {
+    const def = VISITOR_DEFS[v.charId];
+    if (!def || !def.aura) continue;
+    const a = def.aura;
+    // 沈明远：分类匹配速度加成
+    if (a.type === 'speed' && a.category && bookCategory && a.category.includes(bookCategory)) {
+      bonus += a.value;
+    }
+    // 程远：连续专注加成
+    if (a.type === 'streak_speed' && (state.focus.streak || 0) >= 2) {
+      bonus += a.value;
+    }
+  }
+  return bonus;
+}
+
+export function getAuraCoinsMultiplier() {
+  const visitors = getActiveBrowsingVisitors();
+  for (const v of visitors) {
+    const def = VISITOR_DEFS[v.charId];
+    if (def && def.aura && def.aura.type === 'focus_coins') return def.aura.value;
+  }
+  return 0;
+}
+
+export function getAuraShopDiscount() {
+  const visitors = getActiveBrowsingVisitors();
+  for (const v of visitors) {
+    const def = VISITOR_DEFS[v.charId];
+    if (def && def.aura && def.aura.type === 'shop_discount') return def.aura.value;
+  }
+  return 0;
+}
+
+export function getAuraFocusUpgradeDiscount() {
+  const visitors = getActiveBrowsingVisitors();
+  for (const v of visitors) {
+    const def = VISITOR_DEFS[v.charId];
+    if (def && def.aura && def.aura.type === 'focus_discount') return def.aura.value;
+  }
+  return 0;
+}
+
+export function getAuraVisitorCapBonus() {
+  const visitors = getActiveBrowsingVisitors();
+  for (const v of visitors) {
+    const def = VISITOR_DEFS[v.charId];
+    if (def && def.aura && def.aura.type === 'visitor_cap') return def.aura.value;
+  }
+  return 0;
+}
+
+export function getAuraSpawnBonus() {
+  const visitors = getActiveBrowsingVisitors();
+  for (const v of visitors) {
+    const def = VISITOR_DEFS[v.charId];
+    if (def && def.aura && def.aura.type === 'visual_spawn') return def.aura.value;
+  }
+  return 0;
+}
+
+export function getAuraPoemCollect() {
+  const visitors = getActiveBrowsingVisitors();
+  for (const v of visitors) {
+    const def = VISITOR_DEFS[v.charId];
+    if (def && def.aura && def.aura.type === 'poem_collect') return true;
+  }
+  return false;
+}
+
+export function getAuraPlantGrowth() {
+  const visitors = getActiveBrowsingVisitors();
+  for (const v of visitors) {
+    const def = VISITOR_DEFS[v.charId];
+    if (def && def.aura && def.aura.type === 'plant_growth') return def.aura.value;
+  }
+  return 0;
+}
+
+export function getAuraReturnFavorBonus() {
+  const visitors = getActiveBrowsingVisitors();
+  for (const v of visitors) {
+    const def = VISITOR_DEFS[v.charId];
+    if (def && def.aura && def.aura.type === 'return_favor') return def.aura.value;
+  }
+  return 0;
+}
+
+// ========== 裴舟推销书籍池 ==========
+
+const PEIZHOU_BOOKS = [
   { title: '《星尘往事》', words: 18000, emoji: '📙', category: '小说' },
   { title: '《梦境漫游》', words: 22000, emoji: '📓', category: '童话' },
   { title: '《古卷传奇》', words: 32000, emoji: '📔', category: '历史' },
@@ -215,9 +434,12 @@ function getNow() {
   return window.__dev && window.__dev.getNow ? window.__dev.getNow() : Date.now();
 }
 
+const ALL_VISITOR_IDS = Object.keys(VISITOR_DEFS);
+
 function addVisitorFavor(charId, amount) {
   if (!state.visitorFavors) {
-    state.visitorFavors = { shenmingyuan: 0, xiaoying: 0, yunyou: 0, ajiu: 0 };
+    state.visitorFavors = {};
+    ALL_VISITOR_IDS.forEach(id => { state.visitorFavors[id] = 0; });
   }
   if (state.visitorFavors[charId] !== undefined) {
     state.visitorFavors[charId] += amount;
@@ -226,12 +448,15 @@ function addVisitorFavor(charId, amount) {
 
 // ========== 访客刷新 ==========
 
-export function spawnVisitor() {
+export function spawnVisitor(targetCharId) {
   const browsing = state.visitors.filter(v => v.status === 'browsing' || v.status === 'borrowed');
   if (browsing.length >= getVisitorCap()) return null;
 
-  const charIds = Object.keys(VISITOR_DEFS);
-  const charId = pick(charIds);
+  let charId = targetCharId;
+  if (!charId || !VISITOR_DEFS[charId]) {
+    const charIds = Object.keys(VISITOR_DEFS);
+    charId = pick(charIds);
+  }
   const def = VISITOR_DEFS[charId];
 
   const visitor = {
@@ -378,9 +603,25 @@ export function collectReturn(visitorId) {
   addCoins(retCfg.returnCoins);
   if (retCfg.returnAtmo > 0) addAtmosphere(retCfg.returnAtmo);
 
-  const returnFavor = Math.round(5 * (1 + retCfg.favorBonus / 100));
+  // 乔一一光环：还书好感度加成
+  const favorBonus = getAuraReturnFavorBonus();
+  const baseFavor = Math.round(5 * (1 + retCfg.favorBonus / 100));
+  const returnFavor = Math.round(baseFavor * (1 + favorBonus));
   visitor.favorability = (visitor.favorability || 0) + returnFavor;
   addVisitorFavor(charId, returnFavor);
+
+  // 王小磊光环：每次还书获得诗笺
+  let wavePoem = null;
+  if (charId === 'wangxiaolei' || (getAuraPoemCollect() && charId !== 'wangxiaolei')) {
+    // 王小磊本人还书必然触发诗笺；其他访客还书时若王小磊在馆也可能触发
+    if (charId === 'wangxiaolei' || Math.random() < 0.3) {
+      const poem = pick(POEMS);
+      if (!state.collection) state.collection = {};
+      if (!state.collection.wavePoems) state.collection.wavePoems = [];
+      state.collection.wavePoems.push({ text: poem, date: getNow(), from: visitor.name });
+      wavePoem = { text: poem, count: state.collection.wavePoems.length };
+    }
+  }
 
   addHistory('visitor', `${visitor.emoji} ${visitor.name} 归还了《${bookTitle}》`,
     `${retCfg.returnCoins}智慧之光 +${retCfg.returnAtmo}氛围 · 好感+${returnFavor}`);
@@ -434,7 +675,7 @@ export function collectReturn(visitorId) {
   saveState();
 
   return {
-    damaged, event: eventResult, bookId, bookTitle, charId,
+    damaged, event: eventResult, bookId, bookTitle, charId, wavePoem,
     visitorName: visitor.name, visitorEmoji: visitor.emoji,
     coins: retCfg.returnCoins, atmosphere: retCfg.returnAtmo, favor: returnFavor,
     quote
@@ -445,109 +686,85 @@ export function collectReturn(visitorId) {
 
 function triggerEvent(charId, visitor) {
   const def = VISITOR_DEFS[charId];
-  const eventType = pick(def.events);
+  if (!def || !def.events) return null;
+  const eventType = def.events[0]; // 每人目前只有一个事件类型
 
   switch (eventType) {
-    case 'gift_book':
-      return eventGiftBook(visitor);
-    case 'annotation':
-      return eventAnnotation(visitor);
-    case 'treasure_map':
-      return eventTreasureMap(visitor);
-    case 'poem':
-      return eventPoem(visitor);
-    case 'sales_pitch':
-      return eventSalesPitch(visitor);
-    default:
-      return null;
+    case 'gift_book':      return eventGiftBook(visitor);
+    case 'sales_pitch':    return eventSalesPitch(visitor);
+    case 'wave_poem':      return eventWavePoem(visitor);
+    default:               return eventGeneric(charId, visitor);
   }
 }
 
-// --- 沈明远事件 ---
+// --- 沈明远：赠书 ---
 
 function eventGiftBook(visitor) {
-  // 从沈明远专属池中选一本玩家尚未拥有的书
   const available = SHENMINGYUAN_BOOKS.filter(id => !state.books[id] || state.books[id].status === 'locked');
   if (available.length === 0) {
-    // 三本都送过了，改为批注事件
-    addAtmosphere(5);
-    addHistory('event', '📝 沈明远在书中留下了新的批注卡片', '三本专属书均已赠予 +5氛围');
-    addDiaryEntry('special_event', { detail: '沈明远在书中留下了新的批注卡片，三本专属书都已赠予。' });
+    addCoins(50);
+    addHistory('event', '📝 沈明远在书中留下了新的批注卡片', '三本专属书均已赠予');
     saveState();
-    return { type: 'annotation', atmosphere: 5 };
+    return { type: 'annotation', coins: 50 };
   }
   const bookId = pick(available);
   const book = BOOKS[bookId];
-
-  // 将真实书籍加入玩家状态
   state.books[bookId] = {
-    unlockedChapters: [1],
-    copyCount: 0,
-    masteryLevel: 0,
-    copiedWords: 0,
-    status: 'unlocked',
-    starred: false,
-    damaged: false,
-    repairWords: 0
+    unlockedChapters: [1], copyCount: 0, masteryLevel: 0,
+    copiedWords: 0, status: 'unlocked', starred: false, damaged: false, repairWords: 0
   };
-
-  addHistory('event', `📦 沈明远赠送了一本《${book.title}》`, `${(book.totalWords || 0).toLocaleString()}字 · ${book.author} · ${book.category}`);
+  addHistory('event', `📦 沈明远赠送了一本《${book.title}》`, `${(book.totalWords || 0).toLocaleString()}字 · ${book.author}`);
   addDiaryEntry('special_event', { detail: `沈明远赠送了一本《${book.title}》，说是自己珍藏多年的版本。` });
   saveState();
   return { type: 'gift_book', bookId, mysteryTitle: book.title, emoji: book.emoji };
 }
 
-function eventAnnotation(visitor) {
-  addAtmosphere(3);
-  addHistory('event', '📝 沈明远在书中留下了批注卡片', '字迹工整，引经据典 +3氛围');
-  addDiaryEntry('special_event', { detail: '沈明远在借阅的书中留下了工整的批注，引经据典。' });
-  saveState();
-  return { type: 'annotation', atmosphere: 3 };
-}
-
-// --- 小萤事件 ---
-
-function eventTreasureMap(visitor) {
-  const roll = Math.random();
-  let reward;
-  if (roll < 0.5) {
-    const coins = rand(20, 50);
-    addCoins(coins);
-    reward = { type: 'coins', amount: coins, text: `${coins}智慧之光` };
-    addHistory('event', '🗺️ 小萤发现了一张藏宝图！', `翻开获得${coins}智慧之光`);
-  } else {
-    const atmo = rand(2, 5);
-    addAtmosphere(atmo);
-    reward = { type: 'atmosphere', amount: atmo, text: `${atmo}氛围值` };
-    addHistory('event', '🗺️ 小萤发现了一张藏宝图！', `翻开获得${atmo}氛围值`);
-  }
-  addDiaryEntry('special_event', { detail: '小萤在图书馆里发现了一张藏宝图！不知道她找到了什么。' });
-  saveState();
-  return { type: 'treasure_map', reward };
-}
-
-// --- 云游事件 ---
-
-function eventPoem(visitor) {
-  const poem = pick(POEMS);
-  const atmo = rand(2, 5);
-  addAtmosphere(atmo);
-  addHistory('event', '🎵 云游在还书时夹了一首诗', `"${poem}" +${atmo}氛围`);
-  addDiaryEntry('special_event', { detail: `云游在还书时夹了一首诗："${poem}"` });
-  saveState();
-  return { type: 'poem', poem, atmosphere: atmo };
-}
-
-// --- 阿九事件 ---
+// --- 裴舟：推销书籍 ---
 
 function eventSalesPitch(visitor) {
-  const book = pick(SALE_BOOKS);
+  const book = pick(PEIZHOU_BOOKS);
   const price = rand(500, 5000);
-  // 不自动扣款，把选择权交给 UI
-  addHistory('event', '📦 阿九推销一本书', `《${book.title}》售价${price.toLocaleString()}智慧之光`);
-  addDiaryEntry('special_event', { detail: `阿九带来了一本《${book.title}》，售价${price.toLocaleString()}智慧之光。要不要买呢？` });
+  addHistory('event', '📦 裴舟推销一本书', `《${book.title}》售价${price.toLocaleString()}智慧之光`);
+  addDiaryEntry('special_event', { detail: `裴舟带来了一本《${book.title}》，售价${price.toLocaleString()}智慧之光。` });
   saveState();
   return { type: 'sales_pitch', book: { ...book, price } };
+}
+
+// --- 王小磊：波浪诗笺 ---
+
+function eventWavePoem(visitor) {
+  const poem = pick(POEMS);
+  addCoins(15);
+  if (!state.collection) state.collection = {};
+  if (!state.collection.wavePoems) state.collection.wavePoems = [];
+  state.collection.wavePoems.push({ text: poem, date: getNow() });
+  addHistory('event', '📝 王小磊留下了一张波浪诗笺', `"${poem}"`);
+  addDiaryEntry('special_event', { detail: `王小磊在还书时夹了一张诗笺："${poem}"` });
+  saveState();
+  return { type: 'wave_poem', poem, count: state.collection.wavePoems.length };
+}
+
+// --- 通用事件（其他 6 位访客） ---
+
+const GENERIC_EVENTS = {
+  chengyuan:    { emoji: '💻', text: '程远分享了他的调试笔记', msg: '把代码调试和文本校对做了类比，附赠智慧之光。' },
+  jianan:       { emoji: '📋', text: '简安留下了一页公文背面笔记', msg: '正面是会议纪要，背面是一首短诗。' },
+  jiangyoushu:  { emoji: '🎓', text: '江有树分享了一份修改后的简历', msg: '在图书馆里改的版本，措辞自信了很多。' },
+  guyu:         { emoji: '🌾', text: '谷雨夹了一朵野花在书里', msg: '村口采的野花，被她仔细压成了标本。' },
+  qiaoyiyi:     { emoji: '🎨', text: '乔一一画了一张手绘藏书票', msg: '撕掉了原书封底，自己画了一张贴上去。' },
+  xierugui:     { emoji: '🏭', text: '谢如归留了一份SWOT笔记', msg: '对《史记》做了商业分析，视角清奇但颇有见地。' },
+  xiachan:      { emoji: '💃', text: '夏蝉写了一小段歌词', msg: '她说这段副歌是在练功房对着镜子哼出来的。' }
+};
+
+function eventGeneric(charId, visitor) {
+  const evt = GENERIC_EVENTS[charId];
+  if (!evt) return null;
+  const reward = rand(10, 30);
+  addCoins(reward);
+  addHistory('event', `${evt.emoji} ${evt.text}`, `${evt.msg} +${reward}智慧之光`);
+  addDiaryEntry('special_event', { detail: `${evt.text}——${evt.msg}` });
+  saveState();
+  return { type: 'generic', charId, coins: reward, text: evt.text };
 }
 
 // ========== 阿九购买确认（由 UI 调用） ==========

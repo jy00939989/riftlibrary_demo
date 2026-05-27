@@ -1,7 +1,7 @@
 // 访客中心页面渲染
 import { state } from '../state.js';
 import { el, actions } from './common.js';
-import { getBorrowLevelConfig, getVisitorCap } from '../visitors.js';
+import { getBorrowLevelConfig, getVisitorCap, getVisitorDef } from '../visitors.js';
 
 function timeLeft(dueTime) {
   const now = Date.now();
@@ -107,11 +107,16 @@ export function renderVisitorsPage() {
       const browseMoods = ['从书架上抽出一本书', '翻阅泛黄的书页', '驻足在某本书前', '低声念出几个句子', '踮脚够高处的书', '轻轻拂去书上的灰'];
       const mood = browseMoods[Math.floor(Math.random() * browseMoods.length)];
       const favorText = v.favorability ? `好感 ${v.favorability}` : '';
+      const def = getVisitorDef(v.charId);
+      const auraHtml = def?.aura
+        ? `<div class="text-xs text-magic-gold mt-0.5">✨ ${def.aura.name}：${def.aura.desc}</div>`
+        : '';
       const row = el('div', 'flex items-center gap-3 bg-white/60 rounded-lg p-3 mb-2');
       row.innerHTML = `<span class="text-2xl">${v.emoji}</span>
         <div class="flex-1">
           <span class="font-bold">${v.name}</span>
           <span class="text-xs text-ink-light ml-2">${v.title || ''}</span>
+          ${auraHtml}
           <div class="text-sm text-magic-blue mt-0.5 browsing-mood animate-ellipsis">${mood}</div>
         </div>
         <div class="text-xs text-ink-light/60 text-right">
