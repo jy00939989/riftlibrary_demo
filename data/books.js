@@ -23,8 +23,13 @@ import { meta as b21, chapters as c21, quotes as q21 } from './books/book_021_�
 import { meta as b22, chapters as c22, quotes as q22 } from './books/book_022_传习录.js';
 import { meta as b23, chapters as c23, quotes as q23 } from './books/book_023_绿野仙踪.js';
 import { meta as b24, chapters as c24, quotes as q24 } from './books/book_024_爱丽丝梦游奇境.js';
+import { meta as b26, chapters as c26, quotes as q26 } from './books/book_026_图书馆指南.js';
+import { meta as b27, chapters as c27, quotes as q27 } from './books/book_027_飞鸟集.js';
+import { meta as b28, chapters as c28, quotes as q28 } from './books/book_028_伊索寓言.js';
+import { meta as b29, chapters as c29, quotes as q29 } from './books/book_029_菜根谭.js';
 
 const ALL_BOOKS = [
+  { meta: b26, chapters: c26, quotes: q26 },
   { meta: b1, chapters: c1, quotes: q1 },
   { meta: b2, chapters: c2, quotes: q2 },
   { meta: b3, chapters: c3, quotes: q3 },
@@ -48,7 +53,10 @@ const ALL_BOOKS = [
   { meta: b21, chapters: c21, quotes: q21 },
   { meta: b22, chapters: c22, quotes: q22 },
   { meta: b23, chapters: c23, quotes: q23 },
-  { meta: b24, chapters: c24, quotes: q24 }
+  { meta: b24, chapters: c24, quotes: q24 },
+  { meta: b27, chapters: c27, quotes: q27 },
+  { meta: b28, chapters: c28, quotes: q28 },
+  { meta: b29, chapters: c29, quotes: q29 }
 ];
 
 // 组装 BOOKS 对象（保持原有访问模式：BOOKS[id]）

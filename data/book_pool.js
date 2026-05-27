@@ -192,5 +192,46 @@ export const SHARED_POOL = [
     chapterCount: 4,
     description: '人生而自由，却无往不在枷锁之中。现代民主的理论基石。',
     emoji: '🗽'
+  },
+
+  // 新手短书（固定出现在商店，价格便宜）
+  {
+    plane: 'astral',
+    bookId: 'book_027',
+    title: '飞鸟集',
+    author: '泰戈尔',
+    category: '诗歌',
+    totalWords: 3500,
+    chapterCount: 3,
+    description: '印度诗人泰戈尔的短诗集，326首无题短诗如飞鸟掠过天空。',
+    emoji: '🐦',
+    starter: true,
+    starterPrice: 200
+  },
+  {
+    plane: 'astral',
+    bookId: 'book_028',
+    title: '伊索寓言选',
+    author: '伊索',
+    category: '寓言',
+    totalWords: 4000,
+    chapterCount: 3,
+    description: '古希腊寓言家伊索的经典寓言选集，以动物故事喻人世智慧。',
+    emoji: '🦊',
+    starter: true,
+    starterPrice: 200
+  },
+  {
+    plane: 'astral',
+    bookId: 'book_029',
+    title: '菜根谭选',
+    author: '洪应明',
+    category: '哲学',
+    totalWords: 3200,
+    chapterCount: 3,
+    description: '明代洪应明的处世箴言集，融合儒释道三家智慧。',
+    emoji: '🥬',
+    starter: true,
+    starterPrice: 200
   }
 ];

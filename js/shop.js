@@ -49,15 +49,31 @@ export function ensureShopState() {
     const available = getAvailableBooks();
     const shuffled = shuffle(available);
 
-    // 固定区5本
-    shopState.fixed = shuffled.slice(0, 5).map(b => ({
+    // 新手短书固定位（始终出现在固定区前 N 位，价格便宜）
+    const starterBooks = SHARED_POOL.filter(b => b.starter);
+    const ownedIds = Object.keys(state.books).filter(id => state.books[id]?.status !== 'locked');
+    const starterSlots = starterBooks
+      .filter(b => !ownedIds.includes(b.bookId))
+      .map(b => ({
+        bookId: b.bookId,
+        price: b.starterPrice || 200,
+        soldAt: null
+      }));
+
+    // 剩余随机书填充固定区至 5 本
+    const starterIds = new Set(starterSlots.map(s => s.bookId));
+    const nonStarter = shuffled.filter(b => !starterIds.has(b.bookId));
+    const randomSlots = nonStarter.slice(0, 5 - starterSlots.length).map(b => ({
       bookId: b.bookId,
       price: rand(500, 800),
       soldAt: null
     }));
 
-    // 特价区3本（从 shuffle 里取，与固定区不重复）
-    shopState.rotating = shuffled.slice(5, 8).map(b => {
+    shopState.fixed = [...starterSlots, ...randomSlots];
+
+    // 特价区3本（从剩余 shuffle 里取）
+    const usedIds = new Set(shopState.fixed.map(s => s.bookId));
+    shopState.rotating = shuffled.filter(b => !usedIds.has(b.bookId)).slice(0, 3).map(b => {
       const originalPrice = rand(500, 800);
       const discount = rand(30, 70) / 100;
       return {

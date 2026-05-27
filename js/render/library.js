@@ -1,6 +1,6 @@
 // 图书馆 & 收藏室页面渲染（子标签页：概况 / 成就柜 / 收藏室 / 布置 / 攻略）
 import { state } from '../state.js';
-import { getAtmosphereStage, getRandomDescription } from '../../data/atmosphere.js';
+import { ATMOSPHERE_STAGES, getAtmosphereStage, getRandomDescription } from '../../data/atmosphere.js';
 import { getAtmosphereLevel } from '../storage.js';
 import { getFocusSpeedMultiplier } from '../shop.js';
 import { renderAchievements } from './achievements.js';
@@ -91,7 +91,38 @@ export function renderLibraryPage() {
 // ========== 概况子标签 ==========
 
 function renderOverview(container, stage, levelInfo, desc, maxAtmo, atmoPercent) {
+  const curAtmo = state.library.atmosphere;
+  const currStageDef = ATMOSPHERE_STAGES[stage.level - 1];
+  const stageMin = currStageDef ? currStageDef.min : 0;
+  const stageMax = currStageDef ? currStageDef.max : 30;
+  const stageRange = stageMax - stageMin;
+  const stageProgress = Math.min(100, Math.round(((curAtmo - stageMin) / stageRange) * 100));
+  const nextStageDef = stage.level < 5 ? ATMOSPHERE_STAGES[stage.level] : null;
+
   container.innerHTML = `
+    <!-- 当前目标 -->
+    <div class="mb-6 bg-gradient-to-r from-ink/5 via-ink/5 to-magic-gold/10 rounded-xl p-5 border-2 border-magic-gold/20">
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="font-display text-sm text-magic-gold font-bold">🏛️ 当前目标</h3>
+        <span class="text-xs px-2 py-0.5 rounded-full bg-magic-gold/10 text-magic-gold font-bold">阶段 ${stage.level}/5</span>
+      </div>
+      <p class="text-ink text-sm mb-3">将图书馆从<span class="font-bold line-through decoration-wood/40">废墟</span>恢复至<span class="font-bold text-magic-gold">星辰之境</span></p>
+      ${nextStageDef ? `
+      <div class="flex items-center gap-2 mb-2">
+        <span class="text-xs text-ink-light">当前</span>
+        <span class="text-xs font-bold px-2 py-0.5 rounded bg-wood/10">${stage.name}</span>
+        <span class="text-xs text-ink-light/50">→</span>
+        <span class="text-xs font-bold px-2 py-0.5 rounded bg-magic-gold/5 text-magic-gold">${nextStageDef.name}</span>
+      </div>
+      <div class="h-2 bg-gray-200 rounded-full overflow-hidden mb-1">
+        <div class="h-full bg-gradient-to-r from-magic-gold/70 to-magic-gold rounded-full transition-all duration-700" style="width:${stageProgress}%"></div>
+      </div>
+      <p class="text-xs text-ink-light">还需 <span class="font-bold text-magic-blue">${levelInfo.next}</span> 点氛围进入「${nextStageDef.name}」阶段</p>
+      ` : `
+      <p class="text-sm text-magic-gold font-bold">✨ 图书馆已恢复至巅峰状态！</p>
+      `}
+    </div>
+
     <!-- 氛围阶段背景图 -->
     <div class="mb-6 rounded-xl overflow-hidden border-2 border-wood/30 shadow-lg">
       <img src="${STAGE_BG[stage.level]}" alt="图书馆 · ${stage.name}" class="w-full h-48 object-cover">

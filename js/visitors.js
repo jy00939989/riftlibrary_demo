@@ -14,7 +14,8 @@ export const VISITOR_DEFS = {
     emoji: '👨‍🏫',
     title: '退休文学教授 · 白发圆框眼镜',
     category: ['寓言', '哲学'],
-    events: ['gift_book', 'annotation']
+    events: ['gift_book', 'annotation'],
+    firstImpression: '这里……曾经是一座很好的图书馆。但现在连一张像样的书桌都没有，真是可惜。'
   },
   xiaoying: {
     id: 'xiaoying',
@@ -22,23 +23,26 @@ export const VISITOR_DEFS = {
     emoji: '🧒',
     title: '12岁冒险少女 · 大帆布包',
     category: ['童话', '奇幻'],
-    events: ['treasure_map']
+    events: ['treasure_map'],
+    firstImpression: '哇，好暗哦……椅子也歪歪的。不过我喜欢这里！等我找到宝藏就帮你修。'
   },
   yunyou: {
     id: 'yunyou',
     name: '云游',
     emoji: '🎵',
     title: '流浪吟游诗人 · 浪漫忧郁',
-    category: [],  // 无偏好，所有类型
-    events: ['poem']
+    category: [],
+    events: ['poem'],
+    firstImpression: '废墟中的图书馆……倒是个写诗的好地方。可惜，似乎还容不下一杯安静的茶。'
   },
   ajiu: {
     id: 'ajiu',
     name: '阿九',
     emoji: '📦',
     title: '年轻书贩 · 精明善良',
-    category: [],  // 偏好稀有书籍（暂用全部）
-    events: ['sales_pitch']
+    category: [],
+    events: ['sales_pitch'],
+    firstImpression: '这装修……嗯，说实话，比我想象的还破。不过书是好书，我先走了，下次再来看看。'
   }
 };
 
@@ -181,7 +185,7 @@ const BORROW_LEVEL_TABLE = [
 
 export function getBorrowLevelConfig() {
   const lv = state.library.borrowLevel || 0;
-  return BORROW_LEVEL_TABLE[lv] || { cap:0, returnCoins:30, favorBonus:0, returnAtmo:0 };
+  return BORROW_LEVEL_TABLE[lv] || { cap:1, returnCoins:30, favorBonus:0, returnAtmo:0 };
 }
 
 export function getVisitorCap() {
@@ -256,14 +260,25 @@ export function spawnVisitor() {
   return visitor;
 }
 
+export function removeVisitor(visitorId) {
+  const idx = state.visitors.findIndex(v => v.id === visitorId);
+  if (idx === -1) return false;
+  state.visitors.splice(idx, 1);
+  saveState();
+  return true;
+}
+
+export function getVisitorDef(charId) {
+  return VISITOR_DEFS[charId] || null;
+}
+
 // ========== 借书逻辑 ==========
 
 export function tickVisitorBrowsing(now) {
   const blvCfg = getBorrowLevelConfig();
-  if (blvCfg.cap === 0) return;
+  const cap = Math.max(blvCfg.cap, 1); // Lv0 保底 1 人容量
 
   const completedBooks = getCompletedBooks();
-  if (completedBooks.length === 0) return;
 
   state.visitors.forEach(visitor => {
     if (visitor.status !== 'browsing') return;
@@ -272,6 +287,9 @@ export function tickVisitorBrowsing(now) {
     const browseFavor = Math.round(1 * (1 + blvCfg.favorBonus / 100));
     visitor.favorability = (visitor.favorability || 0) + browseFavor;
     addVisitorFavor(visitor.charId, browseFavor);
+
+    // 没有可借的书 → 访客仍在馆浏览，但不触发借书
+    if (completedBooks.length === 0) return;
 
     // 浏览随机时长后尝试借书（简化：每次 tick 有 40% 概率借书）
     if (Math.random() > 0.4) return;

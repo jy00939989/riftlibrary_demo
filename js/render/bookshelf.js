@@ -15,7 +15,7 @@ export function renderBookshelfPage() {
   container.innerHTML = '';
 
   const card = el('div', 'parchment-bg rounded-2xl p-6 magic-glow');
-  let books = Object.values(BOOKS).filter(b => state.books[b.id]);
+  let books = Object.values(BOOKS).filter(b => state.books[b.id]?.status === 'completed');
 
   // 筛选栏
   card.appendChild(renderFilterBar());
@@ -59,8 +59,6 @@ function renderFilterBar() {
 
   const tabs = [
     { id: 'all', label: '全部' },
-    { id: 'copying', label: '誊抄中' },
-    { id: 'completed', label: '已完成' },
     { id: 'starred', label: '⭐收藏' }
   ];
 
@@ -104,14 +102,7 @@ function renderFilterBar() {
 function applyFilters(books) {
   let result = [...books];
 
-  if (currentFilter === 'copying') {
-    result = result.filter(b => {
-      const bs = state.books[b.id];
-      return bs && bs.status !== 'completed' && bs.copiedWords > 0;
-    });
-  } else if (currentFilter === 'completed') {
-    result = result.filter(b => state.books[b.id]?.status === 'completed');
-  } else if (currentFilter === 'starred') {
+  if (currentFilter === 'starred') {
     result = result.filter(b => state.books[b.id]?.starred);
   }
 

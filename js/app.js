@@ -10,7 +10,7 @@ import {
 import { startTimer, togglePauseTimer, abandonTimer, setCompleteCallback } from './timer.js';
 import { BOOKS } from '../data/books.js';
 import { installDevPanel } from './dev.js';
-import { spawnVisitor, tickVisitorBrowsing, checkDueVisitors, collectReturn, buySalesBook } from './visitors.js';
+import { spawnVisitor, tickVisitorBrowsing, checkDueVisitors, collectReturn, buySalesBook, removeVisitor, getVisitorDef } from './visitors.js';
 import { upgradeBorrowLevel, getFocusSpeedMultiplier } from './shop.js';
 import { checkAchievements, checkAllOnInit } from './achievements.js';
 import { showAchievementToast } from './render/achievements.js';
@@ -241,16 +241,27 @@ function handleCompleteFocus(isAuto = false) {
     newMilestones
   });
 
-  // 专注完成后概率吸引访客（~35%，受氛围加成）
+  // 专注完成后访客到来
   if (!bookCompleted) {
-    const spawnChance = 0.30 + (state.library.atmosphere / 500) * 0.20;
-    if (Math.random() < spawnChance) {
+    // 首个访客：累积专注 ≥20 分钟后必然触发破败叙事事件
+    const firstVisitorDue = !state.tutorialFlags.firstVisitorEventDone
+      && state.focus.totalMinutes >= 20;
+    if (firstVisitorDue) {
       const visitor = spawnVisitor();
       if (visitor) {
-        const vAchResults = checkAchievements('visitor_arrive');
-        showAchievementBatch(vAchResults);
-        showVisitorArrivalCard(visitor);
-        triggerQuestCheck('visitor_arrive');
+        showFirstVisitorEvent(visitor);
+      }
+    } else if (state.tutorialFlags.firstVisitorEventDone) {
+      // 后续访客：概率触发（~35%，受氛围加成）
+      const spawnChance = 0.30 + (state.library.atmosphere / 500) * 0.20;
+      if (Math.random() < spawnChance) {
+        const visitor = spawnVisitor();
+        if (visitor) {
+          const vAchResults = checkAchievements('visitor_arrive');
+          showAchievementBatch(vAchResults);
+          showVisitorArrivalCard(visitor);
+          triggerQuestCheck('visitor_arrive');
+        }
       }
     }
   }
@@ -524,6 +535,105 @@ function showAchievementBatch(results) {
   });
 }
 
+// ========== 首个访客破败叙事事件 ==========
+
+function showFirstVisitorEvent(visitor) {
+  const def = getVisitorDef(visitor.charId);
+  const line = def ? def.firstImpression : '这地方……好破旧啊。';
+
+  // 步骤1：访客入场动画 + 破败台词
+  const overlay = document.createElement('div');
+  overlay.className = 'fixed inset-0 z-[200] flex items-center justify-center bg-ink/60';
+  overlay.innerHTML = `
+    <div class="parchment-bg rounded-2xl p-8 shadow-2xl border-2 border-magic-gold/30 max-w-md mx-4 text-center animate-fade-in-up">
+      <div class="text-5xl mb-3 animate-bounce-in">${visitor.emoji}</div>
+      <p class="text-xs text-magic-gold font-bold mb-2">第一位访客</p>
+      <p class="text-ink font-bold text-lg mb-4">${visitor.name}</p>
+      <p class="text-ink-light text-sm leading-relaxed mb-6">「${line}」</p>
+      <p class="text-xs text-ink-light/50">${visitor.name} 环顾了一圈，轻轻叹了口气<br>然后转身离开了</p>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  // 访客离开
+  removeVisitor(visitor.id);
+  state.tutorialFlags.firstVisitorEventDone = true;
+  saveState();
+
+  // 5秒后切换到墨墨的反馈
+  setTimeout(() => {
+    overlay.style.opacity = '0';
+    overlay.style.transition = 'opacity 0.5s';
+    setTimeout(() => overlay.remove(), 500);
+
+    // 步骤2：墨墨转述 + 建议升级借阅区
+    setTimeout(() => showMomoShabbyLibraryCard(), 300);
+  }, 5000);
+}
+
+function showMomoShabbyLibraryCard() {
+  const overlay = document.createElement('div');
+  overlay.className = 'fixed bottom-6 right-6 z-[200] animate-slide-in-right';
+  overlay.innerHTML = `
+    <div class="parchment-bg rounded-xl p-5 shadow-2xl border-2 border-magic-gold/30 max-w-xs">
+      <div class="flex items-start gap-3">
+        <div class="text-3xl">🦉</div>
+        <div>
+          <p class="text-xs text-magic-gold font-bold mb-1">墨墨</p>
+          <p class="text-ink text-sm leading-relaxed mb-3">刚才那位读者走的时候摇了摇头……说图书馆太破了，连像样的桌椅都没有。馆长，要不要去<b class="text-magic-gold">位面商店</b>升级一下借阅区？</p>
+          <button class="momo-upgrade-btn px-4 py-1.5 bg-magic-gold text-white rounded-lg text-xs font-bold hover:shadow-lg transition-all">去看看 →</button>
+        </div>
+        <button class="momo-close-btn text-ink-light/50 hover:text-ink ml-1 text-sm leading-none">&times;</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  const close = () => {
+    overlay.style.opacity = '0';
+    overlay.style.transition = 'opacity 0.3s';
+    setTimeout(() => overlay.remove(), 300);
+  };
+  overlay.querySelector('.momo-close-btn').addEventListener('click', close);
+  overlay.querySelector('.momo-upgrade-btn').addEventListener('click', () => {
+    close();
+    window.switchTab('shop');
+  });
+  // 15秒后自动消失
+  setTimeout(close, 15000);
+}
+
+// ========== 借阅区首次升级后的墨墨提示 ==========
+
+function showMomoBorrowReadyCard() {
+  const overlay = document.createElement('div');
+  overlay.className = 'fixed bottom-6 right-6 z-[200] animate-slide-in-right';
+  overlay.innerHTML = `
+    <div class="parchment-bg rounded-xl p-5 shadow-2xl border-2 border-magic-gold/30 max-w-xs">
+      <div class="flex items-start gap-3">
+        <div class="text-3xl">🦉</div>
+        <div>
+          <p class="text-xs text-magic-gold font-bold mb-1">墨墨</p>
+          <p class="text-ink text-sm leading-relaxed mb-2">借阅区升级完成！现在访客可以<b class="text-magic-gold">正式办理借书手续</b>了。多抄几本书上架，大家就有书可借啦。</p>
+          <p class="text-xs text-ink-light/50">去缮写室誊抄你的第一本书吧</p>
+        </div>
+        <button class="momo-borrow-close-btn text-ink-light/50 hover:text-ink ml-1 text-sm leading-none">&times;</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  const close = () => {
+    overlay.style.opacity = '0';
+    overlay.style.transition = 'opacity 0.3s';
+    setTimeout(() => overlay.remove(), 300);
+  };
+  overlay.querySelector('.momo-borrow-close-btn').addEventListener('click', close);
+  setTimeout(close, 12000);
+}
+
+// ========== 访客到来卡片 ==========
+
 function showVisitorArrivalCard(visitor) {
   const overlay = document.createElement('div');
   overlay.className = 'fixed bottom-6 right-6 z-[120] animate-slide-in-right';
@@ -572,6 +682,13 @@ function handleUpgradeBorrowLevel() {
   renderVisitorsPage();
   showBorrowAreaUpgrade(state.library.borrowLevel);
   triggerQuestCheck('borrow_upgrade');
+
+  // 首次借阅区升级后墨墨提示可正式借书
+  if (!state.tutorialFlags.firstBorrowUpgradeDone) {
+    state.tutorialFlags.firstBorrowUpgradeDone = true;
+    saveState();
+    setTimeout(() => showMomoBorrowReadyCard(), 1500);
+  }
 }
 
 setActions({
@@ -715,8 +832,8 @@ function init() {
   }
   setInterval(tickVisitors, 60000);
 
-  // 初始没有访客时预先刷新一位
-  if (state.visitors.length === 0) {
+  // 初始没有访客时预先刷新一位（已触发过破败事件后才正常刷）
+  if (state.visitors.length === 0 && state.tutorialFlags.firstVisitorEventDone) {
     spawnVisitor();
   }
 }

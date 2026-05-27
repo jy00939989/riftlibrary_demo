@@ -80,7 +80,7 @@ function renderLibraryUpgrades() {
         <span class="text-xs bg-magic-gold/20 text-magic-gold px-2 py-0.5 rounded-full">Lv.${lv} · ${lvNames[lv]}</span>
       </div>
       <p class="text-xs text-ink-light mb-2">${
-        lv === 0 ? '建造借阅区，解锁访客系统'
+        lv === 0 ? '在馆1人 · 购买升级以容纳更多访客'
         : (() => { const c = getBorrowLevelConfig(); return `在馆${c.cap}人 · 还书+${c.returnCoins}💰 · 好感+${c.favorBonus}% · 氛围+${c.returnAtmo}`; })()
       }</p>
       ${maxed
@@ -326,6 +326,7 @@ function renderBookCard(slot, poolEntry, owned, isRotating) {
 
   card.innerHTML = `
     <div class="text-center">
+      ${poolEntry.starter ? '<div class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full inline-block mb-1 font-bold">🌱 新手推荐</div>' : ''}
       <div class="text-3xl mb-2">${poolEntry.emoji}</div>
       <div class="font-bold text-sm mb-1">${poolEntry.title}</div>
       <div class="text-xs text-ink-light mb-1">${poolEntry.author}</div>

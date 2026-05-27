@@ -25,6 +25,17 @@ export const state = {
 
   // 书籍状态（新增书籍时同步更新 DEFAULT_BOOKS）
   books: {
+    'book_026': {
+      unlockedChapters: [1],
+      copyCount: 0,
+      masteryLevel: 0,
+      copiedWords: 0,
+      status: 'unlocked',
+      starred: false,
+      damaged: false,
+      repairWords: 0,
+      readChapters: []
+    },
     'book_001': {
       unlockedChapters: [1],
       copyCount: 0,
@@ -111,10 +122,12 @@ export const state = {
   tutorialFlags: {
     maxAtmoStageSeen: 1,       // 已见过的最高氛围阶段 1-5
     firstFocusComplete: false,  // 首次专注完成
-    firstVisitorArrive: false,  // 首次访客到来
-    firstShopOpen: false,       // 首次打开位面商店
-    firstLibraryOpen: false,    // 首次打开馆长办公室
-    firstBookComplete: false    // 首次完成一本书
+    firstVisitorArrive: false,      // 首次访客到来
+    firstVisitorEventDone: false,   // 首次访客破败事件已完成
+    firstBorrowUpgradeDone: false,  // 首次借阅区升级引导完成
+    firstShopOpen: false,           // 首次打开位面商店
+    firstLibraryOpen: false,        // 首次打开馆长办公室
+    firstBookComplete: false        // 首次完成一本书
   },
 
   // 今日馆务
@@ -158,6 +171,17 @@ export const state = {
 
 // 默认书籍状态（新增/变更书籍时同步更新此处）
 const DEFAULT_BOOKS = {
+  'book_026': {
+    unlockedChapters: [1],
+    copyCount: 0,
+    masteryLevel: 0,
+    copiedWords: 0,
+    status: 'unlocked',
+    starred: false,
+    damaged: false,
+    repairWords: 0,
+    readChapters: []
+  },
   'book_001': {
     unlockedChapters: [1],
     copyCount: 0,
@@ -323,6 +347,12 @@ export function initState() {
       }
       if (state.tutorialFlags.firstBookComplete === undefined) {
         state.tutorialFlags.firstBookComplete = false;
+      }
+      if (state.tutorialFlags.firstVisitorEventDone === undefined) {
+        state.tutorialFlags.firstVisitorEventDone = false;
+      }
+      if (state.tutorialFlags.firstBorrowUpgradeDone === undefined) {
+        state.tutorialFlags.firstBorrowUpgradeDone = false;
       }
       if (!state.dailyTasks) {
         state.dailyTasks = { date: '', focusDone: false, returnDone: false, waterDone: false, allClaimed: false };
