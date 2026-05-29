@@ -6,6 +6,7 @@ import { startWriting, pauseWriting, resumeWriting, stopWriting, isWriting } fro
 import { isMomoAccelerating } from '../timer.js';
 import { ensureDailyTasks, claimAllDoneBonus } from '../dailytasks.js';
 import { getActiveChapterTaskForBook } from '../quests.js';
+import { getActiveAuras } from '../visitors.js';
 
 // 缮写室素材
 const FOCUS_IMG_NAMES = [
@@ -81,6 +82,10 @@ export function renderFocusPage() {
   }
 
   container.appendChild(card);
+
+  // 在馆光环提示
+  const auraSection = renderAuraIndicator();
+  if (auraSection) container.appendChild(auraSection);
 
   // 空闲时显示誊抄预览
   if (!sess.active && sess.bookId && book) {
@@ -250,7 +255,10 @@ function renderBookSelector(sess) {
   const eligibleBooks = Object.values(BOOKS).filter(book => {
     const bs = state.books[book.id];
     if (!bs || bs.status === 'locked') return false;
-    // 已开始抄写 / 已解锁 / 抄写中（结算前 copiedWords 为 0）
+    // 无熟练度的书抄完就不再出现在选择器中
+    if (book.noMastery && bs.status === 'completed') return false;
+    // mastery Lv5 = 500%+，不再出现在誊抄选择器中
+    if (bs.masteryLevel >= 5 || bs.copyCount >= 5) return false;
     return (bs.copiedWords > 0 || bs.status === 'unlocked' || bs.status === 'copying') && bs.masteryLevel < 5;
   });
 
@@ -517,9 +525,145 @@ function renderCopyPreview(book) {
   `);
 }
 
+// ========== 休息行动卡 ==========
+
+export function showActionCards(cards, callback) {
+  if (!cards || cards.length === 0) { if (callback) callback(null); return; }
+
+  const overlay = document.createElement('div');
+  overlay.className = 'fixed inset-0 bg-black/50 z-[140] flex items-end justify-center pb-8 p-4';
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) {
+      overlay.style.opacity = '0';
+      overlay.style.transition = 'opacity 0.2s';
+      setTimeout(() => { overlay.remove(); if (callback) callback(null); }, 200);
+    }
+  });
+
+  const container = document.createElement('div');
+  container.className = 'flex gap-3 max-w-lg w-full animate-fade-in-up';
+
+  cards.forEach(card => {
+    const btn = document.createElement('button');
+    btn.className = 'flex-1 parchment-bg rounded-xl p-4 border-2 border-magic-gold/20 hover:border-magic-gold hover:shadow-lg transition-all text-center cursor-pointer focus:outline-none';
+    btn.innerHTML = `
+      <div class="text-3xl mb-2">${card.emoji}</div>
+      <div class="text-sm font-bold text-ink mb-1">${card.name}</div>
+      <div class="text-xs text-ink-light">${card.desc}</div>
+    `;
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      overlay.style.opacity = '0';
+      overlay.style.transition = 'opacity 0.2s';
+      setTimeout(() => {
+        overlay.remove();
+        if (callback) callback(card);
+      }, 200);
+    });
+    container.appendChild(btn);
+  });
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'w-full flex flex-col items-center';
+  wrapper.innerHTML = `
+    <p class="text-white/80 text-sm mb-3 font-bold">☕ 休息一下，选一件事做吧</p>
+  `;
+  wrapper.appendChild(container);
+
+  overlay.appendChild(wrapper);
+  document.body.appendChild(overlay);
+}
+
+// ========== 在馆光环提示 ==========
+
+function renderAuraIndicator() {
+  const auras = getActiveAuras();
+  if (auras.length === 0) return null;
+
+  const wrapper = el('div', 'mt-4 p-3 rounded-xl border border-magic-gold/20');
+  wrapper.style.background = 'linear-gradient(135deg, rgba(201,162,39,0.06) 0%, rgba(201,162,39,0.02) 100%)';
+
+  const lines = auras.map(a => {
+    // 目前光环无时限，预留 duration 字段
+    const timerHtml = a.duration
+      ? `<span class="text-xs text-magic-blue ml-1">${Math.ceil(a.duration / 60000)}分钟</span>`
+      : '';
+    return `
+      <div class="flex items-center gap-2 text-xs text-ink-light">
+        <span class="text-magic-gold text-sm">✨</span>
+        <span class="font-bold text-ink">${a.name}</span>
+        <span>${a.desc}</span>
+        ${timerHtml}
+      </div>
+    `;
+  }).join('');
+
+  wrapper.innerHTML = `
+    <div class="text-xs text-magic-gold font-bold mb-1.5">🛋️ 在馆光环（${auras.length}）</div>
+    <div class="space-y-1">${lines}</div>
+  `;
+
+  return wrapper;
+}
+
+// ========== 墨墨书评池 ==========
+
+const MOMO_REVIEWS = {
+  _generic: [
+    '墨墨觉得作者写到这一段的时候，窗外一定下着雨。',
+    '有些句子像被遗忘在旧书页里的珍珠，等着人来发现。',
+    '读完这一章，墨墨在书架间沉默了很久。好书就是这样，让人不想说话。',
+    '这一章的节奏真好，像一首渐入佳境的曲子。',
+    '墨墨偷偷在这一页角上画了一颗小星星。值得的。',
+    '文字是有温度的——这一章的温度大概是一杯热茶，不烫嘴，刚好。',
+    '墨墨蹲在横梁上看完了这一章。差点掉下来。',
+    '如果每一本书都是一扇门，这一章就是刚推开时漏出来的那道光。'
+  ],
+  book_001: [
+    '小王子说重要的东西用眼睛是看不见的。墨墨说重要的书用字数也衡量不了。',
+    '玫瑰和小王子的对话让墨墨想起了图书馆刚有第一位访客的时候。'
+  ],
+  book_016: [
+    '孙悟空被压了五百年才等到唐僧。你抄这一章才用了几十分钟，效率高多了。',
+    '墨墨觉得菩提祖师的教学方法有问题——七十二变和筋斗云是体育课，不是文化课。'
+  ],
+  book_017: [
+    '鲁滨逊一个人在岛上待了二十八年。你有整个图书馆陪着，不算孤独。',
+    '星期五出现的时候墨墨差点鼓掌。一个人住太久了，连脚印都是好消息。'
+  ],
+  book_023: [
+    '多萝西走了那么远的路才发现，回家的能力一直都在自己脚上。',
+    '铁皮人想要一颗心，稻草人想要脑子，狮子想要勇气。墨墨觉得他们本来就都有。'
+  ],
+  book_024: [
+    '爱丽丝掉进兔子洞的时候一定没想到这会是一本流传百年的书。',
+    '柴郡猫的笑脸让墨墨想起了图书馆里那些会发光的书脊。'
+  ],
+  book_027: [
+    '三百多首短诗，像三百多只鸟停在窗台上。墨墨数了数，一只都没飞走。',
+    '泰戈尔说生如夏花之绚烂，墨墨觉得抄书的人比夏花还安静。'
+  ],
+  book_028: [
+    '狐狸、乌鸦、乌龟轮番登场。墨墨看完觉得自己也变聪明了一点。',
+    '两千年前的故事到现在还是灵的。人性这东西，比龟兔赛跑的路线还稳定。'
+  ],
+  book_029: [
+    '咬得菜根则百事可做。墨墨觉得抄这本书的人，心里一定很安静。',
+    '儒释道三家煮成一锅汤，墨墨喝了一口，觉得人生通透了不少。'
+  ]
+};
+
+function getMomoReview(book) {
+  if (Math.random() > 0.3) return null;
+  const pool = (book && MOMO_REVIEWS[book.id]) ? MOMO_REVIEWS[book.id] : [];
+  const fullPool = pool.length > 0 ? [...pool, ...MOMO_REVIEWS._generic] : MOMO_REVIEWS._generic;
+  return fullPool[Math.floor(Math.random() * fullPool.length)];
+}
+
 // ========== 专注完成结算卡片 ==========
 
-export function showCompletionCard({ minutes, words, coins, book, streak, totalWords, nextMilestone }, callback) {
+export function showCompletionCard({ minutes, words, coins, book, streak, totalWords, nextMilestone, chapterInfo, nextPreview }, callback) {
+  const momoReview = getMomoReview(book);
   let quoteText = '';
   let quoteSource = '';
   if (book && book.quotes) {
@@ -552,6 +696,64 @@ export function showCompletionCard({ minutes, words, coins, book, streak, totalW
     `;
   }
 
+  // 本书章节进度
+  let chapterHtml = '';
+  if (chapterInfo && book) {
+    chapterHtml = `
+      <div class="bg-white/60 rounded-lg p-3 mb-3 text-left">
+        <div class="flex items-center justify-between mb-1.5">
+          <span class="text-xs font-bold text-ink">📖 ${chapterInfo.title}</span>
+          <span class="text-xs text-ink-light">第 ${chapterInfo.current}/${chapterInfo.total} 章</span>
+        </div>
+        <div class="h-2 bg-wood/20 rounded-full overflow-hidden mb-1">
+          <div class="h-full bg-gradient-to-r from-amber-500 to-magic-gold rounded-full transition-all duration-700" style="width:${chapterInfo.progressPct}%"></div>
+        </div>
+        <div class="flex justify-between text-xs text-ink-light">
+          <span>已抄 ${chapterInfo.progressPct}%</span>
+          <span>还需约 <b class="text-ink">${chapterInfo.remainingMinutes}</b> 分钟</span>
+        </div>
+      </div>
+    `;
+  }
+
+  // 句子回显
+  let echoHtml = '';
+  if (chapterInfo && chapterInfo.highlight) {
+    echoHtml = `
+      <div class="bg-amber-50/80 border-l-4 border-magic-gold rounded-r-lg p-3 mb-3 text-left">
+        <div class="text-xs text-magic-gold font-bold mb-1">🖋️ 刚抄完的句子</div>
+        <p class="text-sm text-ink italic leading-relaxed">「${chapterInfo.highlight}」</p>
+      </div>
+    `;
+  }
+
+  // 下一章引文预告
+  let nextPreviewHtml = '';
+  if (nextPreview) {
+    nextPreviewHtml = `
+      <div class="bg-stone-50/80 border-l-4 border-stone-300 rounded-r-lg p-3 mb-3 text-left">
+        <div class="text-xs text-ink-light font-bold mb-1">📮 下一章引文预告</div>
+        <p class="text-sm text-ink-light leading-relaxed">${nextPreview}</p>
+      </div>
+    `;
+  }
+
+  // 墨墨书评
+  let momoHtml = '';
+  if (momoReview) {
+    momoHtml = `
+      <div class="bg-magic-gold/5 border border-magic-gold/20 rounded-lg p-3 mb-3">
+        <div class="flex items-start gap-2">
+          <span class="text-xl flex-shrink-0">🦉</span>
+          <div class="text-left">
+            <span class="text-xs text-magic-gold font-bold">墨墨的书评</span>
+            <p class="text-xs text-ink-light leading-relaxed mt-0.5">${momoReview}</p>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   const overlay = el('div', 'fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4');
   const card = el('div', 'parchment-bg rounded-2xl p-6 max-w-sm w-full text-center magic-glow animate-scale-in');
 
@@ -577,12 +779,20 @@ export function showCompletionCard({ minutes, words, coins, book, streak, totalW
       ${totalWords !== undefined ? `<span>📝 累计 <span class="font-bold text-magic-blue">${totalWords.toLocaleString()}</span> 字</span>` : ''}
     </div>` : ''}
     ${milestoneHtml}
-    <div class="italic text-ink-light mb-4 text-sm">「${quoteText}」${quoteSource}</div>
+    ${chapterHtml}
+    ${echoHtml}
+    ${nextPreviewHtml}
+    <div class="italic text-ink-light mb-3 text-sm">「${quoteText}」${quoteSource}</div>
+    ${momoHtml}
     <button class="px-6 py-3 bg-magic-gold text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all">继续 →</button>
   `;
 
   overlay.appendChild(card);
   document.body.appendChild(overlay);
+
+  // 超过一屏时允许滚动
+  card.style.maxHeight = '85vh';
+  card.style.overflowY = 'auto';
 
   const btn = card.querySelector('button');
   btn.addEventListener('click', () => {

@@ -73,6 +73,7 @@ export const state = {
 
   // 经济
   coins: 1250,
+  inspiration: 0,
 
   // 访客（每个访客: { id, charId, name, emoji, status:'browsing'|'borrowed'|'due', bookId, bookTitle, arriveTime, borrowTime, dueTime, eventTriggered }）
   visitors: [],
@@ -129,6 +130,13 @@ export const state = {
     firstLibraryOpen: false,        // 首次打开馆长办公室
     firstBookComplete: false        // 首次完成一本书
   },
+
+  // 休息行动卡
+  actionCardDaily: { date: '', count: 0, usedActions: {} },
+
+  // 行动卡 buff
+  pendingTeaBoost: false,
+  pendingCandleInspiration: false,
 
   // 今日馆务
   dailyTasks: {
@@ -365,6 +373,18 @@ export function initState() {
       }
       if (state.tutorialFlags.firstBorrowUpgradeDone === undefined) {
         state.tutorialFlags.firstBorrowUpgradeDone = false;
+      }
+      if (state.inspiration === undefined) {
+        state.inspiration = 0;
+      }
+      if (!state.actionCardDaily) {
+        state.actionCardDaily = { date: '', count: 0, usedActions: {} };
+      }
+      if (state.pendingTeaBoost === undefined) {
+        state.pendingTeaBoost = false;
+      }
+      if (state.pendingCandleInspiration === undefined) {
+        state.pendingCandleInspiration = false;
       }
       if (!state.dailyTasks) {
         state.dailyTasks = { date: '', focusDone: false, returnDone: false, waterDone: false, allClaimed: false };

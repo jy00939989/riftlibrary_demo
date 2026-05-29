@@ -168,7 +168,7 @@ function renderBookCard(book) {
   // 整卡点击
   cardDiv.addEventListener('click', (e) => {
     if (e.target.classList.contains('star-btn')) return;
-    if (isCompleted && bookState.masteryLevel >= 1) {
+    if (isCompleted && bookState.masteryLevel >= 1 && !book.noMastery) {
       showMasteryDetail(book);
     } else {
       renderChapterList(book);

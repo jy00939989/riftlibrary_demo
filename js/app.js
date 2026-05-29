@@ -1,16 +1,17 @@
 // 应用入口 —— 初始化 + 页面切换 + 全局操作
 import { state, initState, saveState } from './state.js';
-import { addCoins, spendCoins, addHistory, updateStreak, addAtmosphere, updateBodyBackground, getAtmosphereLevel } from './storage.js';
+import { addCoins, spendCoins, addHistory, updateStreak, addAtmosphere, updateBodyBackground, getAtmosphereLevel, onStageCross, addInspiration } from './storage.js';
+import { canDrawActionCards, drawActionCards, applyAction } from './actioncards.js';
 import {
   renderFocusPage, renderBookshelfPage, renderLibraryPage,
   renderVisitorsPage, renderArchivePage, renderShopPage,
-  showUnlockAnimation, showBookCompleteAnimation, showBookShelvingAnimation, showCompletionCard, setActions,
+  showUnlockAnimation, showBookCompleteAnimation, showBookShelvingAnimation, showCompletionCard, showActionCards, setActions,
   updateStatusBar
 } from './render/index.js';
 import { startTimer, togglePauseTimer, abandonTimer, setCompleteCallback } from './timer.js';
 import { BOOKS } from '../data/books.js';
 import { installDevPanel } from './dev.js';
-import { spawnVisitor, tickVisitorBrowsing, checkDueVisitors, collectReturn, buySalesBook, removeVisitor, getVisitorDef, getAuraSpeedBonus, getAuraCoinsMultiplier, getAuraSpawnBonus } from './visitors.js';
+import { spawnVisitor, tickVisitorBrowsing, checkDueVisitors, collectReturn, buySalesBook, removeVisitor, getVisitorDef, getAuraSpeedBonus, getAuraCoinsMultiplier, getAuraSpawnBonus, getStageWitnesses } from './visitors.js';
 import { upgradeBorrowLevel, getFocusSpeedMultiplier } from './shop.js';
 import { checkAchievements, checkAllOnInit } from './achievements.js';
 import { showAchievementToast } from './render/achievements.js';
@@ -28,6 +29,62 @@ import { renderGuideQuestWidget, showQuestCompleteToast } from './render/index.j
 
 function getNow() {
   return window.__dev && window.__dev.getNow ? window.__dev.getNow() : Date.now();
+}
+
+// ========== 章节进度辅助 ==========
+
+function getChapterInfo(book, bookState) {
+  if (!book || !book.chapters || book.chapters.length === 0) return null;
+
+  const copyCount = bookState?.copyCount || 0;
+  const totalWords = book.totalWords || 1;
+  const effectiveWords = copyCount > 0 ? (bookState.copiedWords % totalWords) : bookState.copiedWords;
+
+  let currentChapter = null;
+  let chapterIndex = -1;
+  for (let i = book.chapters.length - 1; i >= 0; i--) {
+    if (effectiveWords >= book.chapters[i].unlockAt) {
+      currentChapter = book.chapters[i];
+      chapterIndex = i;
+      break;
+    }
+  }
+
+  if (!currentChapter) return null;
+
+  const chapterStart = currentChapter.unlockAt;
+  const progressInChapter = Math.min(currentChapter.words, effectiveWords - chapterStart);
+  const remainingWords = Math.max(0, currentChapter.words - progressInChapter);
+  const progressPct = Math.min(100, Math.round((progressInChapter / currentChapter.words) * 100));
+  const remainingMinutes = Math.ceil(remainingWords / 100);
+
+  return {
+    current: chapterIndex + 1,
+    total: book.chapters.length,
+    title: currentChapter.title,
+    progressPct,
+    remainingWords,
+    remainingMinutes,
+    highlight: currentChapter.highlight || currentChapter.preview
+  };
+}
+
+function getNextChapterPreview(book, bookState) {
+  if (!book || !book.chapters) return null;
+  const copyCount = bookState?.copyCount || 0;
+  const totalWords = book.totalWords || 1;
+  const effectiveWords = copyCount > 0 ? (bookState.copiedWords % totalWords) : bookState.copiedWords;
+
+  let chapterIndex = -1;
+  for (let i = book.chapters.length - 1; i >= 0; i--) {
+    if (effectiveWords >= book.chapters[i].unlockAt) {
+      chapterIndex = i;
+      break;
+    }
+  }
+
+  const nextChapter = book.chapters[chapterIndex + 1];
+  return nextChapter ? (nextChapter.preview || null) : null;
 }
 
 // ========== 里程碑配置 ==========
@@ -72,7 +129,7 @@ function handleStartFocus() {
   const isFirstFocusEver = state.focus.totalMinutes === 0;
 
   // 首次誊抄此书：状态从 unlocked → copying
-  if (bs && bs.status === 'unlocked') {
+  if (bs && (bs.status === 'unlocked' || bs.status === 'completed')) {
     bs.status = 'copying';
     saveState();
   }
@@ -143,12 +200,22 @@ function handleCompleteFocus(isAuto = false) {
     return;
   }
 
+  // 手动完成时清除 interval；自动完成时 timer.js 已经 stopTimer 了
   if (!isAuto && sess.intervalId) {
     clearInterval(sess.intervalId);
+    sess.intervalId = null;
   }
   const bookCategory = sess.bookId ? BOOKS[sess.bookId]?.category : null;
   const auraSpeed = getAuraSpeedBonus(bookCategory);
-  const wordsGained = Math.round(minutes * 100 * getFocusSpeedMultiplier() * (1 + auraSpeed));
+  // 热茶 buff：前5分钟速度 +10%
+  let wordsGained;
+  if (sess.teaBoost) {
+    const boostMin = Math.min(5, minutes);
+    const normalMin = minutes - boostMin;
+    wordsGained = Math.round((boostMin * 110 + normalMin * 100) * getFocusSpeedMultiplier() * (1 + auraSpeed));
+  } else {
+    wordsGained = Math.round(minutes * 100 * getFocusSpeedMultiplier() * (1 + auraSpeed));
+  }
 
   // 更新统计
   const prevTotalWords = state.focus.totalWords;
@@ -177,7 +244,7 @@ function handleCompleteFocus(isAuto = false) {
 
     // 检查章节解锁
     const newlyUnlocked = [];
-    book.chapters.forEach((ch, idx) => {
+    if (book.chapters) book.chapters.forEach((ch, idx) => {
       if (!bookState.unlockedChapters.includes(idx + 1) && bookState.copiedWords >= ch.unlockAt) {
         bookState.unlockedChapters.push(idx + 1);
         newlyUnlocked.push({ bookId: sess.bookId, chapterIdx: idx });
@@ -190,7 +257,9 @@ function handleCompleteFocus(isAuto = false) {
     if (bookState.copiedWords >= book.totalWords && bookState.status !== 'completed') {
       bookState.status = 'completed';
       bookState.copyCount += 1;
-      bookState.masteryLevel = Math.min(5, bookState.masteryLevel + 1);
+      if (!book.noMastery) {
+        bookState.masteryLevel = Math.min(5, bookState.masteryLevel + 1);
+      }
       addAtmosphere(book.totalWords < 30000 ? 3 : book.totalWords < 100000 ? 6 : 10);
       addCoins(50);
       addHistory('achievement', `完成《${book.title}》誊抄！`, `第${bookState.copyCount}次誊抄`);
@@ -207,12 +276,16 @@ function handleCompleteFocus(isAuto = false) {
   const auraCoinsMult = getAuraCoinsMultiplier();
   const coinsEarned = Math.round(minutes * 0.8 * (1 + auraCoinsMult));
   addCoins(coinsEarned);
-  addHistory('focus', `专注 ${minutes} 分钟`, `誊抄 ${wordsGained.toLocaleString()} 字 · +${coinsEarned}智慧之光`);
+  // 灵感：每次专注完成 +1
+  addInspiration(1);
+  if (sess.candleInspiration) {
+    addInspiration(1);
+    addHistory('action', '🕯️ 烛台微微闪动', '+1 灵感（烛台加成）');
+  }
+  addHistory('focus', `专注 ${minutes} 分钟`, `誊抄 ${wordsGained.toLocaleString()} 字 · +${coinsEarned}智慧之光 · +1灵感`);
 
+  // 立即标记 inactive 防止排队 tick 重入
   sess.active = false;
-  sess.elapsedSeconds = 0;
-  sess.paused = false;
-  saveState();
 
   // 今日馆务：专注 ≥25 分钟
   if (minutes >= 25) {
@@ -236,44 +309,65 @@ function handleCompleteFocus(isAuto = false) {
 
   // 弹窗链：书籍完成 > 章节解锁 > 里程碑 > 结算卡片
   const isFirstBookComplete = bookCompleted && !state.tutorialFlags.firstBookComplete;
-  handlePostFocusEffects({
-    minutes, wordsGained, coinsEarned,
-    unlockedChapter,
-    bookCompleted, bookTitle, bookEmoji, copyCount, completedBook,
-    isFirstBookComplete,
-    newMilestones
-  });
 
-  // 专注完成后访客到来
-  if (!bookCompleted) {
-    // 首个访客：累积专注 ≥20 分钟后必然触发破败叙事事件
-    const firstVisitorDue = !state.tutorialFlags.firstVisitorEventDone
-      && state.focus.totalMinutes >= 20;
-    if (firstVisitorDue) {
-      const visitor = spawnVisitor();
-      if (visitor) {
-        showFirstVisitorEvent(visitor);
-      }
-    } else if (state.tutorialFlags.firstVisitorEventDone) {
-      // 后续访客：概率触发（~35%，受氛围加成）
-      const spawnChance = 0.30 + (state.library.atmosphere / 500) * 0.20 + getAuraSpawnBonus();
-      if (Math.random() < spawnChance) {
+  // P1-03 四层反馈：章节进度 + 句子回显 + 引文预告 + 墨墨书评
+  const currentBook = sess.bookId ? BOOKS[sess.bookId] : null;
+  const currentBookState = sess.bookId ? state.books[sess.bookId] : null;
+  const chapterInfo = getChapterInfo(currentBook, currentBookState);
+  const nextPreview = getNextChapterPreview(currentBook, currentBookState);
+
+  // 结算卡弹窗链 + 访客 + 引导任务，包在 try-catch 防止弹窗异常导致静默失败
+  try {
+    handlePostFocusEffects({
+      minutes, wordsGained, coinsEarned,
+      unlockedChapter,
+      bookCompleted, bookTitle, bookEmoji, copyCount, completedBook,
+      isFirstBookComplete,
+      newMilestones,
+      chapterInfo,
+      nextPreview
+    });
+
+    // 专注完成后访客到来
+    if (!bookCompleted) {
+      const firstVisitorDue = !state.tutorialFlags.firstVisitorEventDone
+        && state.focus.totalMinutes >= 20;
+      if (firstVisitorDue) {
         const visitor = spawnVisitor();
         if (visitor) {
-          const vAchResults = checkAchievements('visitor_arrive');
-          showAchievementBatch(vAchResults);
-          showVisitorArrivalCard(visitor);
-          triggerQuestCheck('visitor_arrive');
+          showFirstVisitorEvent(visitor);
+        }
+      } else if (state.tutorialFlags.firstVisitorEventDone) {
+        const spawnChance = 0.30 + (state.library.atmosphere / 500) * 0.20 + getAuraSpawnBonus();
+        if (Math.random() < spawnChance) {
+          const visitor = spawnVisitor();
+          if (visitor) {
+            const vAchResults = checkAchievements('visitor_arrive');
+            showAchievementBatch(vAchResults);
+            showVisitorArrivalCard(visitor);
+            triggerQuestCheck('visitor_arrive');
+          }
         }
       }
     }
+
+    // 引导任务检测
+    triggerQuestCheck('focus_complete');
+    if (bookCompleted) {
+      triggerQuestCheck('book_complete');
+    }
+  } catch (e) {
+    console.error('结算弹窗链异常:', e);
+    // 弹窗链失败时至少重建页面，避免界面卡死
+    renderFocusPage();
+    updateStatusBar();
   }
 
-  // 引导任务检测
-  triggerQuestCheck('focus_complete');
-  if (bookCompleted) {
-    triggerQuestCheck('book_complete');
-  }
+  sess.elapsedSeconds = 0;
+  sess.paused = false;
+  sess.teaBoost = false;
+  sess.candleInspiration = false;
+  saveState();
 }
 
 // ========== 专注完成后弹窗链 ==========
@@ -284,7 +378,8 @@ function handlePostFocusEffects(effects) {
     unlockedChapter,
     bookCompleted, bookTitle, bookEmoji, copyCount, completedBook,
     isFirstBookComplete,
-    newMilestones
+    newMilestones,
+    chapterInfo, nextPreview
   } = effects;
 
   // 构建回调链（从后往前串联）
@@ -296,12 +391,16 @@ function handlePostFocusEffects(effects) {
       minutes, words: wordsGained, coins: coinsEarned, book,
       streak: state.focus.streak,
       totalWords: state.focus.totalWords,
-      nextMilestone: nextMs
+      nextMilestone: nextMs,
+      chapterInfo,
+      nextPreview
     }, () => {
       renderFocusPage();
       updateStatusBar();
       // 结算后检查教程触发
       checkAndShowPostFocusTutorials();
+      // 休息行动卡：≥15分钟专注 + 每日限3次
+      setTimeout(() => tryShowActionCards(minutes), 600);
     });
   };
 
@@ -330,11 +429,15 @@ function handlePostFocusEffects(effects) {
           showBookShelvingAnimation(completedBook, prevNext);
         });
       };
-    } else {
+    } else if (copyCount === 1) {
       next = () => {
         showBookCompleteAnimation(bookTitle, bookEmoji, copyCount, () => {
           showBookShelvingAnimation(completedBook, prevNext);
-        });
+        }, completedBook, bookState.masteryLevel);
+      };
+    } else {
+      next = () => {
+        showBookCompleteAnimation(bookTitle, bookEmoji, copyCount, prevNext, completedBook, bookState.masteryLevel);
       };
     }
     // 完成时吸引访客
@@ -343,6 +446,23 @@ function handlePostFocusEffects(effects) {
   }
 
   next();
+}
+
+// ========== 休息行动卡触发 ==========
+
+function tryShowActionCards(minutes) {
+  if (minutes < 15) return;
+  if (!canDrawActionCards()) return;
+  const cards = drawActionCards();
+  if (cards.length === 0) return;
+
+  showActionCards(cards, (picked) => {
+    if (picked) {
+      applyAction(picked.id);
+    }
+    renderFocusPage();
+    updateStatusBar();
+  });
 }
 
 // 结算后检查教程触发（氛围阶段跨越 + 首次专注完成）
@@ -371,7 +491,14 @@ function showAtmoStageChain(queue, callback) {
   const stageName = stageNames[stage] || `阶段${stage}`;
 
   addHistory('atmosphere', `✨ 图书馆氛围升至「${stageName}」`, `阶段 ${stage}/5`);
-  addDiaryEntry('special_event', { detail: `图书馆的氛围进入了「${stageName}」阶段——每个角落都充盈着灵光。` });
+  const stageDescs = {
+    2: '天花板的破洞不再漏风了——至少最大的那几个已经被魔法封住。歪倒的书架自己站直了几排，虽然还是空的，但木头里重新有了温度。墨墨说这是百年来第一次有人在乎这个地方。',
+    3: '墙壁上的裂纹在变浅，像愈合的伤口。长窗的彩色玻璃不知何时恢复了半透明的光泽，阳光穿过时在地板上投下淡淡的色斑。空气里羊皮纸和旧木头的气味越来越浓。',
+    4: '壁炉里的火自己燃起来了——不是普通的火焰，带着星星点点的金色碎屑。扶手椅上的绒布恢复了柔软的触感，坐下去会发出一声舒服的叹息。墨墨开始在横梁上挂小灯。',
+    5: '穹顶裂开了——不是坏事，裂缝里透进来的是星光。不是窗外的星光，是图书馆自己生成的。书架之间飘着极淡的金色雾气，书脊上的烫金会在黑暗中微微发光。墨墨蹲在你的肩头，很久没有说话。'
+  };
+  const detail = stageDescs[stage] || `图书馆的氛围进入了「${stageName}」阶段。`;
+  addDiaryEntry('special_event', { detail });
 
   const trigger = checkAndShowTutorial(`atmosphere_stage_${stage}`);
   if (trigger) {
@@ -679,6 +806,45 @@ function showVisitorArrivalCard(visitor) {
   }
 }
 
+// ========== 氛围阶段突破 · 访客见证 ==========
+
+function showWitnessToast(witnesses, stage) {
+  const stageNames = ['', '废墟', '破败', '陈旧', '温暖', '星辰'];
+  const stageName = stageNames[stage] || `阶段${stage}`;
+
+  const itemsHtml = witnesses.map(w => `
+    <div class="flex items-start gap-2 mb-2 last:mb-0">
+      <div class="text-2xl flex-shrink-0">${w.visitor.emoji}</div>
+      <div>
+        <p class="text-xs text-magic-gold font-bold">${w.visitor.name}</p>
+        <p class="text-xs text-ink-light leading-relaxed">「${w.text}」</p>
+      </div>
+    </div>
+  `).join('');
+
+  const overlay = document.createElement('div');
+  overlay.className = 'fixed bottom-6 right-6 z-[130] animate-slide-in-right';
+  overlay.innerHTML = `
+    <div class="parchment-bg rounded-xl p-5 shadow-2xl border-2 border-magic-gold/30 max-w-xs">
+      <div class="flex items-center gap-2 mb-3 pb-2 border-b border-magic-gold/20">
+        <span class="text-lg">✨</span>
+        <span class="text-xs text-magic-gold font-bold">氛围突破 · ${stageName}</span>
+      </div>
+      ${itemsHtml}
+      <p class="text-xs text-ink-light/40 mt-3 text-center">点击关闭 · 8秒后自动消失</p>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  const close = () => {
+    overlay.style.opacity = '0';
+    overlay.style.transition = 'opacity 0.3s';
+    setTimeout(() => overlay.remove(), 300);
+  };
+  overlay.addEventListener('click', close);
+  setTimeout(close, 8000);
+}
+
 // ========== 注入到 render ==========
 
 function handleUpgradeBorrowLevel() {
@@ -765,6 +931,43 @@ window.switchTab = function(tabName) {
 function init() {
   initState();
 
+  // 旧存档迁移：从 copiedWords 修正 copyCount 和 masteryLevel（短书快速重抄导致的不一致）
+  // 以及扩充字数后，旧"completed"需要回退为 copying
+  let migratedBooks = 0;
+  Object.keys(state.books).forEach(bookId => {
+    const book = BOOKS[bookId];
+    const bs = state.books[bookId];
+    if (!book || !bs || !book.totalWords || bs.copiedWords <= 0) return;
+    const actualCopies = Math.floor(bs.copiedWords / book.totalWords);
+    if (actualCopies > (bs.copyCount || 0)) {
+      bs.copyCount = actualCopies;
+      if (!book.noMastery) {
+        bs.masteryLevel = Math.min(5, actualCopies);
+      }
+      if (bs.masteryLevel >= 5) {
+        bs.status = 'completed';
+      }
+      migratedBooks++;
+    }
+    // 扩充字数迁移：旧存档标记为 completed 但字数不足新版总字数 → 回退为 copying
+    if (bs.status === 'completed' && bs.copiedWords < book.totalWords) {
+      bs.status = 'copying';
+      migratedBooks++;
+    }
+    // 确保章节解锁与 copiedWords 同步
+    if (book.chapters && bs.unlockedChapters) {
+      book.chapters.forEach((ch, idx) => {
+        if (bs.copiedWords >= ch.unlockAt && !bs.unlockedChapters.includes(idx + 1)) {
+          bs.unlockedChapters.push(idx + 1);
+        }
+      });
+    }
+  });
+  if (migratedBooks > 0) {
+    saveState();
+    console.log(`📚 迁移修正了 ${migratedBooks} 本书籍状态`);
+  }
+
   // 注入回调
   setCompleteCallback(handleCompleteFocus);
 
@@ -802,6 +1005,23 @@ function init() {
   updateStatusBar();
   updateBodyBackground();
   checkWither(); // 72小时离线凋谢检测
+
+  // 氛围阶段突破 → 访客见证
+  onStageCross((crossedStages) => {
+    const stageNames = ['', '废墟', '破败', '陈旧', '温暖', '星辰'];
+    crossedStages.forEach(stage => {
+      const witnesses = getStageWitnesses(stage);
+      if (witnesses.length > 0) {
+        showWitnessToast(witnesses, stage);
+        witnesses.forEach(w => {
+          addDiaryEntry('special_event', {
+            detail: `氛围升至「${stageNames[stage]}」时，${w.visitor.emoji} ${w.visitor.name}轻声说：「${w.text}」`
+          });
+        });
+      }
+    });
+  });
+
   tryGenerateDailySummary(); // 每日回顾：昨天有活动则生成一篇墨墨日志
 
   // 引导任务初始化

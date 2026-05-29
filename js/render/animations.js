@@ -103,22 +103,51 @@ export function showBookShelvingAnimation(book, callback) {
   }, 750);
 }
 
-export function showBookCompleteAnimation(bookTitle, bookEmoji, copyCount, callback) {
+export function showBookCompleteAnimation(bookTitle, bookEmoji, copyCount, callback, book, newLevel) {
   const overlay = el('div', 'fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4');
 
-  const card = el('div', 'parchment-bg rounded-2xl p-8 max-w-md w-full text-center magic-glow animate-scale-in');
-  card.innerHTML = `
-    <div class="text-6xl mb-4">${bookEmoji}</div>
-    <div class="text-magic-gold text-sm mb-2">🎉 书籍完成！</div>
-    <h3 class="font-display text-2xl font-bold mb-2">《${bookTitle}》</h3>
-    <p class="text-ink-light mb-2">已完整誊抄，永久收录于图书馆</p>
-    <p class="text-magic-blue font-bold mb-2">📚 第${copyCount}次誊抄 · 可以出借了</p>
-    <div class="flex justify-center gap-1 mb-4">
-      ${Array(Math.min(copyCount, 5)).fill('<span class="text-magic-gold text-lg">⭐</span>').join('')}
-    </div>
-    <p class="text-xs text-ink-light mb-1">+50智慧之光 · +5氛围 · 成就解锁</p>
-    <button class="mt-2 px-6 py-3 bg-magic-gold text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all">太棒了 →</button>
-  `;
+  const masteryRewards = ['',
+    '📖 书籍上架 · 可供访客借阅',
+    `📝 解锁作者小传：${book?.authorBio ? book.authorBio.slice(0, 40) + '…' : '待发现'}`,
+    `💬 解锁创作轶闻：${book?.anecdotes ? book.anecdotes.slice(0, 40) + '…' : '待发现'}`,
+    `🏅 解锁名家书评：${book?.reviews ? book.reviews.slice(0, 40) + '…' : '待发现'}`,
+    `🌟 解锁典藏封面 · 金光特效${book?.collectorCover ? ' · ' + book.collectorCover : ''}`
+  ];
+
+  const isFirstTime = copyCount === 1;
+  const rewardText = newLevel && masteryRewards[newLevel] ? masteryRewards[newLevel] : '';
+
+  if (isFirstTime) {
+    card.innerHTML = `
+      <div class="text-6xl mb-4">${bookEmoji}</div>
+      <div class="text-magic-gold text-sm mb-2">🎉 书籍完成！</div>
+      <h3 class="font-display text-2xl font-bold mb-2">《${bookTitle}》</h3>
+      <p class="text-ink-light mb-2">已完整誊抄，永久收录于图书馆</p>
+      <p class="text-magic-blue font-bold mb-2">📚 第${copyCount}次誊抄 · 可以出借了</p>
+      ${rewardText ? `<div class="bg-magic-gold/10 border border-magic-gold/30 rounded-lg p-3 mb-3 text-sm text-ink">
+        <span class="text-xs text-magic-gold font-bold">🔓 新解锁</span><br>${rewardText}
+      </div>` : ''}
+      <div class="flex justify-center gap-1 mb-4">
+        ${Array(Math.min(copyCount, 5)).fill('<span class="text-magic-gold text-lg">⭐</span>').join('')}
+      </div>
+      <p class="text-xs text-ink-light mb-1">+50智慧之光 · +5氛围 · 成就解锁</p>
+      <button class="mt-2 px-6 py-3 bg-magic-gold text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all">太棒了 →</button>
+    `;
+  } else {
+    card.innerHTML = `
+      <div class="text-5xl mb-3">${bookEmoji}</div>
+      <h3 class="font-display text-lg font-bold mb-1">《${bookTitle}》</h3>
+      <p class="text-magic-blue font-bold text-sm mb-3">📚 第${copyCount}次誊抄完成</p>
+      ${rewardText ? `<div class="bg-magic-gold/10 border border-magic-gold/30 rounded-lg p-3 mb-3 text-sm text-ink">
+        <span class="text-xs text-magic-gold font-bold">🔓 新解锁</span><br>${rewardText}
+      </div>` : ''}
+      <div class="flex justify-center gap-1 mb-3">
+        ${Array(Math.min(copyCount, 5)).fill('<span class="text-magic-gold text-lg">⭐</span>').join('')}
+      </div>
+      <p class="text-xs text-ink-light mb-1">+50智慧之光 · +5氛围</p>
+      <button class="mt-2 px-6 py-3 bg-magic-gold text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all">太棒了 →</button>
+    `;
+  }
 
   overlay.appendChild(card);
   document.body.appendChild(overlay);

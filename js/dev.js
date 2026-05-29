@@ -200,7 +200,7 @@ function completeCurrentBook() {
   if (isFirstBook) {
     showCertificate(book, afterCeremony);
   } else {
-    showBookCompleteAnimation(book.title, book.emoji, bs.copyCount, afterCeremony);
+    showBookCompleteAnimation(book.title, book.emoji, bs.copyCount, afterCeremony, book, bs.masteryLevel);
   }
   updateStatusLine();
 }

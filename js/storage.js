@@ -28,13 +28,29 @@ export function spendCoins(amount) {
   return false;
 }
 
+export function addInspiration(amount) {
+  state.inspiration = (state.inspiration || 0) + amount;
+  saveState();
+}
+
+let _onStageCross = null;
+export function onStageCross(cb) { _onStageCross = cb; }
+
 export function addAtmosphere(points) {
   const prevLevel = getAtmosphereLevel().level;
   state.library.atmosphere = Math.min(500, state.library.atmosphere + points);
+  const newLevel = getAtmosphereLevel().level;
   updateBodyBackground();
   refreshBGM();
   saveState();
-  return prevLevel;
+
+  if (newLevel > prevLevel) {
+    const crossed = [];
+    for (let s = prevLevel + 1; s <= newLevel; s++) crossed.push(s);
+    if (_onStageCross) _onStageCross(crossed);
+    return { prevLevel, newLevel, crossed };
+  }
+  return { prevLevel, newLevel, crossed: [] };
 }
 
 // 根据氛围阶段动态切换 body 背景图

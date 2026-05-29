@@ -48,7 +48,7 @@ body {
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
-  font-family: 'Noto Serif SC', serif;
+  font-family: 'Noto Serif SC', 'Source Han Serif SC', 'STSong', 'Songti SC', 'SimSun', '宋体', serif;
   color: #2c2419;
   min-height: 100vh;
 }
@@ -172,8 +172,8 @@ body {
 
 /* ========== 字体 ========== */
 
-.font-display { font-family: 'Cinzel', 'Noto Serif SC', serif; }
-.font-serif { font-family: 'Noto Serif SC', serif; }
+.font-display { font-family: 'Cinzel', 'Noto Serif SC', 'Source Han Serif SC', 'STSong', 'SimSun', '宋体', serif; }
+.font-serif { font-family: 'Noto Serif SC', 'Source Han Serif SC', 'STSong', 'SimSun', '宋体', serif; }
 
 /* ========== 书架卡片 ========== */
 
@@ -299,7 +299,7 @@ body {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
-  font-family: 'Noto Serif SC', serif;
+  font-family: 'Noto Serif SC', 'Source Han Serif SC', 'STSong', 'SimSun', '宋体', serif;
   color: #2c2419;
   line-height: 2;
   padding-right: 4px;
@@ -412,7 +412,7 @@ body {
   background: transparent;
   cursor: pointer;
   transition: all 0.2s;
-  font-family: 'Noto Serif SC', serif;
+  font-family: 'Noto Serif SC', 'Source Han Serif SC', 'STSong', 'SimSun', '宋体', serif;
 }
 .reading-chapter-nav button:hover {
   border-color: rgba(201,162,39,0.4);
@@ -757,7 +757,7 @@ body {
 }
 
 .guide-section h3 {
-  font-family: 'Cinzel', 'Noto Serif SC', serif;
+  font-family: 'Cinzel', 'Noto Serif SC', 'Source Han Serif SC', 'STSong', 'SimSun', '宋体', serif;
   font-size: 1.125rem;
   font-weight: 700;
   margin-bottom: 0.75rem;
@@ -823,7 +823,7 @@ body {
 /* ========== 新手引导任务卡片 ========== */
 
 #guide-quest-widget {
-  font-family: 'Noto Serif SC', serif;
+  font-family: 'Noto Serif SC', 'Source Han Serif SC', 'STSong', 'SimSun', '宋体', serif;
 }
 
 #guide-quest-widget .parchment-bg {

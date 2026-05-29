@@ -24,6 +24,19 @@ export function startTimer() {
   sess.paused = false;
   sess.quoteIndex = 0;
   sess.startTime = Date.now();
+  sess.teaBoost = false;
+  sess.candleInspiration = false;
+
+  // 行动卡 buff：热茶加速
+  if (state.pendingTeaBoost) {
+    sess.teaBoost = true;
+    state.pendingTeaBoost = false;
+  }
+  // 行动卡 buff：烛台灵感
+  if (state.pendingCandleInspiration) {
+    sess.candleInspiration = true;
+    state.pendingCandleInspiration = false;
+  }
 
   // 首次专注：墨墨的魔法加速（10倍速）
   momoAccelerating = state.focus.totalMinutes === 0;
@@ -50,7 +63,12 @@ function tick() {
   if ((sess.mode === 'countdown' || sess.mode === 'pomodoro') && sess.targetMinutes > 0) {
     if (sess.elapsedSeconds >= sess.targetMinutes * 60) {
       stopTimer();
-      if (onComplete) onComplete(false); // false = 自动完成（非手动）
+      if (onComplete) {
+        try { onComplete(true); } catch (e) {
+          console.error('自动完成回调异常:', e);
+          renderFocusPage();
+        }
+      }
       return;
     }
   }
