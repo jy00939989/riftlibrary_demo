@@ -256,6 +256,58 @@ export function showVisitorEventModal(result, callback) {
     }
   }
 
+  // 叙事事件（三层递进：常层便签 → 偶层故事 → 稀层深度 → 终局）
+  if (result.narrative) {
+    const nar = result.narrative;
+    // 常层：铅笔信/便签（每次还书都有）
+    if (nar.common) {
+      contentHtml += `<div class="mt-3 p-3 bg-wood/5 rounded-lg border border-wood/10 text-left">
+        <div class="text-xs text-ink-light mb-1">📝 ${result.visitorName}在书里夹了一张便签：</div>
+        <p class="text-sm text-ink leading-relaxed italic">"${nar.common.text}"</p>
+      </div>`;
+    }
+    // 偶层：野花标本/特别礼物
+    if (nar.occasional) {
+      contentHtml += `<div class="mt-3 p-3 bg-magic-gold/10 rounded-lg border border-magic-gold/20 text-left animate-scale-in">
+        <div class="text-xs text-magic-gold font-bold mb-1">🌸 ${nar.occasional.title}</div>
+        <p class="text-sm text-ink leading-relaxed">${nar.occasional.text}</p>
+      </div>`;
+    }
+    // 稀层：深层叙事 + 信件
+    if (nar.rare) {
+      contentHtml += `<div class="mt-3 p-4 bg-magic-blue/10 rounded-lg border-2 border-magic-blue/30 text-left animate-scale-in">
+        <div class="text-base text-magic-blue font-bold mb-2">✨ ${nar.rare.title}</div>
+        <p class="text-sm text-ink leading-relaxed whitespace-pre-line">${nar.rare.text}</p>
+        ${nar.rare.letter ? `<div class="mt-3 p-3 bg-white/60 rounded-lg border border-wood/20">
+          <div class="text-xs text-ink-light font-bold mb-1">📨 ${nar.rare.letter.title}</div>
+          <p class="text-xs text-ink leading-relaxed whitespace-pre-line italic">${nar.rare.letter.text}</p>
+        </div>` : ''}
+        ${nar.rare.permanentEffect?.message ? `<div class="mt-2 text-xs text-magic-blue font-bold">🎁 ${nar.rare.permanentEffect.message}</div>` : ''}
+      </div>`;
+    }
+    // 稀层后终局
+    if (nar.postRare) {
+      contentHtml += `<div class="mt-3 p-4 bg-magic-gold/10 rounded-lg border-2 border-magic-gold/30 text-left animate-scale-in">
+        <div class="text-base text-magic-gold font-bold mb-2">🎉 ${nar.postRare.title}</div>
+        <p class="text-sm text-ink leading-relaxed whitespace-pre-line">${nar.postRare.text}</p>
+      </div>`;
+    }
+    // 终局后常层（终局完成后的新日常事件）
+    if (nar.postRareCommon) {
+      contentHtml += `<div class="mt-3 p-3 bg-wood/5 rounded-lg border border-wood/10 text-left">
+        <div class="text-xs text-ink-light mb-1">📝 ${result.visitorName} 的消息：</div>
+        <p class="text-sm text-ink leading-relaxed italic">"${nar.postRareCommon.text}"</p>
+      </div>`;
+    }
+    // 终局后偶层（终局完成后的深度事件）
+    if (nar.postRareOccasional) {
+      contentHtml += `<div class="mt-3 p-4 bg-magic-blue/10 rounded-lg border border-magic-blue/20 text-left animate-scale-in">
+        <div class="text-sm text-magic-blue font-bold mb-2">🌟 ${nar.postRareOccasional.title}</div>
+        <p class="text-sm text-ink leading-relaxed whitespace-pre-line">${nar.postRareOccasional.text}</p>
+      </div>`;
+    }
+  }
+
   const card = el('div', 'parchment-bg rounded-2xl p-6 max-w-sm w-full text-center magic-glow animate-scale-in');
   card.innerHTML = contentHtml;
 

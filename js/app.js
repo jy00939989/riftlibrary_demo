@@ -236,6 +236,7 @@ function handleCompleteFocus(isAuto = false) {
   let bookEmoji = '';
   let copyCount = 0;
   let completedBook = null;
+  let bookMastery = 0;
 
   if (sess.bookId && state.books[sess.bookId]) {
     const bookState = state.books[sess.bookId];
@@ -258,7 +259,7 @@ function handleCompleteFocus(isAuto = false) {
       bookState.status = 'completed';
       bookState.copyCount += 1;
       if (!book.noMastery) {
-        bookState.masteryLevel = Math.min(5, bookState.masteryLevel + 1);
+        bookMastery = Math.min(5, bookMastery + 1);
       }
       addAtmosphere(book.totalWords < 30000 ? 3 : book.totalWords < 100000 ? 6 : 10);
       addCoins(50);
@@ -269,6 +270,7 @@ function handleCompleteFocus(isAuto = false) {
       bookEmoji = book.emoji;
       copyCount = bookState.copyCount;
       completedBook = book;
+      bookMastery = bookMastery;
       checkTaskCompletion('book_completed', { bookId: sess.bookId });
     }
   }
@@ -321,7 +323,7 @@ function handleCompleteFocus(isAuto = false) {
     handlePostFocusEffects({
       minutes, wordsGained, coinsEarned,
       unlockedChapter,
-      bookCompleted, bookTitle, bookEmoji, copyCount, completedBook,
+      bookCompleted, bookTitle, bookEmoji, copyCount, completedBook, bookMastery,
       isFirstBookComplete,
       newMilestones,
       chapterInfo,
@@ -376,7 +378,7 @@ function handlePostFocusEffects(effects) {
   const {
     minutes, wordsGained, coinsEarned,
     unlockedChapter,
-    bookCompleted, bookTitle, bookEmoji, copyCount, completedBook,
+    bookCompleted, bookTitle, bookEmoji, copyCount, completedBook, bookMastery,
     isFirstBookComplete,
     newMilestones,
     chapterInfo, nextPreview
@@ -433,11 +435,11 @@ function handlePostFocusEffects(effects) {
       next = () => {
         showBookCompleteAnimation(bookTitle, bookEmoji, copyCount, () => {
           showBookShelvingAnimation(completedBook, prevNext);
-        }, completedBook, bookState.masteryLevel);
+        }, completedBook, bookMastery);
       };
     } else {
       next = () => {
-        showBookCompleteAnimation(bookTitle, bookEmoji, copyCount, prevNext, completedBook, bookState.masteryLevel);
+        showBookCompleteAnimation(bookTitle, bookEmoji, copyCount, prevNext, completedBook, bookMastery);
       };
     }
     // 完成时吸引访客

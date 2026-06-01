@@ -83,6 +83,9 @@ export const state = {
   // 访客好感度（全局累计）
   visitorFavors: {}, // 动态按 VISITOR_DEFS 初始化
 
+  // 访客叙事进度（三层递进事件追踪）
+  visitorNarratives: {}, // 动态按 VISITOR_DEFS 初始化
+
   // 事件历史
   history: [],
 
@@ -285,6 +288,22 @@ export function initState() {
           wangxiaolei: state.visitorFavors?.yunyou || 0
         };
       }
+      }
+      // 旧存档迁移：visitorNarratives（10 人叙事进度追踪）
+      if (!state.visitorNarratives || Object.keys(state.visitorNarratives).length === 0) {
+        state.visitorNarratives = {};
+        const ALL_IDS = ['shenmingyuan','chengyuan','peizhou','jianan','jiangyoushu','guyu','qiaoyiyi','xierugui','xiachan','wangxiaolei'];
+        ALL_IDS.forEach(id => {
+          state.visitorNarratives[id] = {
+            commonTriggered: [],
+            occasionalCompleted: [],
+            rareTriggered: false,
+            postRareTriggered: false,
+            postRareCommonTriggered: [],
+            postRareOccasionalCompleted: [],
+            expansionLevel: 0
+          };
+        });
       }
       // 确保 currentSession 不会从上次恢复
       state.currentSession = {

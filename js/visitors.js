@@ -4,6 +4,7 @@ import { addCoins, addAtmosphere, addHistory } from './storage.js';
 import { BOOKS } from '../data/books.js';
 import { addDiaryEntry } from './diary.js';
 import { isBookCapacityFull } from './shop.js';
+import { VISITOR_NARRATIVES } from '../data/visitor-events.js';
 
 // ========== 访客角色定义（10位，2026-05-27 重构） ==========
 
@@ -651,6 +652,202 @@ export function checkDueVisitors(now) {
   return dueList;
 }
 
+// ========== 访客叙事引擎（三层递进） ==========
+
+function getNarrativeState(charId) {
+  if (!state.visitorNarratives) {
+    state.visitorNarratives = {};
+  }
+  if (!state.visitorNarratives[charId]) {
+    state.visitorNarratives[charId] = {
+      commonTriggered: [],
+      occasionalCompleted: [],
+      rareTriggered: false,
+      postRareTriggered: false,
+      postRareCommonTriggered: [],
+      postRareOccasionalCompleted: [],
+      expansionLevel: 0
+    };
+  }
+  return state.visitorNarratives[charId];
+}
+
+function getAvailableCommonEvents(charId) {
+  const narrative = VISITOR_NARRATIVES[charId];
+  if (!narrative || !narrative.common) return [];
+  const ns = getNarrativeState(charId);
+  let pool = [...narrative.common.base];
+  if (ns.expansionLevel >= 1) pool.push(...(narrative.common.expand1 || []));
+  if (ns.expansionLevel >= 2) pool.push(...(narrative.common.expand2 || []));
+  return pool;
+}
+
+function pickCommonEvent(charId) {
+  const pool = getAvailableCommonEvents(charId);
+  if (pool.length === 0) return null;
+  const ns = getNarrativeState(charId);
+  // 避开最近 3 条已触发的，保证轮换新鲜感
+  const recent = ns.commonTriggered.slice(-3);
+  const candidates = pool.filter(e => !recent.includes(e.id));
+  const chosen = candidates.length > 0
+    ? candidates[Math.floor(Math.random() * candidates.length)]
+    : pool[Math.floor(Math.random() * pool.length)];
+  ns.commonTriggered.push(chosen.id);
+  // 只保留最近 20 条记录，防止数组膨胀
+  if (ns.commonTriggered.length > 20) {
+    ns.commonTriggered = ns.commonTriggered.slice(-20);
+  }
+  return chosen;
+}
+
+function pickOccasionalEvent(charId) {
+  const narrative = VISITOR_NARRATIVES[charId];
+  if (!narrative || !narrative.occasional) return null;
+  const ns = getNarrativeState(charId);
+  const next = narrative.occasional.find(o => !ns.occasionalCompleted.includes(o.id));
+  if (!next) return null;
+  ns.occasionalCompleted.push(next.id);
+  // 首次偶层解锁 → 常层扩容
+  if (ns.occasionalCompleted.length === 1 && ns.expansionLevel < 1) {
+    ns.expansionLevel = 1;
+  }
+  return next;
+}
+
+function triggerNarrative(charId) {
+  const narrative = VISITOR_NARRATIVES[charId];
+  if (!narrative) return null;
+
+  const ns = getNarrativeState(charId);
+  const result = { common: null, occasional: null, rare: null, postRare: null, postRareCommon: null, postRareOccasional: null };
+  const favor = state.visitorFavors?.[charId] || 0;
+
+  // 1. 常层：每次还书必然触发
+  result.common = pickCommonEvent(charId);
+
+  // 2. 偶层：好感≥30 且 有未完成的偶层事件 → 30% 概率
+  const allOccDone = narrative.occasional
+    ? ns.occasionalCompleted.length >= narrative.occasional.length
+    : true;
+  if (favor >= 30 && !allOccDone && Math.random() < 0.30) {
+    result.occasional = pickOccasionalEvent(charId);
+    if (result.occasional) {
+      // 发放偶层奖励
+      const r = result.occasional.reward;
+      if (r) {
+        if (r.coins) addCoins(r.coins);
+        if (r.atmosphere) addAtmosphere(r.atmosphere);
+      }
+      addHistory('event', `🌸 ${result.occasional.title}`,
+        `${VISITOR_DEFS[charId]?.emoji || ''} ${VISITOR_DEFS[charId]?.name || charId}在还书中留下了一份特别的礼物`);
+      addDiaryEntry('special_event', { detail: `${result.occasional.title} —— ${result.occasional.text}` });
+    }
+  }
+
+  // 3. 稀层：偶层全完成 + 好感≥60 + 稀层未触发 → 10% 概率
+  if (allOccDone && !ns.rareTriggered && favor >= 60 && narrative.rare && Math.random() < 0.10) {
+    ns.rareTriggered = true;
+    result.rare = narrative.rare;
+    // 常层再次扩容
+    if (ns.expansionLevel < 2) ns.expansionLevel = 2;
+    // 发放稀层奖励
+    const r = narrative.rare.reward;
+    if (r) {
+      if (r.coins) addCoins(r.coins);
+      if (r.atmosphere) addAtmosphere(r.atmosphere);
+    }
+    // 稀层永久效果
+    if (narrative.rare.permanentEffect) {
+      const pe = narrative.rare.permanentEffect;
+      if (pe.type === 'unlock_book' && pe.bookId) {
+        if (!state.books[pe.bookId] || state.books[pe.bookId].status === 'locked') {
+          state.books[pe.bookId] = {
+            unlockedChapters: [1], copyCount: 0, masteryLevel: 0,
+            copiedWords: 0, status: 'unlocked', starred: false,
+            damaged: false, repairWords: 0
+          };
+        }
+      }
+    }
+    addHistory('event', `✨ 稀层事件：${narrative.rare.title}`,
+      `${VISITOR_DEFS[charId]?.emoji || ''} ${VISITOR_DEFS[charId]?.name || charId} 的故事展开新的一章`);
+    addDiaryEntry('special_event', {
+      detail: `${narrative.rare.title} —— ${narrative.rare.text}\n\n附信：${narrative.rare.letter?.title || ''}`
+    });
+  }
+
+  // 4. 稀层后终局：稀层已触发 + 终局未触发 → 100%
+  if (ns.rareTriggered && !ns.postRareTriggered && narrative.postRare) {
+    ns.postRareTriggered = true;
+    result.postRare = narrative.postRare;
+    const r = narrative.postRare.reward;
+    if (r) {
+      if (r.coins) addCoins(r.coins);
+      if (r.atmosphere) addAtmosphere(r.atmosphere);
+    }
+    addHistory('event', `🎉 终局事件：${narrative.postRare.title}`,
+      `${VISITOR_DEFS[charId]?.emoji || ''} ${VISITOR_DEFS[charId]?.name || charId} 的故事迎来了圆满的篇章`);
+    addDiaryEntry('special_event', { detail: `${narrative.postRare.title} —— ${narrative.postRare.text}` });
+  }
+
+  // 5. 终局后常层：终局已触发后，每次还书可能触发终局后常层事件（可重复）
+  if (ns.postRareTriggered && narrative.postRareCommon && narrative.postRareCommon.length > 0) {
+    const pool = narrative.postRareCommon;
+    const recent = ns.postRareCommonTriggered.slice(-2);
+    const candidates = pool.filter(e => !recent.includes(e.id));
+    const chosen = candidates.length > 0
+      ? candidates[Math.floor(Math.random() * candidates.length)]
+      : pool[Math.floor(Math.random() * pool.length)];
+    ns.postRareCommonTriggered.push(chosen.id);
+    if (ns.postRareCommonTriggered.length > 10) {
+      ns.postRareCommonTriggered = ns.postRareCommonTriggered.slice(-10);
+    }
+    result.postRareCommon = chosen;
+  }
+
+  // 6. 终局后偶层：终局已触发 + 好感≥100 + 有未完成的终局后偶层 → 30%概率
+  if (ns.postRareTriggered && narrative.postRareOccasional && narrative.postRareOccasional.length > 0) {
+    const allPostRareOccDone = ns.postRareOccasionalCompleted.length >= narrative.postRareOccasional.length;
+    if (favor >= 100 && !allPostRareOccDone && Math.random() < 0.30) {
+      const next = narrative.postRareOccasional.find(o => !ns.postRareOccasionalCompleted.includes(o.id));
+      if (next) {
+        ns.postRareOccasionalCompleted.push(next.id);
+        result.postRareOccasional = next;
+        if (next.reward) {
+          if (next.reward.coins) addCoins(next.reward.coins);
+          if (next.reward.atmosphere) addAtmosphere(next.reward.atmosphere);
+        }
+        addHistory('event', `🌟 ${next.title}`,
+          `${VISITOR_DEFS[charId]?.emoji || ''} ${VISITOR_DEFS[charId]?.name || charId} 的故事仍在继续`);
+        addDiaryEntry('special_event', { detail: `${next.title} —— ${next.text}` });
+      }
+    }
+  }
+
+  saveState();
+  return result;
+}
+
+// 导出叙事进度查询（给渲染层用）
+export function getNarrativeProgress(charId) {
+  const ns = getNarrativeState(charId);
+  const narrative = VISITOR_NARRATIVES[charId];
+  if (!narrative) return null;
+  return {
+    charId,
+    favor: state.visitorFavors?.[charId] || 0,
+    commonTotal: getAvailableCommonEvents(charId).length,
+    occasionalDone: ns.occasionalCompleted.length,
+    occasionalTotal: narrative.occasional?.length || 0,
+    rareTriggered: ns.rareTriggered,
+    postRareTriggered: ns.postRareTriggered,
+    postRareCommonTotal: narrative.postRareCommon?.length || 0,
+    postRareOccasionalDone: ns.postRareOccasionalCompleted?.length || 0,
+    postRareOccasionalTotal: narrative.postRareOccasional?.length || 0,
+    expansionLevel: ns.expansionLevel
+  };
+}
+
 // ========== 收取还书 + 事件触发 ==========
 
 export function collectReturn(visitorId) {
@@ -730,7 +927,10 @@ export function collectReturn(visitorId) {
     damaged = true;
   }
 
-  // 判定 2：角色事件（~60%）
+  // 判定 2：访客叙事事件（三层递进：常层→偶层→稀层→终局）
+  const narrativeResult = triggerNarrative(charId);
+
+  // 判定 3：旧版角色事件（~60%，保留赠书/推销/诗笺等玩法效果）
   let eventResult = null;
   if (Math.random() < 0.6 && !visitor.eventTriggered) {
     eventResult = triggerEvent(charId, visitor);
@@ -742,7 +942,7 @@ export function collectReturn(visitorId) {
   saveState();
 
   return {
-    damaged, event: eventResult, bookId, bookTitle, charId, wavePoem,
+    damaged, event: eventResult, narrative: narrativeResult, bookId, bookTitle, charId, wavePoem,
     visitorName: visitor.name, visitorEmoji: visitor.emoji,
     coins: retCfg.returnCoins, atmosphere: retCfg.returnAtmo, favor: returnFavor,
     quote
