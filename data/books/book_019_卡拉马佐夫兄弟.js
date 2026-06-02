@@ -6,6 +6,7 @@ export const meta = {
   titleEn: 'The Brothers Karamazov',
   author: '陀思妥耶夫斯基',
   category: '哲学',
+  era: 'ERA_007',
   totalWords: 450000,
   description: '陀思妥耶夫斯基的巅峰之作，通过卡拉马佐夫一家的故事探讨信仰、理性与自由意志。',
   emoji: '⚖️',

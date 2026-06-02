@@ -6,6 +6,7 @@ export const meta = {
   titleEn: 'Meditations',
   author: '马可·奥勒留',
   category: '哲学',
+  era: 'ERA_001',
   totalWords: 80000,
   description: '罗马皇帝写给自己的日记，斯多葛派哲学的巅峰之作，关于如何保持内心平静。',
   emoji: '🏛️',

@@ -6,6 +6,7 @@ export const meta = {
   titleEn: 'Stray Birds',
   author: '拉宾德拉纳特·泰戈尔',
   category: '诗歌',
+  era: 'ERA_009',
   totalWords: 18000,
   description: '印度诗人泰戈尔的短诗集，326首无题短诗如飞鸟掠过天空，关于爱、自然与生命的沉思。',
   emoji: '🐦',

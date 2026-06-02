@@ -6,6 +6,7 @@ export const meta = {
   titleEn: 'The Little Prince',
   author: '安托万·德·圣-埃克苏佩里',
   category: '童话',
+  era: 'ERA_009',
   totalWords: 28000,
   description: '一个来自小行星B-612的小王子的星际旅行故事，关于爱、责任与生命的意义。',
   emoji: '🤴',

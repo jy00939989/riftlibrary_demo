@@ -6,6 +6,7 @@ export const meta = {
   titleEn: "Alice's Adventures in Wonderland",
   author: '刘易斯·卡罗尔',
   category: '童话',
+  era: 'ERA_007',
   totalWords: 42000,
   description: '小女孩爱丽丝追逐一只揣着怀表的白兔，掉进了奇妙的兔子洞。在那个颠倒的世界里，一切都充满了荒诞与奇思妙想。',
   emoji: '🐇',

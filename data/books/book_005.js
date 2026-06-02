@@ -5,6 +5,7 @@ export const meta = {
   title: '傲慢与偏见',
   author: '简·奥斯汀',
   category: '小说',
+  era: 'ERA_006',
   totalWords: 123000,
   description: '十九世纪初英国乡村，五姐妹待嫁寻爱，傲慢与偏见交织的经典爱情传奇。',
   emoji: '👒',

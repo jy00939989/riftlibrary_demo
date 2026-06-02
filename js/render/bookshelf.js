@@ -3,29 +3,58 @@ import { state, saveState } from '../state.js';
 import { BOOKS, CATEGORIES } from '../../data/books.js';
 import { el, actions } from './common.js';
 import { checkTaskCompletion } from '../quests.js';
+import { spendInspiration } from '../storage.js';
+import { getManuscriptSlots, getManuscriptBoxCount, getBookCapacity, getOwnedBookCount, placeOnShelf } from '../capacity.js';
+import { calcCurationEffects } from '../curation.js';
 
 const SHELF_CAPACITY = 5;
 let currentFilter = 'all';
 let currentCategory = 'all';
 let currentSort = 'default';
 
+// 拖拽状态（模块级，不持久化）
+let dragFromShelf = -1;
+let dragFromSlot = -1;
+
 export function renderBookshelfPage() {
   const container = document.getElementById('page-bookshelf');
   if (!container) return;
   container.innerHTML = '';
 
+  // 自动上架：手稿箱中已完成的书籍写入书架空位
+  const mBox = state.manuscriptBox || [];
+  if (mBox.length > 0) {
+    let changed = false;
+    for (let i = mBox.length - 1; i >= 0; i--) {
+      const bookId = mBox[i];
+      const bs = state.books[bookId];
+      if (bs && bs.status === 'completed') {
+        if (placeOnShelf(bookId)) {
+          mBox.splice(i, 1);
+          changed = true;
+        } else {
+          break; // 书架没空位了
+        }
+      }
+    }
+    if (changed) saveState();
+  }
+
   const card = el('div', 'parchment-bg rounded-2xl p-6 magic-glow');
-  let books = Object.values(BOOKS).filter(b => state.books[b.id]?.status === 'completed');
+  // 集齐所有已完成且不在手稿箱的书，用于筛选判断可见性
+  let allCompletedBooks = Object.values(BOOKS).filter(b =>
+    state.books[b.id]?.status === 'completed' && !(state.manuscriptBox || []).includes(b.id)
+  );
 
   // 筛选栏
   card.appendChild(renderFilterBar());
 
-  // 应用筛选
-  books = applyFilters(books);
+  // 应用筛选（只影响可见性，不影响位置）
+  const visibleBookIds = new Set(applyFilters(allCompletedBooks).map(b => b.id));
 
   // 标题栏
   const header = el('div', 'flex items-center justify-between mb-6');
-  header.innerHTML = `<h2 class="font-display text-xl font-bold">我的书架 <span class="text-sm font-normal text-ink-light">(${books.length}本)</span></h2>`;
+  header.innerHTML = `<h2 class="font-display text-xl font-bold">我的书架 <span class="text-sm font-normal text-ink-light">(${allCompletedBooks.length}本)</span></h2>`;
   const n = state.library.shelves.length;
   const price = Math.min(4800, 300 * Math.pow(2, n - 1));
   const buyBtn = el('button', 'px-4 py-2 bg-magic-gold text-white rounded-lg text-sm font-bold shadow hover:shadow-lg transition-all');
@@ -36,22 +65,184 @@ export function renderBookshelfPage() {
   header.appendChild(buyBtn);
   card.appendChild(header);
 
-  // 书架网格
-  const gridDiv = el('div', 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3');
-  books.forEach(book => {
-    gridDiv.appendChild(renderBookCard(book));
-  });
-  // 空位
-  const totalSlots = state.library.shelves.length * SHELF_CAPACITY;
-  const emptySlots = Math.max(0, totalSlots - books.length);
-  for (let i = 0; i < emptySlots; i++) {
-    const empty = el('div', 'min-h-[200px] p-3 border-2 border-dashed border-wood/30 rounded-lg flex items-center justify-center');
-    empty.innerHTML = '<span class="text-wood/30 text-2xl">+</span>';
-    gridDiv.appendChild(empty);
+  // 手稿箱区域
+  const mBox2 = state.manuscriptBox || [];
+  if (mBox2.length > 0) {
+    const mSection = el('div', 'mb-6 p-4 rounded-xl border-2 border-dashed border-amber-400/40 bg-amber-50/30');
+    const mSlots = getManuscriptSlots();
+    const mCount = getManuscriptBoxCount();
+    mSection.innerHTML = `
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-display text-sm font-bold text-ink">📦 手稿箱 <span class="text-xs font-normal text-ink-light">(${mCount}/${mSlots} 格)</span></h3>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
+        ${mBox2.map(bookId => {
+          const book = BOOKS[bookId];
+          const bs = state.books[bookId];
+          if (!book || !bs) return '';
+          const isCompleted = bs.status === 'completed';
+          return `
+            <div class="p-3 rounded-lg border ${isCompleted ? 'bg-green-50/60 border-green-300' : 'bg-white/70 border-wood/20'} text-center">
+              <div class="text-2xl mb-1">${book.emoji}</div>
+              <div class="text-xs font-bold text-ink">${book.title}</div>
+              <div class="text-[10px] text-ink-light mt-0.5">
+                ${isCompleted ? '✅ 已誊抄 · 待上架' : '📝 待誊抄'}
+              </div>
+            </div>
+          `;
+        }).join('')}
+        ${Array.from({ length: Math.max(0, mSlots - mCount) }, () => `
+          <div class="p-3 rounded-lg border border-dashed border-wood/20 flex items-center justify-center min-h-[80px]">
+            <span class="text-wood/20 text-lg">+</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+    card.appendChild(mSection);
   }
 
-  card.appendChild(gridDiv);
+  // 书架网格（按架分组，按位排列 + 拖拽交换）
+  // 先算一次旧连携，用于对比
+  const oldCuration = calcCurationEffects(state.library.shelves);
+
+  const shelvesContainer = el('div', 'space-y-6');
+  const shelves = state.library.shelves || [[null, null, null, null, null]];
+  shelves.forEach((shelf, shelfIdx) => {
+    if (!Array.isArray(shelf)) return;
+    const shelfDiv = el('div', '');
+    shelfDiv.innerHTML = `<div class="text-xs text-ink-light mb-2 font-bold">📚 书架 ${shelfIdx + 1}</div>`;
+    const row = el('div', 'grid grid-cols-5 gap-3');
+
+    shelf.forEach((bookId, slotIdx) => {
+      // 计算连携光效 class
+      let chainClass = '';
+      for (const chain of oldCuration.chains) {
+        if (chain.shelfIdx === shelfIdx && slotIdx >= chain.startSlot && slotIdx <= chain.endSlot) {
+          chainClass = `curation-chain-${chain.length}`;
+          break;
+        }
+      }
+
+      if (bookId) {
+        const book = BOOKS[bookId];
+        const bs = state.books[bookId];
+        if (book && bs && visibleBookIds.has(bookId)) {
+          const cardDiv = el('div', `curation-slot ${chainClass}`);
+          cardDiv.setAttribute('data-shelf-idx', shelfIdx);
+          cardDiv.setAttribute('data-slot-idx', slotIdx);
+          cardDiv.setAttribute('draggable', 'true');
+          cardDiv.addEventListener('dragstart', (e) => {
+            dragFromShelf = shelfIdx;
+            dragFromSlot = slotIdx;
+            e.dataTransfer.effectAllowed = 'move';
+            e.target.classList.add('dragging');
+          });
+          cardDiv.addEventListener('dragend', (e) => {
+            e.target.classList.remove('dragging');
+            dragFromShelf = -1;
+            dragFromSlot = -1;
+          });
+          cardDiv.addEventListener('dragover', (e) => { e.preventDefault(); });
+          cardDiv.addEventListener('drop', handleDrop);
+          cardDiv.appendChild(renderBookCard(book));
+          row.appendChild(cardDiv);
+        } else {
+          const dim = el('div', `curation-slot min-h-[200px] p-3 border border-dashed border-wood/10 rounded-lg flex items-center justify-center opacity-20 ${chainClass}`);
+          dim.setAttribute('data-shelf-idx', shelfIdx);
+          dim.setAttribute('data-slot-idx', slotIdx);
+          dim.innerHTML = '<span class="text-wood/20 text-lg">·</span>';
+          row.appendChild(dim);
+        }
+      } else {
+        const empty = el('div', `curation-slot min-h-[200px] p-3 border-2 border-dashed border-wood/30 rounded-lg flex items-center justify-center ${chainClass}`);
+        empty.setAttribute('data-shelf-idx', shelfIdx);
+        empty.setAttribute('data-slot-idx', slotIdx);
+        empty.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          e.currentTarget.classList.add('drag-over');
+        });
+        empty.addEventListener('dragleave', (e) => {
+          e.currentTarget.classList.remove('drag-over');
+        });
+        empty.addEventListener('drop', handleDrop);
+        empty.innerHTML = '<span class="text-wood/30 text-2xl">+</span>';
+        row.appendChild(empty);
+      }
+    });
+
+    shelfDiv.appendChild(row);
+    shelvesContainer.appendChild(shelfDiv);
+  });
+  card.appendChild(shelvesContainer);
   container.appendChild(card);
+}
+
+// ========== 拖拽处理 ==========
+
+function handleDrop(e) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+
+  const toShelf = parseInt(e.currentTarget.dataset.shelfIdx);
+  const toSlot = parseInt(e.currentTarget.dataset.slotIdx);
+
+  if (dragFromShelf < 0 || dragFromSlot < 0) return;
+  if (dragFromShelf === toShelf && dragFromSlot === toSlot) return;
+
+  // 旧连携快照
+  const oldEffects = calcCurationEffects(state.library.shelves);
+
+  // 交换
+  const shelves = state.library.shelves;
+  const tmp = shelves[dragFromShelf][dragFromSlot];
+  shelves[dragFromShelf][dragFromSlot] = shelves[toShelf][toSlot];
+  shelves[toShelf][toSlot] = tmp;
+
+  saveState();
+
+  // 检测新连携
+  const newEffects = calcCurationEffects(shelves);
+  const oldIds = new Set(oldEffects.chains.map(c => `${c.type}:${c.shelfIdx}:${c.startSlot}`));
+  const newChains = newEffects.chains.filter(c => !oldIds.has(`${c.type}:${c.shelfIdx}:${c.startSlot}`));
+  const oldPairIds = new Set(oldEffects.pairs.map(p => p.pairId));
+  const newPairs = newEffects.pairs.filter(p => !oldPairIds.has(p.pairId));
+
+  // Toast 通知
+  const toasts = [];
+  for (const chain of newChains) {
+    const typeLabel = chain.type === 'category' ? '分类共鸣' : '时代共鸣';
+    const tierLabel = chain.length >= 5 ? '圆满' : chain.length >= 4 ? '大成' : '小成';
+    toasts.push(`✦ ${typeLabel}：${chain.value} ×${chain.length}「${tierLabel}」`);
+  }
+  for (const pair of newPairs) {
+    toasts.push(`🔗 作者对话：${pair.name}`);
+    // 首次触发墨墨点评
+    if (pair.momoComment) {
+      toasts.push(`🦉 墨墨：${pair.momoComment}`);
+    }
+  }
+
+  if (toasts.length > 0) {
+    showCurationToast(toasts.join('\n'));
+  }
+
+  renderBookshelfPage();
+}
+
+function showCurationToast(message) {
+  const existing = document.querySelector('.curation-toast');
+  if (existing) existing.remove();
+
+  const toast = document.createElement('div');
+  toast.className = 'curation-toast';
+  toast.textContent = message;
+  document.body.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 0.5s';
+    setTimeout(() => toast.remove(), 500);
+  }, 3000);
 }
 
 function renderFilterBar() {
@@ -185,13 +376,28 @@ function renderChapterList(book) {
   const modal = el('div', 'fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4');
   const content = el('div', 'parchment-bg rounded-2xl p-6 max-w-lg w-full max-h-[80vh] overflow-y-auto magic-glow');
 
+  // 重抄灵感费用
+  const getReCopyCost = (b) => {
+    if (b.totalWords < 30000) return 2;
+    if (b.totalWords < 100000) return 3;
+    return 5;
+  };
+
+  const isCompleted = bookState.status === 'completed';
+  const needReCopy = isCompleted && !bookState.reCopyUnlocked && !book.noMastery;
+
   content.innerHTML = `
     <div class="flex items-center justify-between mb-4">
       <h2 class="font-display text-xl font-bold">${book.emoji} ${book.title}</h2>
       <button class="text-2xl text-ink-light hover:text-ink close-modal">✕</button>
     </div>
-    <div class="text-sm text-ink-light mb-3">${book.author} · ${book.category} · ${book.totalWords.toLocaleString()}字</div>
-    <button id="start-copy-btn" class="w-full px-4 py-2 mb-4 bg-magic-gold text-white rounded-lg font-bold text-sm hover:shadow-lg transition-all">📝 开始誊抄此书</button>
+    <div class="text-sm text-ink-light mb-1">${book.author} · ${book.category} · ${book.totalWords.toLocaleString()}字</div>
+    ${isCompleted ? `<div class="text-xs text-magic-gold mb-2">✦ 熟练度 Lv${bookState.masteryLevel} · 已抄 ${bookState.copyCount} 次</div>` : ''}
+    ${needReCopy
+      ? `<button id="re-copy-btn" class="w-full px-4 py-2 mb-4 bg-purple-600 text-white rounded-lg font-bold text-sm hover:shadow-lg transition-all">🔮 花费灵感重抄 · ${getReCopyCost(book)} ✨</button>
+         <div class="text-center text-xs text-ink-light mb-3">当前灵感：${state.inspiration || 0} ✨</div>`
+      : `<button id="start-copy-btn" class="w-full px-4 py-2 mb-4 bg-magic-gold text-white rounded-lg font-bold text-sm hover:shadow-lg transition-all">📝 开始誊抄此书</button>`
+    }
     <div class="space-y-2">
       ${book.chapters.map((ch, i) => {
         const unlocked = bookState.unlockedChapters.includes(i + 1);
@@ -219,11 +425,31 @@ function renderChapterList(book) {
   });
 
   // 开始誊抄按钮
-  content.querySelector('#start-copy-btn').addEventListener('click', () => {
-    state.currentSession.bookId = book.id;
-    modal.remove();
-    document.getElementById('tab-focus').click();
-  });
+  const startBtn = content.querySelector('#start-copy-btn');
+  if (startBtn) {
+    startBtn.addEventListener('click', () => {
+      state.currentSession.bookId = book.id;
+      modal.remove();
+      document.getElementById('tab-focus').click();
+    });
+  }
+
+  // 灵感重抄按钮
+  const reCopyBtn = content.querySelector('#re-copy-btn');
+  if (reCopyBtn) {
+    reCopyBtn.addEventListener('click', () => {
+      const cost = getReCopyCost(book);
+      if (!spendInspiration(cost)) {
+        alert(`灵感不足！需要 ${cost} ✨，当前拥有 ${state.inspiration || 0} ✨`);
+        return;
+      }
+      bookState.reCopyUnlocked = true;
+      saveState();
+      modal.remove();
+      state.currentSession.bookId = book.id;
+      document.getElementById('tab-focus').click();
+    });
+  }
 
   // 章节点击进入阅读
   content.querySelectorAll('.chapter-item.cursor-pointer').forEach((item, i) => {

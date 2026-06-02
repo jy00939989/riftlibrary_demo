@@ -3,7 +3,8 @@ import { state, saveState } from './state.js';
 import { spendCoins, addCoins, addAtmosphere, addHistory } from './storage.js';
 import { markTaskDone } from './dailytasks.js';
 import { PLANT_TYPES, SEED_EXCHANGE } from '../data/plants.js';
-import { isBookCapacityFull, hasSignboard } from './shop.js';
+import { isBookCapacityFull, isManuscriptBoxFull, addToManuscriptBox, createBookRecord } from './capacity.js';
+import { hasSignboard } from './shop.js';
 import { SIGNBOARDS } from '../data/signboards.js';
 
 function getNow() {
@@ -207,21 +208,14 @@ export function canExchangeSeed(seedType) {
 // 种子兑换书籍
 export function exchangeSeed(seedType) {
   if (!canExchangeSeed(seedType)) return false;
-  if (isBookCapacityFull()) return false;
+  if (isManuscriptBoxFull()) return false;
 
   const config = SEED_EXCHANGE[seedType];
   state.seeds[seedType] -= config.required;
 
-  state.books[config.rewardBookId] = {
-    unlockedChapters: [1],
-    copyCount: 0,
-    masteryLevel: 0,
-    copiedWords: 0,
-    status: 'unlocked',
-    starred: false,
-    damaged: false,
-    repairWords: 0
-  };
+  state.books[config.rewardBookId] = createBookRecord();
+
+  addToManuscriptBox(config.rewardBookId);
 
   addHistory('plant', `种子兑换《${config.rewardTitle}》`, `消耗${config.required}颗种子`);
   saveState();

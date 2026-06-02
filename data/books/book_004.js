@@ -5,6 +5,7 @@ export const meta = {
   title: '东京梦华录',
   author: '孟元老（宋代）',
   category: '历史',
+  era: 'ERA_004',
   totalWords: 15000,
   description: '北宋东京汴梁繁华尽录，御街酒楼、相国寺万姓交易，一卷市井风情画与帝国盛衰见证。',
   emoji: '🏙️',

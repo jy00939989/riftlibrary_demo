@@ -6,6 +6,7 @@ export const meta = {
   titleEn: 'Selected Vegetable Roots Discourse',
   author: '洪应明',
   category: '哲学',
+  era: 'ERA_005',
   totalWords: 18000,
   description: '明代洪应明的处世箴言集，融合儒释道三家智慧，以简练文字道破人情世故与修身养性之理。',
   emoji: '🥬',

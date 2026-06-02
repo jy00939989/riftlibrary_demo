@@ -3,7 +3,8 @@ import { state, saveState } from './state.js';
 import { addCoins, addAtmosphere, addHistory } from './storage.js';
 import { BOOKS } from '../data/books.js';
 import { addDiaryEntry } from './diary.js';
-import { isBookCapacityFull } from './shop.js';
+import { isBookCapacityFull, addToManuscriptBox, createBookRecord, unlockBook } from './capacity.js';
+import { getCurationBorrowBonus } from './curation.js';
 import { VISITOR_NARRATIVES } from '../data/visitor-events.js';
 import { SIGNBOARDS } from '../data/signboards.js';
 
@@ -577,8 +578,6 @@ export function tickVisitorBrowsing(now) {
   const blvCfg = getBorrowLevelConfig();
   const cap = Math.max(blvCfg.cap, 1); // Lv0 保底 1 人容量
 
-  const completedBooks = getCompletedBooks();
-
   state.visitors.forEach(visitor => {
     if (visitor.status !== 'browsing') return;
 
@@ -587,11 +586,13 @@ export function tickVisitorBrowsing(now) {
     visitor.favorability = (visitor.favorability || 0) + browseFavor;
     addVisitorFavor(visitor.charId, browseFavor);
 
-    // 没有可借的书 → 访客仍在馆浏览，但不触发借书
+    // 每次 tick 实时计算可用书籍（避免同一 tick 内多个访客借走同一本书）
+    const completedBooks = getCompletedBooks();
     if (completedBooks.length === 0) return;
 
-    // 浏览随机时长后尝试借书（简化：每次 tick 有 40% 概率借书）
-    if (Math.random() > 0.4) return;
+    // 浏览随机时长后尝试借书（简化：每次 tick 有 40% 概率借书 + 策展加成）
+    const borrowChance = 0.4 + getCurationBorrowBonus();
+    if (Math.random() > borrowChance) return;
 
     attemptBorrow(visitor, completedBooks, now);
   });
@@ -767,11 +768,7 @@ function triggerNarrative(charId) {
       const pe = narrative.rare.permanentEffect;
       if (pe.type === 'unlock_book' && pe.bookId) {
         if (!state.books[pe.bookId] || state.books[pe.bookId].status === 'locked') {
-          state.books[pe.bookId] = {
-            unlockedChapters: [1], copyCount: 0, masteryLevel: 0,
-            copiedWords: 0, status: 'unlocked', starred: false,
-            damaged: false, repairWords: 0
-          };
+          unlockBook(pe.bookId);
         }
       } else if (pe.type === 'signboard_active' && pe.signboardId) {
         if (!state.signboards.includes(pe.signboardId)) {
@@ -987,10 +984,12 @@ function eventGiftBook(visitor) {
   }
   const bookId = pick(available);
   const book = BOOKS[bookId];
-  state.books[bookId] = {
-    unlockedChapters: [1], copyCount: 0, masteryLevel: 0,
-    copiedWords: 0, status: 'unlocked', starred: false, damaged: false, repairWords: 0
-  };
+  if (!unlockBook(bookId)) {
+    addCoins(50);
+    addHistory('event', '📝 沈明远留下批注但手稿箱已满', '手稿箱无空位，书籍暂存于借阅区');
+    saveState();
+    return { type: 'annotation', coins: 50 };
+  }
   addHistory('event', `📦 沈明远赠送了一本《${book.title}》`, `${(book.totalWords || 0).toLocaleString()}字 · ${book.author}`);
   addDiaryEntry('special_event', { detail: `沈明远赠送了一本《${book.title}》，说是自己珍藏多年的版本。` });
   saveState();
@@ -1049,22 +1048,14 @@ function eventGeneric(charId, visitor) {
 
 export function buySalesBook(bookMeta) {
   if (state.coins < bookMeta.price) return false;
-  if (isBookCapacityFull()) return false;
+  if (isManuscriptBoxFull()) return false;
   addCoins(-bookMeta.price);
 
   const bookId = 'sale_' + Date.now().toString(36);
-  state.books[bookId] = {
-    unlockedChapters: [1],
-    copyCount: 0,
-    masteryLevel: 0,
-    copiedWords: 0,
-    status: 'unlocked',
-    starred: false,
-    damaged: false,
-    repairWords: 0
-  };
+  state.books[bookId] = createBookRecord();
   if (!state._mysteryBooks) state._mysteryBooks = {};
   state._mysteryBooks[bookId] = bookMeta;
+  addToManuscriptBox(bookId);
 
   addHistory('event', `🛒 购买了阿九推销的《${bookMeta.title}》`, `${(bookMeta.words || 0).toLocaleString()}字`);
   saveState();

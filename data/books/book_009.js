@@ -6,6 +6,7 @@ export const meta = {
   titleEn: 'Dream of the Red Chamber',
   author: '曹雪芹',
   category: '小说',
+  era: 'ERA_005',
   totalWords: 400000,
   description: '一部描写清代贵族贾府兴衰的史诗巨著，宝黛钗爱情悲剧为主线',
   emoji: '🏮',

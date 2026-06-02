@@ -33,6 +33,13 @@ export function addInspiration(amount) {
   saveState();
 }
 
+export function spendInspiration(amount) {
+  if ((state.inspiration || 0) < amount) return false;
+  state.inspiration -= amount;
+  saveState();
+  return true;
+}
+
 let _onStageCross = null;
 export function onStageCross(cb) { _onStageCross = cb; }
 

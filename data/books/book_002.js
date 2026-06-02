@@ -6,6 +6,7 @@ export const meta = {
   titleEn: 'Animal Farm',
   author: '乔治·奥威尔',
   category: '寓言',
+  era: 'ERA_009',
   totalWords: 35000,
   description: '一个关于权力与腐败的经典寓言，讲述农场动物推翻人类统治后发生的故事。',
   emoji: '🐷',

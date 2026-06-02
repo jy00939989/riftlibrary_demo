@@ -1,6 +1,6 @@
 # 异世界图书馆 · 架构文档
 
-最后更新：2026-05-15
+最后更新：2026-06-02
 
 ---
 
@@ -18,12 +18,14 @@
 │
 ├── data/                        ← 静态数据层（不依赖任何模块）
 │   ├── books.js                 ← 入口：组装 BOOKS + 导出 CATEGORIES 枚举
-│   ├── books/                   ← 每本书独立文件（book_001 ~ book_024）
-│   │   ├── book_001.js          ← 各书 meta + chapters + quotes + mastery内容
+│   ├── books/                   ← 每本书独立文件（book_001 ~ book_029，28本）
+│   │   ├── book_001.js          ← 各书 meta(含era) + chapters + quotes + mastery内容
 │   │   └── ...
-│   ├── book_pool.js             ← 共享书籍池（商店/里程碑/阿九推销共用，17本，含plane字段）
+│   ├── book_pool.js             ← 共享书籍池（商店/里程碑/阿九推销共用，含plane字段）
+│   ├── visitor-events.js        ← 10位访客三层递进叙事数据
 │   ├── plants.js                ← 植物盆栽定义（5级成长 + 种子掉落）
-│   ├── signboards.js            ← 标志牌定义（5种）
+│   ├── signboards.js            ← 标志牌定义（5种，含buff对象）
+│   ├── curation_pairs.js        ← 书架策展·作者精选配对表（12组）
 │   └── atmosphere.js            ← 5个氛围阶段描述文字库 + 阶段判定
 │
 ├── audio/                       ← 音频素材
@@ -39,16 +41,19 @@
 │   └── focusroom/               ← 7张缮写室等级插画（lv0→lv6）
 │
 ├── js/                          ← 逻辑层
-│   ├── app.js                   ← 应用入口：初始化 + 页面切换 + 全局编排 + 里程碑
+│   ├── app.js                   ← 应用入口：初始化 + 页面切换 + 全局编排 + 专注结算 + 里程碑
 │   ├── state.js                 ← 单一数据源：全局状态 + 存档序列化 + 旧档迁移
+│   ├── capacity.js              ← 容量/手稿箱模块：createBookRecord()/unlockBook() + 书架位置管理
+│   ├── curation.js              ← 策展计算引擎：calcCurationEffects() 纯函数扫描连携
 │   ├── timer.js                 ← 计时器：番茄钟(25min) / 倒计时 / 正计时 + 墨墨首次加速
-│   ├── storage.js               ← 工具：智慧之光(代币)/氛围/历史/连击的原子读写
+│   ├── storage.js               ← 工具：智慧之光/氛围/历史/连击/灵感的原子读写
 │   ├── audio.js                 ← 音频引擎：3层氛围BGM曲目 + 交叉淡入淡出
-│   ├── diary.js                 ← 墨墨日志：每日回顾 + 特殊事件记录
+│   ├── diary.js                 ← 墨墨日志：每日回顾 + 特殊事件记录（Lv2-Lv5 mastery模板）
+│   ├── plants.js                ← 植物逻辑：浇水/施肥/成长/收获/凋谢/种子兑换（含暴击buff）
 │   ├── tutorial.js              ← 教学引擎：情境触发检测 + 首遇标记管理（纯逻辑）
-│   ├── intro.js                 ← 开场引导：5步卡片式引导 + PV开场（从app.js提取）
-│   ├── visitors.js              ← 访客逻辑：刷新/借书/还书/事件/好感度（纯逻辑）
-│   ├── shop.js                  ← 商店逻辑：借阅区/缮写室升级 + 书籍刷新/购买（纯逻辑）
+│   ├── intro.js                 ← 开场引导：5步卡片式引导 + PV开场
+│   ├── visitors.js              ← 访客逻辑：刷新/借书/还书/10位访客叙事引擎/光环效果（纯逻辑）
+│   ├── shop.js                  ← 商店逻辑：借阅区/缮写室升级 + 书籍刷新/购买 + 连击加成（纯逻辑）
 │   ├── books.js                 ← 书籍解锁/进度计算
 │   ├── achievements.js          ← 成就引擎：条件检测 + toast通知 + 稀有度推算
 │   ├── collection.js            ← 收集系统：收集品状态 + 分类进度
@@ -56,19 +61,19 @@
 │   │
 │   └── render/                  ← 渲染层（唯一操作 DOM 的模块）
 │       ├── index.js             ← 入口：统一 re-export
-│       ├── common.js            ← 工具：el(), h(), formatTime(), setActions()
+│       ├── common.js            ← 工具：el(), h(), formatTime(), setActions(), updateStatusBar()
 │       ├── focus.js             ← 缮写室 + 结算卡片 + 缮写动画集成
 │       ├── writing.js           ← 缮写动画引擎（canvas排版 + 羽笔效果 + 左右翻页）
-│       ├── bookshelf.js         ← 大书库 + 筛选 + mastery详情弹窗
+│       ├── bookshelf.js         ← 大书库 + 筛选 + mastery详情弹窗 + 拖拽策展 + 灵感重抄
 │       ├── visitors.js          ← 读者沙龙 + 事件弹窗
 │       ├── library.js           ← 馆长办公室（子标签：概况/成就柜/收藏室/布置/馆长手册）
 │       ├── archive.js           ← 馆史档案：统计面板 + 事件历史 + 墨墨日志子标签
-│       ├── shop.js              ← 位面商店：借阅区/缮写室升级 + 固定区/特价区
-│       ├── achievements.js      ← 成就柜 UI：网格展示 + 稀有度边框 + 详情
-│       ├── collection.js        ← 收藏室 UI：分类图鉴 + 进度百分比
-│       ├── tutorial-ui.js       ← 教学 UI：情境引导卡片 + 氛围/缮写室/借阅区升级弹窗
-│       ├── certificate.js       ← 典藏证书：书籍完成时仪式感分享卡片
-│       └── animations.js        ← 弹窗动画（解锁/完成/里程碑）
+│       ├── shop.js              ← 位面商店 + 手稿箱容量 + 书架容量提示
+│       ├── achievements.js      ← 成就柜 UI
+│       ├── collection.js        ← 收藏室 UI
+│       ├── tutorial-ui.js       ← 教学 UI
+│       ├── certificate.js       ← 典藏证书
+│       └── animations.js        ← 弹窗动画
 │
 ├── docs/                         ← 项目文档
 │   ├── ARCHITECTURE.md            ← 本文件
@@ -133,6 +138,26 @@
 - `data/` 目录是纯静态数据，不依赖任何模块
 - 成就和收集系统使用独立 localStorage key，不与核心存档混在一起
 
+**2026-06-02 重构后依赖分层：**
+```
+state.js + storage.js           ← Layer 0: 纯数据层（零外部依赖）
+      ↑
+capacity.js + curation.js       ← Layer 1: 数据引擎（仅依赖 state + data）
+      ↑
+visitors.js / shop.js           ← Layer 2: 业务逻辑（单向依赖 L0/L1，无互相依赖）
+plants.js / books.js / diary.js
+      ↑
+app.js                          ← Layer 3: 编排层（全量 import）
+      ↑
+render/*.js                     ← Layer 4: 渲染层（唯一操作 DOM）
+```
+
+**关键拆分（解决循环依赖）：**
+- `capacity.js` 从 `shop.js` 中拆出（书架容量 + 手稿箱 + createBookRecord）
+- `curation.js` 独立模块（连携计算引擎，仅依赖 state + BOOKS + CURATION_PAIRS）
+- `visitors.js → shop.js` 已断开，改为 `visitors.js → capacity.js`
+- `shop.js → visitors.js` 保留（光环折扣函数），为单向依赖
+
 ---
 
 ## 核心模块说明
@@ -142,66 +167,59 @@
 ```js
 state = {
   // 用户统计
-  focus: {
-    totalMinutes, totalWords, todayMinutes, todayDate,
-    streak, lastFocusDate, claimedMilestones
-  },
+  focus: { totalMinutes, totalWords, todayMinutes, todayDate, streak, lastFocusDate },
 
   // 当前计时会话（不持久化）
-  currentSession: {
-    active, mode, bookId, targetMinutes,
-    elapsedSeconds, paused, intervalId, quoteIndex
-  },
+  currentSession: { active, mode, bookId, targetMinutes, elapsedSeconds, paused, intervalId, quoteIndex },
 
-  // 书籍状态（按 bookId 索引）
+  // 书籍状态（按 bookId 索引，所有写入经由 capacity.js 的 createBookRecord()）
   books: {
     'book_001': {
       unlockedChapters, copyCount, masteryLevel, copiedWords,
       status,       // 'locked' | 'unlocked' | 'copying' | 'completed'
       starred,      // 星标收藏
       damaged,      // 是否损毁
-      repairWords   // 修复所需誊抄字数
+      repairWords,  // 修复所需誊抄字数
+      readChapters, // 已阅读章节索引
+      reCopyUnlocked // 灵感解锁重抄标记
     }, ...
   },
 
   // 图书馆
   library: {
     name: '归墟图书馆',
-    atmosphere: 0,     // 0~500，分5阶段
-    shelves: [1],      // 书架编号数组
-    borrowLevel: 0,    // 借阅区等级 0~7
-    focusLevel: 0,     // 缮写室等级 0~6
-    planePortals: {},  // 位面传送门状态
-    nameLocked: false  // 是否已使用铭牌命名
+    atmosphere: 0,       // 0~500，分5阶段
+    shelves: [[bookId|null, ...], ...],  // 二维书架位置模型（每排5格）
+    borrowLevel: 0,      // 借阅区等级 0~7
+    focusLevel: 0,       // 缮写室等级 0~6
+    manuscriptSlots: 3,  // 手稿箱已解锁格子数
+    planePortals: {},    // 位面传送门状态
+    nameLocked: false
   },
 
+  // 手稿箱：存放未誊抄完的稿子，誊抄完成后移出上架
+  manuscriptBox: [],
+
   // 经济
-  coins: Number,       // 智慧之光（代币）
+  coins: Number,       // 智慧之光
+  inspiration: 0,      // 灵感值
 
   // 访客
-  visitors: [{ id, charId, name, emoji, status, bookId, bookTitle,
-               arriveTime, borrowTime, dueTime, eventTriggered }],
-  borrowRecords: [{ id, charId, charName, bookId, bookTitle,
-                    borrowTime, returnTime, event, status }],
-  visitorFavors: { shenmingyuan, xiaoying, yunyou, ajiu },
+  visitors: [{ id, charId, name, emoji, status, bookId, ... }],
+  borrowRecords: [...],
+  visitorFavors: { shenmingyuan, chengyuan, peizhou, jianan, jiangyoushu, guyu, qiaoyiyi, xierugui, xiachan, wangxiaolei },
+  visitorNarratives: { ... },  // 10人三层递进事件追踪
 
-  // 事件历史
-  history: [{ type, title, detail, time }],
-
-  // 成就（核心存档中的引用，实际数据在 library_achievements）
-  achievements: [],
-
-  // 新手引导
-  introCompleted: false,
-  tutorialFlags: {
-    maxAtmoStageSeen: 1,     // 已见过的最高氛围阶段（1~5）
-    firstFocusComplete: false,
-    firstVisitorArrive: false,
-    firstShopOpen: false,
-    firstLibraryOpen: false,
-    firstBookComplete: false
-  }
+  // 事件历史 / 成就 / 收集 / 植物 / 标志牌 / 熟客池 / 新手引导
+  ...
 }
+```
+
+**书籍字段规范**（`createBookRecord()` 统一生成）：
+```
+unlockedChapters: [1], copyCount: 0, masteryLevel: 0, copiedWords: 0,
+status: 'unlocked', starred: false, damaged: false, repairWords: 0,
+readChapters: [], reCopyUnlocked: false
 ```
 
 ### 持久化策略
@@ -591,8 +609,40 @@ tick() 循环（150ms/字 + 40ms 羽笔延迟）：
 | 项目 | 说明 |
 |------|------|
 | 商店状态不持久化 | `shopState` 存模块变量，页面刷新后重新随机 |
-| `_mysteryBooks`（阿九推销） | 阿九 SALE_BOOKS 仍为虚构空壳书 |
-| 访客专属书池 | 沈明远池已改造为真实书ID，小萤/云游/阿九池待建立 |
+| `_mysteryBooks`（裴舟推销） | 裴舟 SALE_BOOKS 仍为虚构空壳书 |
+| 访客专属书池 | 沈明远/裴舟池已建立，其他访客待建立 |
 | 店占位升级项 | 古籍修复室、咖啡角、研究区仍为灰色占位卡片 |
 | 位面系统 | 仅完成主位面（归墟图书馆）设定和书籍 plane 字段标注 |
-| 古修复机制 | `damaged`/`repairWords` 字段已建，游戏循环未接入 |
+| 古籍修复机制 | `damaged`/`repairWords` 字段已建，游戏循环未接入 |
+| 书灵觉醒 (P2-06) | mastery Lv5 的书灵觉醒尚未实现 |
+
+---
+
+## 新增系统（2026-06-02）
+
+### capacity.js — 容量/手稿箱 + 书籍工厂
+
+唯一获书入口。所有模块通过 `createBookRecord()` / `unlockBook()` 创建书籍，保证 8 个规范字段一致。
+
+**导出函数**：`getBookCapacity()`, `getOwnedBookCount()`, `isBookCapacityFull()`, `getManuscriptSlots()`, `getManuscriptBoxCount()`, `isManuscriptBoxFull()`, `getManuscriptSlotPrice()`, `expandManuscriptSlots()`, `addToManuscriptBox()`, `removeFromManuscriptBox()`, `normalizeShelves()`, `placeOnShelf()`, `createBookRecord()`, `unlockBook()`
+
+### curation.js — 书架策展计算引擎
+
+纯函数 `calcCurationEffects(shelves)` 扫描书架位置数据，返回连携列表和总加成。
+
+- **category 连线**：扫描 5 槽中 ≥3 本连续同 category → 缮写速度加成（3连+1%, 4连+1.5%, 5连+2%）
+- **era 连线**：扫描 ≥3 本连续同 era → 借阅率加成
+- **作者配对**：同排 5 格内找到预设配对组合 → 智慧之光 +3%
+- **叠加规则**：多层同时生效可叠加
+
+### 手稿箱系统
+
+所有获书入口统一进手稿箱（初始 3 格免费），誊抄完成后上架书架。扩容价格：第4格10💡 → 第5格25💡 → 之后陡峭翻倍封顶5000。
+
+### 灵感重抄系统
+
+已完成的书不出现在缮写室选择器中。在书架上点击 → 花费灵感解锁重抄（短书2✨/中篇3✨/长篇5✨）→ 回到缮写室。抄完自动重置，需再次花费。mastery Lv5 不可再重抄。
+
+### 书架策展拖拽
+
+HTML5 Drag and Drop 原生交换机制。策展触发时底部 toast 通知 + 书架卡槽连携光效（3/4/5 线不同粗细/颜色/脉冲动画）。CSS class：`curation-chain-3/4/5`, `curation-slot`, `.drag-over`, `.dragging`。

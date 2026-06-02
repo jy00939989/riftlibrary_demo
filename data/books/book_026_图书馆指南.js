@@ -6,6 +6,7 @@ export const meta = {
   titleEn: 'A Guide to the Library',
   author: '墨墨',
   category: '散文',
+  era: 'ERA_009',
   totalWords: 2500,
   description: '归墟图书馆的守护精灵墨墨为新任馆长撰写的入门指南，介绍了图书馆的历史、誊抄之法以及馆长的职责。',
   emoji: '📖',

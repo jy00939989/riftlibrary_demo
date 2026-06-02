@@ -6,6 +6,7 @@ export const meta = {
   titleEn: 'The Wonderful Wizard of Oz',
   author: '莱曼·弗兰克·鲍姆',
   category: '童话',
+  era: 'ERA_009',
   totalWords: 38000,
   description: '一场龙卷风把多萝西带到了奇妙的奥兹国，她与稻草人、铁皮人和胆小的狮子一起，踏上了寻找魔法师的冒险之旅。',
   emoji: '🌈',

@@ -6,6 +6,7 @@ export const meta = {
   titleEn: 'Elements',
   author: '欧几里得',
   category: '科学',
+  era: 'ERA_001',
   totalWords: 600000,
   description: '人类历史上最成功的教科书，建立第一个公理演绎体系，影响科学思维两千余年。',
   emoji: '📐',

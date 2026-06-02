@@ -3,7 +3,8 @@ import { state, saveState } from '../state.js';
 import { BOOKS } from '../../data/books.js';
 import { SHARED_POOL } from '../../data/book_pool.js';
 import { el, h, actions, updateStatusBar } from './common.js';
-import { ensureShopState, getShopState, purchaseBook, getBorrowLevelPrice, upgradeBorrowLevel, getFocusLevelPrice, upgradeFocusLevel, purchaseSignboard, purchasePlanePortal, getPlanePortalPrice, getBookCapacity, getOwnedBookCount } from '../shop.js';
+import { ensureShopState, getShopState, purchaseBook, getBorrowLevelPrice, upgradeBorrowLevel, getFocusLevelPrice, upgradeFocusLevel, purchaseSignboard, purchasePlanePortal, getPlanePortalPrice } from '../shop.js';
+import { getBookCapacity, getOwnedBookCount, getManuscriptSlots, getManuscriptBoxCount, getManuscriptSlotPrice, expandManuscriptSlots } from '../capacity.js';
 import { PLANES, canUnlockPlane } from '../../data/planes.js';
 import { showFocusRoomUpgrade } from './tutorial-ui.js';
 import { getBorrowLevelConfig } from '../visitors.js';
@@ -42,6 +43,33 @@ export function renderShopPage() {
     capacityNote.querySelector('span:first-child').textContent = '📚 书架已满！';
   }
   wrapper.appendChild(capacityNote);
+
+  // ========== 手稿箱容量 ==========
+  const mSlots = getManuscriptSlots();
+  const mCount = getManuscriptBoxCount();
+  const mPrice = getManuscriptSlotPrice();
+  const mFull = mCount >= mSlots;
+  const mBoxRow = el('div', 'flex items-center justify-between bg-white/60 rounded-xl p-3 border border-wood/10 text-sm');
+  mBoxRow.innerHTML = `
+    <span>📦 手稿箱</span>
+    <span class="font-bold ${mFull ? 'text-red-500' : 'text-ink'}">${mCount} / ${mSlots} 格</span>
+  `;
+  if (mFull) {
+    mBoxRow.classList.add('border-red-300', 'bg-red-50');
+    mBoxRow.querySelector('span:first-child').textContent = '📦 手稿箱已满！';
+  }
+  const mExpandBtn = el('button', 'ml-3 px-3 py-1 bg-amber-100 text-amber-800 rounded-lg text-xs font-bold hover:bg-amber-200 transition-all');
+  mExpandBtn.textContent = `+ 扩容 💰${mPrice}`;
+  mExpandBtn.addEventListener('click', () => {
+    if (expandManuscriptSlots()) {
+      updateStatusBar();
+      renderShopPage();
+    } else {
+      alert('智慧之光不足！');
+    }
+  });
+  mBoxRow.appendChild(mExpandBtn);
+  wrapper.appendChild(mBoxRow);
 
   // ========== 新书区 ==========
   wrapper.appendChild(renderBookSection('📚 新书上架', shopState.fixed, false));
@@ -294,26 +322,32 @@ function renderBookSection(title, slots, isRotating) {
     if (!poolEntry) return;
 
     const owned = state.books[slot.bookId] && state.books[slot.bookId].status !== 'locked';
+    const mBoxFull = getManuscriptBoxCount() >= getManuscriptSlots();
 
-    grid.appendChild(renderBookCard(slot, poolEntry, owned, isRotating));
+    grid.appendChild(renderBookCard(slot, poolEntry, owned, isRotating, mBoxFull));
   });
 
   section.appendChild(grid);
   return section;
 }
 
-function renderBookCard(slot, poolEntry, owned, isRotating) {
+function renderBookCard(slot, poolEntry, owned, isRotating, mBoxFull) {
+  const disabled = owned || (mBoxFull && !owned);
+  let disabledReason = '';
+  if (owned) disabledReason = '✅ 已拥有';
+  else if (mBoxFull) disabledReason = '📦 手稿箱已满';
+
   const card = el('div', `book-card rounded-xl p-4 border-2 transition-all relative ${
-    owned ? 'bg-gray-100 border-gray-200 opacity-50' : 'bg-white border-wood/20 hover:border-magic-gold/50 hover:shadow-lg cursor-pointer'
+    disabled ? 'bg-gray-100 border-gray-200 opacity-50' : 'bg-white border-wood/20 hover:border-magic-gold/50 hover:shadow-lg cursor-pointer'
   }`);
 
-  if (owned) {
+  if (disabled) {
     card.innerHTML = `
       <div class="text-center">
         <div class="text-3xl mb-2">${poolEntry.emoji}</div>
         <div class="font-bold text-sm mb-1">${poolEntry.title}</div>
         <div class="text-xs text-ink-light mb-2">${poolEntry.author} · ${poolEntry.category}</div>
-        <div class="text-xs text-magic-gold font-bold">✅ 已拥有</div>
+        <div class="text-xs text-magic-gold font-bold">${disabledReason}</div>
       </div>
     `;
     return card;
@@ -349,9 +383,11 @@ function renderBookCard(slot, poolEntry, owned, isRotating) {
     </div>
   `;
 
-  card.addEventListener('click', () => {
-    showPurchaseModal(poolEntry, slot.price, isRotating ? slot.originalPrice : null, isRotating ? slot.discount : null);
-  });
+  if (!disabled) {
+    card.addEventListener('click', () => {
+      showPurchaseModal(poolEntry, slot.price, isRotating ? slot.originalPrice : null, isRotating ? slot.discount : null);
+    });
+  }
 
   return card;
 }
@@ -397,23 +433,29 @@ function showPurchaseModal(poolEntry, price, originalPrice, discount) {
 
   const confirmBtn = content.querySelector('.confirm-btn');
   confirmBtn.addEventListener('click', () => {
-    if (state.coins < price) {
-      alert('智慧之光不足 💰');
-      return;
-    }
-    if (purchaseBook(poolEntry.bookId, price)) {
+    const result = purchaseBook(poolEntry.bookId, price);
+    if (result.ok) {
       updateStatusBar();
       overlay.remove();
       renderShopPage();
       const bookAch = checkAchievements('purchase_book');
       bookAch.forEach(a => showAchievementToast(a));
     } else {
-      const cap = getBookCapacity();
-      const owned = getOwnedBookCount();
-      if (owned >= cap) {
-        alert(`书架已满（${owned}/${cap}本）！请先扩容书架再购买。`);
-      } else {
-        alert('购买失败，请稍后再试。');
+      switch (result.reason) {
+        case 'insufficient_coins':
+          alert(`智慧之光不足！需要 ${result.actualPrice} 💡（原价 ${price}，折扣后）`);
+          break;
+        case 'already_owned':
+          alert('你已经拥有这本书了！');
+          break;
+        case 'manuscript_box_full': {
+          const mSlots = getManuscriptSlots();
+          const mCount = getManuscriptBoxCount();
+          alert(`手稿箱已满（${mCount}/${mSlots}格）！请先扩容手稿箱再购买。`);
+          break;
+        }
+        default:
+          alert('购买失败，请稍后再试。');
       }
     }
   });

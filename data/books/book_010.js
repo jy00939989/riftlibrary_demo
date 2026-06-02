@@ -6,6 +6,7 @@ export const meta = {
   titleEn: 'Critique of Pure Reason',
   author: '康德（Immanuel Kant）',
   category: '哲学',
+  era: 'ERA_004',
   totalWords: 225000,
   description: '以哥白尼革命式勇气追问人类理性边界与认识何以可能的哲学经典',
   emoji: '🤔',

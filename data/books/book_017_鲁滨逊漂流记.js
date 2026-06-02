@@ -6,6 +6,7 @@ export const meta = {
   titleEn: 'Robinson Crusoe',
   author: '丹尼尔·笛福',
   category: '小说',
+  era: 'ERA_004',
   totalWords: 150000,
   description: '英国文学史上第一部现实主义长篇小说，讲述主人公鲁滨逊在荒岛上度过28年的传奇故事。',
   emoji: '🏝️',

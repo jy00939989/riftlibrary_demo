@@ -6,6 +6,7 @@ export const meta = {
   titleEn: 'Tao Te Ching',
   author: '老子',
   category: '哲学',
+  era: 'ERA_001',
   totalWords: 5162,
   description: '中国哲学的源头，短短五千言影响了整个东亚文明两千多年。',
   emoji: '☯️',

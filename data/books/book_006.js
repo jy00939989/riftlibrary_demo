@@ -5,6 +5,7 @@ export const meta = {
   title: '庄子',
   author: '庄周',
   category: '哲学',
+  era: 'ERA_001',
   totalWords: 32500,
   description: '战国庄周所著，以汪洋恣肆之文笔与恢诡谲怪之寓言，构建逍遥齐物的哲学天地。',
   emoji: '🦋',

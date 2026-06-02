@@ -6,6 +6,7 @@ export const meta = {
   titleEn: 'Journey to the West',
   author: '吴承恩',
   category: '小说',
+  era: 'ERA_005',
   totalWords: 860000,
   description: '中国古典四大名著之一，明代神魔小说巅峰之作，讲述唐僧师徒四人西天取经的传奇故事。',
   emoji: '🐒',

@@ -12,7 +12,9 @@ import { startTimer, togglePauseTimer, abandonTimer, setCompleteCallback } from 
 import { BOOKS } from '../data/books.js';
 import { installDevPanel } from './dev.js';
 import { spawnVisitor, tickVisitorBrowsing, checkDueVisitors, collectReturn, buySalesBook, removeVisitor, getVisitorDef, getAuraSpeedBonus, getAuraCoinsMultiplier, getAuraSpawnBonus, getBorrowSpawnBonus, getStageWitnesses } from './visitors.js';
+import { removeFromManuscriptBox, isBookCapacityFull, placeOnShelf } from './capacity.js';
 import { upgradeBorrowLevel, getFocusSpeedMultiplier, hasSignboard } from './shop.js';
+import { getCurationFocusSpeed, getCurationCoinsBonus } from './curation.js';
 import { checkAchievements, checkAllOnInit } from './achievements.js';
 import { showAchievementToast } from './render/achievements.js';
 import { addWaterOpportunity, checkWither } from './plants.js';
@@ -208,13 +210,15 @@ function handleCompleteFocus(isAuto = false) {
   const bookCategory = sess.bookId ? BOOKS[sess.bookId]?.category : null;
   const auraSpeed = getAuraSpeedBonus(bookCategory);
   // 热茶 buff：前5分钟速度 +10%
+  const curationSpeed = getCurationFocusSpeed();
+
   let wordsGained;
   if (sess.teaBoost) {
     const boostMin = Math.min(5, minutes);
     const normalMin = minutes - boostMin;
-    wordsGained = Math.round((boostMin * 110 + normalMin * 100) * getFocusSpeedMultiplier() * (1 + auraSpeed));
+    wordsGained = Math.round((boostMin * 110 + normalMin * 100) * getFocusSpeedMultiplier() * (1 + auraSpeed + curationSpeed));
   } else {
-    wordsGained = Math.round(minutes * 100 * getFocusSpeedMultiplier() * (1 + auraSpeed));
+    wordsGained = Math.round(minutes * 100 * getFocusSpeedMultiplier() * (1 + auraSpeed + curationSpeed));
   }
 
   // 章节收尾冲刺：专注开始时章节进度 ≥90% → +20% 速度
@@ -275,6 +279,11 @@ function handleCompleteFocus(isAuto = false) {
         bookState.status = 'completed';
       }
 
+      // 灵感重抄完成 → 重置标记
+      if (bookState.reCopyUnlocked && !wasFirst) {
+        bookState.reCopyUnlocked = false;
+      }
+
       if (!book.noMastery) {
         bookState.masteryLevel = Math.min(5, totalCopies + 1);
         bookMastery = bookState.masteryLevel;
@@ -296,13 +305,23 @@ function handleCompleteFocus(isAuto = false) {
         bookEmoji = book.emoji;
         completedBook = book;
         checkTaskCompletion('book_completed', { bookId: sess.bookId });
+
+        // 手稿箱 → 书架：誊抄完成首次上架
+        if (isBookCapacityFull()) {
+          addHistory('action', '📦 书架已满，等待扩容', `《${book.title}》誊抄完成，暂存手稿箱——请前往商店扩充书架`);
+        } else {
+          removeFromManuscriptBox(sess.bookId);
+          placeOnShelf(sess.bookId);
+          addHistory('action', '📚 上架', `《${book.title}》已从手稿箱移入书架`);
+        }
       }
       copyCount = totalCopies;
     }
   }
 
   const auraCoinsMult = getAuraCoinsMultiplier();
-  const coinsEarned = Math.round(minutes * 0.8 * (1 + auraCoinsMult));
+  const curationCoins = getCurationCoinsBonus();
+  const coinsEarned = Math.round(minutes * 0.8 * (1 + auraCoinsMult + curationCoins));
   addCoins(coinsEarned);
   // 灵感：每次专注完成 +1
   addInspiration(1);
@@ -649,7 +668,7 @@ function handleBuyShelf() {
   const n = state.library.shelves.length;
   const price = Math.min(4800, 300 * Math.pow(2, n - 1));
   if (spendCoins(price)) {
-    state.library.shelves.push(state.library.shelves.length + 1);
+    state.library.shelves.push([null, null, null, null, null]);
     addAtmosphere(5);
     addHistory('purchase', '购买新书架', `花费${price}智慧之光 · +5氛围`);
     saveState();

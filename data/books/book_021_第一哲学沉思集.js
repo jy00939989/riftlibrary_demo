@@ -6,6 +6,7 @@ export const meta = {
   titleEn: 'Meditations on First Philosophy',
   author: '笛卡尔',
   category: '哲学',
+  era: 'ERA_004',
   totalWords: 60000,
   description: '近代哲学的真正起点，"我思故我在"的诞生之地。六个沉思颠覆了整个中世纪哲学。',
   emoji: '💭',

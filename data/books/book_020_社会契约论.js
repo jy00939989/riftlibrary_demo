@@ -6,6 +6,7 @@ export const meta = {
   titleEn: 'The Social Contract',
   author: '卢梭',
   category: '哲学',
+  era: 'ERA_004',
   totalWords: 80000,
   description: '卢梭政治哲学代表作，提出"人生而自由却无往不在枷锁中"，奠定现代民主理论基石。',
   emoji: '📜',

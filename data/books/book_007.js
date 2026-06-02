@@ -5,6 +5,7 @@ export const meta = {
   title: '本草纲目·草部',
   author: '李时珍（明代）',
   category: '科学',
+  era: 'ERA_005',
   totalWords: 190000,
   description: '明万历六年，李时珍闭户著书廿七载，亲尝百草以身试毒，正本清源成此东方药学巨著',
   emoji: '🌿',

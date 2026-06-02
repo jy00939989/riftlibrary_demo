@@ -34,7 +34,8 @@ export const state = {
       starred: false,
       damaged: false,
       repairWords: 0,
-      readChapters: []
+      readChapters: [],
+    reCopyUnlocked: false
     },
     'book_001': {
       unlockedChapters: [1],
@@ -45,7 +46,8 @@ export const state = {
       starred: false,
       damaged: false,
       repairWords: 0,
-      readChapters: []
+      readChapters: [],
+    reCopyUnlocked: false
     },
     'book_002': {
       unlockedChapters: [1],
@@ -56,7 +58,8 @@ export const state = {
       starred: false,
       damaged: false,
       repairWords: 0,
-      readChapters: []
+      readChapters: [],
+    reCopyUnlocked: false
     }
   },
 
@@ -64,12 +67,16 @@ export const state = {
   library: {
     name: '归墟图书馆',
     atmosphere: 0,
-    shelves: [1],
+    shelves: [[null, null, null, null, null]],
     borrowLevel: 0,  // 借阅区等级 0-7，0=未建造
     focusLevel: 0,   // 缮写室等级 0-6，0=未建造
     planePortals: {}, // 位面传送门状态 { magic: { unlocked: false, progress: 0 } }
-    nameLocked: false // 是否已使用铭牌命名（false=还可改名）
+    nameLocked: false, // 是否已使用铭牌命名（false=还可改名）
+    manuscriptSlots: 3  // 手稿箱已解锁格子数（初始3格免费）
   },
+
+  // 手稿箱：存放未誊抄完的稿子，誊抄完成后上架书架
+  manuscriptBox: [],
 
   // 经济
   coins: 1250,
@@ -191,7 +198,8 @@ const DEFAULT_BOOKS = {
     starred: false,
     damaged: false,
     repairWords: 0,
-    readChapters: []
+    readChapters: [],
+    reCopyUnlocked: false
   },
   'book_001': {
     unlockedChapters: [1],
@@ -202,7 +210,8 @@ const DEFAULT_BOOKS = {
     starred: false,
     damaged: false,
     repairWords: 0,
-    readChapters: []
+    readChapters: [],
+    reCopyUnlocked: false
   },
   'book_002': {
     unlockedChapters: [1],
@@ -213,7 +222,8 @@ const DEFAULT_BOOKS = {
     starred: false,
     damaged: false,
     repairWords: 0,
-    readChapters: []
+    readChapters: [],
+    reCopyUnlocked: false
   },
   'book_023': {
     unlockedChapters: [1],
@@ -224,7 +234,8 @@ const DEFAULT_BOOKS = {
     starred: false,
     damaged: false,
     repairWords: 0,
-    readChapters: []
+    readChapters: [],
+    reCopyUnlocked: false
   },
   'book_024': {
     unlockedChapters: [1],
@@ -235,7 +246,8 @@ const DEFAULT_BOOKS = {
     starred: false,
     damaged: false,
     repairWords: 0,
-    readChapters: []
+    readChapters: [],
+    reCopyUnlocked: false
   }
 };
 
@@ -270,6 +282,9 @@ export function initState() {
           }
           if (state.books[id].readChapters === undefined) {
             state.books[id].readChapters = [];
+          }
+          if (state.books[id].reCopyUnlocked === undefined) {
+            state.books[id].reCopyUnlocked = false;
           }
         }
       });
@@ -440,6 +455,30 @@ export function initState() {
       }
       if (!state.guideQuests) {
         state.guideQuests = { completed: [], allCompleted: false };
+      }
+      // 旧存档迁移：手稿箱
+      if (!state.manuscriptBox) {
+        state.manuscriptBox = [];
+      }
+      if (state.library.manuscriptSlots === undefined) {
+        state.library.manuscriptSlots = 3;
+      }
+      // 旧存档迁移：shelves 从 [1, 2] 数字格式 → [[null×5], ...] 位置格式
+      if (state.library.shelves.length > 0 && typeof state.library.shelves[0] === 'number') {
+        const oldCount = state.library.shelves.length;
+        const newShelves = Array.from({ length: oldCount }, () => Array(5).fill(null));
+        // 回填已完成的书籍
+        const mBox = state.manuscriptBox || [];
+        const completedIds = Object.entries(state.books || {})
+          .filter(([id, b]) => b && b.status === 'completed' && !mBox.includes(id))
+          .map(([id]) => id);
+        let bookIdx = 0;
+        for (let s = 0; s < newShelves.length && bookIdx < completedIds.length; s++) {
+          for (let p = 0; p < 5 && bookIdx < completedIds.length; p++) {
+            newShelves[s][p] = completedIds[bookIdx++];
+          }
+        }
+        state.library.shelves = newShelves;
       }
       saveState(); // 迁移后立即持久化
       return true;

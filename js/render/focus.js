@@ -259,7 +259,9 @@ function renderBookSelector(sess) {
     if (book.noMastery && bs.status === 'completed') return false;
     // mastery Lv5 = 500%+，不再出现在誊抄选择器中
     if (bs.masteryLevel >= 5 || bs.copyCount >= 5) return false;
-    return (bs.copiedWords > 0 || bs.status === 'unlocked' || bs.status === 'copying') && bs.masteryLevel < 5;
+    // 已完成的书需要先花费灵感解锁重抄
+    if (bs.status === 'completed' && !bs.reCopyUnlocked) return false;
+    return (bs.status === 'unlocked' || bs.copiedWords > 0);
   });
 
   if (eligibleBooks.length === 0) {

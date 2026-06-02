@@ -5,6 +5,7 @@ export const meta = {
   title: '物种起源',
   author: '达尔文（Charles Darwin）',
   category: '科学',
+  era: 'ERA_007',
   totalWords: 193000,
   description: '达尔文随贝格尔号环球航行五年，发现自然选择法则，揭示生命演化永恒奥秘',
   emoji: '🐦',

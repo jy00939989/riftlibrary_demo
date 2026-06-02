@@ -6,6 +6,7 @@ export const meta = {
   titleEn: 'The Republic',
   author: '柏拉图',
   category: '哲学',
+  era: 'ERA_001',
   totalWords: 300000,
   description: '西方哲学的奠基之作，关于正义、理想城邦和人类灵魂的永恒对话。',
   emoji: '🏺',

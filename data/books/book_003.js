@@ -4,6 +4,7 @@ export const meta = {
   title: '老人与海',
   author: '海明威',
   category: '小说',
+  era: 'ERA_009',
   totalWords: 25000,
   description: '一位古巴老渔夫与海洋的史诗对决。八十四天空手而归后，他驶向命运的深处，独自对抗一条比船还长的大马林鱼。三天三夜的搏斗，是人与自然最古老的对话——关于尊严、坚韧与永不言败的灵魂。',
   emoji: '🎣',

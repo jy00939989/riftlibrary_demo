@@ -6,6 +6,7 @@ export const meta = {
   titleEn: 'The Book of Songs',
   author: '孔子编订',
   category: '诗歌',
+  era: 'ERA_001',
   totalWords: 39000,
   description: '中国最早的诗歌总集，收录西周初年至春秋中叶诗歌305篇，又称"诗三百"，儒家经典"五经"之一。',
   emoji: '📖',

@@ -6,6 +6,7 @@ import { SIGNBOARDS } from '../data/signboards.js';
 import { PLANES, canUnlockPlane } from '../data/planes.js';
 import { unlockPlane } from './quests.js';
 import { getAuraShopDiscount, getAuraFocusUpgradeDiscount } from './visitors.js';
+import { isManuscriptBoxFull, addToManuscriptBox, createBookRecord } from './capacity.js';
 
 export function hasSignboard(id) {
   return state.signboards.includes(id);
@@ -143,22 +144,21 @@ export function purchaseBook(bookId, price) {
   const signboardDiscount = hasSignboard('curator_pick') ? (SIGNBOARDS.curator_pick?.buff?.value || 0) : 0;
   const actualPrice = Math.round(price * (1 - auraDiscount) * (1 - signboardDiscount));
 
-  if (state.coins < actualPrice) return false;
-  if (state.books[bookId] && state.books[bookId].status !== 'locked') return false;
-  if (isBookCapacityFull()) return false;
+  if (state.books[bookId] && state.books[bookId].status !== 'locked') {
+    return { ok: false, reason: 'already_owned' };
+  }
+  if (state.coins < actualPrice) {
+    return { ok: false, reason: 'insufficient_coins', actualPrice };
+  }
+  if (isManuscriptBoxFull()) {
+    return { ok: false, reason: 'manuscript_box_full' };
+  }
 
   spendCoins(actualPrice);
 
-  state.books[bookId] = {
-    unlockedChapters: [1],
-    copyCount: 0,
-    masteryLevel: 0,
-    copiedWords: 0,
-    status: 'unlocked',
-    starred: false,
-    damaged: false,
-    repairWords: 0
-  };
+  state.books[bookId] = createBookRecord();
+
+  addToManuscriptBox(bookId);
 
   const poolEntry = SHARED_POOL.find(b => b.bookId === bookId);
   const title = poolEntry ? poolEntry.title : bookId;
@@ -178,7 +178,7 @@ export function purchaseBook(bookId, price) {
   });
 
   saveState();
-  return true;
+  return { ok: true };
 }
 
 // 借阅区价格：500 × 1.5^(n-1)，封顶 5700
@@ -270,18 +270,3 @@ export function purchaseSignboard(signboardId) {
   return true;
 }
 
-// ========== 书架容量 ==========
-
-const SHELF_CAPACITY = 5;
-
-export function getBookCapacity() {
-  return (state.library.shelves || [1]).length * SHELF_CAPACITY;
-}
-
-export function getOwnedBookCount() {
-  return Object.values(state.books || {}).filter(b => b && b.status !== 'locked').length;
-}
-
-export function isBookCapacityFull() {
-  return getOwnedBookCount() >= getBookCapacity();
-}

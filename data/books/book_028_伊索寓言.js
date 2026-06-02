@@ -6,6 +6,7 @@ export const meta = {
   titleEn: 'Selected Aesop\'s Fables',
   author: '伊索',
   category: '寓言',
+  era: 'ERA_001',
   totalWords: 20000,
   description: '古希腊寓言家伊索的经典寓言选集，以动物故事喻人世智慧，流传两千余年的启蒙读物。',
   emoji: '🦊',

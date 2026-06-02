@@ -6,6 +6,7 @@ export const meta = {
   titleEn: 'Instructions for Practical Living',
   author: '王阳明',
   category: '哲学',
+  era: 'ERA_005',
   totalWords: 80000,
   description: '心即理，知行合一，致良知。阳明心学的全部精义，尽在此书中。',
   emoji: '🪷',

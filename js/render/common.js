@@ -10,9 +10,11 @@ export function setActions(a) { actions = a; }
 export function updateStatusBar() {
   const coinsEl = document.getElementById('status-coins');
   const atmosEl = document.getElementById('status-atmosphere');
+  const inspEl = document.getElementById('status-inspiration');
   const nameEl = document.getElementById('nav-library-name');
   if (coinsEl) coinsEl.textContent = state.coins.toLocaleString();
   if (atmosEl) atmosEl.textContent = `${state.library.atmosphere}/500`;
+  if (inspEl) inspEl.textContent = (state.inspiration || 0).toString();
   if (nameEl) nameEl.textContent = state.library.name;
 }
 

@@ -6,6 +6,7 @@ export const meta = {
   titleEn: 'Records of the Grand Historian',
   author: '司马迁',
   category: '历史',
+  era: 'ERA_002',
   totalWords: 530000,
   description: '中国第一部纪传体通史，"史家之绝唱，无韵之离骚"，记载了从黄帝到汉武帝三千年的历史。',
   emoji: '📜',

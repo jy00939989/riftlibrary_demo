@@ -366,18 +366,61 @@ MVP 行动池：
 | B-14 | 乔一一稀层事件 signboard_active 永久效果未实现 — 新增分支 | ✅ |
 | B-15 | 商店购买失败静默 — 容量满时 alert 提示 + 商店页显示书架容量 | ✅ |
 | B-16 | 访客刷新概率低 — 借阅区等级加成 + 长专注多轮抽卡 | ✅ |
-
 ---
 
-## 悬赏定价参考
+## 2026-06-02 · 架构重构 + 手稿箱 + 书架策展
 
-| 难度 | 价格范围 |
-|------|---------|
-| ⭐ | 100-200 元 |
-| ⭐⭐ | 200-400 元 |
-| ⭐⭐⭐ | 400-600 元 |
+### 架构修复（audit-driven）
 
-> 所有金额为人民币，验收合格后支付。
+| 编号 | 问题 | 处置 |
+|------|------|------|
+| **A-01** | shop.js ↔ visitors.js 循环依赖 | ✅ 拆出 `js/capacity.js`（容量/手稿箱纯数据层） |
+| **A-02** | state.books 写入分散 6 模块，7 个站点字段不一致 | ✅ 统一入口 `createBookRecord()` + `unlockBook()` |
+| **A-03** | purchaseBook 静默失败 4 分支 | ✅ 返回值 `{ ok, reason }`，渲染层精准 switch |
+| **A-04** | 购买卡片无手稿箱满提示 | ✅ 卡片灰掉显示 "📦 手稿箱已满" |
+| **A-05** | shelves 从 `[1]` 迁移到 `[[null×5]]` 位置模型 | ✅ `normalizeShelves()` + `placeOnShelf()` + 旧档迁移 |
+| **A-06** | 多访客同 tick 借走同一本书 | ✅ `getCompletedBooks()` 移入 forEach 循环内实时算 |
+
+### 手稿箱系统
+
+| 功能 | 说明 |
+|------|------|
+| **新增状态** | `state.manuscriptBox: []` + `state.library.manuscriptSlots: 3` |
+| **流转** | 买书/获书 → 手稿箱(unlocked) → 誊抄完成 → 上架书架 |
+| **扩容定价** | 1-3格免费，第4格10💡，第5格25💡，之后 80×2.5ⁿ 封顶5000 |
+| **商店 UI** | 手稿箱容量行 + 扩容按钮 + 购买失败细分提示 |
+| **涉及文件** | `js/capacity.js`(新建)、`js/shop.js`、`js/app.js`、`js/visitors.js`、`js/plants.js`、`js/books.js`、`js/render/bookshelf.js`、`js/render/shop.js`、`js/render/focus.js`、`js/state.js`、`js/storage.js` |
+
+### 书架策展系统（P2-02 Phase 1-4）
+
+| Phase | 内容 |
+|-------|------|
+| **1a** | 28 本书加 `era` 字段（ERA_001-009，豆包调研 9 期划分） |
+| **1b** | 12 组精选作者配对 `data/curation_pairs.js` |
+| **2** | 连携计算引擎 `js/curation.js`：扫描 category/era 连续段落 + 作者配对 |
+| **3** | HTML5 拖拽交换 + 连携光效（3/4/5 线不同粗细/颜色）+ Toast 通知 |
+| **4** | 加成接入：缮写速度 + 借阅率 + 智慧之光；状态栏灵感显示 |
+
+**连携维度**：category 共鸣（3-5连 → +1-2% 速度）、era 共鸣（3-5连 → +1-2% 借阅率）、作者配对（12组 × +3% 智慧之光）
+
+### 灵感重抄系统
+
+| 功能 | 说明 |
+|------|------|
+| **门控** | 已完成的书不出现在缮写室，需先花灵感解锁 |
+| **花费** | 短书(<3万字)2✨ / 中篇 3✨ / 长篇(≥10万字)5✨ |
+| **按钮** | 书架点击完成书 → 章节弹窗 → "🔮 花费灵感重抄" |
+| **重置** | 抄完自动清除 `reCopyUnlocked` 标记，需再次花费 |
+| **UI** | 顶部导航栏新增 ✨ 灵感值显示；`spendInspiration()` 函数 |
+
+### 文件变更总计
+
+| 类型 | 数量 | 明细 |
+|------|------|------|
+| 新建 | 4 | `js/capacity.js`、`js/curation.js`、`data/curation_pairs.js`、`docs/plans/*` |
+| 修改 | 38 | 28 本书 + `js/app.js`、`js/visitors.js`、`js/shop.js`、`js/state.js`、`js/storage.js`、`js/books.js`、`js/plants.js`、`js/dev.js`、`js/render/bookshelf.js`、`js/render/shop.js`、`js/render/focus.js`、`js/render/common.js`、`css/style.css`、`index.html`、`ISSUES.md` |
+
+---
 
 ## 悬赏定价参考
 

@@ -3,6 +3,7 @@ import { state, saveState } from './state.js';
 import { BOOKS } from '../data/books.js';
 import { addCoins, addAtmosphere, addHistory } from './storage.js';
 import { renderBookshelfPage } from './render/index.js';
+import { unlockBook } from './capacity.js';
 
 export function tryUnlockNewBook() {
   // 获取所有未解锁的书籍
@@ -21,13 +22,11 @@ export function tryUnlockNewBook() {
   const randomId = lockedIds[Math.floor(Math.random() * lockedIds.length)];
   const book = BOOKS[randomId];
 
-  state.books[randomId] = {
-    unlockedChapters: [1],  // 第一章默认解锁
-    copyCount: 0,
-    masteryLevel: 1,
-    copiedWords: 0,
-    status: 'unlocked'
-  };
+  if (!unlockBook(randomId, { masteryLevel: 1 })) {
+    addCoins(50);
+    addHistory('unlock', '手稿箱已满，暂无法解锁新书', '获得50智慧之光补偿');
+    return null;
+  }
 
   addHistory('unlock', `解锁新书《${book.title}》`, `${book.author} · ${book.category}`);
   saveState();

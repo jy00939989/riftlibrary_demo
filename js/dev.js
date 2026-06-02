@@ -6,7 +6,8 @@ import { renderFocusPage, showBookCompleteAnimation, showBookShelvingAnimation, 
 import { showCertificate } from './render/certificate.js';
 import { spawnVisitor, onTimeSkip, visitorForceReturn as doForceReturn, visitorReset as doReset, VISITOR_DEFS } from './visitors.js';
 import { SHARED_POOL } from '../data/book_pool.js';
-import { purchasePlanePortal, getBookCapacity, getOwnedBookCount } from './shop.js';
+import { purchasePlanePortal } from './shop.js';
+import { getBookCapacity, getOwnedBookCount, createBookRecord } from './capacity.js';
 import { PLANES, canUnlockPlane } from '../data/planes.js';
 
 window.__devTimeOffset = window.__devTimeOffset || 0;
@@ -138,13 +139,7 @@ function unlockAll() {
   const { BOOKS } = requireBooks();
   Object.keys(BOOKS).forEach(id => {
     if (!state.books[id]) {
-      state.books[id] = {
-        unlockedChapters: [],
-        copyCount: 0,
-        masteryLevel: 0,
-        copiedWords: 0,
-        status: 'unlocked'
-      };
+      state.books[id] = createBookRecord({ unlockedChapters: [] });
     }
     if (state.books[id].status === 'locked') {
       state.books[id].status = 'unlocked';
@@ -171,7 +166,7 @@ function completeCurrentBook() {
   const book = BOOKS[bookId];
   if (!book) return;
   if (!state.books[bookId]) {
-    state.books[bookId] = { unlockedChapters: [], copyCount: 0, masteryLevel: 0, copiedWords: 0, status: 'unlocked' };
+    state.books[bookId] = createBookRecord({ unlockedChapters: [] });
   }
   const bs = state.books[bookId];
   bs.unlockedChapters = book.chapters.map((_, i) => i + 1);
@@ -256,11 +251,7 @@ function unlockPastoralPlane() {
     let added = 0;
     for (const entry of available) {
       if (added >= needed) break;
-      state.books[entry.bookId] = {
-        unlockedChapters: [1],
-        copyCount: 0, masteryLevel: 0, copiedWords: 0,
-        status: 'unlocked', starred: false, damaged: false, repairWords: 0
-      };
+      state.books[entry.bookId] = createBookRecord();
       added++;
     }
     addHistory('system', `🔧 Dev: 解锁 ${added} 本书（总数达到12本）`);
