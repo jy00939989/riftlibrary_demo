@@ -3,7 +3,7 @@ import { state, saveState } from '../state.js';
 import { BOOKS } from '../../data/books.js';
 import { SHARED_POOL } from '../../data/book_pool.js';
 import { el, h, actions, updateStatusBar } from './common.js';
-import { ensureShopState, getShopState, purchaseBook, getBorrowLevelPrice, upgradeBorrowLevel, getFocusLevelPrice, upgradeFocusLevel, purchaseSignboard, purchasePlanePortal, getPlanePortalPrice } from '../shop.js';
+import { ensureShopState, getShopState, purchaseBook, getBorrowLevelPrice, upgradeBorrowLevel, getFocusLevelPrice, upgradeFocusLevel, purchaseSignboard, purchasePlanePortal, getPlanePortalPrice, getBookCapacity, getOwnedBookCount } from '../shop.js';
 import { PLANES, canUnlockPlane } from '../../data/planes.js';
 import { showFocusRoomUpgrade } from './tutorial-ui.js';
 import { getBorrowLevelConfig } from '../visitors.js';
@@ -28,6 +28,20 @@ export function renderShopPage() {
 
   // ========== 图书馆升级区 ==========
   wrapper.appendChild(renderLibraryUpgrades());
+
+  // ========== 书架容量提示 ==========
+  const cap = getBookCapacity();
+  const owned = getOwnedBookCount();
+  const capacityNote = el('div', 'flex items-center justify-between bg-white/60 rounded-xl p-3 border border-wood/10 text-sm');
+  capacityNote.innerHTML = `
+    <span>📚 书架容量</span>
+    <span class="font-bold ${owned >= cap ? 'text-red-500' : 'text-ink'}">${owned} / ${cap} 本</span>
+  `;
+  if (owned >= cap) {
+    capacityNote.classList.add('border-red-300', 'bg-red-50');
+    capacityNote.querySelector('span:first-child').textContent = '📚 书架已满！';
+  }
+  wrapper.appendChild(capacityNote);
 
   // ========== 新书区 ==========
   wrapper.appendChild(renderBookSection('📚 新书上架', shopState.fixed, false));
@@ -393,6 +407,14 @@ function showPurchaseModal(poolEntry, price, originalPrice, discount) {
       renderShopPage();
       const bookAch = checkAchievements('purchase_book');
       bookAch.forEach(a => showAchievementToast(a));
+    } else {
+      const cap = getBookCapacity();
+      const owned = getOwnedBookCount();
+      if (owned >= cap) {
+        alert(`书架已满（${owned}/${cap}本）！请先扩容书架再购买。`);
+      } else {
+        alert('购买失败，请稍后再试。');
+      }
     }
   });
 }

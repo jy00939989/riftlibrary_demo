@@ -249,7 +249,7 @@ export function showVisitorEventModal(result, callback) {
       contentHtml += `<div class="mt-3 p-2 bg-wood/10 rounded-lg text-xs text-ink-light italic">🎵 "${ev.poem}"</div>`;
     } else if (ev.type === 'sales_pitch') {
       contentHtml += `<div class="mt-3 p-3 bg-magic-gold/10 rounded-lg">
-        <div class="text-magic-gold font-bold text-sm">📦 阿九推销一本书！</div>
+        <div class="text-magic-gold font-bold text-sm">📦 ${ev.vendor === 'peizhou' ? '裴舟' : '阿九'}推销一本书！</div>
         <div class="text-ink-light text-sm">《${ev.book.title}》${ev.book.emoji}</div>
         <div class="text-magic-blue font-bold text-xs mt-1">售价：${ev.book.price.toLocaleString()} 💰</div>
       </div>`;

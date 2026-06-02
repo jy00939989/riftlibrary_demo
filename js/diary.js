@@ -33,9 +33,22 @@ const OPENINGS = {
     '{emoji}{name}把《{bookTitle}》轻轻放回柜台，说了声谢谢。'
   ],
   book_complete: [
-    '最后一页抄完，《{title}》的书脊上浮现出金色的书名。',
-    '墨墨鼓起掌来——《{title}》完整地立在书架上了！',
-    '当主人落下最后一笔，《{title}》发出了一阵柔和的微光。'
+    // Lv2（首次完成）—— 书脊显名
+    '最后一页抄完，《{title}》的书脊上浮现出金色的书名。墨墨歪着头看了好一会儿。',
+    '当主人落下最后一笔，《{title}》发出了一阵柔和的微光——这是它被遗忘后第一次被人完整记住。',
+    '墨墨鼓起掌来——《{title}》完整地立在书架上了！一只猫头鹰的掌声很轻，但很认真。',
+    // Lv3（第二次完成）—— 墨迹加深
+    '主人第二遍抄完《{title}》，书页间的墨迹比第一遍更深了。墨墨觉得这本书正在从沉睡里醒来。',
+    '《{title}》的第二次誊抄完成了。这次的字迹比上次更稳——墨墨偷偷对比过了。',
+    // Lv4（第三次完成）—— 书本回应
+    '第三遍《{title}》抄完的时候，书页自动翻到了扉页——像在和主人打招呼。墨墨从横梁上飞下来看了一眼。',
+    '当主人合上《{title}》的第三遍誊抄，书脊上的金色不再是浮现——是停留。它已经不只是一本书了。',
+    // Lv5（第四次完成）—— 书本成为伙伴
+    '第四遍《{title}》。墨墨不再鼓掌了——它在书旁边蹲下来，用翅膀尖碰了碰书脊。这本书已经是图书馆的一部分了。',
+    '主人第四遍打开《{title}》的最后一页时，墨墨已经在旁边等着了。它说这本书"闻起来像家了"。',
+    // Lv6（第五次完成，满熟练）—— 书本拥有灵魂
+    '第五遍《{title}》誊抄完成。书自己在缮写室里发出了一声叹息——不是累，是满足。墨墨说这就是书的"够了"。',
+    '最后一笔落下时，整座图书馆的蜡烛都跳了一下。《{title}》的书脊上浮现的不是金色书名——是一道很细很轻的、像呼吸一样的纹路。墨墨在日志上写：今日，一本书活了过来。'
   ],
   milestone: [
     '书架修复度又前进了一大步。墨墨偷偷在主人的桌上放了一颗糖。',
@@ -117,7 +130,20 @@ function getWeather() {
 // ========== 日志生成 ==========
 
 export function generateDiaryEntry(type, vars = {}) {
-  const openingTemplate = pick(OPENINGS[type] || OPENINGS.focus_complete);
+  let openingTemplate;
+  if (type === 'book_complete' && vars.mastery) {
+    const pool = OPENINGS[type];
+    if (!pool) { openingTemplate = pick(OPENINGS.focus_complete); }
+    else {
+      const lv = Math.min(vars.mastery, 5);
+      // Lv2=首次(0-1), Lv3=二次(2-3), Lv4=三次(4-5), Lv5=四次(6-7), Lv6=五次(8-9)
+      const tierMap = { 1: [0,1], 2: [0,1], 3: [2,3], 4: [4,5], 5: [6,7], 6: [8,9] };
+      const [a, b] = tierMap[lv] || [0,1];
+      openingTemplate = pool[Math.floor(Math.random() * (b - a + 1)) + a];
+    }
+  } else {
+    openingTemplate = pick(OPENINGS[type] || OPENINGS.focus_complete);
+  }
   const opening = fill(openingTemplate, vars);
 
   let middleCategory = 'general';

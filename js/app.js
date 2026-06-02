@@ -11,8 +11,8 @@ import {
 import { startTimer, togglePauseTimer, abandonTimer, setCompleteCallback } from './timer.js';
 import { BOOKS } from '../data/books.js';
 import { installDevPanel } from './dev.js';
-import { spawnVisitor, tickVisitorBrowsing, checkDueVisitors, collectReturn, buySalesBook, removeVisitor, getVisitorDef, getAuraSpeedBonus, getAuraCoinsMultiplier, getAuraSpawnBonus, getStageWitnesses } from './visitors.js';
-import { upgradeBorrowLevel, getFocusSpeedMultiplier } from './shop.js';
+import { spawnVisitor, tickVisitorBrowsing, checkDueVisitors, collectReturn, buySalesBook, removeVisitor, getVisitorDef, getAuraSpeedBonus, getAuraCoinsMultiplier, getAuraSpawnBonus, getBorrowSpawnBonus, getStageWitnesses } from './visitors.js';
+import { upgradeBorrowLevel, getFocusSpeedMultiplier, hasSignboard } from './shop.js';
 import { checkAchievements, checkAllOnInit } from './achievements.js';
 import { showAchievementToast } from './render/achievements.js';
 import { addWaterOpportunity, checkWither } from './plants.js';
@@ -217,6 +217,14 @@ function handleCompleteFocus(isAuto = false) {
     wordsGained = Math.round(minutes * 100 * getFocusSpeedMultiplier() * (1 + auraSpeed));
   }
 
+  // 章节收尾冲刺：专注开始时章节进度 ≥90% → +20% 速度
+  if (sess.bookId && state.books[sess.bookId]) {
+    const chInfo = getChapterInfo(BOOKS[sess.bookId], state.books[sess.bookId]);
+    if (chInfo && chInfo.progressPct >= 90) {
+      wordsGained = Math.round(wordsGained * 1.20);
+    }
+  }
+
   // 更新统计
   const prevTotalWords = state.focus.totalWords;
   state.focus.totalMinutes += minutes;
@@ -254,24 +262,42 @@ function handleCompleteFocus(isAuto = false) {
     });
     newlyUnlocked.forEach(u => checkTaskCompletion('chapter_unlocked', u));
 
-    // 检查书籍完成
-    if (bookState.copiedWords >= book.totalWords && bookState.status !== 'completed') {
-      bookState.status = 'completed';
-      bookState.copyCount += 1;
-      if (!book.noMastery) {
-        bookMastery = Math.min(5, bookMastery + 1);
+    // 检查书籍完成（支持短书一次专注多次完成 + 已完本重复誊抄提升熟练度）
+    const totalCopies = Math.floor(bookState.copiedWords / book.totalWords);
+    const prevCopies = bookState.copyCount || 0;
+    const newCompletions = totalCopies - prevCopies;
+
+    if (newCompletions > 0) {
+      bookState.copyCount = totalCopies;
+      const wasFirst = (prevCopies === 0);
+
+      if (wasFirst) {
+        bookState.status = 'completed';
       }
-      addAtmosphere(book.totalWords < 30000 ? 3 : book.totalWords < 100000 ? 6 : 10);
-      addCoins(50);
-      addHistory('achievement', `完成《${book.title}》誊抄！`, `第${bookState.copyCount}次誊抄`);
-      addDiaryEntry('book_complete', { title: book.title });
-      bookCompleted = true;
-      bookTitle = book.title;
-      bookEmoji = book.emoji;
-      copyCount = bookState.copyCount;
-      completedBook = book;
-      bookMastery = bookMastery;
-      checkTaskCompletion('book_completed', { bookId: sess.bookId });
+
+      if (!book.noMastery) {
+        bookState.masteryLevel = Math.min(5, totalCopies + 1);
+        bookMastery = bookState.masteryLevel;
+      }
+
+      // 按完成次数发放奖励
+      for (let i = 0; i < newCompletions; i++) {
+        addAtmosphere(book.totalWords < 30000 ? 3 : book.totalWords < 100000 ? 6 : 10);
+        addCoins(50);
+      }
+      addHistory('achievement',
+        newCompletions > 1 ? `连破${newCompletions}重！《${book.title}》誊抄 ×${newCompletions}` : `完成《${book.title}》誊抄！`,
+        `第${totalCopies}次誊抄 · 熟练度 Lv${bookState.masteryLevel || Math.min(5, totalCopies + 1)}`);
+      addDiaryEntry('book_complete', { title: book.title, copyCount: totalCopies, mastery: bookState.masteryLevel || Math.min(5, totalCopies + 1) });
+
+      if (wasFirst) {
+        bookCompleted = true;
+        bookTitle = book.title;
+        bookEmoji = book.emoji;
+        completedBook = book;
+        checkTaskCompletion('book_completed', { bookId: sess.bookId });
+      }
+      copyCount = totalCopies;
     }
   }
 
@@ -283,6 +309,17 @@ function handleCompleteFocus(isAuto = false) {
   if (sess.candleInspiration) {
     addInspiration(1);
     addHistory('action', '🕯️ 烛台微微闪动', '+1 灵感（烛台加成）');
+  }
+  // 时光沙漏标志牌：专注≥60分钟后概率额外灵感
+  if (hasSignboard('hourglass') && minutes >= 60) {
+    const roll = Math.random();
+    if (roll < 0.05) {
+      addInspiration(2);
+      addHistory('action', '⏳ 时光沙漏闪耀！', '额外 +2 灵感（5%）');
+    } else if (roll < 0.30) {
+      addInspiration(1);
+      addHistory('action', '⏳ 时光沙漏微微发光', '额外 +1 灵感（25%）');
+    }
   }
   addHistory('focus', `专注 ${minutes} 分钟`, `誊抄 ${wordsGained.toLocaleString()} 字 · +${coinsEarned}智慧之光 · +1灵感`);
 
@@ -340,14 +377,21 @@ function handleCompleteFocus(isAuto = false) {
           showFirstVisitorEvent(visitor);
         }
       } else if (state.tutorialFlags.firstVisitorEventDone) {
-        const spawnChance = 0.30 + (state.library.atmosphere / 500) * 0.20 + getAuraSpawnBonus();
-        if (Math.random() < spawnChance) {
-          const visitor = spawnVisitor();
-          if (visitor) {
-            const vAchResults = checkAchievements('visitor_arrive');
-            showAchievementBatch(vAchResults);
-            showVisitorArrivalCard(visitor);
-            triggerQuestCheck('visitor_arrive');
+        // 访客到来：基础20% + 氛围(最高15%) + 夏蝉光环(15%) + 借阅区等级(Lv1+5%~Lv7+30%)
+        const welcomeBonus = hasSignboard('welcome') ? 0.03 : 0;
+        const perRollChance = 0.20 + (state.library.atmosphere / 1000) * 0.15 + getAuraSpawnBonus() + getBorrowSpawnBonus() + welcomeBonus;
+        // 长专注多轮抽卡：每12分钟多一次机会
+        const rolls = Math.max(1, Math.ceil(minutes / 12));
+        for (let r = 0; r < rolls; r++) {
+          if (Math.random() < perRollChance) {
+            const visitor = spawnVisitor();
+            if (visitor) {
+              const vAchResults = checkAchievements('visitor_arrive');
+              showAchievementBatch(vAchResults);
+              showVisitorArrivalCard(visitor);
+              triggerQuestCheck('visitor_arrive');
+              break; // 本轮已触达，不再连抽
+            }
           }
         }
       }
@@ -944,7 +988,7 @@ function init() {
     if (actualCopies > (bs.copyCount || 0)) {
       bs.copyCount = actualCopies;
       if (!book.noMastery) {
-        bs.masteryLevel = Math.min(5, actualCopies);
+        bs.masteryLevel = Math.min(5, actualCopies + 1);
       }
       if (bs.masteryLevel >= 5) {
         bs.status = 'completed';

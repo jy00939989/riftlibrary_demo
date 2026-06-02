@@ -3,7 +3,8 @@ import { state, saveState } from './state.js';
 import { spendCoins, addCoins, addAtmosphere, addHistory } from './storage.js';
 import { markTaskDone } from './dailytasks.js';
 import { PLANT_TYPES, SEED_EXCHANGE } from '../data/plants.js';
-import { isBookCapacityFull } from './shop.js';
+import { isBookCapacityFull, hasSignboard } from './shop.js';
+import { SIGNBOARDS } from '../data/signboards.js';
 
 function getNow() {
   return window.__dev?.getNow?.() || Date.now();
@@ -33,7 +34,18 @@ export function waterPlant() {
   if (!def || !canWater()) return false;
 
   state.plant.waterAvailable -= 1;
-  state.plant.growthProgress += def.waterGrowth;
+
+  // 禁止烟火标志牌：浇水有几率暴击（×2 成长）
+  let waterGrowth = def.waterGrowth;
+  if (hasSignboard('no_smoking')) {
+    const critRate = SIGNBOARDS.no_smoking?.buff?.value || 0;
+    if (Math.random() < critRate) {
+      waterGrowth *= 2;
+      addHistory('plant', '💥 浇水暴击！', `禁止烟火庇佑，成长 +${waterGrowth}`);
+    }
+  }
+
+  state.plant.growthProgress += waterGrowth;
   state.plant.lastCareTime = getNow();
 
   // 检查是否升到下一级（或可收获）

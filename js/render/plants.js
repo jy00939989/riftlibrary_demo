@@ -195,10 +195,12 @@ function renderSignboardCollection() {
 
     const card = document.createElement('div');
     card.className = 'bg-white rounded-xl p-3 border-2 border-magic-gold/30 text-center hover:shadow-md transition-all';
+    const buffNote = sb.buff && sb.buff.desc ? `<div class="text-xs text-magic-gold/70 mt-1 italic">${sb.buff.desc}</div>` : '';
     card.innerHTML = `
       <div class="text-3xl mb-2">${sb.emoji}</div>
       <div class="font-bold text-xs">${sb.name}</div>
       <div class="text-xs text-ink-light mt-1">📌 ${getPageDisplayName(sb.page)}</div>
+      ${buffNote}
     `;
     grid.appendChild(card);
   });

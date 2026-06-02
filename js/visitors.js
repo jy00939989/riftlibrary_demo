@@ -5,6 +5,7 @@ import { BOOKS } from '../data/books.js';
 import { addDiaryEntry } from './diary.js';
 import { isBookCapacityFull } from './shop.js';
 import { VISITOR_NARRATIVES } from '../data/visitor-events.js';
+import { SIGNBOARDS } from '../data/signboards.js';
 
 // ========== 访客角色定义（10位，2026-05-27 重构） ==========
 
@@ -43,10 +44,10 @@ export const VISITOR_DEFS = {
     id: 'jianan',
     name: '简安',
     emoji: '📋',
-    title: '基层公务员 · 公文背面写诗',
+    title: '基层公务员 · 公文背面写小说',
     category: ['小说', '历史', '散文'],
-    events: ['poem_memo'],
-    firstImpression: '原来公文背面还可以写诗……这里让我想起大学时的图书馆。',
+    events: ['novel_draft'],
+    firstImpression: '原来公文背面还可以写小说……这里让我想起大学时通宵读书的日子。',
     aura: { name: '公文背面', desc: '每次专注智慧之光 +15%', type: 'focus_coins', value: 0.15 }
   },
   jiangyoushu: {
@@ -167,8 +168,9 @@ const RETURN_QUOTES = {
       '图书馆比办公室安静，但比家里热闹。恰恰好的程度。'
     ],
     personal: [
-      '基层八年，写过的公文能装满一面墙。但背面写过的诗只有我自己记得。',
-      '有时候我觉得，公文背面的那几句话，才是我真正想说的。'
+      '基层八年，写过的公文能装满一面墙。但背面写的小说和剧本只有我自己记得。',
+      '有时候我觉得，公文背面的那几行字，才是我真正想说的——不是诗，是我虚构的另一些人生。',
+        '别人以为我喜欢的是这份铁饭碗。我很感恩——但铁饭碗端久了手会麻。背面写故事的时候，手不麻。'
     ]
   },
   jiangyoushu: {
@@ -281,7 +283,7 @@ export const STAGE_WITNESS = {
   jianan: {
     2: '比我们单位刚搬进临时办公室的时候好多了。那次连天花板都没有，头顶就是通风管。',
     3: '这里的桌子比我办公桌舒服。不是木头的问题——是我那张桌子压了太多不会有人看的报告。',
-    4: '公文背面的诗，在这里应该能写在正面了吧。',
+    4: '公文背面的小说，在这里——应该能摊在正面写了吧。',
     5: '如果有一天我辞了职，就天天来这里抄书。星光下的缮写室，比任何一个会议室都像办公室。'
   },
   jiangyoushu: {
@@ -357,13 +359,13 @@ const SHENMINGYUAN_BOOKS = ['book_010', 'book_021', 'book_022'];
 
 const BORROW_LEVEL_TABLE = [
   null, // 索引0占位(Lv0)
-  { cap:2, returnCoins:30, favorBonus:0,  returnAtmo:1 },  // Lv1 陋室
-  { cap:3, returnCoins:35, favorBonus:10, returnAtmo:1 },  // Lv2 整洁
-  { cap:6, returnCoins:40, favorBonus:20, returnAtmo:3 },  // Lv3 开放
-  { cap:7, returnCoins:45, favorBonus:30, returnAtmo:3 },  // Lv4 舒适
-  { cap:8, returnCoins:50, favorBonus:40, returnAtmo:5 },  // Lv5 精致
-  { cap:9, returnCoins:55, favorBonus:50, returnAtmo:5 },  // Lv6 优雅
-  { cap:10,returnCoins:60, favorBonus:60, returnAtmo:8 }   // Lv7 圣所
+  { cap:2, returnCoins:30, favorBonus:0,  returnAtmo:1, spawnBonus:0.05 },  // Lv1 陋室
+  { cap:3, returnCoins:35, favorBonus:10, returnAtmo:1, spawnBonus:0.08 },  // Lv2 整洁
+  { cap:6, returnCoins:40, favorBonus:20, returnAtmo:3, spawnBonus:0.12 },  // Lv3 开放
+  { cap:7, returnCoins:45, favorBonus:30, returnAtmo:3, spawnBonus:0.16 },  // Lv4 舒适
+  { cap:8, returnCoins:50, favorBonus:40, returnAtmo:5, spawnBonus:0.20 },  // Lv5 精致
+  { cap:9, returnCoins:55, favorBonus:50, returnAtmo:5, spawnBonus:0.25 },  // Lv6 优雅
+  { cap:10,returnCoins:60, favorBonus:60, returnAtmo:8, spawnBonus:0.30 }   // Lv7 圣所
 ];
 
 export function getBorrowLevelConfig() {
@@ -373,6 +375,10 @@ export function getBorrowLevelConfig() {
 
 export function getVisitorCap() {
   return getBorrowLevelConfig().cap + getAuraVisitorCapBonus();
+}
+
+export function getBorrowSpawnBonus() {
+  return getBorrowLevelConfig().spawnBonus || 0;
 }
 
 // ========== 光环引擎 ==========
@@ -767,6 +773,11 @@ function triggerNarrative(charId) {
             damaged: false, repairWords: 0
           };
         }
+      } else if (pe.type === 'signboard_active' && pe.signboardId) {
+        if (!state.signboards.includes(pe.signboardId)) {
+          state.signboards.push(pe.signboardId);
+          addHistory('event', `🪧 获得标志牌「${SIGNBOARDS[pe.signboardId]?.name || pe.signboardId}」`, pe.message || '');
+        }
       }
     }
     addHistory('event', `✨ 稀层事件：${narrative.rare.title}`,
@@ -994,7 +1005,7 @@ function eventSalesPitch(visitor) {
   addHistory('event', '📦 裴舟推销一本书', `《${book.title}》售价${price.toLocaleString()}智慧之光`);
   addDiaryEntry('special_event', { detail: `裴舟带来了一本《${book.title}》，售价${price.toLocaleString()}智慧之光。` });
   saveState();
-  return { type: 'sales_pitch', book: { ...book, price } };
+  return { type: 'sales_pitch', vendor: 'peizhou', book: { ...book, price } };
 }
 
 // --- 王小磊：波浪诗笺 ---
@@ -1015,7 +1026,7 @@ function eventWavePoem(visitor) {
 
 const GENERIC_EVENTS = {
   chengyuan:    { emoji: '💻', text: '程远分享了他的调试笔记', msg: '把代码调试和文本校对做了类比，附赠智慧之光。' },
-  jianan:       { emoji: '📋', text: '简安留下了一页公文背面笔记', msg: '正面是会议纪要，背面是一首短诗。' },
+  jianan:       { emoji: '📋', text: '简安留下了一页公文背面手稿', msg: '正面是汇报材料，背面是一段小说开头。' },
   jiangyoushu:  { emoji: '🎓', text: '江有树分享了一份修改后的简历', msg: '在图书馆里改的版本，措辞自信了很多。' },
   guyu:         { emoji: '🌾', text: '谷雨夹了一朵野花在书里', msg: '村口采的野花，被她仔细压成了标本。' },
   qiaoyiyi:     { emoji: '🎨', text: '乔一一画了一张手绘藏书票', msg: '原书封底已经破损，她用自己画的藏书票修补了上去。' },

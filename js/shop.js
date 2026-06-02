@@ -7,6 +7,14 @@ import { PLANES, canUnlockPlane } from '../data/planes.js';
 import { unlockPlane } from './quests.js';
 import { getAuraShopDiscount, getAuraFocusUpgradeDiscount } from './visitors.js';
 
+export function hasSignboard(id) {
+  return state.signboards.includes(id);
+}
+
+function getSignboardSpeedBonus() {
+  return hasSignboard('keep_quiet') ? (SIGNBOARDS.keep_quiet?.buff?.value || 0) : 0;
+}
+
 function getNow() {
   return window.__dev?.getNow?.() || Date.now();
 }
@@ -130,8 +138,10 @@ export function ensureShopState() {
 
 export function purchaseBook(bookId, price) {
   // 裴舟光环：商店买书 9 折
-  const discount = getAuraShopDiscount();
-  const actualPrice = Math.round(price * (1 - discount));
+  const auraDiscount = getAuraShopDiscount();
+  // 馆长推荐标志牌：额外 2% 折扣（叠乘）
+  const signboardDiscount = hasSignboard('curator_pick') ? (SIGNBOARDS.curator_pick?.buff?.value || 0) : 0;
+  const actualPrice = Math.round(price * (1 - auraDiscount) * (1 - signboardDiscount));
 
   if (state.coins < actualPrice) return false;
   if (state.books[bookId] && state.books[bookId].status !== 'locked') return false;
@@ -152,7 +162,10 @@ export function purchaseBook(bookId, price) {
 
   const poolEntry = SHARED_POOL.find(b => b.bookId === bookId);
   const title = poolEntry ? poolEntry.title : bookId;
-  const discountNote = discount > 0 ? ` (裴舟光环9折)` : '';
+  const parts = [];
+  if (auraDiscount > 0) parts.push('裴舟光环9折');
+  if (signboardDiscount > 0) parts.push('馆长推荐98折');
+  const discountNote = parts.length > 0 ? ` (${parts.join('+')})` : '';
   addHistory('purchase', `购买《${title}》${discountNote}`, `花费${actualPrice}智慧之光`);
 
   // 标记已售出
@@ -186,9 +199,10 @@ export function upgradeBorrowLevel() {
   return true;
 }
 
-// 缮写室速率倍率：每级 +5%
+// 缮写室速率倍率：每级 +5% + 标志牌 keep_quiet +1% + 连击 +2%/天（7天封顶+14%）
 export function getFocusSpeedMultiplier() {
-  return 1 + (state.library.focusLevel || 0) * 0.05;
+  const streakBonus = (state.focus.streak || 0) * 0.02;
+  return Math.min(1.80, 1 + (state.library.focusLevel || 0) * 0.05 + getSignboardSpeedBonus() + streakBonus);
 }
 
 // 缮写室价格：400 × 1.45^(n-1)，封顶 5000
