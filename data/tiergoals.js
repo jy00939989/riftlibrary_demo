@@ -50,6 +50,9 @@ export const TIER_GOALS = [
     emoji: '🚪',
     subtitle: '废墟中的第一道门',
     flavor: '你站在门外太久了。门缝里漏出的光浮动着灰尘和某种古老的回响。推门进去——这座图书馆，现在是你的了。在缮写室落下第一笔，然后去大书库看看手稿箱里有什么。',
+    image: 'visual/tiers/tier1_unlock.jpg',
+    rewardCoins: 30,
+    rewardAtmo: 5,
     goals: [
       { id: 't1g1', icon: '📖', label: '完成新手引导',       check: (s) => s.introCompleted === true },
       { id: 't1g2', icon: '🕯️', label: '开始第一次专注',     check: (s) => (s.focus && s.focus.totalMinutes > 0) },
@@ -66,6 +69,9 @@ export const TIER_GOALS = [
     emoji: '🕯️',
     subtitle: '第一簇烛光亮起',
     flavor: '你费力地扶正第三排书架——它不再摇晃了。第一本书被誊抄完成，烛光照亮了整个东厅。你还不太熟悉这里，但图书馆已经开始记得你的温度。',
+    image: 'visual/tiers/tier2_unlock.jpg',
+    rewardCoins: 50,
+    rewardAtmo: 10,
     goals: [
       { id: 't2g1', icon: '✅', label: '誊抄完成第一本书',    check: (s) => countCompletedBooks(s) >= 1 },
       { id: 't2g2', icon: '🛒', label: '在商店购买新书',      check: (s) => (s.guideQuests && s.guideQuests.completed || []).includes('q05') },
@@ -82,6 +88,9 @@ export const TIER_GOALS = [
     emoji: '📚',
     subtitle: '书香渐浓，秩序初成',
     flavor: '现在走进图书馆，首先注意到的不再是破败，而是安静——一种被妥善维护的、有尊严的安静。书架站稳了，书脊整齐排列。角落里那株植物见证了这一切。',
+    image: 'visual/tiers/tier3_unlock.jpg',
+    rewardCoins: 80,
+    rewardAtmo: 15,
     goals: [
       { id: 't3g1', icon: '📖', label: '完成 5 本书',           check: (s) => countCompletedBooks(s) >= 5 },
       { id: 't3g2', icon: '⏱️', label: '累计专注 120 分钟',    check: (s) => (s.focus && s.focus.totalMinutes >= 120) },
@@ -98,6 +107,9 @@ export const TIER_GOALS = [
     emoji: '🏛️',
     subtitle: '不只是建筑，而是庇护所',
     flavor: '图书馆有了一种特别的温度——不是壁炉的温度，而是被许多人触碰过的温度。访客们开始在这里停留，不只是借书，而是坐下阅读。异世界的门扉也悄然开启。',
+    image: 'visual/tiers/tier4_unlock.jpg',
+    rewardCoins: 120,
+    rewardAtmo: 20,
     goals: [
       { id: 't4g1', icon: '📚', label: '完成 10 本书',       check: (s) => countCompletedBooks(s) >= 10 },
       { id: 't4g2', icon: '🌌', label: '解锁一个位面',       check: (s) => checkAnyPlaneUnlocked(s) },
@@ -114,6 +126,9 @@ export const TIER_GOALS = [
     emoji: '✨',
     subtitle: '奇迹在此栖息',
     flavor: '某个深夜，你誊抄完最后一页。抬起头，发现图书馆的穹顶变成了星空——那是所有被誊抄过的文字，在天花板上化为了光点。你已经把一座废墟，变成了一方世界。',
+    image: 'visual/tiers/tier5_unlock.jpg',
+    rewardCoins: 200,
+    rewardAtmo: 30,
     goals: [
       { id: 't5g1', icon: '📚', label: '完成 15 本书',       check: (s) => countCompletedBooks(s) >= 15 },
       { id: 't5g2', icon: '👥', label: '吸引全部 10 位访客', check: (s) => countUniqueVisitors(s) >= 10 },

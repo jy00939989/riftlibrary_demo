@@ -23,6 +23,8 @@ import { tickPlaneVisitors, checkTaskCompletion } from './quests.js';
 import { initAudio, toggleMusic, onFirstInteraction } from './audio.js';
 import { showIntro } from './intro.js';
 import { checkAndShowTutorial } from './tutorial.js';
+import { TIER_GOALS, isTierComplete, countTierGoalsComplete } from '../data/tiergoals.js';
+import { showTierCompletePopup } from './render/animations.js';
 import { dispatchTutorialUI, showBorrowAreaUpgrade } from './render/tutorial-ui.js';
 import { showCertificate } from './render/certificate.js';
 import { ensureDailyTasks, markTaskDone, claimAllDoneBonus } from './dailytasks.js';
@@ -1073,7 +1075,7 @@ function init() {
   updateBodyBackground();
   checkWither(); // 72小时离线凋谢检测
 
-  // 氛围阶段突破 → 访客见证
+  // 氛围阶段突破 → 访客见证 + 馆长目标阶段完成弹窗
   onStageCross((crossedStages) => {
     const stageNames = ['', '废墟', '破败', '陈旧', '温暖', '星辰'];
     crossedStages.forEach(stage => {
@@ -1085,6 +1087,24 @@ function init() {
             detail: `氛围升至「${stageNames[stage]}」时，${w.visitor.emoji} ${w.visitor.name}轻声说：「${w.text}」`
           });
         });
+      }
+
+      // 馆长目标：阶段突破时检测对应 tier 是否已完成
+      const completedTier = TIER_GOALS[stage - 2]; // stage 2 → tier1, stage 3 → tier2 ...
+      if (completedTier && !(state.tierPopupsShown || []).includes(completedTier.id)) {
+        const goalsComplete = countTierGoalsComplete(completedTier, state);
+        const allDone = isTierComplete(completedTier, state);
+        // 弹出阶段完成弹窗
+        showTierCompletePopup(completedTier, { goalsComplete, goalsTotal: completedTier.goals.length, allDone });
+        // 发放奖励
+        if (completedTier.rewardCoins > 0) addCoins(completedTier.rewardCoins);
+        if (completedTier.rewardAtmo > 0) addAtmosphere(completedTier.rewardAtmo);
+        addHistory('milestone', `🏛️ 馆长目标达成：${completedTier.emoji} ${completedTier.name}`,
+          `+${completedTier.rewardCoins}智慧之光 · +${completedTier.rewardAtmo}氛围`);
+        // 记录已弹出
+        if (!state.tierPopupsShown) state.tierPopupsShown = [];
+        state.tierPopupsShown.push(completedTier.id);
+        saveState();
       }
     });
   });

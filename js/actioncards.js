@@ -37,12 +37,13 @@ const ACTIONS = [
   {
     id: 'organize_shelf',
     emoji: '📋', name: '整理书架',
-    desc: '+5~10 智慧之光',
+    desc: '+3~6 智慧之光 · +1 氛围',
     available() { return true; },
     apply() {
-      const n = rand(5, 10);
+      const n = rand(3, 6);
       addCoins(n);
-      addHistory('action', '📋 整理了书架', `+${n} 智慧之光`);
+      addAtmosphere(1);
+      addHistory('action', '📋 整理了书架', `+${n} 智慧之光 · +1 氛围`);
     },
     dailyLimit: 2
   },

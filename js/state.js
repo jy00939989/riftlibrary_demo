@@ -184,7 +184,10 @@ export const state = {
   guideQuests: {
     completed: [],
     allCompleted: false
-  }
+  },
+
+  // 馆长目标阶梯 — 已弹出过的阶段完成弹窗
+  tierPopupsShown: []
 };
 
 // 默认书籍状态（新增/变更书籍时同步更新此处）

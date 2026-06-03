@@ -1,6 +1,60 @@
-// 动画弹窗 —— 解锁动画 + 书籍完成动画
+// 动画弹窗 —— 解锁动画 + 书籍完成动画 + 馆长目标阶段完成弹窗
 import { el, actions } from './common.js';
 import { UNLOCK_TEXTS } from '../../data/books.js';
+import { addCoins, addAtmosphere, addHistory } from '../storage.js';
+import { saveState } from '../state.js';
+
+// ========== 馆长目标阶段完成弹窗 ==========
+
+/**
+ * @param {Object} tier — TIER_GOALS 条目
+ * @param {Object} progress — { goalsComplete, goalsTotal, allDone }
+ */
+export function showTierCompletePopup(tier, progress) {
+  const overlay = el('div', 'fixed inset-0 bg-black/70 z-[140] flex items-center justify-center p-4');
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+
+  const card = el('div', 'parchment-bg rounded-2xl p-0 max-w-lg w-full magic-glow animate-scale-in overflow-hidden');
+
+  // 图片区（有图则显示，无图则显示 emoji 占位）
+  const imgHTML = tier.image
+    ? `<img src="${tier.image}" alt="${tier.name}" class="w-full h-48 object-cover" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">`
+    : '';
+  const fallbackHTML = tier.image
+    ? `<div class="w-full h-48 bg-gradient-to-br from-magic-gold/20 to-ink/10 flex items-center justify-center text-6xl" style="display:none">${tier.emoji}</div>`
+    : `<div class="w-full h-48 bg-gradient-to-br from-magic-gold/20 to-ink/10 flex items-center justify-center text-6xl">${tier.emoji}</div>`;
+
+  card.innerHTML = `
+    ${imgHTML}
+    ${fallbackHTML}
+    <div class="p-6 text-center">
+      <div class="text-xs text-magic-gold font-bold mb-1 uppercase tracking-wider">馆长目标 · 阶段达成</div>
+      <h2 class="font-display text-xl font-bold mb-1">${tier.emoji} ${tier.name}</h2>
+      <p class="text-sm text-ink-light mb-4">${tier.subtitle}</p>
+      <p class="text-sm leading-relaxed text-ink-light italic mb-5 px-2">" ${tier.flavor} "</p>
+      <div class="flex items-center justify-center gap-3 mb-4">
+        ${tier.rewardCoins > 0 ? `<span class="bg-magic-gold/10 px-3 py-1.5 rounded-full text-sm font-bold text-magic-gold">💰 +${tier.rewardCoins} 智慧之光</span>` : ''}
+        ${tier.rewardAtmo > 0 ? `<span class="bg-amber-100 px-3 py-1.5 rounded-full text-sm font-bold text-amber-700">✨ +${tier.rewardAtmo} 氛围</span>` : ''}
+      </div>
+      ${progress.allDone
+        ? '<p class="text-xs text-green-600 mb-3 font-medium">✅ 该阶段所有目标均已达成</p>'
+        : `<p class="text-xs text-ink-light mb-3">目标完成度：${progress.goalsComplete}/${progress.goalsTotal}</p>`}
+      <button class="px-8 py-3 bg-magic-gold text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all">太好了 →</button>
+    </div>
+  `;
+
+  overlay.appendChild(card);
+  document.body.appendChild(overlay);
+
+  const close = () => {
+    overlay.style.opacity = '0';
+    overlay.style.transition = 'opacity 0.3s';
+    setTimeout(() => overlay.remove(), 300);
+  };
+
+  const btn = card.querySelector('button');
+  btn.addEventListener('click', close);
+}
 
 export function showUnlockAnimation(bookTitle, chapterTitle, callback) {
   const text = UNLOCK_TEXTS[Math.floor(Math.random() * UNLOCK_TEXTS.length)];
