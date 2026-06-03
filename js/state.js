@@ -72,14 +72,14 @@ export const state = {
     focusLevel: 0,   // 缮写室等级 0-6，0=未建造
     planePortals: {}, // 位面传送门状态 { magic: { unlocked: false, progress: 0 } }
     nameLocked: false, // 是否已使用铭牌命名（false=还可改名）
-    manuscriptSlots: 3  // 手稿箱已解锁格子数（初始3格免费）
+    manuscriptSlots: 5  // 手稿箱已解锁格子数（初始5格免费）
   },
 
   // 手稿箱：存放未誊抄完的稿子，誊抄完成后上架书架
   manuscriptBox: [],
 
   // 经济
-  coins: 1250,
+  coins: 500,
   inspiration: 0,
 
   // 访客（每个访客: { id, charId, name, emoji, status:'browsing'|'borrowed'|'due', bookId, bookTitle, arriveTime, borrowTime, dueTime, eventTriggered }）
@@ -461,7 +461,7 @@ export function initState() {
         state.manuscriptBox = [];
       }
       if (state.library.manuscriptSlots === undefined) {
-        state.library.manuscriptSlots = 3;
+        state.library.manuscriptSlots = 5;
       }
       // 旧存档迁移：shelves 从 [1, 2] 数字格式 → [[null×5], ...] 位置格式
       if (state.library.shelves.length > 0 && typeof state.library.shelves[0] === 'number') {

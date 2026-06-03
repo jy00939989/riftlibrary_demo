@@ -87,11 +87,13 @@ const ACTIONS = [
   {
     id: 'open_window',
     emoji: '🪟', name: '开窗通风',
-    desc: '+1 氛围',
+    desc: '+1 氛围 · +5~8 智慧之光',
     available() { return true; },
     apply() {
+      const n = rand(5, 8);
       addAtmosphere(1);
-      addHistory('action', '🪟 开了窗通风', '+1 氛围');
+      addCoins(n);
+      addHistory('action', '🪟 开了窗通风', `+1 氛围 · +${n} 智慧之光`);
     },
     dailyLimit: 2
   },

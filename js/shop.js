@@ -7,6 +7,7 @@ import { PLANES, canUnlockPlane } from '../data/planes.js';
 import { unlockPlane } from './quests.js';
 import { getAuraShopDiscount, getAuraFocusUpgradeDiscount } from './visitors.js';
 import { isManuscriptBoxFull, addToManuscriptBox, createBookRecord } from './capacity.js';
+import { getAchievementBonuses } from './achievements.js';
 
 export function hasSignboard(id) {
   return state.signboards.includes(id);
@@ -199,10 +200,11 @@ export function upgradeBorrowLevel() {
   return true;
 }
 
-// 缮写室速率倍率：每级 +5% + 标志牌 keep_quiet +1% + 连击 +2%/天（7天封顶+14%）
+// 缮写室速率倍率：毎级 +5% + 标志牌 + 连击 + 成就加成
 export function getFocusSpeedMultiplier() {
-  const streakBonus = (state.focus.streak || 0) * 0.02;
-  return Math.min(1.80, 1 + (state.library.focusLevel || 0) * 0.05 + getSignboardSpeedBonus() + streakBonus);
+  const b = getAchievementBonuses();
+  const streakBonus = (state.focus.streak || 0) * b.streakMultiplier;
+  return Math.min(1.80, 1 + (state.library.focusLevel || 0) * b.focusLevelBonus + getSignboardSpeedBonus() + b.speedFlat + streakBonus);
 }
 
 // 缮写室价格：400 × 1.45^(n-1)，封顶 5000

@@ -6,6 +6,7 @@ import { getFocusSpeedMultiplier } from '../shop.js';
 import { renderAchievements } from './achievements.js';
 import { renderCollection } from './collection.js';
 import { renderDecorationPage } from './plants.js';
+import { TIER_GOALS, getTierStatus, countTierGoalsComplete } from '../../data/tiergoals.js';
 
 // 氛围阶段 → 背景图映射
 const STAGE_BG = {
@@ -88,6 +89,90 @@ export function renderLibraryPage() {
   }
 }
 
+// ========== 馆长目标阶梯渲染 ==========
+
+function renderTierGoals(stage) {
+  const curAtmo = state.library.atmosphere;
+
+  // 已完成阶 → 紧凑摘要（一行一行）
+  const completedTiers = TIER_GOALS.filter(t => getTierStatus(t, curAtmo) === 'completed');
+  let completedHTML = '';
+  if (completedTiers.length > 0) {
+    const names = completedTiers.map(t => `${t.emoji} ${t.name}`).join(' → ');
+    const totalGoals = completedTiers.reduce((s, t) => s + t.goals.length, 0);
+    const totalDone = completedTiers.reduce((s, t) => s + countTierGoalsComplete(t, state), 0);
+    completedHTML = `
+      <div class="mb-3 bg-green-50/30 border border-green-300/30 rounded-lg px-4 py-2.5 flex items-center gap-2">
+        <span class="text-sm font-bold text-green-700">✅ 已完成的阶段</span>
+        <span class="text-xs text-green-600">${names}</span>
+      </div>`;
+  }
+
+  // 当前阶 → 完整展开
+  const activeTier = TIER_GOALS.find(t => getTierStatus(t, curAtmo) === 'active');
+  let activeHTML = '';
+  if (activeTier) {
+    const goalsComplete = countTierGoalsComplete(activeTier, state);
+    const goalsTotal = activeTier.goals.length;
+    const items = activeTier.goals.map(g => {
+      const done = g.check(state);
+      return `
+        <div class="flex items-center gap-2 text-xs ${done ? 'text-green-700' : 'text-ink-light'}">
+          <span class="flex-shrink-0 w-4 text-center">${done ? '✅' : '○'}</span>
+          <span>${g.icon} ${g.label}</span>
+        </div>`;
+    }).join('');
+
+    activeHTML = `
+      <div class="rounded-xl p-4 border-2 border-magic-gold/30 bg-magic-gold/5">
+        <div class="flex items-start gap-3">
+          <div class="flex-shrink-0 w-8 h-8 rounded-full bg-magic-gold/20 flex items-center justify-center text-lg">
+            ${activeTier.emoji}
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between mb-1 flex-wrap gap-1">
+              <div>
+                <span class="font-bold text-sm">${activeTier.name}</span>
+                <span class="text-xs text-ink-light ml-2">${activeTier.subtitle}</span>
+              </div>
+              <span class="text-xs px-2 py-0.5 rounded-full bg-magic-gold/20 text-magic-gold font-bold">进行中</span>
+            </div>
+            <p class="text-xs leading-relaxed italic text-ink-light mb-1">
+              " ${activeTier.flavor} "
+            </p>
+            <div class="space-y-1.5 pt-3 mt-3 border-t border-magic-gold/20">
+              ${items}
+              <div class="mt-2 pt-2 border-t border-ink/5">
+                <span class="text-xs text-ink-light">目标进度：${goalsComplete}/${goalsTotal}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  // 下一阶段预告
+  const nextTier = TIER_GOALS.find(t => getTierStatus(t, curAtmo) === 'locked');
+  let nextHTML = '';
+  if (nextTier) {
+    nextHTML = `
+      <div class="mt-3 text-center text-xs text-ink-light/60">
+        🔜 下一阶段「${nextTier.emoji} ${nextTier.name}」—— 氛围达到 <span class="font-bold text-magic-blue">${nextTier.stageMin}</span> 解锁
+      </div>`;
+  }
+
+  return `
+    <div class="mb-6">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-display text-sm text-magic-gold font-bold">🏛️ 馆长目标 · 复兴之路</h3>
+        <span class="text-xs px-2 py-0.5 rounded-full bg-magic-gold/10 text-magic-gold font-bold">阶段 ${stage.level}/5</span>
+      </div>
+      ${completedHTML}
+      ${activeHTML}
+      ${nextHTML}
+    </div>`;
+}
+
 // ========== 概况子标签 ==========
 
 function renderOverview(container, stage, levelInfo, desc, maxAtmo, atmoPercent) {
@@ -100,28 +185,7 @@ function renderOverview(container, stage, levelInfo, desc, maxAtmo, atmoPercent)
   const nextStageDef = stage.level < 5 ? ATMOSPHERE_STAGES[stage.level] : null;
 
   container.innerHTML = `
-    <!-- 当前目标 -->
-    <div class="mb-6 bg-gradient-to-r from-ink/5 via-ink/5 to-magic-gold/10 rounded-xl p-5 border-2 border-magic-gold/20">
-      <div class="flex items-center justify-between mb-2">
-        <h3 class="font-display text-sm text-magic-gold font-bold">🏛️ 当前目标</h3>
-        <span class="text-xs px-2 py-0.5 rounded-full bg-magic-gold/10 text-magic-gold font-bold">阶段 ${stage.level}/5</span>
-      </div>
-      <p class="text-ink text-sm mb-3">将图书馆从<span class="font-bold line-through decoration-wood/40">废墟</span>恢复至<span class="font-bold text-magic-gold">星辰之境</span></p>
-      ${nextStageDef ? `
-      <div class="flex items-center gap-2 mb-2">
-        <span class="text-xs text-ink-light">当前</span>
-        <span class="text-xs font-bold px-2 py-0.5 rounded bg-wood/10">${stage.name}</span>
-        <span class="text-xs text-ink-light/50">→</span>
-        <span class="text-xs font-bold px-2 py-0.5 rounded bg-magic-gold/5 text-magic-gold">${nextStageDef.name}</span>
-      </div>
-      <div class="h-2 bg-gray-200 rounded-full overflow-hidden mb-1">
-        <div class="h-full bg-gradient-to-r from-magic-gold/70 to-magic-gold rounded-full transition-all duration-700" style="width:${stageProgress}%"></div>
-      </div>
-      <p class="text-xs text-ink-light">还需 <span class="font-bold text-magic-blue">${levelInfo.next}</span> 点氛围进入「${nextStageDef.name}」阶段</p>
-      ` : `
-      <p class="text-sm text-magic-gold font-bold">✨ 图书馆已恢复至巅峰状态！</p>
-      `}
-    </div>
+    ${renderTierGoals(stage)}
 
     <!-- 氛围阶段背景图 -->
     <div class="mb-6 rounded-xl overflow-hidden border-2 border-wood/30 shadow-lg">

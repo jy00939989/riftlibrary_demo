@@ -105,7 +105,7 @@ export function isBookCapacityFull() {
 // ========== 手稿箱 ==========
 
 export function getManuscriptSlots() {
-  return state.library.manuscriptSlots || 3;
+  return state.library.manuscriptSlots || 5;
 }
 
 export function getManuscriptBoxCount() {
@@ -118,20 +118,20 @@ export function isManuscriptBoxFull() {
 
 export function getManuscriptSlotPrice() {
   const current = getManuscriptSlots();
-  // 第1-3格免费，第4格10，第5格25，之后陡峭
-  if (current < 3) return 0;
-  if (current === 3) return 10;
-  if (current === 4) return 25;
-  // 第6格起：80 × 2.5^(n-6)，封顶5000
+  // 前5格免费，第6格10，第7格25，之后陡峭
+  if (current < 5) return 0;
+  if (current === 5) return 10;
+  if (current === 6) return 25;
+  // 第8格起：80 × 2.5^(n-8)，封顶5000
   const n = current + 1; // 下一格编号
-  return Math.min(5000, Math.round(80 * Math.pow(2.5, n - 6)));
+  return Math.min(5000, Math.round(80 * Math.pow(2.5, n - 8)));
 }
 
 export function expandManuscriptSlots() {
   const price = getManuscriptSlotPrice();
   if (price <= 0) return false;
   if (!spendCoins(price)) return false;
-  state.library.manuscriptSlots = (state.library.manuscriptSlots || 3) + 1;
+  state.library.manuscriptSlots = (state.library.manuscriptSlots || 5) + 1;
   addHistory('purchase', `📦 扩充手稿箱至 ${state.library.manuscriptSlots} 格`, `花费${price}智慧之光`);
   saveState();
   return true;

@@ -8,6 +8,15 @@ const RARITY_STYLES = {
   '铂金': { border: 'border-purple-400', bg: 'bg-purple-50', badge: 'bg-purple-500', glow: 'shadow-[0_0_12px_rgba(168,85,247,0.4)]' }
 };
 
+const BONUS_TEXTS = {
+  'W06': '⚡ 连击加成 3%/天',
+  'L04': '⚡ 缮写室升级 7%/级',
+  'B07': '📝 誊抄速度 +5%',
+  'V02': '💰 智慧之光 +10%',
+  'W07': '✨ 每次专注 +1 灵感',
+  'B08': '✨ 每次专注 +2 灵感',
+};
+
 export function renderAchievements(container) {
   let list, unlocked, total;
   try {
@@ -54,13 +63,15 @@ export function renderAchievements(container) {
 
     catAchievements.forEach(ach => {
       const rs = RARITY_STYLES[ach.rarity] || RARITY_STYLES['青铜'];
+      const bonusText = BONUS_TEXTS[ach.id] || '';
       if (ach.unlocked) {
         html += `
           <div class="relative ${rs.bg} ${rs.border} border rounded-lg p-3 text-center ${rs.glow} transition-all hover:scale-105 cursor-default"
-               title="${ach.name}\n${ach.desc}\n${new Date(ach.unlockedAt).toLocaleString('zh-CN')}">
+               title="${ach.name}\n${ach.desc}${bonusText ? '\n效果：' + bonusText : ''}\n${new Date(ach.unlockedAt).toLocaleString('zh-CN')}">
             <div class="text-2xl mb-1">${getCategoryEmoji(ach.category)}</div>
             <div class="text-xs font-bold leading-tight">${ach.name}</div>
             <span class="inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded-full ${rs.badge} text-white">${ach.rarity}</span>
+            ${bonusText ? `<div class="mt-1.5 text-[10px] text-magic-gold font-medium leading-tight">${bonusText}</div>` : ''}
           </div>
         `;
       } else {
@@ -90,6 +101,7 @@ function getCategoryEmoji(cat) {
 
 export function showAchievementToast(achievement) {
   const rs = RARITY_STYLES[achievement.rarity] || RARITY_STYLES['青铜'];
+  const bonusText = BONUS_TEXTS[achievement.id] || '';
 
   const toast = document.createElement('div');
   toast.className = `fixed bottom-20 right-4 z-[150] ${rs.bg} ${rs.border} border-2 rounded-xl p-4 shadow-lg ${rs.glow}
@@ -102,6 +114,7 @@ export function showAchievementToast(achievement) {
         <div class="font-bold text-sm">${achievement.name}</div>
         <div class="text-xs text-ink-light mt-0.5">${achievement.desc}</div>
         <span class="inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded-full ${rs.badge} text-white">${achievement.rarity}</span>
+        ${bonusText ? `<div class="mt-1.5 text-[10px] text-magic-gold font-medium">效果：${bonusText}</div>` : ''}
       </div>
     </div>
   `;

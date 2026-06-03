@@ -15,7 +15,7 @@ import { spawnVisitor, tickVisitorBrowsing, checkDueVisitors, collectReturn, buy
 import { removeFromManuscriptBox, isBookCapacityFull, placeOnShelf } from './capacity.js';
 import { upgradeBorrowLevel, getFocusSpeedMultiplier, hasSignboard } from './shop.js';
 import { getCurationFocusSpeed, getCurationCoinsBonus } from './curation.js';
-import { checkAchievements, checkAllOnInit } from './achievements.js';
+import { checkAchievements, checkAllOnInit, getAchievementBonuses } from './achievements.js';
 import { showAchievementToast } from './render/achievements.js';
 import { addWaterOpportunity, checkWither } from './plants.js';
 import { addDiaryEntry, tryGenerateDailySummary } from './diary.js';
@@ -321,10 +321,12 @@ function handleCompleteFocus(isAuto = false) {
 
   const auraCoinsMult = getAuraCoinsMultiplier();
   const curationCoins = getCurationCoinsBonus();
-  const coinsEarned = Math.round(minutes * 0.8 * (1 + auraCoinsMult + curationCoins));
+  const achieveBonuses = getAchievementBonuses();
+  const coinsEarned = Math.round(minutes * 0.8 * (1 + auraCoinsMult + curationCoins) * (1 + achieveBonuses.coinsBoost));
   addCoins(coinsEarned);
-  // 灵感：每次专注完成 +1
-  addInspiration(1);
+  // 灵感：每次专注完成 +1 + 成就加成
+  const inspirBase = 1 + (achieveBonuses.inspirationBonus || 0);
+  addInspiration(inspirBase);
   if (sess.candleInspiration) {
     addInspiration(1);
     addHistory('action', '🕯️ 烛台微微闪动', '+1 灵感（烛台加成）');
@@ -340,7 +342,7 @@ function handleCompleteFocus(isAuto = false) {
       addHistory('action', '⏳ 时光沙漏微微发光', '额外 +1 灵感（25%）');
     }
   }
-  addHistory('focus', `专注 ${minutes} 分钟`, `誊抄 ${wordsGained.toLocaleString()} 字 · +${coinsEarned}智慧之光 · +1灵感`);
+  addHistory('focus', `专注 ${minutes} 分钟`, `誊抄 ${wordsGained.toLocaleString()} 字 · +${coinsEarned}智慧之光 · +${inspirBase}灵感`);
 
   // 立即标记 inactive 防止排队 tick 重入
   sess.active = false;

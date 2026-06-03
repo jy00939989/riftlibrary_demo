@@ -201,6 +201,28 @@ export function registerEmojiClick() {
   return [];
 }
 
+// ========== 成就加成查询 ==========
+
+/**
+ * 返回已解锁成就的聚合加成对象，供 speed / coins / inspiration 消费。
+ * 纯函数，从 localStorage 读取，不依赖 state。
+ */
+export function getAchievementBonuses() {
+  const unlocked = loadUnlocked();
+  return {
+    // W06 七日不绝：连击系数从 0.02 提升至 0.03
+    streakMultiplier: unlocked['W06'] ? 0.03 : 0.02,
+    // L04 借阅进阶：缮写室升级每级系数从 0.05 提升至 0.07
+    focusLevelBonus: unlocked['L04'] ? 0.07 : 0.05,
+    // B07 五书精通：全书籍誊抄速度 +5%
+    speedFlat: unlocked['B07'] ? 0.05 : 0,
+    // V02 四海皆知：专注智慧之光收益 +10%
+    coinsBoost: unlocked['V02'] ? 0.10 : 0,
+    // W07 十万字匠 +1灵感 / B08 典藏大师 +2灵感（可叠加）
+    inspirationBonus: (unlocked['W07'] ? 1 : 0) + (unlocked['B08'] ? 2 : 0),
+  };
+}
+
 // ========== 检测入口 ==========
 
 export function checkAchievements(trigger, payload) {
