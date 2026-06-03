@@ -10,7 +10,6 @@ import {
 } from './render/index.js';
 import { startTimer, togglePauseTimer, abandonTimer, setCompleteCallback } from './timer.js';
 import { BOOKS } from '../data/books.js';
-import { installDevPanel } from './dev.js';
 import { spawnVisitor, tickVisitorBrowsing, checkDueVisitors, collectReturn, buySalesBook, removeVisitor, getVisitorDef, getAuraSpeedBonus, getAuraCoinsMultiplier, getAuraSpawnBonus, getBorrowSpawnBonus, getStageWitnesses } from './visitors.js';
 import { removeFromManuscriptBox, isBookCapacityFull, placeOnShelf } from './capacity.js';
 import { upgradeBorrowLevel, getFocusSpeedMultiplier, hasSignboard } from './shop.js';
@@ -1131,9 +1130,7 @@ function init() {
   console.log('📚 异世界图书馆已就绪');
   console.log(`   ${state.library.name} · 氛围 ${state.library.atmosphere}/500 · 连续专注 ${state.focus.streak} 天`);
 
-  // 注入 BOOKS 引用给 dev 面板
-  window.__dev._books = BOOKS;
-  installDevPanel();
+  // 初始化完成
 
   // 访客系统循环（每 60 秒推进一次）
   function tickVisitors() {
