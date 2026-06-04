@@ -16,11 +16,44 @@ function timeLeft(dueTime) {
   return { text, pct: 0 }; // pct 在渲染时单独计算
 }
 
+// ========== 好感条渲染 ==========
+
+function renderFavorBar(charId, sessionFavor) {
+  const globalFavor = state.visitorFavors?.[charId] || 0;
+  const pct = Math.min(100, globalFavor);
+  let color, heartColor, heartEmoji;
+  if (globalFavor >= 100) { color = 'bg-purple-500'; heartColor = 'text-purple-400'; heartEmoji = '💖'; }
+  else if (globalFavor >= 60) { color = 'bg-magic-gold'; heartColor = 'text-magic-gold'; heartEmoji = '💛'; }
+  else if (globalFavor >= 30) { color = 'bg-magic-blue'; heartColor = 'text-magic-blue'; heartEmoji = '💛'; }
+  else { color = 'bg-gray-400'; heartColor = 'text-gray-400'; heartEmoji = '🤍'; }
+
+  return `<div class="favor-bar-wrapper mt-1">
+    <span class="favor-heart ${heartColor}">${heartEmoji}</span>
+    <span class="favor-bar"><span class="favor-bar-fill ${color}" style="width:${pct}%"></span></span>
+    <span class="text-[10px] text-ink-light">${globalFavor}</span>
+    ${sessionFavor > 0 ? `<span class="text-[10px] text-magic-gold">+${sessionFavor}</span>` : ''}
+  </div>`;
+}
+
 function calcProgress(visitor) {
   if (!visitor.borrowTime || !visitor.dueTime) return 0;
   const total = visitor.dueTime - visitor.borrowTime;
   const elapsed = Date.now() - visitor.borrowTime;
   return Math.min(100, Math.max(0, Math.round((elapsed / total) * 100)));
+}
+
+// ========== 访客立绘辅助 ==========
+
+function getVisitorPortrait(charId, emoji, size = 'sm') {
+  const sizes = { sm: 'w-10 h-10 text-lg', md: 'w-14 h-14 text-2xl', lg: 'w-20 h-20 text-4xl' };
+  const sizeClass = sizes[size] || sizes.sm;
+  return `<img src="visual/visitors/${charId}.png"
+    class="${sizeClass} rounded-lg object-cover flex-shrink-0"
+    alt="${charId}"
+    onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
+    onload="this.style.display='block';"
+    style="display:block;">
+    <span class="${sizeClass} rounded-lg items-center justify-center bg-wood/10 flex-shrink-0" style="display:none;">${emoji}</span>`;
 }
 
 // 借阅区素材（Lv1~Lv7 各对应一张图，Lv0 不显示）
@@ -106,21 +139,21 @@ export function renderVisitorsPage() {
     browsing.forEach(v => {
       const browseMoods = ['从书架上抽出一本书', '翻阅泛黄的书页', '驻足在某本书前', '低声念出几个句子', '踮脚够高处的书', '轻轻拂去书上的灰'];
       const mood = browseMoods[Math.floor(Math.random() * browseMoods.length)];
-      const favorText = v.favorability ? `好感 ${v.favorability}` : '';
       const def = getVisitorDef(v.charId);
       const auraHtml = def?.aura
         ? `<div class="text-xs text-magic-gold mt-0.5">✨ ${def.aura.name}：${def.aura.desc}</div>`
         : '';
+      const favorHtml = renderFavorBar(v.charId, v.favorability || 0);
       const row = el('div', 'flex items-center gap-3 bg-white/60 rounded-lg p-3 mb-2');
-      row.innerHTML = `<span class="text-2xl">${v.emoji}</span>
+      row.innerHTML = `${getVisitorPortrait(v.charId, v.emoji, 'sm')}
         <div class="flex-1">
           <span class="font-bold">${v.name}</span>
           <span class="text-xs text-ink-light ml-2">${v.title || ''}</span>
           ${auraHtml}
           <div class="text-sm text-magic-blue mt-0.5 browsing-mood animate-ellipsis">${mood}</div>
+          ${favorHtml}
         </div>
         <div class="text-xs text-ink-light/60 text-right">
-          ${favorText ? `<div>💛 ${favorText}</div>` : ''}
           <div class="text-magic-gold/50 text-[10px] mt-0.5">浏览中</div>
         </div>`;
       section1.appendChild(row);
@@ -218,8 +251,10 @@ export function showVisitorEventModal(result, callback) {
   const quoteHtml = result.quote ? `<p class="text-ink-light italic leading-relaxed mt-3 text-sm">「${result.quote}」</p>` : '';
 
   // 基础卡内容
+  const charId = result.charId || '';
+  const visitorEmoji = result.visitorEmoji || '👤';
   let contentHtml = `
-    <div class="text-4xl mb-2">${result.visitorEmoji || '👤'}</div>
+    <div class="flex justify-center mb-2">${getVisitorPortrait(charId, visitorEmoji, 'lg')}</div>
     <div class="font-bold text-ink">${result.visitorName || '访客'} 归还了《${result.bookTitle || '书'}》</div>
     ${quoteHtml}
     ${rewardsHtml}
@@ -261,9 +296,9 @@ export function showVisitorEventModal(result, callback) {
     const nar = result.narrative;
     // 常层：铅笔信/便签（每次还书都有）
     if (nar.common) {
-      contentHtml += `<div class="mt-3 p-3 bg-wood/5 rounded-lg border border-wood/10 text-left">
+      contentHtml += `<div class="mt-3 p-3 rounded-lg text-left visitor-note-${charId}">
         <div class="text-xs text-ink-light mb-1">📝 ${result.visitorName}在书里夹了一张便签：</div>
-        <p class="text-sm text-ink leading-relaxed italic">"${nar.common.text}"</p>
+        <p class="text-sm leading-relaxed italic">"${nar.common.text}"</p>
       </div>`;
     }
     // 偶层：野花标本/特别礼物
@@ -294,9 +329,9 @@ export function showVisitorEventModal(result, callback) {
     }
     // 终局后常层（终局完成后的新日常事件）
     if (nar.postRareCommon) {
-      contentHtml += `<div class="mt-3 p-3 bg-wood/5 rounded-lg border border-wood/10 text-left">
+      contentHtml += `<div class="mt-3 p-3 rounded-lg text-left visitor-note-${charId}">
         <div class="text-xs text-ink-light mb-1">📝 ${result.visitorName} 的消息：</div>
-        <p class="text-sm text-ink leading-relaxed italic">"${nar.postRareCommon.text}"</p>
+        <p class="text-sm leading-relaxed italic">"${nar.postRareCommon.text}"</p>
       </div>`;
     }
     // 终局后偶层（终局完成后的深度事件）

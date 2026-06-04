@@ -40,24 +40,24 @@ export function renderLibraryPage() {
   container.innerHTML = `
     <div class="parchment-bg rounded-2xl magic-glow overflow-hidden">
       <!-- 子标签导航 -->
-      <div class="flex border-b-2 border-wood/20 bg-wood/5">
-        <button data-subtab="overview" class="subtab-btn px-5 py-3 text-sm font-bold transition-all
+      <div class="flex border-b-2 border-wood/20 bg-wood/5 overflow-x-auto flex-nowrap" style="-webkit-overflow-scrolling:touch;scrollbar-width:none">
+        <button data-subtab="overview" class="subtab-btn flex-shrink-0 px-3 sm:px-5 py-3 text-sm font-bold transition-all
           ${activeSubTab === 'overview' ? 'bg-white text-magic-gold border-b-2 border-magic-gold -mb-0.5' : 'text-ink-light hover:text-ink hover:bg-white/50'}">
           📊 概况
         </button>
-        <button data-subtab="achievements" class="subtab-btn px-5 py-3 text-sm font-bold transition-all
+        <button data-subtab="achievements" class="subtab-btn flex-shrink-0 px-3 sm:px-5 py-3 text-sm font-bold transition-all
           ${activeSubTab === 'achievements' ? 'bg-white text-magic-gold border-b-2 border-magic-gold -mb-0.5' : 'text-ink-light hover:text-ink hover:bg-white/50'}">
           🏆 成就柜
         </button>
-        <button data-subtab="collection" class="subtab-btn px-5 py-3 text-sm font-bold transition-all
+        <button data-subtab="collection" class="subtab-btn flex-shrink-0 px-3 sm:px-5 py-3 text-sm font-bold transition-all
           ${activeSubTab === 'collection' ? 'bg-white text-magic-gold border-b-2 border-magic-gold -mb-0.5' : 'text-ink-light hover:text-ink hover:bg-white/50'}">
           📦 收藏室
         </button>
-        <button data-subtab="decoration" class="subtab-btn px-5 py-3 text-sm font-bold transition-all
+        <button data-subtab="decoration" class="subtab-btn flex-shrink-0 px-3 sm:px-5 py-3 text-sm font-bold transition-all
           ${activeSubTab === 'decoration' ? 'bg-white text-magic-gold border-b-2 border-magic-gold -mb-0.5' : 'text-ink-light hover:text-ink hover:bg-white/50'}">
           🏺 布置
         </button>
-        <button data-subtab="guide" class="subtab-btn px-5 py-3 text-sm font-bold transition-all
+        <button data-subtab="guide" class="subtab-btn flex-shrink-0 px-3 sm:px-5 py-3 text-sm font-bold transition-all
           ${activeSubTab === 'guide' ? 'bg-white text-magic-gold border-b-2 border-magic-gold -mb-0.5' : 'text-ink-light hover:text-ink hover:bg-white/50'}">
           📖 馆长手册
         </button>

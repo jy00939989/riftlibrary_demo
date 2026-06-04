@@ -4,6 +4,7 @@ import { getDiaryEntries, getDiaryBindingLevel } from '../diary.js';
 import { PLANES, canUnlockPlane } from '../../data/planes.js';
 import { getPlaneQuestState } from '../quests.js';
 import { renderPlaneDetail } from './plane.js';
+import { VISITOR_DEFS } from '../visitors.js';
 
 let archiveTab = 'history'; // 'history' | 'diary' | 'planes'
 
@@ -88,6 +89,85 @@ function renderHistoryTab() {
 
 // ========== 墨墨日志 ==========
 
+function generateDiarySummary() {
+  const entries = getDiaryEntries();
+  if (entries.length === 0) return null;
+
+  const typeCounts = {};
+  const bookMentions = {};
+  const visitorMentions = {};
+  const visitorNames = Object.values(VISITOR_DEFS || {}).map(d => d.name);
+
+  entries.forEach(e => {
+    typeCounts[e.type] = (typeCounts[e.type] || 0) + 1;
+    // 提取书名提及
+    const bookMatches = e.text.match(/《(.+?)》/g);
+    if (bookMatches) {
+      bookMatches.forEach(m => {
+        const name = m.replace(/[《》]/g, '');
+        bookMentions[name] = (bookMentions[name] || 0) + 1;
+      });
+    }
+    // 提取访客提及
+    visitorNames.forEach(name => {
+      if (e.text.includes(name)) {
+        visitorMentions[name] = (visitorMentions[name] || 0) + 1;
+      }
+    });
+  });
+
+  const topBooks = Object.entries(bookMentions).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const topVisitors = Object.entries(visitorMentions).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+  return { typeCounts, topBooks, topVisitors, totalEntries: entries.length, firstEntries: entries.slice(-5).reverse() };
+}
+
+function showDiaryReviewModal() {
+  const summary = generateDiarySummary();
+  if (!summary) return;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4';
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+
+  const typeLabels = { focus_complete: '专注完成', focus_abandon: '专注中断', visitor_arrive: '访客到来', visitor_borrow: '访客借书', visitor_return: '访客还书', book_complete: '书籍完成', milestone: '里程碑', special_event: '特殊事件', daily: '每日回顾' };
+
+  let typeHtml = '';
+  Object.entries(summary.typeCounts).forEach(([type, count]) => {
+    typeHtml += `<span class="bg-white/60 px-2 py-1 rounded-full text-xs">${typeLabels[type] || type} ×${count}</span>`;
+  });
+
+  let bookHtml = '';
+  summary.topBooks.forEach(([name, count]) => {
+    bookHtml += `<div class="text-xs text-ink-light">📖 《${name}》— ${count}次提及</div>`;
+  });
+
+  let visitorHtml = '';
+  summary.topVisitors.forEach(([name, count]) => {
+    visitorHtml += `<div class="text-xs text-ink-light">👤 ${name} — ${count}次出现</div>`;
+  });
+
+  const card = document.createElement('div');
+  card.className = 'parchment-bg rounded-2xl p-6 max-w-md w-full magic-glow animate-scale-in max-h-[80vh] overflow-y-auto';
+  card.innerHTML = `
+    <h2 class="font-display text-lg font-bold mb-4">📖 日志回顾</h2>
+    <p class="text-sm text-ink-light mb-4">墨墨翻阅了共 <b>${summary.totalEntries}</b> 页日志，总结如下：</p>
+    ${typeHtml ? `<div class="mb-3"><div class="text-xs font-bold text-magic-gold mb-1">📊 事件类型</div><div class="flex flex-wrap gap-1">${typeHtml}</div></div>` : ''}
+    ${bookHtml ? `<div class="mb-3"><div class="text-xs font-bold text-magic-gold mb-1">📚 最常提及的书</div>${bookHtml}</div>` : ''}
+    ${visitorHtml ? `<div class="mb-3"><div class="text-xs font-bold text-magic-gold mb-1">👥 最常出现的访客</div>${visitorHtml}</div>` : ''}
+    <div class="mb-3">
+      <div class="text-xs font-bold text-magic-gold mb-1">📝 最早记录</div>
+      ${summary.firstEntries.map(e => `<div class="text-xs text-ink-light mb-1 border-l-2 border-magic-gold/30 pl-2">${new Date(e.time).toLocaleString('zh-CN')} — ${e.text.slice(0, 60)}…</div>`).join('')}
+    </div>
+    <button class="mt-3 px-6 py-2 bg-magic-gold text-white rounded-lg font-bold hover:shadow-lg transition-all w-full">关闭</button>
+  `;
+
+  overlay.appendChild(card);
+  document.body.appendChild(overlay);
+
+  card.querySelector('button').addEventListener('click', () => overlay.remove());
+}
+
 function renderDiaryTab() {
   const div = document.createElement('div');
   const entries = getDiaryEntries();
@@ -95,13 +175,15 @@ function renderDiaryTab() {
 
   let bindingHtml = '';
   if (entries.length > 0) {
-    const progressPct = Math.min(100, Math.round((entries.length % 30) / 30 * 100));
+    const progressPct = binding.level >= 4 ? 100 : Math.min(100, Math.round((entries.length % 30) / 30 * 100));
+    const levelClass = `diary-binding-lv${binding.level}`;
     bindingHtml = `
-      <div class="parchment-bg rounded-2xl p-4 mb-4 magic-glow text-center">
+      <div class="parchment-bg rounded-2xl p-4 mb-4 magic-glow text-center ${levelClass}">
         <div class="text-3xl mb-1">${binding.icon}</div>
         <div class="font-display font-bold text-lg">${binding.name}</div>
         <div class="text-xs text-ink-light">${binding.level < 4 ? `已记录 ${entries.length} 页 · 距下一级还差 ${30 - (entries.length % 30)} 页` : '墨墨的日志已臻至化境 ✨'}</div>
-        ${binding.level < 4 ? `<div class="mt-2 h-1.5 bg-wood/20 rounded-full overflow-hidden"><div class="h-full bg-magic-gold rounded-full" style="width:${entries.length % 30 / 30 * 100}%"></div></div>` : ''}
+        ${binding.level < 4 ? `<div class="mt-2 h-1.5 bg-wood/20 rounded-full overflow-hidden"><div class="h-full bg-magic-gold rounded-full" style="width:${progressPct}%"></div></div>` : ''}
+        ${binding.level >= 3 ? `<button class="diary-review-btn mt-2 px-4 py-1.5 bg-magic-gold/10 border border-magic-gold/30 rounded-lg text-xs font-bold text-magic-gold hover:bg-magic-gold/20 transition-all">📖 回顾</button>` : ''}
       </div>
     `;
   }
@@ -116,12 +198,16 @@ function renderDiaryTab() {
       </div>
     `;
   } else {
-    entriesHtml = entries.map((entry, i) => `
-      <div class="parchment-bg rounded-xl p-4 mb-3 magic-glow ${i === 0 ? 'border-l-4 border-magic-gold' : ''}">
-        <div class="text-xs text-ink-light mb-2">${new Date(entry.time).toLocaleString('zh-CN')}</div>
-        <div class="text-sm text-ink whitespace-pre-line leading-relaxed">${entry.text}</div>
-      </div>
-    `).join('');
+    entriesHtml = entries.map((entry, i) => {
+      const isSpecial = entry.type === 'book_complete' || entry.type === 'milestone';
+      const sparkle = (binding.level >= 4 && isSpecial) ? '✨ ' : '';
+      return `
+        <div class="parchment-bg rounded-xl p-4 mb-3 magic-glow ${i === 0 ? 'border-l-4 border-magic-gold' : ''}">
+          <div class="text-xs text-ink-light mb-2">${sparkle}${new Date(entry.time).toLocaleString('zh-CN')}</div>
+          <div class="text-sm text-ink whitespace-pre-line leading-relaxed">${entry.text}</div>
+        </div>
+      `;
+    }).join('');
   }
 
   div.innerHTML = `
@@ -129,6 +215,15 @@ function renderDiaryTab() {
     ${bindingHtml}
     ${entriesHtml}
   `;
+
+  // 绑定回顾按钮事件
+  setTimeout(() => {
+    const reviewBtn = div.querySelector('.diary-review-btn');
+    if (reviewBtn) {
+      reviewBtn.addEventListener('click', showDiaryReviewModal);
+    }
+  }, 0);
+
   return div;
 }
 

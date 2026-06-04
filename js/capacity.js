@@ -129,10 +129,9 @@ export function getManuscriptSlotPrice() {
 
 export function expandManuscriptSlots() {
   const price = getManuscriptSlotPrice();
-  if (price <= 0) return false;
-  if (!spendCoins(price)) return false;
+  if (price > 0 && !spendCoins(price)) return false;
   state.library.manuscriptSlots = (state.library.manuscriptSlots || 5) + 1;
-  addHistory('purchase', `📦 扩充手稿箱至 ${state.library.manuscriptSlots} 格`, `花费${price}智慧之光`);
+  addHistory('purchase', `📦 扩充手稿箱至 ${state.library.manuscriptSlots} 格`, price > 0 ? `花费${price}智慧之光` : '免费扩容');
   saveState();
   return true;
 }

@@ -51,6 +51,14 @@ body {
   font-family: 'Noto Serif SC', 'Source Han Serif SC', 'STSong', 'Songti SC', 'SimSun', '宋体', serif;
   color: #2c2419;
   min-height: 100vh;
+  min-height: 100dvh; /* iOS Safari 新标准 */
+  /* iOS Safari 安全区域 */
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+/* iOS Safari 不支持 background-attachment: fixed，移动端回退为 scroll */
+@supports (-webkit-touch-callout: none) {
+  body { background-attachment: scroll; }
 }
 
 .hidden { display: none !important; }
@@ -476,17 +484,167 @@ body {
 
 /* ========== 响应式 ========== */
 
-@media (max-width: 768px) {
-  .text-6xl { font-size: 3rem !important; }
-  .text-7xl { font-size: 3.5rem !important; }
-  .grid-cols-3 { grid-template-columns: repeat(2, 1fr); }
-  .grid-cols-5 { grid-template-columns: repeat(2, 1fr); }
+/* ========== 响应式 ========== */
+
+/* 640px：平板竖屏/大屏手机 */
+@media (max-width: 640px) {
+  /* --- 顶部导航栏 --- */
+  #nav-library-name { font-size: 1rem !important; }
+  .font-display.text-xl { font-size: 1rem !important; }
+  /* 隐藏副标题 */
+  nav .text-xs.text-ink-light { display: none; }
+  /* 状态栏文字精简 */
+  #status-atmosphere { font-size: 0.7rem; }
+  nav .flex.items-center.gap-4 { gap: 0.5rem !important; }
+
+  /* --- 标签导航：横向滚动 --- */
+  #nav-tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+    padding-bottom: 4px;
+  }
+  #nav-tabs::-webkit-scrollbar { display: none; }
+  .nav-btn {
+    flex-shrink: 0;
+    white-space: nowrap;
+    padding: 0.45rem 0.8rem;
+    font-size: 0.8rem;
+  }
+
+  /* --- 触摸目标 --- */
+  .nav-btn { min-height: 44px; }
+  .reading-font-btn { min-height: 40px; padding: 8px 14px; font-size: 0.8rem; }
+  .reading-chapter-nav button { min-height: 40px; padding: 8px 16px; font-size: 0.78rem; }
+
+  /* --- 网格降级 --- */
+  .grid-cols-3 { grid-template-columns: repeat(2, 1fr) !important; }
+  .grid-cols-4 { grid-template-columns: repeat(3, 1fr) !important; }
+  .grid-cols-5 { grid-template-columns: repeat(2, 1fr) !important; }
+
+  /* --- 阅读覆盖层 --- */
+  .reading-tap-zone { width: 38% !important; }
+  .reading-book { max-width: 100%; padding: 0 8px; }
+  .reading-panel { padding: 1rem 1.25rem; }
+
+  /* --- 页面横幅 --- */
+  .page-section img.h-48 { height: 140px; }
+
+  /* --- 专注模式选择器：纵向堆叠 --- */
+  .mode-btn { padding: 0.75rem 0.5rem !important; }
 }
 
+/* 480px：典型手机竖屏 */
 @media (max-width: 480px) {
   .p-6 { padding: 1rem; }
   .p-8 { padding: 1.5rem; }
   .text-6xl { font-size: 2.5rem !important; }
+  .text-7xl { font-size: 3rem !important; }
+
+  /* 网格进一步降级 */
+  .grid-cols-3 { grid-template-columns: repeat(2, 1fr) !important; }
+  .grid-cols-4 { grid-template-columns: repeat(2, 1fr) !important; }
+  .grid-cols-5 { grid-template-columns: repeat(2, 1fr) !important; }
+
+  /* --- 固定定位元素防重叠 --- */
+  .momo-suggestion-bubble {
+    bottom: 56px !important;
+    right: 8px !important;
+    max-width: 170px !important;
+    font-size: 0.7rem !important;
+    padding: 8px 10px !important;
+  }
+  .momo-suggestion-text { font-size: 0.68rem !important; }
+
+  /* 引导任务小部件 */
+  #guide-quest-widget {
+    bottom: 4px !important;
+    right: 4px !important;
+  }
+
+  /* 成就 Toast */
+  .achievement-toast,
+  [class*="toast"][class*="fixed"] {
+    bottom: 56px !important;
+    right: 4px !important;
+    max-width: 240px !important;
+    font-size: 0.72rem !important;
+  }
+
+  /* 策展 Toast 居中但收窄 */
+  .curation-toast {
+    bottom: 44px !important;
+    max-width: 88vw !important;
+    font-size: 0.75rem !important;
+    padding: 10px 16px !important;
+  }
+
+  /* Dev 面板齿轮 */
+  [class*="dev-gear"],
+  #dev-toggle-btn,
+  .dev-gear-btn {
+    bottom: 6px !important;
+    right: 6px !important;
+    width: 30px !important;
+    height: 30px !important;
+  }
+
+  /* --- 覆盖层/模态框 --- */
+  .fixed.inset-0 .max-w-sm,
+  .fixed.inset-0 .max-w-md,
+  .fixed.inset-0 .max-w-lg,
+  .fixed.inset-0 .max-w-xl {
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+
+  /* 升级弹窗横幅缩小 */
+  .fixed.inset-0 img.h-56,
+  .fixed.inset-0 .h-56 {
+    height: 140px !important;
+  }
+
+  /* 证书卡片 */
+  .certificate-card {
+    padding: 1rem !important;
+    border-width: 2px !important;
+  }
+  .certificate-card .grid-cols-3 {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 0.5rem !important;
+  }
+
+  /* --- 按钮通用触摸目标 --- */
+  button { min-height: 38px; }
+
+  /* --- 最小字号 --- */
+  .text-\[10px\] { font-size: 12px !important; }
+  .text-\[11px\] { font-size: 12px !important; }
+}
+
+/* 360px：极小屏 */
+@media (max-width: 360px) {
+  .nav-btn { font-size: 0.7rem; padding: 0.35rem 0.55rem; }
+  .text-6xl { font-size: 2rem !important; }
+  .grid-cols-3 { grid-template-columns: repeat(1, 1fr) !important; }
+}
+
+/* 手机横屏 */
+@media (max-width: 900px) and (orientation: landscape) {
+  /* 压缩导航栏 */
+  nav.sticky { padding-top: 4px; padding-bottom: 4px; }
+  nav .text-xs { display: none; }
+
+  /* 页面横幅缩小 */
+  .page-section img.h-48 { height: 100px; }
+
+  /* 全屏覆盖层允许滚动 */
+  .fixed.inset-0 .max-w-sm,
+  .fixed.inset-0 .max-w-md {
+    max-height: 80vh;
+    overflow-y: auto;
+  }
 }
 
 /* ========== 缮写动画 ========== */
@@ -692,21 +850,64 @@ body {
   margin-top: 6px;
 }
 
-/* 移动端适配 */
-@media (max-width: 768px) {
-  .writing-scene { max-height: 340px; }
-  .writing-area { font-size: 14px; line-height: 1.8; }
+/* ========== 缮写动画移动端：单页模式 ========== */
+
+/* 640px 以下：隐藏左页+书脊，右页全宽单页 */
+@media (max-width: 640px) {
+  .writing-scene { max-height: 300px; }
+
+  /* 隐藏左页和书脊 */
+  .writing-page-left,
+  .writing-spine { display: none; }
+
+  /* 右页撑满全宽 */
+  .writing-page-right {
+    flex: 1 1 100%;
+    border-radius: 10px;
+    margin-left: 0;
+  }
+
+  /* 移除 3D 透视，恢复平面 */
+  .writing-book {
+    transform: none;
+  }
+
+  /* 文字区放宽内边距 */
+  .writing-area {
+    font-size: 15px;
+    line-height: 1.85;
+    left: 18px !important;
+    right: 18px !important;
+  }
+
+  /* 书页横线密度适配 */
   .writing-page::before {
     background-image: repeating-linear-gradient(
-      0deg, transparent, transparent 24px, rgba(139,105,20,0.3) 24px, rgba(139,105,20,0.3) 25px
+      0deg, transparent, transparent 26px, rgba(139,105,20,0.3) 26px, rgba(139,105,20,0.3) 27px
     );
   }
+
+  .writing-quill-inner { font-size: 26px; }
 }
 
-@media (max-width: 480px) {
-  .writing-scene { max-height: 260px; }
-  .writing-area { font-size: 13px; line-height: 1.7; top: 16px; bottom: 16px; left: 20px; right: 20px; }
+/* 400px 以下：进一步收紧 */
+@media (max-width: 400px) {
+  .writing-scene { max-height: 250px; }
+  .writing-area {
+    font-size: 13px;
+    line-height: 1.75;
+    left: 10px !important;
+    right: 10px !important;
+    top: 14px !important;
+    bottom: 14px !important;
+  }
   .writing-quill-inner { font-size: 22px; }
+}
+
+/* 横屏：场景高度不能过大 */
+@media (max-width: 900px) and (orientation: landscape) {
+  .writing-scene { max-height: 55vh; }
+  .writing-area { font-size: 13px; line-height: 1.7; }
 }
 
 /* ========== 页面专属氛围背景（由 JS 动态设置 backgroundImage） ========== */
@@ -716,6 +917,11 @@ body {
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
+}
+
+/* iOS Safari 不支持 background-attachment: fixed */
+@supports (-webkit-touch-callout: none) {
+  .page-section { background-attachment: scroll; }
 }
 
 /* ========== 典藏证书 ========== */
@@ -954,4 +1160,432 @@ body {
 @keyframes toast-in {
   0% { transform: translateX(-50%) translateY(20px); opacity: 0; }
   100% { transform: translateX(-50%) translateY(0); opacity: 1; }
+}
+
+/* ========== 墨墨建议气泡 ========== */
+
+.momo-suggestion-bubble {
+  position: fixed;
+  bottom: 80px;
+  right: 24px;
+  z-index: 75;
+  max-width: 220px;
+  background: linear-gradient(180deg, #fdf6e8 0%, #f5e6c8 100%);
+  border: 2px solid rgba(201, 162, 39, 0.35);
+  border-radius: 12px;
+  padding: 10px 13px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.22), 0 0 14px rgba(201,162,39,0.08);
+  cursor: pointer;
+  animation: momo-bubble-in 0.4s ease-out, momo-pulse 4s ease-in-out 0.4s infinite;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.momo-suggestion-bubble::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  right: 20px;
+  width: 0; height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid rgba(201, 162, 39, 0.35);
+}
+.momo-suggestion-header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 5px;
+}
+.momo-suggestion-emoji {
+  font-size: 1rem;
+}
+.momo-suggestion-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #c9a227;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  flex: 1;
+}
+.momo-suggestion-close {
+  background: none;
+  border: none;
+  font-size: 0.75rem;
+  color: rgba(44, 36, 25, 0.3);
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+  transition: color 0.2s;
+}
+.momo-suggestion-close:hover {
+  color: rgba(44, 36, 25, 0.7);
+}
+.momo-suggestion-text {
+  font-size: 0.78rem;
+  color: #3d2b1f;
+  line-height: 1.45;
+  margin: 0;
+}
+@keyframes momo-bubble-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes momo-pulse {
+  0%, 100% { box-shadow: 0 4px 20px rgba(0,0,0,0.22), 0 0 14px rgba(201,162,39,0.08); }
+  50% { box-shadow: 0 4px 24px rgba(0,0,0,0.28), 0 0 22px rgba(201,162,39,0.16); }
+}
+
+/* ========== 访客好感条 ========== */
+
+.favor-bar-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.favor-heart {
+  font-size: 0.7rem;
+  transition: color 0.5s ease;
+}
+.favor-bar {
+  display: inline-block;
+  width: 56px;
+  height: 5px;
+  background: rgba(139, 105, 20, 0.1);
+  border-radius: 999px;
+  overflow: hidden;
+  vertical-align: middle;
+  margin: 0 2px;
+}
+.favor-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.5s ease, background-color 0.5s ease;
+}
+
+/* ========== 日志装帧等级样式 ========== */
+
+/* Lv2: 线装布封 — 虚线缝边 */
+.diary-binding-lv2 {
+  border: 3px dashed rgba(139, 105, 20, 0.4) !important;
+  box-shadow: inset 0 0 20px rgba(139,105,20,0.08), 0 4px 16px rgba(0,0,0,0.18) !important;
+}
+
+/* Lv3: 皮面精装 — 深皮边框 + 金色角标 */
+.diary-binding-lv3 {
+  border: 3px solid #3d2b1f !important;
+  background: linear-gradient(180deg, #f5e6c8 0%, #d4b896 50%, #f5e6c8 100%) !important;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.3), inset 0 0 30px rgba(139,105,20,0.1) !important;
+  position: relative;
+}
+.diary-binding-lv3::before {
+  content: '';
+  position: absolute;
+  top: -6px; left: -6px; right: -6px; bottom: -6px;
+  border: 1px solid rgba(201,162,39,0.5);
+  border-radius: 1.2rem;
+  pointer-events: none;
+}
+
+/* Lv4: 魔法装帧 — 流光渐变 + 呼吸光晕 */
+.diary-binding-lv4 {
+  border: 3px solid transparent !important;
+  background: linear-gradient(180deg, #f5e6c8 0%, #c9a227 20%, #f5e6c8 50%, #c9a227 80%, #f5e6c8 100%) !important;
+  box-shadow: 0 0 24px rgba(201,162,39,0.4), inset 0 0 40px rgba(201,162,39,0.1) !important;
+  animation: diary-lv4-glow 3s ease-in-out infinite;
+}
+@keyframes diary-lv4-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(201,162,39,0.3), inset 0 0 30px rgba(201,162,39,0.08); }
+  50% { box-shadow: 0 0 40px rgba(201,162,39,0.5), inset 0 0 50px rgba(201,162,39,0.15); }
+}
+
+/* ========== 访客立绘 ========== */
+
+.visitor-portrait {
+  transition: transform 0.3s ease;
+  flex-shrink: 0;
+}
+
+/* ========== 访客便签样式（10位访客各不同） ========== */
+
+.visitor-note-shenmingyuan,
+.visitor-note-chengyuan,
+.visitor-note-peizhou,
+.visitor-note-jianan,
+.visitor-note-jiangyoushu,
+.visitor-note-guyu,
+.visitor-note-qiaoyiyi,
+.visitor-note-xierugui,
+.visitor-note-xiachan,
+.visitor-note-wangxiaolei {
+  border: 1px solid rgba(139,105,20,0.15);
+}
+
+/* 沈明远 — 象牙色稿纸，蓝黑钢笔字，横线格 */
+.visitor-note-shenmingyuan {
+  background: linear-gradient(180deg, #fdfaf0 0%, #f8f2e0 100%);
+  color: #1a1a3a;
+  font-family: 'Noto Serif SC', serif;
+  background-image: repeating-linear-gradient(
+    0deg, transparent, transparent 27px, rgba(139,120,80,0.1) 27px, rgba(139,120,80,0.1) 28px
+  );
+  border-left: 3px solid #4a7c9b;
+}
+
+/* 程远 — 便利贴黄，等宽字体，仓促潦草 */
+.visitor-note-chengyuan {
+  background: linear-gradient(180deg, #fff9c4 0%, #fff176 100%);
+  color: #333;
+  font-family: 'Courier New', monospace;
+  transform: rotate(-0.5deg);
+  box-shadow: 2px 3px 6px rgba(0,0,0,0.1);
+}
+
+/* 裴舟 — 旧书店收据，暖色调，小字紧凑 */
+.visitor-note-peizhou {
+  background: linear-gradient(180deg, #f5f0e8 0%, #ede3d3 100%);
+  color: #3d2b1f;
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
+  border: 1px dashed rgba(139,105,20,0.25);
+}
+
+/* 简安 — 公文纸边角，浅色网格，端正 */
+.visitor-note-jianan {
+  background: linear-gradient(180deg, #fafaf7 0%, #f2f2ec 100%);
+  color: #2c2419;
+  background-image:
+    linear-gradient(0deg, transparent 98%, rgba(180,180,170,0.12) 100%),
+    linear-gradient(90deg, transparent 98%, rgba(180,180,170,0.12) 100%);
+  background-size: 18px 18px;
+  border: 1px solid rgba(100,100,90,0.2);
+}
+
+/* 江有树 — 大学横线笔记本，随手写字体 */
+.visitor-note-jiangyoushu {
+  background: linear-gradient(180deg, #fafeff 0%, #f0f4f8 100%);
+  color: #1a3a5c;
+  font-family: 'Zhi Mang Xing', cursive, serif;
+  background-image: repeating-linear-gradient(
+    0deg, transparent, transparent 25px, rgba(100,150,200,0.16) 25px, rgba(100,150,200,0.16) 26px
+  );
+  border: 1px solid rgba(100,150,200,0.2);
+}
+
+/* 谷雨 — 撕边笔记本，铅笔灰，稚拙笔迹 */
+.visitor-note-guyu {
+  background: linear-gradient(180deg, #fefcf8 0%, #faf4e8 100%);
+  color: #555;
+  font-family: 'Ma Shan Zheng', cursive, serif;
+  font-size: 0.88rem;
+  border-top: 2px solid rgba(139,105,20,0.2);
+  border-bottom: 2px solid rgba(139,105,20,0.2);
+  border-left: 1px solid rgba(139,105,20,0.15);
+  border-right: 1px solid rgba(139,105,20,0.15);
+}
+
+/* 乔一一 — 水彩纸边角，彩笔渐变，艺术感 */
+.visitor-note-qiaoyiyi {
+  background: linear-gradient(135deg, #fff 0%, #faf0ff 50%, #f0f8ff 100%);
+  color: #6b2fa0;
+  font-family: 'Zhi Mang Xing', cursive, serif;
+  font-size: 0.86rem;
+  border: 2px solid;
+  border-image: linear-gradient(135deg, #e879f9, #60a5fa, #fbbf24) 1;
+}
+
+/* 谢如归 — 高级奶白纸，极细字重，冷淡克制 */
+.visitor-note-xierugui {
+  background: linear-gradient(180deg, #fdfaf5 0%, #f5eee0 100%);
+  color: #2c2419;
+  font-family: 'Noto Serif SC', serif;
+  font-weight: 300;
+  border: 1px solid rgba(180,160,120,0.25);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+/* 夏蝉 — 亮粉闪光纸，偶像系配色 */
+.visitor-note-xiachan {
+  background: linear-gradient(135deg, #fff5f5 0%, #ffe0f0 50%, #f5f0ff 100%);
+  color: #c02660;
+  font-family: 'Noto Serif SC', serif;
+  border: 1px solid rgba(255,130,170,0.3);
+  box-shadow: 0 0 10px rgba(255,130,170,0.1);
+}
+
+/* 王小磊 — 牛皮纸板，圆珠笔蓝字，波浪线签名 */
+.visitor-note-wangxiaolei {
+  background: linear-gradient(180deg, #d4c4a8 0%, #c8b898 100%);
+  color: #1a3a6c;
+  font-family: 'Courier New', monospace;
+  font-size: 0.81rem;
+  border: 1px solid rgba(120,100,70,0.25);
+  box-shadow: inset 0 0 15px rgba(100,80,40,0.08);
+}
+
+/* ========== 借阅区场景图 ========== */
+
+.reading-scene-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  max-height: 420px;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  border: 2px solid rgba(139, 105, 20, 0.3);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.25), inset 0 0 60px rgba(0,0,0,0.15);
+  background-size: cover;
+  background-position: center;
+  background-color: #2c2419;
+}
+
+/* 场景氛围层：暖光渐变 */
+.reading-scene-container::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 60% 30%, rgba(255,200,120,0.12) 0%, transparent 60%),
+              radial-gradient(ellipse at 20% 70%, rgba(200,180,140,0.08) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* 空荡荡时的微尘浮动 */
+.reading-scene-empty {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.reading-scene-empty-text {
+  color: rgba(245,230,200,0.5);
+  font-family: 'Noto Serif SC', serif;
+  font-size: 0.9rem;
+  letter-spacing: 0.06em;
+  text-shadow: 0 0 12px rgba(0,0,0,0.5);
+  animation: scene-dust-float 4s ease-in-out infinite;
+}
+@keyframes scene-dust-float {
+  0%, 100% { opacity: 0.35; transform: translateY(0); }
+  50% { opacity: 0.6; transform: translateY(-4px); }
+}
+
+/* 场景热点锚点（5个固定位置） */
+.scene-hotspot {
+  position: absolute;
+  z-index: 3;
+  /* 每个热点通过 JS 内联设置 left/top */
+}
+
+/* 访客小人在场景中的形象 */
+.scene-visitor-figure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+  transition: transform 0.3s ease, filter 0.3s ease;
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.35));
+}
+.scene-visitor-figure:hover {
+  transform: scale(1.18);
+  filter: drop-shadow(0 3px 8px rgba(0,0,0,0.5)) brightness(1.1);
+  z-index: 10;
+}
+.scene-visitor-figure .scene-visitor-emoji {
+  font-size: 1.8rem;
+  line-height: 1;
+  transition: transform 0.3s ease;
+}
+.scene-visitor-figure .scene-visitor-name {
+  font-size: 0.6rem;
+  color: #f5e6c8;
+  background: rgba(44,36,25,0.75);
+  padding: 1px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  letter-spacing: 0.04em;
+  backdrop-filter: blur(2px);
+}
+
+/* 各活动类型微动画 */
+.scene-visitor-reading .scene-visitor-emoji {
+  animation: scene-reading-sway 3s ease-in-out infinite;
+}
+@keyframes scene-reading-sway {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-2deg); }
+  75% { transform: rotate(2deg); }
+}
+
+.scene-visitor-bookshelf .scene-visitor-emoji {
+  animation: scene-reach-up 4s ease-in-out infinite;
+}
+@keyframes scene-reach-up {
+  0%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-3px); }
+  60% { transform: translateY(0); }
+}
+
+.scene-visitor-counter .scene-visitor-emoji {
+  animation: scene-nod 3.5s ease-in-out infinite;
+}
+@keyframes scene-nod {
+  0%, 100% { transform: rotate(0deg); }
+  40% { transform: rotate(1deg) translateY(-1px); }
+  80% { transform: rotate(-1deg) translateY(0); }
+}
+
+.scene-visitor-plants .scene-visitor-emoji {
+  animation: scene-water 5s ease-in-out infinite;
+}
+@keyframes scene-water {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-2px) rotate(2deg); }
+}
+
+.scene-visitor-window .scene-visitor-emoji {
+  animation: scene-gaze 5s ease-in-out infinite;
+}
+@keyframes scene-gaze {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}
+
+/* 借阅区等级标签 */
+.reading-scene-label {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  background: rgba(44,36,25,0.8);
+  color: #f5e6c8;
+  font-size: 0.7rem;
+  padding: 4px 14px;
+  border-radius: 999px;
+  letter-spacing: 0.06em;
+  pointer-events: none;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(201,162,39,0.2);
+}
+
+/* 移动端适配 */
+@media (max-width: 640px) {
+  .reading-scene-container {
+    aspect-ratio: 4 / 3;
+    max-height: 300px;
+  }
+  .scene-visitor-figure .scene-visitor-emoji { font-size: 1.4rem; }
+  .scene-visitor-figure .scene-visitor-name { font-size: 0.5rem; padding: 0 4px; }
+}
+
+@media (max-width: 400px) {
+  .reading-scene-container {
+    aspect-ratio: 3 / 4;
+    max-height: 340px;
+  }
+  .scene-visitor-figure .scene-visitor-emoji { font-size: 1.2rem; }
+  .scene-visitor-figure .scene-visitor-name { font-size: 0.48rem; }
 }
