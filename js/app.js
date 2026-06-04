@@ -1,5 +1,5 @@
 // 应用入口 —— 初始化 + 页面切换 + 全局操作
-import { state, initState, saveState } from './state.js';
+import { state, initState, saveState, ensureAllBooksInManuscriptBox } from './state.js';
 import { addCoins, spendCoins, addHistory, updateStreak, addAtmosphere, updateBodyBackground, getAtmosphereLevel, onStageCross, addInspiration } from './storage.js';
 import { canDrawActionCards, drawActionCards, applyAction } from './actioncards.js';
 import {
@@ -19,7 +19,7 @@ import { showAchievementToast } from './render/achievements.js';
 import { addWaterOpportunity, checkWither } from './plants.js';
 import { addDiaryEntry, tryGenerateDailySummary } from './diary.js';
 import { tickPlaneVisitors, checkTaskCompletion } from './quests.js';
-import { initAudio, toggleMusic, onFirstInteraction } from './audio.js';
+import { initAudio, toggleMusic, onFirstInteraction, initSfx, playSfx } from './audio.js';
 import { showIntro } from './intro.js';
 import { checkAndShowTutorial } from './tutorial.js';
 import { TIER_GOALS, isTierComplete, countTierGoalsComplete } from '../data/tiergoals.js';
@@ -29,6 +29,7 @@ import { showCertificate } from './render/certificate.js';
 import { ensureDailyTasks, markTaskDone, claimAllDoneBonus } from './dailytasks.js';
 import { ensureGuideQuests, checkGuideQuest, tryCompleteAllDone, getQuestProgress } from './guidequests.js';
 import { renderGuideQuestWidget, showQuestCompleteToast } from './render/index.js';
+import { renderMomoSuggestion, resetMomoSuggestion } from './render/momo-suggestion.js';
 
 function getNow() {
   return window.__dev && window.__dev.getNow ? window.__dev.getNow() : Date.now();
@@ -203,6 +204,8 @@ function handleCompleteFocus(isAuto = false) {
     return;
   }
 
+  playSfx('focus_complete');
+
   // 手动完成时清除 interval；自动完成时 timer.js 已经 stopTimer 了
   if (!isAuto && sess.intervalId) {
     clearInterval(sess.intervalId);
@@ -325,9 +328,7 @@ function handleCompleteFocus(isAuto = false) {
   const achieveBonuses = getAchievementBonuses();
   const coinsEarned = Math.round(minutes * 0.8 * (1 + auraCoinsMult + curationCoins) * (1 + achieveBonuses.coinsBoost));
   addCoins(coinsEarned);
-  // 灵感：每次专注完成 +1 + 成就加成
-  const inspirBase = 1 + (achieveBonuses.inspirationBonus || 0);
-  addInspiration(inspirBase);
+  // 灵感：不再随每次专注 +1，仅通过烛台/沙漏/成就获得
   if (sess.candleInspiration) {
     addInspiration(1);
     addHistory('action', '🕯️ 烛台微微闪动', '+1 灵感（烛台加成）');
@@ -343,7 +344,7 @@ function handleCompleteFocus(isAuto = false) {
       addHistory('action', '⏳ 时光沙漏微微发光', '额外 +1 灵感（25%）');
     }
   }
-  addHistory('focus', `专注 ${minutes} 分钟`, `誊抄 ${wordsGained.toLocaleString()} 字 · +${coinsEarned}智慧之光 · +${inspirBase}灵感`);
+  addHistory('focus', `专注 ${minutes} 分钟`, `誊抄 ${wordsGained.toLocaleString()} 字 · +${coinsEarned}智慧之光`);
 
   // 立即标记 inactive 防止排队 tick 重入
   sess.active = false;
@@ -396,6 +397,7 @@ function handleCompleteFocus(isAuto = false) {
       if (firstVisitorDue) {
         const visitor = spawnVisitor();
         if (visitor) {
+          playSfx('visitor_arrive');
           showFirstVisitorEvent(visitor);
         }
       } else if (state.tutorialFlags.firstVisitorEventDone) {
@@ -408,6 +410,7 @@ function handleCompleteFocus(isAuto = false) {
           if (Math.random() < perRollChance) {
             const visitor = spawnVisitor();
             if (visitor) {
+              playSfx('visitor_arrive');
               const vAchResults = checkAchievements('visitor_arrive');
               showAchievementBatch(vAchResults);
               showVisitorArrivalCard(visitor);
@@ -674,6 +677,7 @@ function handleBuyShelf() {
     state.library.shelves.push([null, null, null, null, null]);
     addAtmosphere(5);
     addHistory('purchase', '购买新书架', `花费${price}智慧之光 · +5氛围`);
+    playSfx('buy_success');
     saveState();
     const achResults = checkAchievements('purchase_shelf');
     showAchievementBatch(achResults);
@@ -687,6 +691,7 @@ function handleBuyShelf() {
 function handleCollectReturn(visitorId) {
   const result = collectReturn(visitorId);
   if (result) {
+    playSfx('book_return');
     const hour = new Date(getNow()).getHours();
     const achResults = [];
     achResults.push(...checkAchievements('visitor_return', { hour }));
@@ -708,6 +713,7 @@ function handleBuySalesBook(bookMeta) {
   const bookId = buySalesBook(bookMeta);
   if (bookId) {
     updateStatusBar();
+    playSfx('buy_success');
     saveState();
     renderBookshelfPage();
     const bookAch = checkAchievements('purchase_book');
@@ -727,6 +733,9 @@ function showAchievementBatch(results) {
     seen.add(a.id);
     return true;
   });
+  if (unique.length > 0) {
+    playSfx('achievement_unlock');
+  }
   // 逐个弹 toast，每个间隔 0.5s
   unique.forEach((ach, i) => {
     setTimeout(() => showAchievementToast(ach), i * 500);
@@ -921,6 +930,7 @@ function handleUpgradeBorrowLevel() {
     return;
   }
   updateStatusBar();
+  playSfx('buy_success');
   renderShopPage();
   renderVisitorsPage();
   showBorrowAreaUpgrade(state.library.borrowLevel);
@@ -962,6 +972,7 @@ function renderCurrentTab() {
 
 window.switchTab = function(tabName) {
   currentTab = tabName;
+  playSfx('button_click');
 
   document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
   const activeBtn = document.getElementById('tab-' + tabName);
@@ -972,6 +983,7 @@ window.switchTab = function(tabName) {
   if (page) page.classList.remove('hidden');
 
   renderCurrentTab();
+  resetMomoSuggestion();
 
   // 引导任务：首次进入大书库 / 商店
   if (tabName === 'bookshelf') {
@@ -998,6 +1010,7 @@ window.switchTab = function(tabName) {
 
 function init() {
   initState();
+  ensureAllBooksInManuscriptBox();
 
   // 旧存档迁移：从 copiedWords 修正 copyCount 和 masteryLevel（短书快速重抄导致的不一致）
   // 以及扩充字数后，旧"completed"需要回退为 copying
@@ -1064,12 +1077,14 @@ function init() {
   const musicBtn = document.getElementById('music-toggle');
   if (musicBtn) musicBtn.addEventListener('click', toggleMusic);
   initAudio();
-  // 回头客自动播放BGM，新用户等首次专注完成后触发
+  initSfx();
+  // 回头客自动播放BGM+SFX，新用户等首次专注完成后触发
   if (state.focus.totalMinutes > 0) {
     onFirstInteraction();
   }
 
   renderCurrentTab();
+  renderMomoSuggestion();
   updateStatusBar();
   updateBodyBackground();
   checkWither(); // 72小时离线凋谢检测

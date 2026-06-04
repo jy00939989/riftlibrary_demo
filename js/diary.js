@@ -1,6 +1,7 @@
 // 墨墨日志模块 —— 纯前端模板拼接，不依赖后端
 import { state, saveState } from './state.js';
 import { BOOKS } from '../data/books.js';
+import { addCoins, addAtmosphere } from './storage.js';
 
 // ========== 三段模板池 ==========
 
@@ -174,6 +175,19 @@ export function addDiaryEntry(type, vars = {}) {
   });
   // 保留最近 30 条
   if (state.diaryLogs.length > 30) state.diaryLogs.length = 30;
+
+  // 检测装帧升级
+  const levelUp = checkDiaryLevelUp();
+  if (levelUp) {
+    // 延迟显示弹窗，避免与其他 UI 冲突
+    setTimeout(() => {
+      import('./render/animations.js').then(mod => {
+        mod.showDiaryLevelUpPopup(levelUp);
+      });
+    }, 800);
+  }
+
+  return levelUp;
 }
 
 export function getDiaryEntries() {
@@ -273,4 +287,40 @@ export function getDiaryBindingLevel() {
   if (count >= 60) return { level: 3, name: '皮面精装', icon: '📔' };
   if (count >= 30) return { level: 2, name: '线装布封', icon: '📒' };
   return { level: 1, name: '简装手记', icon: '📓' };
+}
+
+// ========== 装帧升级奖励 ==========
+
+const DIARY_LEVEL_REWARDS = {
+  2: { coins: 50, atmo: 3 },
+  3: { coins: 100, atmo: 5 },
+  4: { coins: 200, atmo: 10 },
+};
+
+const DIARY_LEVEL_MOMO_SPEECH = {
+  2: '墨墨的日志有了个像样的封面！虽然还是布面的，但已经很不错了~',
+  3: '皮面精装！墨墨可以挺起胸脯说：这是一本真正的日志了。',
+  4: '魔法装帧……连墨墨都没想到能到这一步。谢谢你，馆长。',
+};
+
+export function checkDiaryLevelUp() {
+  if (!state.diaryLevelRewardsClaimed) state.diaryLevelRewardsClaimed = [];
+  const currentLevel = getDiaryBindingLevel().level;
+  if (currentLevel > 1 && !state.diaryLevelRewardsClaimed.includes(currentLevel)) {
+    state.diaryLevelRewardsClaimed.push(currentLevel);
+    const rewards = DIARY_LEVEL_REWARDS[currentLevel];
+    if (rewards) {
+      addCoins(rewards.coins);
+      addAtmosphere(rewards.atmo);
+    }
+    saveState();
+    return {
+      level: currentLevel,
+      name: getDiaryBindingLevel().name,
+      icon: getDiaryBindingLevel().icon,
+      rewards: rewards || { coins: 0, atmo: 0 },
+      momoSpeech: DIARY_LEVEL_MOMO_SPEECH[currentLevel] || '',
+    };
+  }
+  return null;
 }

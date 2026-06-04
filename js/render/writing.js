@@ -57,6 +57,7 @@ class WritingAnim {
     this.rightLines = [];  // 右页已完成行
     this.writingSide = 'left'; // 'left' | 'right'
     this.currentLineEl = null;
+    this.singlePage = false;   // 手机单页模式
 
     // 书源
     this.chapters = this.book.chapters || [];
@@ -133,7 +134,7 @@ class WritingAnim {
           </div>
         </div>
         <div class="writing-quill-container" id="writing-quill" style="display:none;">
-          <div class="writing-quill-inner">🪶</div>
+          <div class="writing-quill-inner">✒️</div>
         </div>
       </div>
     `;
@@ -150,8 +151,11 @@ class WritingAnim {
   // ========== 动态排版 ==========
 
   recalcLayout() {
-    const area = this.areaRight || this.areaLeft;
-    if (!area) return;
+    this._checkSinglePage();
+
+    // 单页模式强制用右页测量（左页 display:none 时 clientWidth=0）
+    const area = this.singlePage ? this.areaRight : (this.areaRight || this.areaLeft);
+    if (!area || area.clientWidth === 0) return;
 
     const style = getComputedStyle(area);
     const fontSize = parseFloat(style.fontSize) || 17;
@@ -175,6 +179,31 @@ class WritingAnim {
       this.allLines = this.typeset(currentText);
       this.lineIndex = Math.min(this.lineIndex, Math.max(0, this.allLines.length - 1));
       this.charIndex = Math.min(this.charIndex, (this.allLines[this.lineIndex] || '').length);
+      if (this.currentLineEl) {
+        this.currentLineEl.classList.remove('writing-current-line');
+        this.currentLineEl = null;
+      }
+      this.rerenderBothPages();
+    }
+  }
+
+  // 检测单页/双页模式切换（用 getComputedStyle 与 CSS 断点自动同步）
+  _checkSinglePage() {
+    if (!this.pageLeft) return;
+    const wasSingle = this.singlePage;
+    this.singlePage = getComputedStyle(this.pageLeft).display === 'none';
+
+    if (!wasSingle && this.singlePage) {
+      // 双页→单页：左页已有行合并到右页，防止内容丢失
+      if (this.leftLines.length > 0) {
+        this.rightLines = [...this.leftLines, ...this.rightLines];
+        this.leftLines = [];
+      }
+      // 确保 writingSide 指向可见的右页
+      if (this.writingSide === 'left') {
+        this.writingSide = 'right';
+      }
+      // 当前行 DOM 将被重绘清除
       if (this.currentLineEl) {
         this.currentLineEl.classList.remove('writing-current-line');
         this.currentLineEl = null;
@@ -224,6 +253,8 @@ class WritingAnim {
   // ========== 页面渲染 ==========
 
   getActiveArea() {
+    // 单页模式下始终返回右页（左页被 CSS 隐藏）
+    if (this.singlePage) return this.areaRight;
     return this.writingSide === 'left' ? this.areaLeft : this.areaRight;
   }
 
@@ -318,7 +349,7 @@ class WritingAnim {
       if (this.areaLeft) this.areaLeft.innerHTML = '';
       if (this.areaRight) this.areaRight.innerHTML = '';
 
-      this.writingSide = 'left';
+      this.writingSide = this.singlePage ? 'right' : 'left';
       this.currentLineEl = null;
       this.pageNumber++;
       this.updateStatus(`🖋️ 缮写中… 第${this.pageNumber}页`);

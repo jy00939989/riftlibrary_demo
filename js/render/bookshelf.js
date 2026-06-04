@@ -46,15 +46,28 @@ export function renderBookshelfPage() {
     state.books[b.id]?.status === 'completed' && !(state.manuscriptBox || []).includes(b.id)
   );
 
+  // 架上书籍：书架上的所有 bookId 对应的 BOOKS 条目（含未完成但已上架的书）
+  const allShelfBookIds = new Set();
+  (state.library.shelves || []).forEach(s => {
+    if (Array.isArray(s)) s.forEach(id => { if (id) allShelfBookIds.add(id); });
+  });
+  const allShelfBooks = [...allShelfBookIds].map(id => BOOKS[id]).filter(Boolean);
+
+  // 合并两套书籍用于筛选（架上书籍始终可见）
+  const allDisplayBooks = [...allCompletedBooks];
+  allShelfBooks.forEach(b => {
+    if (!allDisplayBooks.find(x => x.id === b.id)) allDisplayBooks.push(b);
+  });
+
   // 筛选栏
   card.appendChild(renderFilterBar());
 
   // 应用筛选（只影响可见性，不影响位置）
-  const visibleBookIds = new Set(applyFilters(allCompletedBooks).map(b => b.id));
+  const visibleBookIds = new Set(applyFilters(allDisplayBooks).map(b => b.id));
 
   // 标题栏
   const header = el('div', 'flex items-center justify-between mb-6');
-  header.innerHTML = `<h2 class="font-display text-xl font-bold">我的书架 <span class="text-sm font-normal text-ink-light">(${allCompletedBooks.length}本)</span></h2>`;
+  header.innerHTML = `<h2 class="font-display text-xl font-bold">我的书架 <span class="text-sm font-normal text-ink-light">(${allShelfBookIds.size}本)</span></h2>`;
   const n = state.library.shelves.length;
   const price = Math.min(4800, 300 * Math.pow(2, n - 1));
   const buyBtn = el('button', 'px-4 py-2 bg-magic-gold text-white rounded-lg text-sm font-bold shadow hover:shadow-lg transition-all');

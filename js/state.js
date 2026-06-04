@@ -187,7 +187,13 @@ export const state = {
   },
 
   // 馆长目标阶梯 — 已弹出过的阶段完成弹窗
-  tierPopupsShown: []
+  tierPopupsShown: [],
+
+  // 墨墨成就点评今日已用
+  momoCommentUsedToday: { date: '', comments: [] },
+
+  // 日志装帧升级奖励是否已领取
+  diaryLevelRewardsClaimed: []
 };
 
 // 默认书籍状态（新增/变更书籍时同步更新此处）
@@ -459,6 +465,12 @@ export function initState() {
       if (!state.guideQuests) {
         state.guideQuests = { completed: [], allCompleted: false };
       }
+      if (!state.momoCommentUsedToday) {
+        state.momoCommentUsedToday = { date: '', comments: [] };
+      }
+      if (!state.diaryLevelRewardsClaimed) {
+        state.diaryLevelRewardsClaimed = [];
+      }
       // 旧存档迁移：手稿箱
       if (!state.manuscriptBox) {
         state.manuscriptBox = [];
@@ -490,6 +502,21 @@ export function initState() {
     }
   }
   return false;
+}
+
+// 手稿箱自动补齐（新旧存档通用）：所有已解锁但未上架+未入箱的书应入箱
+export function ensureAllBooksInManuscriptBox() {
+  const allShelfIds = new Set();
+  (state.library.shelves || []).forEach(shelf => {
+    if (Array.isArray(shelf)) shelf.forEach(id => { if (id) allShelfIds.add(id); });
+  });
+  if (!state.manuscriptBox) state.manuscriptBox = [];
+  Object.entries(state.books || {}).forEach(([id, b]) => {
+    if (!b || b.status === 'locked') return;
+    if (allShelfIds.has(id)) return;
+    if (state.manuscriptBox.includes(id)) return;
+    state.manuscriptBox.push(id);
+  });
 }
 
 export function saveState() {

@@ -370,7 +370,7 @@ function renderDailyTasks() {
 // ========== 控制按钮 ==========
 
 function renderControls(sess) {
-  const div = el('div', 'flex justify-center gap-4');
+  const div = el('div', 'flex flex-wrap justify-center gap-2 sm:gap-4');
 
   if (!sess.active) {
     const startBtn = el('button',

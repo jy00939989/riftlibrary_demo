@@ -3,6 +3,7 @@ import { state, saveState } from '../state.js';
 import { BOOKS } from '../../data/books.js';
 import { SHARED_POOL } from '../../data/book_pool.js';
 import { el, h, actions, updateStatusBar } from './common.js';
+import { playSfx } from '../audio.js';
 import { ensureShopState, getShopState, purchaseBook, getBorrowLevelPrice, upgradeBorrowLevel, getFocusLevelPrice, upgradeFocusLevel, purchaseSignboard, purchasePlanePortal, getPlanePortalPrice } from '../shop.js';
 import { getBookCapacity, getOwnedBookCount, getManuscriptSlots, getManuscriptBoxCount, getManuscriptSlotPrice, expandManuscriptSlots } from '../capacity.js';
 import { PLANES, canUnlockPlane } from '../../data/planes.js';
@@ -29,47 +30,6 @@ export function renderShopPage() {
 
   // ========== 图书馆升级区 ==========
   wrapper.appendChild(renderLibraryUpgrades());
-
-  // ========== 书架容量提示 ==========
-  const cap = getBookCapacity();
-  const owned = getOwnedBookCount();
-  const capacityNote = el('div', 'flex items-center justify-between bg-white/60 rounded-xl p-3 border border-wood/10 text-sm');
-  capacityNote.innerHTML = `
-    <span>📚 书架容量</span>
-    <span class="font-bold ${owned >= cap ? 'text-red-500' : 'text-ink'}">${owned} / ${cap} 本</span>
-  `;
-  if (owned >= cap) {
-    capacityNote.classList.add('border-red-300', 'bg-red-50');
-    capacityNote.querySelector('span:first-child').textContent = '📚 书架已满！';
-  }
-  wrapper.appendChild(capacityNote);
-
-  // ========== 手稿箱容量 ==========
-  const mSlots = getManuscriptSlots();
-  const mCount = getManuscriptBoxCount();
-  const mPrice = getManuscriptSlotPrice();
-  const mFull = mCount >= mSlots;
-  const mBoxRow = el('div', 'flex items-center justify-between bg-white/60 rounded-xl p-3 border border-wood/10 text-sm');
-  mBoxRow.innerHTML = `
-    <span>📦 手稿箱</span>
-    <span class="font-bold ${mFull ? 'text-red-500' : 'text-ink'}">${mCount} / ${mSlots} 格</span>
-  `;
-  if (mFull) {
-    mBoxRow.classList.add('border-red-300', 'bg-red-50');
-    mBoxRow.querySelector('span:first-child').textContent = '📦 手稿箱已满！';
-  }
-  const mExpandBtn = el('button', 'ml-3 px-3 py-1 bg-amber-100 text-amber-800 rounded-lg text-xs font-bold hover:bg-amber-200 transition-all');
-  mExpandBtn.textContent = `+ 扩容 💰${mPrice}`;
-  mExpandBtn.addEventListener('click', () => {
-    if (expandManuscriptSlots()) {
-      updateStatusBar();
-      renderShopPage();
-    } else {
-      alert('智慧之光不足！');
-    }
-  });
-  mBoxRow.appendChild(mExpandBtn);
-  wrapper.appendChild(mBoxRow);
 
   // ========== 新书区 ==========
   wrapper.appendChild(renderBookSection('📚 新书上架', shopState.fixed, false));
@@ -137,6 +97,7 @@ function renderLibraryUpgrades() {
     upgradeBtn.addEventListener('click', () => {
       if (upgradeBorrowLevel()) {
         updateStatusBar();
+        playSfx('buy_success');
         renderShopPage();
       } else {
         alert('智慧之光不足 💰');
@@ -193,6 +154,7 @@ function renderLibraryUpgrades() {
     fUpgradeBtn.addEventListener('click', () => {
       if (upgradeFocusLevel()) {
         updateStatusBar();
+        playSfx('buy_success');
         renderShopPage();
         showFocusRoomUpgrade(state.library.focusLevel);
       } else {
@@ -244,6 +206,7 @@ function renderLibraryUpgrades() {
       if (purchaseBtn) {
         purchaseBtn.addEventListener('click', () => {
           if (purchasePlanePortal('pastoral')) {
+            playSfx('buy_success');
             updateStatusBar();
             renderShopPage();
           } else {
@@ -273,6 +236,48 @@ function renderLibraryUpgrades() {
     plaqueCard.addEventListener('click', showNamingModal);
     grid.appendChild(plaqueCard);
   }
+
+  // === 书架容量 ===
+  const cap = getBookCapacity();
+  const owned = getOwnedBookCount();
+  const shelfCard = el('div', `bg-white rounded-xl p-4 border-2 flex items-center gap-3 ${owned >= cap ? 'border-red-300 bg-red-50' : 'border-wood/20'}`);
+  shelfCard.innerHTML = `
+    <span class="text-2xl">📚</span>
+    <div class="flex-1">
+      <span class="font-bold text-sm">书架容量</span>
+      <span class="text-xs text-ink-light ml-2">${owned >= cap ? '已满' : '存放已完成的书籍'}</span>
+    </div>
+    <span class="font-bold text-sm ${owned >= cap ? 'text-red-500' : 'text-ink'}">${owned}/${cap}</span>
+  `;
+  grid.appendChild(shelfCard);
+
+  // === 手稿箱 ===
+  const mSlots = getManuscriptSlots();
+  const mCount = getManuscriptBoxCount();
+  const mPrice = getManuscriptSlotPrice();
+  const mFull = mCount >= mSlots;
+  const mCard = el('div', `bg-white rounded-xl p-4 border-2 flex items-center gap-3 ${mFull ? 'border-red-300 bg-red-50' : 'border-wood/20'}`);
+  mCard.innerHTML = `
+    <span class="text-2xl">📦</span>
+    <div class="flex-1">
+      <span class="font-bold text-sm">手稿箱</span>
+      <span class="text-xs text-ink-light ml-2">${mFull ? '已满' : '存放待誊抄的稿子'}</span>
+    </div>
+    <span class="font-bold text-sm ${mFull ? 'text-red-500' : 'text-ink'} mr-2">${mCount}/${mSlots}</span>
+    <button class="m-expand-btn px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs font-bold hover:bg-amber-200 transition-all">+💰${mPrice}</button>
+  `;
+  const mExpandBtn = mCard.querySelector('.m-expand-btn');
+  mExpandBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (expandManuscriptSlots()) {
+      playSfx('buy_success');
+      updateStatusBar();
+      renderShopPage();
+    } else if (mPrice > 0) {
+      alert('智慧之光不足！');
+    }
+  });
+  grid.appendChild(mCard);
 
   // === 三个占位项 ===
   const placeholders = [
@@ -436,6 +441,7 @@ function showPurchaseModal(poolEntry, price, originalPrice, discount) {
     const result = purchaseBook(poolEntry.bookId, price);
     if (result.ok) {
       updateStatusBar();
+      playSfx('buy_success');
       overlay.remove();
       renderShopPage();
       const bookAch = checkAchievements('purchase_book');
@@ -587,6 +593,7 @@ function renderDecorationShop() {
         card.querySelector('.plant-buy-btn').addEventListener('click', (e) => {
           e.stopPropagation();
           if (plantSeed(pt.id)) {
+            playSfx('buy_success');
             updateStatusAndRefresh();
             if (typeof window.renderLibraryPage === 'function') window.renderLibraryPage();
           } else {
@@ -629,6 +636,7 @@ function renderDecorationShop() {
     if (!owned && state.coins >= sb.price) {
       card.querySelector('.signboard-buy-btn').addEventListener('click', () => {
         if (purchaseSignboard(sb.id)) {
+          playSfx('buy_success');
           updateStatusAndRefresh();
           if (typeof window.renderLibraryPage === 'function') window.renderLibraryPage();
         } else {

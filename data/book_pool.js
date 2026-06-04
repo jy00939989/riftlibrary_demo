@@ -203,7 +203,7 @@ export const SHARED_POOL = [
     category: '诗歌',
     totalWords: 18000,
     chapterCount: 6,
-    description: '印度诗人泰戈尔的短诗集，326首无题短诗如飞鸟掠过天空。',
+    description: '印度诗人泰戈尔的短诗集，326首无题短诗如飞鸟掠过天空，关于爱、自然与生命的沉思。',
     emoji: '🐦',
     starter: true,
     starterPrice: 200
@@ -215,8 +215,8 @@ export const SHARED_POOL = [
     author: '伊索',
     category: '寓言',
     totalWords: 20000,
-    chapterCount: 6,
-    description: '古希腊寓言家伊索的经典寓言选集，以动物故事喻人世智慧。',
+    chapterCount: 5,
+    description: '古希腊寓言家伊索的经典寓言选集，动物故事喻人世，短小精悍藏智慧。',
     emoji: '🦊',
     starter: true,
     starterPrice: 200
@@ -229,7 +229,7 @@ export const SHARED_POOL = [
     category: '哲学',
     totalWords: 18000,
     chapterCount: 6,
-    description: '明代洪应明的处世箴言集，融合儒释道三家智慧。',
+    description: '明代洪应明的处世箴言集，咬得菜根则百事可做，儒释道三家智慧融于一炉。',
     emoji: '🥬',
     starter: true,
     starterPrice: 200
