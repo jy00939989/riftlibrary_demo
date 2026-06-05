@@ -261,7 +261,7 @@ function renderBookSelector(sess) {
     if (bs.masteryLevel >= 5 || bs.copyCount >= 5) return false;
     // 已完成的书需要先花费灵感解锁重抄
     if (bs.status === 'completed' && !bs.reCopyUnlocked) return false;
-    return (bs.status === 'unlocked' || bs.copiedWords > 0);
+    return (bs.status === 'unlocked' || bs.status === 'copying' || bs.copiedWords > 0);
   });
 
   if (eligibleBooks.length === 0) {

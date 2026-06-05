@@ -867,9 +867,9 @@ body {
     margin-left: 0;
   }
 
-  /* 移除 3D 透视，恢复平面 */
+  /* 移除 3D 透视，保持居中 */
   .writing-book {
-    transform: none;
+    transform: translate(-50%, -50%);
   }
 
   /* 文字区放宽内边距 */

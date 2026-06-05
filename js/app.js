@@ -1030,9 +1030,23 @@ function init() {
       }
       migratedBooks++;
     }
-    // 扩充字数迁移：旧存档标记为 completed 但字数不足新版总字数 → 回退为 copying
+    // 扩充字数迁移：旧存档标记为 completed 但字数不足新版总字数 → 回退
     if (bs.status === 'completed' && bs.copiedWords < book.totalWords) {
-      bs.status = 'copying';
+      bs.status = bs.copiedWords > 0 ? 'copying' : 'unlocked';
+      migratedBooks++;
+    }
+    // 修正：copying 但一字未抄 → unlocked
+    if (bs.status === 'copying' && bs.copiedWords <= 0) {
+      bs.status = 'unlocked';
+      migratedBooks++;
+    }
+    // 修正：copying 但字数已达总字数 → completed
+    if (bs.status === 'copying' && bs.copiedWords >= book.totalWords) {
+      bs.status = 'completed';
+      bs.copyCount = Math.max(bs.copyCount || 1, Math.floor(bs.copiedWords / book.totalWords));
+      if (!book.noMastery) {
+        bs.masteryLevel = Math.min(5, bs.copyCount + 1);
+      }
       migratedBooks++;
     }
     // 确保章节解锁与 copiedWords 同步
