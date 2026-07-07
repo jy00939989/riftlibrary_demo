@@ -111,6 +111,20 @@ export function ensureGuideQuests() {
   // 扫描并补全已满足条件的旧任务（老玩家登录）
   if (!state.guideQuests.allCompleted) {
     retroCheck();
+    // retroCheck 可能补全了 q09，但 q10 不走事件触发——直接内联补刀
+    // （不能用 tryCompleteAllDone，它会调 getCurrentQuest → ensureGuideQuests 死循环）
+    if (!state.guideQuests.allCompleted
+        && state.guideQuests.completed.length >= QUESTS.length - 1) {
+      const lastQuest = QUESTS[QUESTS.length - 1];
+      if (lastQuest && lastQuest.id === 'q10'
+          && !state.guideQuests.completed.includes('q10')) {
+        state.guideQuests.completed.push('q10');
+        if (lastQuest.rewardCoins > 0) addCoins(lastQuest.rewardCoins);
+        if (lastQuest.rewardAtmo > 0) addAtmosphere(lastQuest.rewardAtmo);
+        state.guideQuests.allCompleted = true;
+        saveState();
+      }
+    }
   }
 }
 
@@ -231,8 +245,9 @@ export function checkGuideQuest(event) {
 
 // 全部任务完成（用于 q10 的 all_done 触发）
 export function tryCompleteAllDone() {
-  ensureGuideQuests();
-  if (state.guideQuests.allCompleted) return null;
+  // 不调 ensureGuideQuests() —— 所有调用方已确保初始化
+  // （ensureGuideQuests 自身 / triggerQuestCheck → checkGuideQuest 内部已调）
+  if (!state.guideQuests || state.guideQuests.allCompleted) return null;
   const completed = state.guideQuests.completed.length;
   if (completed >= QUESTS.length - 1) {
     // q10 是最后一个，前面 9 个都完成了

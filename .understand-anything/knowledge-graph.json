@@ -1,0 +1,2623 @@
+{
+  "version": "1.0.0",
+  "project": {
+    "name": "归墟图书馆",
+    "languages": [
+      "javascript",
+      "html",
+      "css",
+      "markdown",
+      "json"
+    ],
+    "frameworks": [
+      "tailwindcss"
+    ],
+    "description": "纯前端Web游戏 — 番茄钟专注计时 + 经典书籍收集 + NPC访客模拟 + 位面探索系统",
+    "analyzedAt": "2026-06-09T03:22:14.275Z",
+    "gitCommitHash": "ec085caadbf2767601f1f028904f2f3716bc234a"
+  },
+  "nodes": [
+    {
+      "id": "document:.claude/skills/grill-me/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": ".claude/skills/grill-me/SKILL.md",
+      "summary": "项目文档",
+      "tags": [
+        "markdown",
+        "docs"
+      ],
+      "complexity": "trivial"
+    },
+    {
+      "id": "config:.netlify/netlify.toml",
+      "type": "config",
+      "name": "netlify.toml",
+      "filePath": ".netlify/netlify.toml",
+      "summary": "项目文件",
+      "tags": [
+        "toml",
+        "config"
+      ],
+      "complexity": "trivial"
+    },
+    {
+      "id": "config:.netlify/state.json",
+      "type": "config",
+      "name": "state.json",
+      "filePath": ".netlify/state.json",
+      "summary": "项目文件",
+      "tags": [
+        "json",
+        "config"
+      ],
+      "complexity": "trivial"
+    },
+    {
+      "id": "file:audio/effect/achievement_unlock.wav",
+      "type": "file",
+      "name": "achievement_unlock.wav",
+      "filePath": "audio/effect/achievement_unlock.wav",
+      "summary": "项目文件",
+      "tags": [
+        "wav",
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:audio/effect/book_return.wav",
+      "type": "file",
+      "name": "book_return.wav",
+      "filePath": "audio/effect/book_return.wav",
+      "summary": "项目文件",
+      "tags": [
+        "wav",
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:audio/effect/button_click.wav",
+      "type": "file",
+      "name": "button_click.wav",
+      "filePath": "audio/effect/button_click.wav",
+      "summary": "项目文件",
+      "tags": [
+        "wav",
+        "code"
+      ],
+      "complexity": "trivial"
+    },
+    {
+      "id": "file:audio/effect/buy_success.wav",
+      "type": "file",
+      "name": "buy_success.wav",
+      "filePath": "audio/effect/buy_success.wav",
+      "summary": "项目文件",
+      "tags": [
+        "wav",
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:audio/effect/focus_complete.wav",
+      "type": "file",
+      "name": "focus_complete.wav",
+      "filePath": "audio/effect/focus_complete.wav",
+      "summary": "项目文件",
+      "tags": [
+        "wav",
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:audio/effect/visitor_arrive.wav",
+      "type": "file",
+      "name": "visitor_arrive.wav",
+      "filePath": "audio/effect/visitor_arrive.wav",
+      "summary": "项目文件",
+      "tags": [
+        "wav",
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:css/style.css",
+      "type": "file",
+      "name": "style.css",
+      "filePath": "css/style.css",
+      "summary": "项目文件",
+      "tags": [
+        "css",
+        "markup"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:data/atmosphere.js",
+      "type": "file",
+      "name": "atmosphere.js",
+      "filePath": "data/atmosphere.js",
+      "summary": "项目文件",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "trivial"
+    },
+    {
+      "id": "file:data/book_pool.js",
+      "type": "file",
+      "name": "book_pool.js",
+      "filePath": "data/book_pool.js",
+      "summary": "项目文件",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:data/books.js",
+      "type": "file",
+      "name": "books.js",
+      "filePath": "data/books.js",
+      "summary": "项目文件",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "trivial"
+    },
+    {
+      "id": "file:data/books/book_001.js",
+      "type": "file",
+      "name": "book_001.js",
+      "filePath": "data/books/book_001.js",
+      "summary": "书籍数据：book_001",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "trivial"
+    },
+    {
+      "id": "file:data/books/book_002.js",
+      "type": "file",
+      "name": "book_002.js",
+      "filePath": "data/books/book_002.js",
+      "summary": "书籍数据：book_002",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "trivial"
+    },
+    {
+      "id": "file:data/books/book_003.js",
+      "type": "file",
+      "name": "book_003.js",
+      "filePath": "data/books/book_003.js",
+      "summary": "书籍数据：book_003",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:data/books/book_004.js",
+      "type": "file",
+      "name": "book_004.js",
+      "filePath": "data/books/book_004.js",
+      "summary": "书籍数据：book_004",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "trivial"
+    },
+    {
+      "id": "file:data/books/book_005.js",
+      "type": "file",
+      "name": "book_005.js",
+      "filePath": "data/books/book_005.js",
+      "summary": "书籍数据：book_005",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:data/books/book_006.js",
+      "type": "file",
+      "name": "book_006.js",
+      "filePath": "data/books/book_006.js",
+      "summary": "书籍数据：book_006",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "trivial"
+    },
+    {
+      "id": "file:data/books/book_007.js",
+      "type": "file",
+      "name": "book_007.js",
+      "filePath": "data/books/book_007.js",
+      "summary": "书籍数据：book_007",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:data/books/book_008.js",
+      "type": "file",
+      "name": "book_008.js",
+      "filePath": "data/books/book_008.js",
+      "summary": "书籍数据：book_008",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:data/books/book_009.js",
+      "type": "file",
+      "name": "book_009.js",
+      "filePath": "data/books/book_009.js",
+      "summary": "书籍数据：book_009",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:data/books/book_010.js",
+      "type": "file",
+      "name": "book_010.js",
+      "filePath": "data/books/book_010.js",
+      "summary": "书籍数据：book_010",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "trivial"
+    },
+    {
+      "id": "file:data/books/book_011_道德经.js",
+      "type": "file",
+      "name": "book_011_道德经.js",
+      "filePath": "data/books/book_011_道德经.js",
+      "summary": "书籍数据：道德经",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "trivial"
+    },
+    {
+      "id": "file:data/books/book_012_沉思录.js",
+      "type": "file",
+      "name": "book_012_沉思录.js",
+      "filePath": "data/books/book_012_沉思录.js",
+      "summary": "书籍数据：沉思录",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "trivial"
+    },
+    {
+      "id": "file:data/books/book_013_理想国.js",
+      "type": "file",
+      "name": "book_013_理想国.js",
+      "filePath": "data/books/book_013_理想国.js",
+      "summary": "书籍数据：理想国",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:data/books/book_014_史记.js",
+      "type": "file",
+      "name": "book_014_史记.js",
+      "filePath": "data/books/book_014_史记.js",
+      "summary": "书籍数据：史记",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:data/books/book_015_诗经.js",
+      "type": "file",
+      "name": "book_015_诗经.js",
+      "filePath": "data/books/book_015_诗经.js",
+      "summary": "书籍数据：诗经",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:data/books/book_016_西游记.js",
+      "type": "file",
+      "name": "book_016_西游记.js",
+      "filePath": "data/books/book_016_西游记.js",
+      "summary": "书籍数据：西游记",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:data/books/book_017_鲁滨逊漂流记.js",
+      "type": "file",
+      "name": "book_017_鲁滨逊漂流记.js",
+      "filePath": "data/books/book_017_鲁滨逊漂流记.js",
+      "summary": "书籍数据：鲁滨逊漂流记",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:data/books/book_018_几何原本.js",
+      "type": "file",
+      "name": "book_018_几何原本.js",
+      "filePath": "data/books/book_018_几何原本.js",
+      "summary": "书籍数据：几何原本",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:data/books/book_019_卡拉马佐夫兄弟.js",
+      "type": "file",
+      "name": "book_019_卡拉马佐夫兄弟.js",
+      "filePath": "data/books/book_019_卡拉马佐夫兄弟.js",
+      "summary": "书籍数据：卡拉马佐夫兄弟",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:data/books/book_020_社会契约论.js",
+      "type": "file",
+      "name": "book_020_社会契约论.js",
+      "filePath": "data/books/book_020_社会契约论.js",
+      "summary": "书籍数据：社会契约论",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:data/books/book_021_第一哲学沉思集.js",
+      "type": "file",
+      "name": "book_021_第一哲学沉思集.js",
+      "filePath": "data/books/book_021_第一哲学沉思集.js",
+      "summary": "书籍数据：第一哲学沉思集",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:data/books/book_022_传习录.js",
+      "type": "file",
+      "name": "book_022_传习录.js",
+      "filePath": "data/books/book_022_传习录.js",
+      "summary": "书籍数据：传习录",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:data/books/book_023_绿野仙踪.js",
+      "type": "file",
+      "name": "book_023_绿野仙踪.js",
+      "filePath": "data/books/book_023_绿野仙踪.js",
+      "summary": "书籍数据：绿野仙踪",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "trivial"
+    },
+    {
+      "id": "file:data/books/book_024_爱丽丝梦游奇境.js",
+      "type": "file",
+      "name": "book_024_爱丽丝梦游奇境.js",
+      "filePath": "data/books/book_024_爱丽丝梦游奇境.js",
+      "summary": "书籍数据：爱丽丝梦游奇境",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "trivial"
+    },
+    {
+      "id": "file:data/books/book_026_图书馆指南.js",
+      "type": "file",
+      "name": "book_026_图书馆指南.js",
+      "filePath": "data/books/book_026_图书馆指南.js",
+      "summary": "书籍数据：图书馆指南",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "trivial"
+    },
+    {
+      "id": "file:data/books/book_027_飞鸟集.js",
+      "type": "file",
+      "name": "book_027_飞鸟集.js",
+      "filePath": "data/books/book_027_飞鸟集.js",
+      "summary": "书籍数据：飞鸟集",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:data/books/book_028_伊索寓言.js",
+      "type": "file",
+      "name": "book_028_伊索寓言.js",
+      "filePath": "data/books/book_028_伊索寓言.js",
+      "summary": "书籍数据：伊索寓言",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:data/books/book_029_菜根谭.js",
+      "type": "file",
+      "name": "book_029_菜根谭.js",
+      "filePath": "data/books/book_029_菜根谭.js",
+      "summary": "书籍数据：菜根谭",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:data/curation_pairs.js",
+      "type": "file",
+      "name": "curation_pairs.js",
+      "filePath": "data/curation_pairs.js",
+      "summary": "项目文件",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "trivial"
+    },
+    {
+      "id": "file:data/planes.js",
+      "type": "file",
+      "name": "planes.js",
+      "filePath": "data/planes.js",
+      "summary": "项目文件",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "trivial"
+    },
+    {
+      "id": "file:data/plants.js",
+      "type": "file",
+      "name": "plants.js",
+      "filePath": "data/plants.js",
+      "summary": "项目文件",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "trivial"
+    },
+    {
+      "id": "file:data/quests/pastoral_tasks.js",
+      "type": "file",
+      "name": "pastoral_tasks.js",
+      "filePath": "data/quests/pastoral_tasks.js",
+      "summary": "项目文件",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:data/signboards.js",
+      "type": "file",
+      "name": "signboards.js",
+      "filePath": "data/signboards.js",
+      "summary": "项目文件",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "trivial"
+    },
+    {
+      "id": "file:data/tiergoals.js",
+      "type": "file",
+      "name": "tiergoals.js",
+      "filePath": "data/tiergoals.js",
+      "summary": "项目文件",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "trivial"
+    },
+    {
+      "id": "file:data/visitor-events.js",
+      "type": "file",
+      "name": "visitor-events.js",
+      "filePath": "data/visitor-events.js",
+      "summary": "项目文件",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/2026-06-03-changelog.md",
+      "type": "document",
+      "name": "2026-06-03-changelog.md",
+      "filePath": "docs/2026-06-03-changelog.md",
+      "summary": "项目文档",
+      "tags": [
+        "markdown",
+        "docs"
+      ],
+      "complexity": "trivial"
+    },
+    {
+      "id": "document:docs/bugs/2026-06-04-smart-quote-syntax-error.md",
+      "type": "document",
+      "name": "2026-06-04-smart-quote-syntax-error.md",
+      "filePath": "docs/bugs/2026-06-04-smart-quote-syntax-error.md",
+      "summary": "项目文档",
+      "tags": [
+        "markdown",
+        "docs"
+      ],
+      "complexity": "trivial"
+    },
+    {
+      "id": "document:docs/diary/CLAUDE_DIARY.md",
+      "type": "document",
+      "name": "CLAUDE_DIARY.md",
+      "filePath": "docs/diary/CLAUDE_DIARY.md",
+      "summary": "项目文档",
+      "tags": [
+        "markdown",
+        "docs"
+      ],
+      "complexity": "trivial"
+    },
+    {
+      "id": "document:docs/glossary.md",
+      "type": "document",
+      "name": "glossary.md",
+      "filePath": "docs/glossary.md",
+      "summary": "项目文档",
+      "tags": [
+        "markdown",
+        "docs"
+      ],
+      "complexity": "trivial"
+    },
+    {
+      "id": "document:docs/plans/focus-room-scene-2026-06-05.md",
+      "type": "document",
+      "name": "focus-room-scene-2026-06-05.md",
+      "filePath": "docs/plans/focus-room-scene-2026-06-05.md",
+      "summary": "项目文档",
+      "tags": [
+        "markdown",
+        "docs"
+      ],
+      "complexity": "trivial"
+    },
+    {
+      "id": "document:docs/visitor-voice-guide.md",
+      "type": "document",
+      "name": "visitor-voice-guide.md",
+      "filePath": "docs/visitor-voice-guide.md",
+      "summary": "项目文档",
+      "tags": [
+        "markdown",
+        "docs"
+      ],
+      "complexity": "trivial"
+    },
+    {
+      "id": "file:index.html",
+      "type": "file",
+      "name": "index.html",
+      "filePath": "index.html",
+      "summary": "应用主入口 HTML，定义导航栏、标签切换结构、所有页面容器",
+      "tags": [
+        "html",
+        "markup"
+      ],
+      "complexity": "trivial"
+    },
+    {
+      "id": "file:js/achievements.js",
+      "type": "file",
+      "name": "achievements.js",
+      "filePath": "js/achievements.js",
+      "summary": "项目文件",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:js/actioncards.js",
+      "type": "file",
+      "name": "actioncards.js",
+      "filePath": "js/actioncards.js",
+      "summary": "项目文件",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "trivial"
+    },
+    {
+      "id": "file:js/app.js",
+      "type": "file",
+      "name": "app.js",
+      "filePath": "js/app.js",
+      "summary": "项目文件",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:js/atmosphere.js",
+      "type": "file",
+      "name": "atmosphere.js",
+      "filePath": "js/atmosphere.js",
+      "summary": "项目文件",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "trivial"
+    },
+    {
+      "id": "file:js/audio.js",
+      "type": "file",
+      "name": "audio.js",
+      "filePath": "js/audio.js",
+      "summary": "项目文件",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "trivial"
+    },
+    {
+      "id": "file:js/books.js",
+      "type": "file",
+      "name": "books.js",
+      "filePath": "js/books.js",
+      "summary": "项目文件",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "trivial"
+    },
+    {
+      "id": "file:js/capacity.js",
+      "type": "file",
+      "name": "capacity.js",
+      "filePath": "js/capacity.js",
+      "summary": "项目文件",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "trivial"
+    },
+    {
+      "id": "file:js/collection.js",
+      "type": "file",
+      "name": "collection.js",
+      "filePath": "js/collection.js",
+      "summary": "项目文件",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "trivial"
+    },
+    {
+      "id": "file:js/curation.js",
+      "type": "file",
+      "name": "curation.js",
+      "filePath": "js/curation.js",
+      "summary": "项目文件",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "trivial"
+    },
+    {
+      "id": "file:js/dailytasks.js",
+      "type": "file",
+      "name": "dailytasks.js",
+      "filePath": "js/dailytasks.js",
+      "summary": "项目文件",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "trivial"
+    },
+    {
+      "id": "file:js/diary.js",
+      "type": "file",
+      "name": "diary.js",
+      "filePath": "js/diary.js",
+      "summary": "项目文件",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:js/guidequests.js",
+      "type": "file",
+      "name": "guidequests.js",
+      "filePath": "js/guidequests.js",
+      "summary": "项目文件",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:js/i18n/terms.js",
+      "type": "file",
+      "name": "terms.js",
+      "filePath": "js/i18n/terms.js",
+      "summary": "项目文件",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "trivial"
+    },
+    {
+      "id": "file:js/intro.js",
+      "type": "file",
+      "name": "intro.js",
+      "filePath": "js/intro.js",
+      "summary": "项目文件",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:js/plants.js",
+      "type": "file",
+      "name": "plants.js",
+      "filePath": "js/plants.js",
+      "summary": "项目文件",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:js/quests.js",
+      "type": "file",
+      "name": "quests.js",
+      "filePath": "js/quests.js",
+      "summary": "项目文件",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:js/render/achievements.js",
+      "type": "file",
+      "name": "achievements.js",
+      "filePath": "js/render/achievements.js",
+      "summary": "achievements 页面渲染模块",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:js/render/animations.js",
+      "type": "file",
+      "name": "animations.js",
+      "filePath": "js/render/animations.js",
+      "summary": "animations 页面渲染模块",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:js/render/archive.js",
+      "type": "file",
+      "name": "archive.js",
+      "filePath": "js/render/archive.js",
+      "summary": "archive 页面渲染模块",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:js/render/bookshelf.js",
+      "type": "file",
+      "name": "bookshelf.js",
+      "filePath": "js/render/bookshelf.js",
+      "summary": "bookshelf 页面渲染模块",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:js/render/certificate.js",
+      "type": "file",
+      "name": "certificate.js",
+      "filePath": "js/render/certificate.js",
+      "summary": "certificate 页面渲染模块",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "trivial"
+    },
+    {
+      "id": "file:js/render/collection.js",
+      "type": "file",
+      "name": "collection.js",
+      "filePath": "js/render/collection.js",
+      "summary": "collection 页面渲染模块",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "trivial"
+    },
+    {
+      "id": "file:js/render/common.js",
+      "type": "file",
+      "name": "common.js",
+      "filePath": "js/render/common.js",
+      "summary": "common 页面渲染模块",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "trivial"
+    },
+    {
+      "id": "file:js/render/focus.js",
+      "type": "file",
+      "name": "focus.js",
+      "filePath": "js/render/focus.js",
+      "summary": "focus 页面渲染模块",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:js/render/guidequests.js",
+      "type": "file",
+      "name": "guidequests.js",
+      "filePath": "js/render/guidequests.js",
+      "summary": "guidequests 页面渲染模块",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "trivial"
+    },
+    {
+      "id": "file:js/render/index.js",
+      "type": "file",
+      "name": "index.js",
+      "filePath": "js/render/index.js",
+      "summary": "index 页面渲染模块",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "trivial"
+    },
+    {
+      "id": "file:js/render/library.js",
+      "type": "file",
+      "name": "library.js",
+      "filePath": "js/render/library.js",
+      "summary": "library 页面渲染模块",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:js/render/momo-suggestion.js",
+      "type": "file",
+      "name": "momo-suggestion.js",
+      "filePath": "js/render/momo-suggestion.js",
+      "summary": "momo-suggestion 页面渲染模块",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "trivial"
+    },
+    {
+      "id": "file:js/render/plane.js",
+      "type": "file",
+      "name": "plane.js",
+      "filePath": "js/render/plane.js",
+      "summary": "plane 页面渲染模块",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:js/render/plants.js",
+      "type": "file",
+      "name": "plants.js",
+      "filePath": "js/render/plants.js",
+      "summary": "plants 页面渲染模块",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:js/render/quests.js",
+      "type": "file",
+      "name": "quests.js",
+      "filePath": "js/render/quests.js",
+      "summary": "quests 页面渲染模块",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:js/render/shop.js",
+      "type": "file",
+      "name": "shop.js",
+      "filePath": "js/render/shop.js",
+      "summary": "shop 页面渲染模块",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:js/render/tutorial-ui.js",
+      "type": "file",
+      "name": "tutorial-ui.js",
+      "filePath": "js/render/tutorial-ui.js",
+      "summary": "tutorial-ui 页面渲染模块",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:js/render/visitors.js",
+      "type": "file",
+      "name": "visitors.js",
+      "filePath": "js/render/visitors.js",
+      "summary": "visitors 页面渲染模块",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:js/render/writing.js",
+      "type": "file",
+      "name": "writing.js",
+      "filePath": "js/render/writing.js",
+      "summary": "writing 页面渲染模块",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:js/shop.js",
+      "type": "file",
+      "name": "shop.js",
+      "filePath": "js/shop.js",
+      "summary": "项目文件",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:js/state.js",
+      "type": "file",
+      "name": "state.js",
+      "filePath": "js/state.js",
+      "summary": "项目文件",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:js/storage.js",
+      "type": "file",
+      "name": "storage.js",
+      "filePath": "js/storage.js",
+      "summary": "项目文件",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "trivial"
+    },
+    {
+      "id": "file:js/timer.js",
+      "type": "file",
+      "name": "timer.js",
+      "filePath": "js/timer.js",
+      "summary": "项目文件",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "trivial"
+    },
+    {
+      "id": "file:js/tutorial.js",
+      "type": "file",
+      "name": "tutorial.js",
+      "filePath": "js/tutorial.js",
+      "summary": "项目文件",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "trivial"
+    },
+    {
+      "id": "file:js/visitors.js",
+      "type": "file",
+      "name": "visitors.js",
+      "filePath": "js/visitors.js",
+      "summary": "项目文件",
+      "tags": [
+        "javascript",
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "config:package.json",
+      "type": "config",
+      "name": "package.json",
+      "filePath": "package.json",
+      "summary": "项目配置，包含依赖和 dev 脚本",
+      "tags": [
+        "json",
+        "config"
+      ],
+      "complexity": "trivial"
+    },
+    {
+      "id": "file:visual/visitors/.gitkeep",
+      "type": "file",
+      "name": ".gitkeep",
+      "filePath": "visual/visitors/.gitkeep",
+      "summary": "项目文件",
+      "tags": [
+        "unknown",
+        "code"
+      ],
+      "complexity": "trivial"
+    },
+    {
+      "id": "document:visual/visitors/README.md",
+      "type": "document",
+      "name": "README.md",
+      "filePath": "visual/visitors/README.md",
+      "summary": "项目文档",
+      "tags": [
+        "markdown",
+        "docs"
+      ],
+      "complexity": "trivial"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:js/app.js",
+      "target": "file:js/state.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/app.js",
+      "target": "file:js/storage.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/app.js",
+      "target": "file:js/actioncards.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/app.js",
+      "target": "file:js/timer.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/app.js",
+      "target": "file:js/visitors.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/app.js",
+      "target": "file:js/capacity.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/app.js",
+      "target": "file:js/shop.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/app.js",
+      "target": "file:js/curation.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/app.js",
+      "target": "file:js/achievements.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/app.js",
+      "target": "file:js/plants.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/app.js",
+      "target": "file:js/diary.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/app.js",
+      "target": "file:js/quests.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/app.js",
+      "target": "file:js/audio.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/app.js",
+      "target": "file:js/intro.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/app.js",
+      "target": "file:js/tutorial.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/app.js",
+      "target": "file:js/dailytasks.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/app.js",
+      "target": "file:js/guidequests.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/app.js",
+      "target": "file:js/render/achievements.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/app.js",
+      "target": "file:js/render/animations.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/app.js",
+      "target": "file:js/render/tutorial-ui.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/app.js",
+      "target": "file:js/render/certificate.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/app.js",
+      "target": "file:js/render/index.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/app.js",
+      "target": "file:js/render/momo-suggestion.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/app.js",
+      "target": "file:data/books.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/app.js",
+      "target": "file:data/tiergoals.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/storage.js",
+      "target": "file:js/state.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/timer.js",
+      "target": "file:js/state.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/audio.js",
+      "target": "file:js/state.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/curation.js",
+      "target": "file:js/state.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/curation.js",
+      "target": "file:data/books.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/curation.js",
+      "target": "file:data/curation_pairs.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/capacity.js",
+      "target": "file:js/state.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/capacity.js",
+      "target": "file:js/storage.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/shop.js",
+      "target": "file:js/state.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/shop.js",
+      "target": "file:js/storage.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/shop.js",
+      "target": "file:js/capacity.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/shop.js",
+      "target": "file:data/books.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/shop.js",
+      "target": "file:data/signboards.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/shop.js",
+      "target": "file:data/planes.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/books.js",
+      "target": "file:js/state.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/books.js",
+      "target": "file:js/storage.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/books.js",
+      "target": "file:js/capacity.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/books.js",
+      "target": "file:data/books.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/books.js",
+      "target": "file:js/render/index.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/visitors.js",
+      "target": "file:js/state.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/visitors.js",
+      "target": "file:js/storage.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/visitors.js",
+      "target": "file:js/capacity.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/visitors.js",
+      "target": "file:js/shop.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/visitors.js",
+      "target": "file:js/curation.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/visitors.js",
+      "target": "file:js/diary.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/visitors.js",
+      "target": "file:js/plants.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/visitors.js",
+      "target": "file:js/quests.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/visitors.js",
+      "target": "file:data/visitor-events.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/visitors.js",
+      "target": "file:data/curation_pairs.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/visitors.js",
+      "target": "file:js/i18n/terms.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/achievements.js",
+      "target": "file:js/state.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/achievements.js",
+      "target": "file:data/books.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/actioncards.js",
+      "target": "file:js/state.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/actioncards.js",
+      "target": "file:js/storage.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/actioncards.js",
+      "target": "file:data/books.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/plants.js",
+      "target": "file:js/state.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/plants.js",
+      "target": "file:js/storage.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/plants.js",
+      "target": "file:data/plants.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/diary.js",
+      "target": "file:js/state.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/diary.js",
+      "target": "file:js/storage.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/quests.js",
+      "target": "file:js/state.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/quests.js",
+      "target": "file:js/storage.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/quests.js",
+      "target": "file:data/planes.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/quests.js",
+      "target": "file:data/quests/pastoral_tasks.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/quests.js",
+      "target": "file:data/tiergoals.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/dailytasks.js",
+      "target": "file:js/state.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/dailytasks.js",
+      "target": "file:js/storage.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/guidequests.js",
+      "target": "file:js/state.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/guidequests.js",
+      "target": "file:js/storage.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/collection.js",
+      "target": "file:js/state.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/collection.js",
+      "target": "file:data/books.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/collection.js",
+      "target": "file:data/planes.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/atmosphere.js",
+      "target": "file:js/state.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/atmosphere.js",
+      "target": "file:data/atmosphere.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/tutorial.js",
+      "target": "file:js/state.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/index.js",
+      "target": "file:js/render/common.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/common.js",
+      "target": "file:js/state.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/common.js",
+      "target": "file:js/storage.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/common.js",
+      "target": "file:js/timer.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/focus.js",
+      "target": "file:js/state.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/focus.js",
+      "target": "file:js/storage.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/focus.js",
+      "target": "file:js/timer.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/focus.js",
+      "target": "file:js/books.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/focus.js",
+      "target": "file:js/capacity.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/focus.js",
+      "target": "file:js/render/common.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/focus.js",
+      "target": "file:js/render/writing.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/focus.js",
+      "target": "file:data/books.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/focus.js",
+      "target": "file:js/audio.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/bookshelf.js",
+      "target": "file:js/state.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/bookshelf.js",
+      "target": "file:js/storage.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/bookshelf.js",
+      "target": "file:js/capacity.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/bookshelf.js",
+      "target": "file:js/books.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/bookshelf.js",
+      "target": "file:js/collection.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/bookshelf.js",
+      "target": "file:js/curation.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/bookshelf.js",
+      "target": "file:js/render/common.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/bookshelf.js",
+      "target": "file:js/render/collection.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/bookshelf.js",
+      "target": "file:data/books.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/bookshelf.js",
+      "target": "file:data/curation_pairs.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/shop.js",
+      "target": "file:js/state.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/shop.js",
+      "target": "file:js/storage.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/shop.js",
+      "target": "file:js/shop.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/shop.js",
+      "target": "file:js/capacity.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/shop.js",
+      "target": "file:js/render/common.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/shop.js",
+      "target": "file:data/books.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/shop.js",
+      "target": "file:data/planes.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/shop.js",
+      "target": "file:data/signboards.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/shop.js",
+      "target": "file:data/tiergoals.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/visitors.js",
+      "target": "file:js/state.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/visitors.js",
+      "target": "file:js/storage.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/visitors.js",
+      "target": "file:js/visitors.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/visitors.js",
+      "target": "file:js/capacity.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/visitors.js",
+      "target": "file:js/render/common.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/visitors.js",
+      "target": "file:js/i18n/terms.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/library.js",
+      "target": "file:js/state.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/library.js",
+      "target": "file:js/storage.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/library.js",
+      "target": "file:js/capacity.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/library.js",
+      "target": "file:js/shop.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/library.js",
+      "target": "file:js/plants.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/library.js",
+      "target": "file:js/render/common.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/library.js",
+      "target": "file:js/render/plants.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/library.js",
+      "target": "file:js/render/plane.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/library.js",
+      "target": "file:js/render/quests.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/library.js",
+      "target": "file:data/plants.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/library.js",
+      "target": "file:data/signboards.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/archive.js",
+      "target": "file:js/state.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/archive.js",
+      "target": "file:js/storage.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/archive.js",
+      "target": "file:js/capacity.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/archive.js",
+      "target": "file:js/books.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/archive.js",
+      "target": "file:js/timer.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/archive.js",
+      "target": "file:js/shop.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/archive.js",
+      "target": "file:js/curation.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/archive.js",
+      "target": "file:js/render/common.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/achievements.js",
+      "target": "file:js/achievements.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/achievements.js",
+      "target": "file:js/render/common.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/animations.js",
+      "target": "file:js/state.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/animations.js",
+      "target": "file:js/render/common.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/animations.js",
+      "target": "file:js/capacity.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/collection.js",
+      "target": "file:js/collection.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/collection.js",
+      "target": "file:js/state.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/collection.js",
+      "target": "file:js/render/common.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/certificate.js",
+      "target": "file:js/state.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/certificate.js",
+      "target": "file:js/capacity.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/certificate.js",
+      "target": "file:js/render/common.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/writing.js",
+      "target": "file:js/state.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/writing.js",
+      "target": "file:js/storage.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/writing.js",
+      "target": "file:js/timer.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/plants.js",
+      "target": "file:js/state.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/plants.js",
+      "target": "file:js/plants.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/plants.js",
+      "target": "file:js/render/common.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/plants.js",
+      "target": "file:data/plants.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/plane.js",
+      "target": "file:js/state.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/plane.js",
+      "target": "file:js/quests.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/plane.js",
+      "target": "file:js/render/common.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/quests.js",
+      "target": "file:js/state.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/quests.js",
+      "target": "file:js/quests.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/quests.js",
+      "target": "file:js/render/common.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/quests.js",
+      "target": "file:data/quests/pastoral_tasks.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/tutorial-ui.js",
+      "target": "file:js/state.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/tutorial-ui.js",
+      "target": "file:js/storage.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/tutorial-ui.js",
+      "target": "file:js/render/common.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/tutorial-ui.js",
+      "target": "file:js/tutorial.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/guidequests.js",
+      "target": "file:js/guidequests.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/guidequests.js",
+      "target": "file:js/render/common.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/momo-suggestion.js",
+      "target": "file:js/state.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/momo-suggestion.js",
+      "target": "file:js/capacity.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:js/render/momo-suggestion.js",
+      "target": "file:js/render/common.js",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:data/books.js",
+      "target": "file:data/books/book_001.js",
+      "type": "contains",
+      "weight": 1
+    },
+    {
+      "source": "file:data/books.js",
+      "target": "file:data/books/book_002.js",
+      "type": "contains",
+      "weight": 1
+    },
+    {
+      "source": "file:data/books.js",
+      "target": "file:data/books/book_003.js",
+      "type": "contains",
+      "weight": 1
+    },
+    {
+      "source": "file:data/books.js",
+      "target": "file:data/books/book_004.js",
+      "type": "contains",
+      "weight": 1
+    },
+    {
+      "source": "file:data/books.js",
+      "target": "file:data/books/book_005.js",
+      "type": "contains",
+      "weight": 1
+    },
+    {
+      "source": "file:data/books.js",
+      "target": "file:data/books/book_006.js",
+      "type": "contains",
+      "weight": 1
+    },
+    {
+      "source": "file:data/books.js",
+      "target": "file:data/books/book_007.js",
+      "type": "contains",
+      "weight": 1
+    },
+    {
+      "source": "file:data/books.js",
+      "target": "file:data/books/book_008.js",
+      "type": "contains",
+      "weight": 1
+    },
+    {
+      "source": "file:data/books.js",
+      "target": "file:data/books/book_009.js",
+      "type": "contains",
+      "weight": 1
+    },
+    {
+      "source": "file:data/books.js",
+      "target": "file:data/books/book_010.js",
+      "type": "contains",
+      "weight": 1
+    },
+    {
+      "source": "file:data/books.js",
+      "target": "file:data/books/book_011_道德经.js",
+      "type": "contains",
+      "weight": 1
+    },
+    {
+      "source": "file:data/books.js",
+      "target": "file:data/books/book_012_沉思录.js",
+      "type": "contains",
+      "weight": 1
+    },
+    {
+      "source": "file:data/books.js",
+      "target": "file:data/books/book_013_理想国.js",
+      "type": "contains",
+      "weight": 1
+    },
+    {
+      "source": "file:data/books.js",
+      "target": "file:data/books/book_014_史记.js",
+      "type": "contains",
+      "weight": 1
+    },
+    {
+      "source": "file:data/books.js",
+      "target": "file:data/books/book_015_诗经.js",
+      "type": "contains",
+      "weight": 1
+    },
+    {
+      "source": "file:data/books.js",
+      "target": "file:data/books/book_016_西游记.js",
+      "type": "contains",
+      "weight": 1
+    },
+    {
+      "source": "file:data/books.js",
+      "target": "file:data/books/book_017_鲁滨逊漂流记.js",
+      "type": "contains",
+      "weight": 1
+    },
+    {
+      "source": "file:data/books.js",
+      "target": "file:data/books/book_018_几何原本.js",
+      "type": "contains",
+      "weight": 1
+    },
+    {
+      "source": "file:data/books.js",
+      "target": "file:data/books/book_019_卡拉马佐夫兄弟.js",
+      "type": "contains",
+      "weight": 1
+    },
+    {
+      "source": "file:data/books.js",
+      "target": "file:data/books/book_020_社会契约论.js",
+      "type": "contains",
+      "weight": 1
+    },
+    {
+      "source": "file:data/books.js",
+      "target": "file:data/books/book_021_第一哲学沉思集.js",
+      "type": "contains",
+      "weight": 1
+    },
+    {
+      "source": "file:data/books.js",
+      "target": "file:data/books/book_022_传习录.js",
+      "type": "contains",
+      "weight": 1
+    },
+    {
+      "source": "file:data/books.js",
+      "target": "file:data/books/book_023_绿野仙踪.js",
+      "type": "contains",
+      "weight": 1
+    },
+    {
+      "source": "file:data/books.js",
+      "target": "file:data/books/book_024_爱丽丝梦游奇境.js",
+      "type": "contains",
+      "weight": 1
+    },
+    {
+      "source": "file:data/books.js",
+      "target": "file:data/books/book_026_图书馆指南.js",
+      "type": "contains",
+      "weight": 1
+    },
+    {
+      "source": "file:data/books.js",
+      "target": "file:data/books/book_027_飞鸟集.js",
+      "type": "contains",
+      "weight": 1
+    },
+    {
+      "source": "file:data/books.js",
+      "target": "file:data/books/book_028_伊索寓言.js",
+      "type": "contains",
+      "weight": 1
+    },
+    {
+      "source": "file:data/books.js",
+      "target": "file:data/books/book_029_菜根谭.js",
+      "type": "contains",
+      "weight": 1
+    }
+  ],
+  "layers": [
+    {
+      "id": "layer:entry-point",
+      "name": "应用入口",
+      "description": "HTML 入口和主应用启动模块",
+      "nodeIds": [
+        "file:index.html",
+        "file:js/app.js",
+        "config:package.json"
+      ]
+    },
+    {
+      "id": "layer:state-storage",
+      "name": "状态与持久化",
+      "description": "全局状态管理、localStorage 持久化、核心数据层",
+      "nodeIds": [
+        "file:js/state.js",
+        "file:js/storage.js",
+        "file:data/atmosphere.js",
+        "file:data/book_pool.js",
+        "file:data/books.js",
+        "file:data/planes.js"
+      ]
+    },
+    {
+      "id": "layer:game-systems",
+      "name": "游戏系统",
+      "description": "访客、书籍、成就、商店、策展、植物等核心游戏机制",
+      "nodeIds": [
+        "file:js/visitors.js",
+        "file:js/books.js",
+        "file:js/achievements.js",
+        "file:js/shop.js",
+        "file:js/capacity.js",
+        "file:js/curation.js",
+        "file:js/plants.js",
+        "file:js/diary.js",
+        "file:js/quests.js",
+        "file:js/actioncards.js",
+        "file:js/dailytasks.js",
+        "file:js/guidequests.js",
+        "file:js/collection.js",
+        "file:js/atmosphere.js",
+        "file:js/timer.js",
+        "file:js/tutorial.js"
+      ]
+    },
+    {
+      "id": "layer:interaction",
+      "name": "交互层",
+      "description": "音频、引导、i18n、入场动画",
+      "nodeIds": [
+        "file:js/audio.js",
+        "file:js/intro.js",
+        "file:js/i18n/terms.js"
+      ]
+    },
+    {
+      "id": "layer:render",
+      "name": "渲染层",
+      "description": "所有页面的 UI 渲染和动画",
+      "nodeIds": [
+        "file:js/render/index.js",
+        "file:js/render/common.js",
+        "file:js/render/focus.js",
+        "file:js/render/bookshelf.js",
+        "file:js/render/shop.js",
+        "file:js/render/visitors.js",
+        "file:js/render/library.js",
+        "file:js/render/archive.js",
+        "file:js/render/achievements.js",
+        "file:js/render/animations.js",
+        "file:js/render/collection.js",
+        "file:js/render/certificate.js",
+        "file:js/render/writing.js",
+        "file:js/render/plants.js",
+        "file:js/render/plane.js",
+        "file:js/render/quests.js",
+        "file:js/render/tutorial-ui.js",
+        "file:js/render/guidequests.js",
+        "file:js/render/momo-suggestion.js"
+      ]
+    },
+    {
+      "id": "layer:game-data",
+      "name": "游戏数据",
+      "description": "书籍内容、访客叙事、任务、位面、植物等静态数据",
+      "nodeIds": [
+        "file:data/books/book_001.js",
+        "file:data/books/book_002.js",
+        "file:data/books/book_003.js",
+        "file:data/books/book_004.js",
+        "file:data/books/book_005.js",
+        "file:data/books/book_006.js",
+        "file:data/books/book_007.js",
+        "file:data/books/book_008.js",
+        "file:data/books/book_009.js",
+        "file:data/books/book_010.js",
+        "file:data/books/book_011_道德经.js",
+        "file:data/books/book_012_沉思录.js",
+        "file:data/books/book_013_理想国.js",
+        "file:data/books/book_014_史记.js",
+        "file:data/books/book_015_诗经.js",
+        "file:data/books/book_016_西游记.js",
+        "file:data/books/book_017_鲁滨逊漂流记.js",
+        "file:data/books/book_018_几何原本.js",
+        "file:data/books/book_019_卡拉马佐夫兄弟.js",
+        "file:data/books/book_020_社会契约论.js",
+        "file:data/books/book_021_第一哲学沉思集.js",
+        "file:data/books/book_022_传习录.js",
+        "file:data/books/book_023_绿野仙踪.js",
+        "file:data/books/book_024_爱丽丝梦游奇境.js",
+        "file:data/books/book_026_图书馆指南.js",
+        "file:data/books/book_027_飞鸟集.js",
+        "file:data/books/book_028_伊索寓言.js",
+        "file:data/books/book_029_菜根谭.js",
+        "file:data/visitor-events.js",
+        "file:data/curation_pairs.js",
+        "file:data/signboards.js",
+        "file:data/quests/pastoral_tasks.js",
+        "file:data/plants.js",
+        "file:data/tiergoals.js",
+        "file:data/atmosphere.js"
+      ]
+    },
+    {
+      "id": "layer:assets",
+      "name": "静态资源",
+      "description": "CSS 样式和音效文件",
+      "nodeIds": [
+        "file:css/style.css",
+        "file:audio/effect/achievement_unlock.wav",
+        "file:audio/effect/book_return.wav",
+        "file:audio/effect/button_click.wav",
+        "file:audio/effect/buy_success.wav",
+        "file:audio/effect/focus_complete.wav",
+        "file:audio/effect/visitor_arrive.wav",
+        "file:visual/visitors/.gitkeep"
+      ]
+    },
+    {
+      "id": "layer:docs-config",
+      "name": "文档与配置",
+      "description": "项目文档、变更日志、部署配置",
+      "nodeIds": [
+        "document:.claude/skills/grill-me/SKILL.md",
+        "config:.netlify/netlify.toml",
+        "config:.netlify/state.json",
+        "document:docs/2026-06-03-changelog.md",
+        "document:docs/bugs/2026-06-04-smart-quote-syntax-error.md",
+        "document:docs/diary/CLAUDE_DIARY.md",
+        "document:docs/glossary.md",
+        "document:docs/plans/focus-room-scene-2026-06-05.md",
+        "document:docs/visitor-voice-guide.md",
+        "config:package.json",
+        "document:visual/visitors/README.md"
+      ]
+    }
+  ],
+  "tour": [
+    {
+      "order": 1,
+      "title": "项目概览",
+      "description": "从 README 和入口文件了解项目整体架构",
+      "nodeIds": [
+        "file:index.html",
+        "config:package.json"
+      ]
+    },
+    {
+      "order": 2,
+      "title": "应用启动",
+      "description": "主控制器 js/app.js 是大脑，初始化所有子系统",
+      "nodeIds": [
+        "file:js/app.js"
+      ]
+    },
+    {
+      "order": 3,
+      "title": "状态与持久化",
+      "description": "理解全局状态结构和数据流转",
+      "nodeIds": [
+        "file:js/state.js",
+        "file:js/storage.js"
+      ]
+    },
+    {
+      "order": 4,
+      "title": "游戏核心系统",
+      "description": "访客、书籍、成就、商店等核心玩法",
+      "nodeIds": [
+        "file:js/visitors.js",
+        "file:js/books.js",
+        "file:js/achievements.js",
+        "file:js/shop.js"
+      ]
+    },
+    {
+      "order": 5,
+      "title": "渲染层",
+      "description": "所有页面的 UI 渲染模块",
+      "nodeIds": [
+        "file:js/render/index.js",
+        "file:js/render/focus.js",
+        "file:js/render/bookshelf.js"
+      ]
+    },
+    {
+      "order": 6,
+      "title": "游戏数据",
+      "description": "庞大的经典书籍内容库和访客叙事数据",
+      "nodeIds": [
+        "file:data/books.js",
+        "file:data/visitor-events.js",
+        "file:data/tiergoals.js"
+      ]
+    }
+  ]
+}

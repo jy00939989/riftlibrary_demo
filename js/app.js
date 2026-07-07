@@ -124,6 +124,9 @@ function triggerQuestCheck(event) {
 // ========== 全局操作 ==========
 
 function handleStartFocus() {
+  // 首次用户交互时初始化音频（修复：之前 initSfx 在专注完成后才调用，导致首次专注音效静默）
+  onFirstInteraction();
+
   if (!state.currentSession.bookId) {
     alert('请先选择一本要誊抄的书 📖');
     return;
@@ -1006,14 +1009,126 @@ window.switchTab = function(tabName) {
 
 // showIntro() 已提取至 js/intro.js
 
+// ========== 崩溃恢复面板 ==========
+
+function showCrashRecovery(message, file, line) {
+  // 防止递归：一个面板已显示就不再创建
+  if (document.getElementById('crash-recovery')) return;
+
+  const overlay = document.createElement('div');
+  overlay.id = 'crash-recovery';
+  overlay.className = 'fixed inset-0 z-[300] flex items-center justify-center p-4';
+  overlay.style.background = 'radial-gradient(ellipse at center, #3d2b1f 0%, #1a1410 100%)';
+  overlay.innerHTML = `
+    <div class="parchment-bg rounded-2xl p-6 max-w-sm w-full text-center magic-glow">
+      <div class="text-5xl mb-3">🦉</div>
+      <p class="text-sm text-magic-gold font-bold mb-2">墨墨发现了一些不对劲…</p>
+      <p class="text-xs text-ink-light leading-relaxed mb-4">
+        图书馆的魔法暂时有些波动。<br>别担心，你的抄写记录都还在。
+      </p>
+      <details class="text-left mb-4">
+        <summary class="text-xs text-ink-light/50 cursor-pointer">错误详情</summary>
+        <pre class="text-xs text-red-500 mt-2 p-2 bg-red-50 rounded overflow-x-auto max-h-32">${message}${file ? '\n文件: ' + file + ':' + line : ''}</pre>
+      </details>
+      <div class="space-y-2">
+        <button id="crash-reload" class="w-full px-4 py-2.5 bg-magic-gold text-white rounded-lg font-bold hover:shadow-lg transition-all text-sm">
+          🔄 刷新页面
+        </button>
+        <button id="crash-reset" class="w-full px-4 py-2.5 bg-red-100 text-red-700 rounded-lg font-bold hover:bg-red-200 transition-all text-sm">
+          ⚠️ 重置存档重新开始
+        </button>
+        <button id="crash-export" class="w-full px-4 py-2.5 bg-wood/15 text-ink rounded-lg font-bold hover:bg-wood/25 transition-all text-sm">
+          📥 先导出存档备份
+        </button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  overlay.querySelector('#crash-reload').addEventListener('click', () => location.reload());
+  overlay.querySelector('#crash-reset').addEventListener('click', () => {
+    if (confirm('确定要清除所有存档数据重新开始吗？此操作不可恢复。')) {
+      localStorage.removeItem('library_state');
+      localStorage.removeItem('library_state_backup');
+      location.reload();
+    }
+  });
+  overlay.querySelector('#crash-export').addEventListener('click', () => {
+    const payload = JSON.parse(localStorage.getItem('library_state') || '{}');
+    if (!payload.library) {
+      alert('存档数据不可用');
+      return;
+    }
+    const blob = new Blob([JSON.stringify({ version: 1, state: payload }, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `归墟图书馆_崩溃备份_${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+}
+
+function hideLoadingScreen() {
+  const el = document.getElementById('loading-screen');
+  if (!el) return;
+  const bar = document.getElementById('loading-bar');
+  if (bar) bar.style.width = '100%';
+  const text = document.getElementById('loading-text');
+  if (text) text.textContent = '馆门已开，欢迎回来。';
+  setTimeout(() => {
+    el.style.opacity = '0';
+    el.style.transition = 'opacity 0.4s';
+    setTimeout(() => el.remove(), 400);
+  }, 300);
+}
+
 // ========== 启动 ==========
 
 function init() {
+  // 加载进度：初始化
+  const loadingBar = document.getElementById('loading-bar');
+  const loadingText = document.getElementById('loading-text');
+  const updateLoading = (pct, text) => {
+    if (loadingBar) loadingBar.style.width = pct + '%';
+    if (loadingText) loadingText.textContent = text;
+  };
+  updateLoading(10, '正在唤醒图书馆...');
+
+  // 全局错误兜底：防止单点 JS 异常 → 全站白屏
+  window.addEventListener('error', (e) => {
+    const msg = e.error?.message || e.message || '未知错误';
+    const stack = e.error?.stack || '';
+    const file = e.filename || '';
+    const line = e.lineno || '';
+    console.error('📚 图书馆异常:', msg, file, line, stack);
+    // 非外部资源加载错误（JS 运行时错误）→ 显示恢复面板
+    if (e.error || (file && line)) {
+      showCrashRecovery(msg, file, line);
+    }
+  });
+  window.addEventListener('unhandledrejection', (e) => {
+    console.error('📚 异步异常:', e.reason);
+    if (e.reason?.message) {
+      showCrashRecovery(e.reason.message, '', '');
+    }
+  });
+
+  // 首次用户交互激活音频（兜底：任何按钮点击都激活）
+  const activateAudio = () => {
+    onFirstInteraction();
+    document.removeEventListener('click', activateAudio);
+  };
+  document.addEventListener('click', activateAudio);
+
+  updateLoading(30, '正在整理书架...');
+
   initState();
   ensureAllBooksInManuscriptBox();
 
-  // 旧存档迁移：从 copiedWords 修正 copyCount 和 masteryLevel（短书快速重抄导致的不一致）
+  // 旧存档迁移：从 copiedWords 修正 copyCount 和 masteryLevel
   // 以及扩充字数后，旧"completed"需要回退为 copying
+  updateLoading(40, '正在校对古籍...');
   let migratedBooks = 0;
   Object.keys(state.books).forEach(bookId => {
     const book = BOOKS[bookId];
@@ -1103,19 +1218,22 @@ function init() {
   updateBodyBackground();
   checkWither(); // 72小时离线凋谢检测
 
-  // 氛围阶段突破 → 访客见证 + 馆长目标阶段完成弹窗
-  onStageCross((crossedStages) => {
-    const stageNames = ['', '废墟', '破败', '陈旧', '温暖', '星辰'];
-    crossedStages.forEach(stage => {
-      const witnesses = getStageWitnesses(stage);
-      if (witnesses.length > 0) {
-        showWitnessToast(witnesses, stage);
-        witnesses.forEach(w => {
-          addDiaryEntry('special_event', {
-            detail: `氛围升至「${stageNames[stage]}」时，${w.visitor.emoji} ${w.visitor.name}轻声说：「${w.text}」`
+  updateLoading(70, '正在点亮烛台...');
+
+  try {
+    // 氛围阶段突破 → 访客见证 + 馆长目标阶段完成弹窗
+    onStageCross((crossedStages) => {
+      const stageNames = ['', '废墟', '破败', '陈旧', '温暖', '星辰'];
+      crossedStages.forEach(stage => {
+        const witnesses = getStageWitnesses(stage);
+        if (witnesses.length > 0) {
+          showWitnessToast(witnesses, stage);
+          witnesses.forEach(w => {
+            addDiaryEntry('special_event', {
+              detail: `氛围升至「${stageNames[stage]}」时，${w.visitor.emoji} ${w.visitor.name}轻声说：「${w.text}」`
+            });
           });
-        });
-      }
+        }
 
       // 馆长目标：阶段突破时检测对应 tier 是否已完成
       const completedTier = TIER_GOALS[stage - 2]; // stage 2 → tier1, stage 3 → tier2 ...
@@ -1154,6 +1272,8 @@ function init() {
   setTimeout(() => {
     const initAchievements = checkAllOnInit();
     showAchievementBatch(initAchievements);
+    // 隐藏加载屏：等引导启动后再淡出，避免闪烁
+    hideLoadingScreen();
   }, state.introCompleted ? 500 : 5000); // 有引导时等引导结束
 
   console.log('📚 异世界图书馆已就绪');
@@ -1177,6 +1297,11 @@ function init() {
   // 初始没有访客时预先刷新一位（已触发过破败事件后才正常刷）
   if (state.visitors.length === 0 && state.tutorialFlags.firstVisitorEventDone) {
     spawnVisitor();
+  }
+  } finally {
+    // 无论初始化是否出错，都要隐藏加载屏
+    updateLoading(100, '馆门已开，欢迎回来。');
+    hideLoadingScreen();
   }
 }
 

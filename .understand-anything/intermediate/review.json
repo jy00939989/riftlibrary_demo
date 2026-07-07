@@ -1,0 +1,43 @@
+{
+  "issues": [
+    "Layer 'layer:entry-point' refs missing node 'file:package.json'",
+    "Tour step[0] refs missing node 'file:package.json'"
+  ],
+  "warnings": [
+    "File node 'file:data/curation_pairs.js' not in any layer",
+    "File node 'file:data/plants.js' not in any layer",
+    "File node 'file:data/quests/pastoral_tasks.js' not in any layer",
+    "File node 'file:data/signboards.js' not in any layer",
+    "File node 'file:data/tiergoals.js' not in any layer",
+    "File node 'file:data/visitor-events.js' not in any layer",
+    "File node 'file:visual/visitors/.gitkeep' not in any layer",
+    "Node 'document:.claude/skills/grill-me/SKILL.md' has no edges (orphan)",
+    "Node 'config:.netlify/netlify.toml' has no edges (orphan)",
+    "Node 'config:.netlify/state.json' has no edges (orphan)",
+    "Node 'file:audio/effect/achievement_unlock.wav' has no edges (orphan)",
+    "Node 'file:audio/effect/book_return.wav' has no edges (orphan)",
+    "Node 'file:audio/effect/button_click.wav' has no edges (orphan)",
+    "Node 'file:audio/effect/buy_success.wav' has no edges (orphan)",
+    "Node 'file:audio/effect/focus_complete.wav' has no edges (orphan)",
+    "Node 'file:audio/effect/visitor_arrive.wav' has no edges (orphan)",
+    "Node 'file:css/style.css' has no edges (orphan)",
+    "Node 'file:data/book_pool.js' has no edges (orphan)",
+    "Node 'document:docs/2026-06-03-changelog.md' has no edges (orphan)",
+    "Node 'document:docs/bugs/2026-06-04-smart-quote-syntax-error.md' has no edges (orphan)"
+  ],
+  "stats": {
+    "totalNodes": 99,
+    "totalEdges": 199,
+    "totalLayers": 8,
+    "tourSteps": 6,
+    "nodeTypes": {
+      "document": 8,
+      "config": 3,
+      "file": 88
+    },
+    "edgeTypes": {
+      "imports": 171,
+      "contains": 28
+    }
+  }
+}

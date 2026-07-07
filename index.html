@@ -35,6 +35,17 @@
 </head>
 <body class="min-h-screen text-ink">
 
+  <!-- 加载进度条 -->
+  <div id="loading-screen" class="fixed inset-0 z-[999] flex flex-col items-center justify-center" style="background: radial-gradient(ellipse at center, #3d2b1f 0%, #1a1410 100%);">
+    <div class="text-center">
+      <div class="text-6xl mb-6 animate-bounce">📚</div>
+      <div class="w-64 h-2 bg-white/10 rounded-full overflow-hidden mb-4">
+        <div id="loading-bar" class="h-full bg-gradient-to-r from-amber-600 to-amber-400 rounded-full transition-all duration-300" style="width:0%"></div>
+      </div>
+      <p id="loading-text" class="text-amber-200/60 text-sm font-serif">正在推开馆门...</p>
+    </div>
+  </div>
+
   <!-- 顶部导航栏 -->
   <nav class="parchment-bg border-b-4 border-wood sticky top-0 z-40">
     <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
@@ -57,6 +68,7 @@
           <span class="hidden sm:inline">氛围: </span><span class="text-magic-blue font-bold" id="status-atmosphere">0/500</span>
         </div>
         <button id="music-toggle" class="text-lg cursor-pointer hover:scale-110 transition-transform" title="开关音乐">🔈</button>
+        <button id="save-mgr-btn" class="text-lg cursor-pointer hover:scale-110 transition-transform" title="存档管理">💾</button>
       </div>
     </div>
   </nav>
@@ -82,5 +94,6 @@
   </div>
 
   <script type="module" src="js/app.js"></script>
+  <script type="module" src="js/save-manager.js"></script>
 </body>
 </html>

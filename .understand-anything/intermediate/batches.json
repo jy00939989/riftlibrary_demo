@@ -1,0 +1,1242 @@
+{
+  "schemaVersion": 1,
+  "algorithm": "louvain",
+  "totalFiles": 99,
+  "totalBatches": 5,
+  "exportsByPath": {
+    "audio/effect/achievement_unlock.wav": [],
+    "audio/effect/book_return.wav": [],
+    "audio/effect/button_click.wav": [],
+    "audio/effect/buy_success.wav": [],
+    "audio/effect/focus_complete.wav": [],
+    "audio/effect/visitor_arrive.wav": [],
+    "data/atmosphere.js": [
+      "ATMOSPHERE_STAGES",
+      "getAtmosphereStage",
+      "getRandomDescription"
+    ],
+    "data/book_pool.js": [
+      "SHARED_POOL"
+    ],
+    "data/books.js": [
+      "BOOKS",
+      "CATEGORIES",
+      "COPY_TEMPLATES",
+      "UNLOCK_TEXTS"
+    ],
+    "data/books/book_001.js": [
+      "meta",
+      "chapters",
+      "quotes"
+    ],
+    "data/books/book_002.js": [
+      "meta",
+      "chapters",
+      "quotes"
+    ],
+    "data/books/book_003.js": [
+      "meta",
+      "chapters",
+      "quotes"
+    ],
+    "data/books/book_004.js": [
+      "meta",
+      "chapters",
+      "quotes"
+    ],
+    "data/books/book_005.js": [
+      "meta",
+      "chapters",
+      "quotes"
+    ],
+    "data/books/book_006.js": [
+      "meta",
+      "chapters",
+      "quotes"
+    ],
+    "data/books/book_007.js": [
+      "meta",
+      "chapters",
+      "quotes"
+    ],
+    "data/books/book_008.js": [
+      "meta",
+      "chapters",
+      "quotes"
+    ],
+    "data/books/book_009.js": [
+      "meta",
+      "chapters",
+      "quotes"
+    ],
+    "data/books/book_010.js": [
+      "meta",
+      "chapters",
+      "quotes"
+    ],
+    "data/books/book_011_道德经.js": [
+      "meta",
+      "chapters",
+      "quotes"
+    ],
+    "data/books/book_012_沉思录.js": [
+      "meta",
+      "chapters",
+      "quotes"
+    ],
+    "data/books/book_013_理想国.js": [
+      "meta",
+      "chapters",
+      "quotes"
+    ],
+    "data/books/book_014_史记.js": [
+      "meta",
+      "chapters",
+      "quotes"
+    ],
+    "data/books/book_015_诗经.js": [
+      "meta",
+      "chapters",
+      "quotes"
+    ],
+    "data/books/book_016_西游记.js": [
+      "meta",
+      "chapters",
+      "quotes"
+    ],
+    "data/books/book_017_鲁滨逊漂流记.js": [
+      "meta",
+      "chapters",
+      "quotes"
+    ],
+    "data/books/book_018_几何原本.js": [
+      "meta",
+      "chapters",
+      "quotes"
+    ],
+    "data/books/book_019_卡拉马佐夫兄弟.js": [
+      "meta",
+      "chapters",
+      "quotes"
+    ],
+    "data/books/book_020_社会契约论.js": [
+      "meta",
+      "chapters",
+      "quotes"
+    ],
+    "data/books/book_021_第一哲学沉思集.js": [
+      "meta",
+      "chapters",
+      "quotes"
+    ],
+    "data/books/book_022_传习录.js": [
+      "meta",
+      "chapters",
+      "quotes"
+    ],
+    "data/books/book_023_绿野仙踪.js": [
+      "meta",
+      "chapters",
+      "quotes"
+    ],
+    "data/books/book_024_爱丽丝梦游奇境.js": [
+      "meta",
+      "chapters",
+      "quotes"
+    ],
+    "data/books/book_026_图书馆指南.js": [
+      "meta",
+      "chapters",
+      "quotes"
+    ],
+    "data/books/book_027_飞鸟集.js": [
+      "meta",
+      "chapters",
+      "quotes"
+    ],
+    "data/books/book_028_伊索寓言.js": [
+      "meta",
+      "chapters",
+      "quotes"
+    ],
+    "data/books/book_029_菜根谭.js": [
+      "meta",
+      "chapters",
+      "quotes"
+    ],
+    "data/curation_pairs.js": [
+      "CURATION_PAIRS"
+    ],
+    "data/planes.js": [
+      "PLANES",
+      "ACTIVE_PLANES",
+      "canUnlockPlane"
+    ],
+    "data/plants.js": [
+      "PLANT_TYPES",
+      "SEED_EXCHANGE"
+    ],
+    "data/quests/pastoral_tasks.js": [
+      "PASTORAL_TASKS"
+    ],
+    "data/signboards.js": [
+      "SIGNBOARDS"
+    ],
+    "data/tiergoals.js": [
+      "TIER_GOALS",
+      "getTierStatus",
+      "countTierGoalsComplete",
+      "isTierComplete",
+      "getCurrentTier"
+    ],
+    "data/visitor-events.js": [
+      "VISITOR_NARRATIVES"
+    ],
+    "js/achievements.js": [
+      "registerEmojiClick",
+      "getAchievementBonuses",
+      "checkAchievements",
+      "checkAllOnInit",
+      "getAchievementState",
+      "getAchievementStats"
+    ],
+    "js/actioncards.js": [
+      "canDrawActionCards",
+      "drawActionCards",
+      "applyAction"
+    ],
+    "js/app.js": [],
+    "js/atmosphere.js": [
+      "getCurrentAtmosphereText",
+      "getStageInfo"
+    ],
+    "js/audio.js": [
+      "isMusicOn",
+      "initAudio",
+      "refreshBGM",
+      "toggleMusic",
+      "onFirstInteraction",
+      "initSfx",
+      "playSfx",
+      "toggleSfx",
+      "isSfxOn"
+    ],
+    "js/books.js": [
+      "tryUnlockNewBook",
+      "getBookProgress",
+      "getUnlockedChapters",
+      "canBorrowBook"
+    ],
+    "js/capacity.js": [
+      "createBookRecord",
+      "unlockBook",
+      "normalizeShelves",
+      "placeOnShelf",
+      "hasShelfSpace",
+      "getBookCapacity",
+      "getOwnedBookCount",
+      "isBookCapacityFull",
+      "getManuscriptSlots",
+      "getManuscriptBoxCount",
+      "isManuscriptBoxFull",
+      "getManuscriptSlotPrice",
+      "expandManuscriptSlots",
+      "addToManuscriptBox",
+      "removeFromManuscriptBox",
+      "isInManuscriptBox"
+    ],
+    "js/collection.js": [
+      "COLLECTION_CATEGORIES",
+      "getCollectionState"
+    ],
+    "js/curation.js": [
+      "calcCurationEffects",
+      "getCurationFocusSpeed",
+      "getCurationBorrowBonus",
+      "getCurationCoinsBonus"
+    ],
+    "js/dailytasks.js": [
+      "ensureDailyTasks",
+      "markTaskDone",
+      "claimAllDoneBonus",
+      "todayKey"
+    ],
+    "js/diary.js": [
+      "generateDiaryEntry",
+      "addDiaryEntry",
+      "getDiaryEntries",
+      "tryGenerateDailySummary",
+      "getDiaryBindingLevel",
+      "checkDiaryLevelUp"
+    ],
+    "js/guidequests.js": [
+      "ensureGuideQuests",
+      "getCurrentQuest",
+      "getQuestProgress",
+      "checkGuideQuest",
+      "tryCompleteAllDone",
+      "getAllQuests",
+      "QUESTS"
+    ],
+    "js/i18n/terms.js": [
+      "T",
+      "ATMOSPHERE_STAGES",
+      "VISITOR_NAMES",
+      "ACHIEVEMENT_CATEGORIES",
+      "ACHIEVEMENT_RARITIES",
+      "DIARY_BINDING_NAMES"
+    ],
+    "js/intro.js": [
+      "showIntro"
+    ],
+    "js/plants.js": [
+      "getPlantDef",
+      "getActivePlantDef",
+      "canWater",
+      "waterPlant",
+      "canFertilize",
+      "fertilizePlant",
+      "canHarvest",
+      "harvestPlant",
+      "checkWither",
+      "plantSeed",
+      "canExchangeSeed",
+      "exchangeSeed",
+      "addWaterOpportunity"
+    ],
+    "js/quests.js": [
+      "unlockPlane",
+      "tickPlaneVisitors",
+      "checkTaskCompletion",
+      "submitTask",
+      "getPlaneQuestState",
+      "getCharacterTasks",
+      "getPlaneCharacters",
+      "getTaskById",
+      "getAllTasks",
+      "getActiveChapterTaskForBook"
+    ],
+    "js/render/achievements.js": [
+      "renderAchievements",
+      "showAchievementToast"
+    ],
+    "js/render/animations.js": [
+      "showTierCompletePopup",
+      "showUnlockAnimation",
+      "showBookShelvingAnimation",
+      "showBookCompleteAnimation",
+      "showDiaryLevelUpPopup"
+    ],
+    "js/render/archive.js": [
+      "renderArchivePage"
+    ],
+    "js/render/bookshelf.js": [
+      "renderBookshelfPage",
+      "showMasteryDetail"
+    ],
+    "js/render/certificate.js": [
+      "showCertificate"
+    ],
+    "js/render/collection.js": [
+      "renderCollection"
+    ],
+    "js/render/common.js": [
+      "actions",
+      "setActions",
+      "updateStatusBar",
+      "el",
+      "h",
+      "formatTime",
+      "updateTimerDisplay"
+    ],
+    "js/render/focus.js": [
+      "renderFocusPage",
+      "showActionCards",
+      "showCompletionCard"
+    ],
+    "js/render/guidequests.js": [
+      "renderGuideQuestWidget",
+      "showQuestCompleteToast"
+    ],
+    "js/render/index.js": [
+      "setActions",
+      "updateStatusBar",
+      "formatTime",
+      "updateTimerDisplay",
+      "renderFocusPage",
+      "showCompletionCard",
+      "showActionCards",
+      "renderBookshelfPage",
+      "showMasteryDetail",
+      "renderVisitorsPage",
+      "showVisitorEventModal",
+      "renderLibraryPage",
+      "renderArchivePage",
+      "renderShopPage",
+      "showUnlockAnimation",
+      "showBookCompleteAnimation",
+      "showBookShelvingAnimation",
+      "showDiaryLevelUpPopup",
+      "renderAchievements",
+      "showAchievementToast",
+      "renderGuideQuestWidget",
+      "showQuestCompleteToast",
+      "renderMomoSuggestion",
+      "resetMomoSuggestion"
+    ],
+    "js/render/library.js": [
+      "renderLibraryPage"
+    ],
+    "js/render/momo-suggestion.js": [
+      "getMomoSuggestion",
+      "renderMomoSuggestion",
+      "dismissMomoSuggestion",
+      "resetMomoSuggestion"
+    ],
+    "js/render/plane.js": [
+      "renderPlaneDetail"
+    ],
+    "js/render/plants.js": [
+      "renderDecorationPage"
+    ],
+    "js/render/quests.js": [
+      "renderCharacterCard"
+    ],
+    "js/render/shop.js": [
+      "renderShopPage"
+    ],
+    "js/render/tutorial-ui.js": [
+      "showFocusCompleteGuide",
+      "showVisitorArriveGuide",
+      "showShopOpenGuide",
+      "showLibraryOpenGuide",
+      "showAtmosphereStagePopup",
+      "showFocusRoomUpgrade",
+      "showBorrowAreaUpgrade",
+      "dispatchTutorialUI"
+    ],
+    "js/render/visitors.js": [
+      "renderVisitorsPage",
+      "showVisitorEventModal"
+    ],
+    "js/render/writing.js": [
+      "startWriting",
+      "pauseWriting",
+      "resumeWriting",
+      "stopWriting",
+      "isWriting"
+    ],
+    "js/shop.js": [
+      "hasSignboard",
+      "getAvailableBooks",
+      "getShopState",
+      "ensureShopState",
+      "purchaseBook",
+      "getBorrowLevelPrice",
+      "upgradeBorrowLevel",
+      "getFocusSpeedMultiplier",
+      "getFocusLevelPrice",
+      "upgradeFocusLevel",
+      "getPlanePortalPrice",
+      "purchasePlanePortal",
+      "purchaseSignboard"
+    ],
+    "js/state.js": [
+      "state",
+      "initState",
+      "ensureAllBooksInManuscriptBox",
+      "saveState"
+    ],
+    "js/storage.js": [
+      "addHistory",
+      "addCoins",
+      "spendCoins",
+      "addInspiration",
+      "spendInspiration",
+      "onStageCross",
+      "addAtmosphere",
+      "updateBodyBackground",
+      "getAtmosphereLevel",
+      "updateStreak"
+    ],
+    "js/timer.js": [
+      "setCompleteCallback",
+      "isMomoAccelerating",
+      "startTimer",
+      "togglePauseTimer",
+      "abandonTimer",
+      "cleanupTimer"
+    ],
+    "js/tutorial.js": [
+      "checkAndShowTutorial",
+      "markTutorialSeen",
+      "getTutorialFlags",
+      "getTutorialAtmoSeenStage"
+    ],
+    "js/visitors.js": [
+      "VISITOR_DEFS",
+      "STAGE_WITNESS",
+      "getBorrowLevelConfig",
+      "getVisitorCap",
+      "getBorrowSpawnBonus",
+      "getActiveAuras",
+      "getAuraSpeedBonus",
+      "getAuraCoinsMultiplier",
+      "getAuraShopDiscount",
+      "getAuraFocusUpgradeDiscount",
+      "getAuraVisitorCapBonus",
+      "getAuraSpawnBonus",
+      "getAuraPoemCollect",
+      "getAuraPlantGrowth",
+      "getAuraReturnFavorBonus",
+      "spawnVisitor",
+      "removeVisitor",
+      "getVisitorDef",
+      "tickVisitorBrowsing",
+      "checkDueVisitors",
+      "getNarrativeProgress",
+      "collectReturn",
+      "buySalesBook",
+      "getStageWitnesses",
+      "onTimeSkip",
+      "visitorForceReturn",
+      "visitorReset"
+    ],
+    "visual/visitors/.gitkeep": []
+  },
+  "batches": [
+    {
+      "batchIndex": 1,
+      "files": [
+        {
+          "path": "docs/2026-06-03-changelog.md",
+          "language": "markdown",
+          "sizeLines": 75,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/glossary.md",
+          "language": "markdown",
+          "sizeLines": 118,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/visitor-voice-guide.md",
+          "language": "markdown",
+          "sizeLines": 107,
+          "fileCategory": "docs"
+        }
+      ],
+      "batchImportData": {
+        "docs/2026-06-03-changelog.md": [],
+        "docs/glossary.md": [],
+        "docs/visitor-voice-guide.md": []
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 2,
+      "files": [
+        {
+          "path": ".claude/skills/grill-me/SKILL.md",
+          "language": "markdown",
+          "sizeLines": 5,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".netlify/netlify.toml",
+          "language": "toml",
+          "sizeLines": 24,
+          "fileCategory": "config"
+        },
+        {
+          "path": ".netlify/state.json",
+          "language": "json",
+          "sizeLines": 2,
+          "fileCategory": "config"
+        },
+        {
+          "path": "audio/effect/achievement_unlock.wav",
+          "language": "wav",
+          "sizeLines": 1541,
+          "fileCategory": "code"
+        },
+        {
+          "path": "audio/effect/book_return.wav",
+          "language": "wav",
+          "sizeLines": 1422,
+          "fileCategory": "code"
+        },
+        {
+          "path": "audio/effect/button_click.wav",
+          "language": "wav",
+          "sizeLines": 40,
+          "fileCategory": "code"
+        },
+        {
+          "path": "audio/effect/buy_success.wav",
+          "language": "wav",
+          "sizeLines": 1103,
+          "fileCategory": "code"
+        },
+        {
+          "path": "audio/effect/focus_complete.wav",
+          "language": "wav",
+          "sizeLines": 2902,
+          "fileCategory": "code"
+        },
+        {
+          "path": "audio/effect/visitor_arrive.wav",
+          "language": "wav",
+          "sizeLines": 2008,
+          "fileCategory": "code"
+        },
+        {
+          "path": "css/style.css",
+          "language": "css",
+          "sizeLines": 1591,
+          "fileCategory": "markup"
+        },
+        {
+          "path": "data/atmosphere.js",
+          "language": "javascript",
+          "sizeLines": 63,
+          "fileCategory": "code"
+        },
+        {
+          "path": "data/book_pool.js",
+          "language": "javascript",
+          "sizeLines": 237,
+          "fileCategory": "code"
+        },
+        {
+          "path": "data/books.js",
+          "language": "javascript",
+          "sizeLines": 90,
+          "fileCategory": "code"
+        },
+        {
+          "path": "data/books/book_001.js",
+          "language": "javascript",
+          "sizeLines": 148,
+          "fileCategory": "code"
+        },
+        {
+          "path": "data/books/book_002.js",
+          "language": "javascript",
+          "sizeLines": 170,
+          "fileCategory": "code"
+        },
+        {
+          "path": "data/books/book_003.js",
+          "language": "javascript",
+          "sizeLines": 218,
+          "fileCategory": "code"
+        },
+        {
+          "path": "data/books/book_004.js",
+          "language": "javascript",
+          "sizeLines": 141,
+          "fileCategory": "code"
+        },
+        {
+          "path": "data/books/book_005.js",
+          "language": "javascript",
+          "sizeLines": 229,
+          "fileCategory": "code"
+        },
+        {
+          "path": "data/books/book_006.js",
+          "language": "javascript",
+          "sizeLines": 139,
+          "fileCategory": "code"
+        },
+        {
+          "path": "data/books/book_007.js",
+          "language": "javascript",
+          "sizeLines": 269,
+          "fileCategory": "code"
+        },
+        {
+          "path": "data/books/book_008.js",
+          "language": "javascript",
+          "sizeLines": 295,
+          "fileCategory": "code"
+        },
+        {
+          "path": "data/books/book_009.js",
+          "language": "javascript",
+          "sizeLines": 484,
+          "fileCategory": "code"
+        },
+        {
+          "path": "data/books/book_010.js",
+          "language": "javascript",
+          "sizeLines": 127,
+          "fileCategory": "code"
+        },
+        {
+          "path": "data/books/book_011_道德经.js",
+          "language": "javascript",
+          "sizeLines": 158,
+          "fileCategory": "code"
+        },
+        {
+          "path": "data/books/book_012_沉思录.js",
+          "language": "javascript",
+          "sizeLines": 134,
+          "fileCategory": "code"
+        }
+      ],
+      "batchImportData": {
+        ".claude/skills/grill-me/SKILL.md": [],
+        ".netlify/netlify.toml": [],
+        ".netlify/state.json": [],
+        "audio/effect/achievement_unlock.wav": [],
+        "audio/effect/book_return.wav": [],
+        "audio/effect/button_click.wav": [],
+        "audio/effect/buy_success.wav": [],
+        "audio/effect/focus_complete.wav": [],
+        "audio/effect/visitor_arrive.wav": [],
+        "css/style.css": [],
+        "data/atmosphere.js": [],
+        "data/book_pool.js": [],
+        "data/books.js": [],
+        "data/books/book_001.js": [],
+        "data/books/book_002.js": [],
+        "data/books/book_003.js": [],
+        "data/books/book_004.js": [],
+        "data/books/book_005.js": [],
+        "data/books/book_006.js": [],
+        "data/books/book_007.js": [],
+        "data/books/book_008.js": [],
+        "data/books/book_009.js": [],
+        "data/books/book_010.js": [],
+        "data/books/book_011_道德经.js": [],
+        "data/books/book_012_沉思录.js": []
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 3,
+      "files": [
+        {
+          "path": "data/books/book_013_理想国.js",
+          "language": "javascript",
+          "sizeLines": 238,
+          "fileCategory": "code"
+        },
+        {
+          "path": "data/books/book_014_史记.js",
+          "language": "javascript",
+          "sizeLines": 230,
+          "fileCategory": "code"
+        },
+        {
+          "path": "data/books/book_015_诗经.js",
+          "language": "javascript",
+          "sizeLines": 249,
+          "fileCategory": "code"
+        },
+        {
+          "path": "data/books/book_016_西游记.js",
+          "language": "javascript",
+          "sizeLines": 322,
+          "fileCategory": "code"
+        },
+        {
+          "path": "data/books/book_017_鲁滨逊漂流记.js",
+          "language": "javascript",
+          "sizeLines": 303,
+          "fileCategory": "code"
+        },
+        {
+          "path": "data/books/book_018_几何原本.js",
+          "language": "javascript",
+          "sizeLines": 608,
+          "fileCategory": "code"
+        },
+        {
+          "path": "data/books/book_019_卡拉马佐夫兄弟.js",
+          "language": "javascript",
+          "sizeLines": 826,
+          "fileCategory": "code"
+        },
+        {
+          "path": "data/books/book_020_社会契约论.js",
+          "language": "javascript",
+          "sizeLines": 283,
+          "fileCategory": "code"
+        },
+        {
+          "path": "data/books/book_021_第一哲学沉思集.js",
+          "language": "javascript",
+          "sizeLines": 216,
+          "fileCategory": "code"
+        },
+        {
+          "path": "data/books/book_022_传习录.js",
+          "language": "javascript",
+          "sizeLines": 244,
+          "fileCategory": "code"
+        },
+        {
+          "path": "data/books/book_023_绿野仙踪.js",
+          "language": "javascript",
+          "sizeLines": 143,
+          "fileCategory": "code"
+        },
+        {
+          "path": "data/books/book_024_爱丽丝梦游奇境.js",
+          "language": "javascript",
+          "sizeLines": 164,
+          "fileCategory": "code"
+        },
+        {
+          "path": "data/books/book_026_图书馆指南.js",
+          "language": "javascript",
+          "sizeLines": 90,
+          "fileCategory": "code"
+        },
+        {
+          "path": "data/books/book_027_飞鸟集.js",
+          "language": "javascript",
+          "sizeLines": 363,
+          "fileCategory": "code"
+        },
+        {
+          "path": "data/books/book_028_伊索寓言.js",
+          "language": "javascript",
+          "sizeLines": 288,
+          "fileCategory": "code"
+        },
+        {
+          "path": "data/books/book_029_菜根谭.js",
+          "language": "javascript",
+          "sizeLines": 340,
+          "fileCategory": "code"
+        },
+        {
+          "path": "data/curation_pairs.js",
+          "language": "javascript",
+          "sizeLines": 88,
+          "fileCategory": "code"
+        },
+        {
+          "path": "data/planes.js",
+          "language": "javascript",
+          "sizeLines": 87,
+          "fileCategory": "code"
+        },
+        {
+          "path": "data/plants.js",
+          "language": "javascript",
+          "sizeLines": 69,
+          "fileCategory": "code"
+        },
+        {
+          "path": "data/quests/pastoral_tasks.js",
+          "language": "javascript",
+          "sizeLines": 2057,
+          "fileCategory": "code"
+        },
+        {
+          "path": "data/signboards.js",
+          "language": "javascript",
+          "sizeLines": 55,
+          "fileCategory": "code"
+        },
+        {
+          "path": "data/tiergoals.js",
+          "language": "javascript",
+          "sizeLines": 163,
+          "fileCategory": "code"
+        },
+        {
+          "path": "data/visitor-events.js",
+          "language": "javascript",
+          "sizeLines": 1087,
+          "fileCategory": "code"
+        },
+        {
+          "path": "docs/bugs/2026-06-04-smart-quote-syntax-error.md",
+          "language": "markdown",
+          "sizeLines": 54,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/diary/CLAUDE_DIARY.md",
+          "language": "markdown",
+          "sizeLines": 68,
+          "fileCategory": "docs"
+        }
+      ],
+      "batchImportData": {
+        "data/books/book_013_理想国.js": [],
+        "data/books/book_014_史记.js": [],
+        "data/books/book_015_诗经.js": [],
+        "data/books/book_016_西游记.js": [],
+        "data/books/book_017_鲁滨逊漂流记.js": [],
+        "data/books/book_018_几何原本.js": [],
+        "data/books/book_019_卡拉马佐夫兄弟.js": [],
+        "data/books/book_020_社会契约论.js": [],
+        "data/books/book_021_第一哲学沉思集.js": [],
+        "data/books/book_022_传习录.js": [],
+        "data/books/book_023_绿野仙踪.js": [],
+        "data/books/book_024_爱丽丝梦游奇境.js": [],
+        "data/books/book_026_图书馆指南.js": [],
+        "data/books/book_027_飞鸟集.js": [],
+        "data/books/book_028_伊索寓言.js": [],
+        "data/books/book_029_菜根谭.js": [],
+        "data/curation_pairs.js": [],
+        "data/planes.js": [],
+        "data/plants.js": [],
+        "data/quests/pastoral_tasks.js": [],
+        "data/signboards.js": [],
+        "data/tiergoals.js": [],
+        "data/visitor-events.js": [],
+        "docs/bugs/2026-06-04-smart-quote-syntax-error.md": [],
+        "docs/diary/CLAUDE_DIARY.md": []
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 4,
+      "files": [
+        {
+          "path": "docs/plans/focus-room-scene-2026-06-05.md",
+          "language": "markdown",
+          "sizeLines": 53,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "index.html",
+          "language": "html",
+          "sizeLines": 86,
+          "fileCategory": "markup"
+        },
+        {
+          "path": "js/achievements.js",
+          "language": "javascript",
+          "sizeLines": 274,
+          "fileCategory": "code"
+        },
+        {
+          "path": "js/actioncards.js",
+          "language": "javascript",
+          "sizeLines": 200,
+          "fileCategory": "code"
+        },
+        {
+          "path": "js/app.js",
+          "language": "javascript",
+          "sizeLines": 1200,
+          "fileCategory": "code"
+        },
+        {
+          "path": "js/atmosphere.js",
+          "language": "javascript",
+          "sizeLines": 18,
+          "fileCategory": "code"
+        },
+        {
+          "path": "js/audio.js",
+          "language": "javascript",
+          "sizeLines": 159,
+          "fileCategory": "code"
+        },
+        {
+          "path": "js/books.js",
+          "language": "javascript",
+          "sizeLines": 51,
+          "fileCategory": "code"
+        },
+        {
+          "path": "js/capacity.js",
+          "language": "javascript",
+          "sizeLines": 159,
+          "fileCategory": "code"
+        },
+        {
+          "path": "js/collection.js",
+          "language": "javascript",
+          "sizeLines": 130,
+          "fileCategory": "code"
+        },
+        {
+          "path": "js/curation.js",
+          "language": "javascript",
+          "sizeLines": 118,
+          "fileCategory": "code"
+        },
+        {
+          "path": "js/dailytasks.js",
+          "language": "javascript",
+          "sizeLines": 59,
+          "fileCategory": "code"
+        },
+        {
+          "path": "js/diary.js",
+          "language": "javascript",
+          "sizeLines": 326,
+          "fileCategory": "code"
+        },
+        {
+          "path": "js/guidequests.js",
+          "language": "javascript",
+          "sizeLines": 252,
+          "fileCategory": "code"
+        },
+        {
+          "path": "js/i18n/terms.js",
+          "language": "javascript",
+          "sizeLines": 140,
+          "fileCategory": "code"
+        },
+        {
+          "path": "js/intro.js",
+          "language": "javascript",
+          "sizeLines": 209,
+          "fileCategory": "code"
+        },
+        {
+          "path": "js/plants.js",
+          "language": "javascript",
+          "sizeLines": 231,
+          "fileCategory": "code"
+        },
+        {
+          "path": "js/quests.js",
+          "language": "javascript",
+          "sizeLines": 361,
+          "fileCategory": "code"
+        },
+        {
+          "path": "js/render/achievements.js",
+          "language": "javascript",
+          "sizeLines": 204,
+          "fileCategory": "code"
+        },
+        {
+          "path": "js/render/animations.js",
+          "language": "javascript",
+          "sizeLines": 256,
+          "fileCategory": "code"
+        },
+        {
+          "path": "js/render/archive.js",
+          "language": "javascript",
+          "sizeLines": 321,
+          "fileCategory": "code"
+        },
+        {
+          "path": "js/render/bookshelf.js",
+          "language": "javascript",
+          "sizeLines": 758,
+          "fileCategory": "code"
+        },
+        {
+          "path": "js/render/certificate.js",
+          "language": "javascript",
+          "sizeLines": 120,
+          "fileCategory": "code"
+        },
+        {
+          "path": "js/render/collection.js",
+          "language": "javascript",
+          "sizeLines": 171,
+          "fileCategory": "code"
+        },
+        {
+          "path": "js/render/common.js",
+          "language": "javascript",
+          "sizeLines": 61,
+          "fileCategory": "code"
+        }
+      ],
+      "batchImportData": {
+        "docs/plans/focus-room-scene-2026-06-05.md": [],
+        "index.html": [],
+        "js/achievements.js": [],
+        "js/actioncards.js": [],
+        "js/app.js": [],
+        "js/atmosphere.js": [],
+        "js/audio.js": [],
+        "js/books.js": [],
+        "js/capacity.js": [],
+        "js/collection.js": [],
+        "js/curation.js": [],
+        "js/dailytasks.js": [],
+        "js/diary.js": [],
+        "js/guidequests.js": [],
+        "js/i18n/terms.js": [],
+        "js/intro.js": [],
+        "js/plants.js": [],
+        "js/quests.js": [],
+        "js/render/achievements.js": [],
+        "js/render/animations.js": [],
+        "js/render/archive.js": [],
+        "js/render/bookshelf.js": [],
+        "js/render/certificate.js": [],
+        "js/render/collection.js": [],
+        "js/render/common.js": []
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 5,
+      "files": [
+        {
+          "path": "js/render/focus.js",
+          "language": "javascript",
+          "sizeLines": 808,
+          "fileCategory": "code"
+        },
+        {
+          "path": "js/render/guidequests.js",
+          "language": "javascript",
+          "sizeLines": 137,
+          "fileCategory": "code"
+        },
+        {
+          "path": "js/render/index.js",
+          "language": "javascript",
+          "sizeLines": 13,
+          "fileCategory": "code"
+        },
+        {
+          "path": "js/render/library.js",
+          "language": "javascript",
+          "sizeLines": 341,
+          "fileCategory": "code"
+        },
+        {
+          "path": "js/render/momo-suggestion.js",
+          "language": "javascript",
+          "sizeLines": 173,
+          "fileCategory": "code"
+        },
+        {
+          "path": "js/render/plane.js",
+          "language": "javascript",
+          "sizeLines": 303,
+          "fileCategory": "code"
+        },
+        {
+          "path": "js/render/plants.js",
+          "language": "javascript",
+          "sizeLines": 229,
+          "fileCategory": "code"
+        },
+        {
+          "path": "js/render/quests.js",
+          "language": "javascript",
+          "sizeLines": 273,
+          "fileCategory": "code"
+        },
+        {
+          "path": "js/render/shop.js",
+          "language": "javascript",
+          "sizeLines": 772,
+          "fileCategory": "code"
+        },
+        {
+          "path": "js/render/tutorial-ui.js",
+          "language": "javascript",
+          "sizeLines": 316,
+          "fileCategory": "code"
+        },
+        {
+          "path": "js/render/visitors.js",
+          "language": "javascript",
+          "sizeLines": 387,
+          "fileCategory": "code"
+        },
+        {
+          "path": "js/render/writing.js",
+          "language": "javascript",
+          "sizeLines": 460,
+          "fileCategory": "code"
+        },
+        {
+          "path": "js/shop.js",
+          "language": "javascript",
+          "sizeLines": 274,
+          "fileCategory": "code"
+        },
+        {
+          "path": "js/state.js",
+          "language": "javascript",
+          "sizeLines": 536,
+          "fileCategory": "code"
+        },
+        {
+          "path": "js/storage.js",
+          "language": "javascript",
+          "sizeLines": 103,
+          "fileCategory": "code"
+        },
+        {
+          "path": "js/timer.js",
+          "language": "javascript",
+          "sizeLines": 125,
+          "fileCategory": "code"
+        },
+        {
+          "path": "js/tutorial.js",
+          "language": "javascript",
+          "sizeLines": 71,
+          "fileCategory": "code"
+        },
+        {
+          "path": "js/visitors.js",
+          "language": "javascript",
+          "sizeLines": 1108,
+          "fileCategory": "code"
+        },
+        {
+          "path": "package.json",
+          "language": "json",
+          "sizeLines": 14,
+          "fileCategory": "config"
+        },
+        {
+          "path": "visual/visitors/.gitkeep",
+          "language": "unknown",
+          "sizeLines": 0,
+          "fileCategory": "code"
+        },
+        {
+          "path": "visual/visitors/README.md",
+          "language": "markdown",
+          "sizeLines": 40,
+          "fileCategory": "docs"
+        }
+      ],
+      "batchImportData": {
+        "js/render/focus.js": [],
+        "js/render/guidequests.js": [],
+        "js/render/index.js": [],
+        "js/render/library.js": [],
+        "js/render/momo-suggestion.js": [],
+        "js/render/plane.js": [],
+        "js/render/plants.js": [],
+        "js/render/quests.js": [],
+        "js/render/shop.js": [],
+        "js/render/tutorial-ui.js": [],
+        "js/render/visitors.js": [],
+        "js/render/writing.js": [],
+        "js/shop.js": [],
+        "js/state.js": [],
+        "js/storage.js": [],
+        "js/timer.js": [],
+        "js/tutorial.js": [],
+        "js/visitors.js": [],
+        "package.json": [],
+        "visual/visitors/.gitkeep": [],
+        "visual/visitors/README.md": []
+      },
+      "neighborMap": {}
+    }
+  ]
+}

@@ -1,0 +1,621 @@
+{
+  "scriptCompleted": true,
+  "files": [
+    {
+      "path": ".claude/skills/grill-me/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 5,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".netlify/netlify.toml",
+      "language": "toml",
+      "sizeLines": 24,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".netlify/state.json",
+      "language": "json",
+      "sizeLines": 2,
+      "fileCategory": "config"
+    },
+    {
+      "path": "audio/effect/achievement_unlock.wav",
+      "language": "wav",
+      "sizeLines": 1541,
+      "fileCategory": "code"
+    },
+    {
+      "path": "audio/effect/book_return.wav",
+      "language": "wav",
+      "sizeLines": 1422,
+      "fileCategory": "code"
+    },
+    {
+      "path": "audio/effect/button_click.wav",
+      "language": "wav",
+      "sizeLines": 40,
+      "fileCategory": "code"
+    },
+    {
+      "path": "audio/effect/buy_success.wav",
+      "language": "wav",
+      "sizeLines": 1103,
+      "fileCategory": "code"
+    },
+    {
+      "path": "audio/effect/focus_complete.wav",
+      "language": "wav",
+      "sizeLines": 2902,
+      "fileCategory": "code"
+    },
+    {
+      "path": "audio/effect/visitor_arrive.wav",
+      "language": "wav",
+      "sizeLines": 2008,
+      "fileCategory": "code"
+    },
+    {
+      "path": "css/style.css",
+      "language": "css",
+      "sizeLines": 1591,
+      "fileCategory": "markup"
+    },
+    {
+      "path": "data/atmosphere.js",
+      "language": "javascript",
+      "sizeLines": 63,
+      "fileCategory": "code"
+    },
+    {
+      "path": "data/book_pool.js",
+      "language": "javascript",
+      "sizeLines": 237,
+      "fileCategory": "code"
+    },
+    {
+      "path": "data/books.js",
+      "language": "javascript",
+      "sizeLines": 90,
+      "fileCategory": "code"
+    },
+    {
+      "path": "data/books/book_001.js",
+      "language": "javascript",
+      "sizeLines": 148,
+      "fileCategory": "code"
+    },
+    {
+      "path": "data/books/book_002.js",
+      "language": "javascript",
+      "sizeLines": 170,
+      "fileCategory": "code"
+    },
+    {
+      "path": "data/books/book_003.js",
+      "language": "javascript",
+      "sizeLines": 218,
+      "fileCategory": "code"
+    },
+    {
+      "path": "data/books/book_004.js",
+      "language": "javascript",
+      "sizeLines": 141,
+      "fileCategory": "code"
+    },
+    {
+      "path": "data/books/book_005.js",
+      "language": "javascript",
+      "sizeLines": 229,
+      "fileCategory": "code"
+    },
+    {
+      "path": "data/books/book_006.js",
+      "language": "javascript",
+      "sizeLines": 139,
+      "fileCategory": "code"
+    },
+    {
+      "path": "data/books/book_007.js",
+      "language": "javascript",
+      "sizeLines": 269,
+      "fileCategory": "code"
+    },
+    {
+      "path": "data/books/book_008.js",
+      "language": "javascript",
+      "sizeLines": 295,
+      "fileCategory": "code"
+    },
+    {
+      "path": "data/books/book_009.js",
+      "language": "javascript",
+      "sizeLines": 484,
+      "fileCategory": "code"
+    },
+    {
+      "path": "data/books/book_010.js",
+      "language": "javascript",
+      "sizeLines": 127,
+      "fileCategory": "code"
+    },
+    {
+      "path": "data/books/book_011_道德经.js",
+      "language": "javascript",
+      "sizeLines": 158,
+      "fileCategory": "code"
+    },
+    {
+      "path": "data/books/book_012_沉思录.js",
+      "language": "javascript",
+      "sizeLines": 134,
+      "fileCategory": "code"
+    },
+    {
+      "path": "data/books/book_013_理想国.js",
+      "language": "javascript",
+      "sizeLines": 238,
+      "fileCategory": "code"
+    },
+    {
+      "path": "data/books/book_014_史记.js",
+      "language": "javascript",
+      "sizeLines": 230,
+      "fileCategory": "code"
+    },
+    {
+      "path": "data/books/book_015_诗经.js",
+      "language": "javascript",
+      "sizeLines": 249,
+      "fileCategory": "code"
+    },
+    {
+      "path": "data/books/book_016_西游记.js",
+      "language": "javascript",
+      "sizeLines": 322,
+      "fileCategory": "code"
+    },
+    {
+      "path": "data/books/book_017_鲁滨逊漂流记.js",
+      "language": "javascript",
+      "sizeLines": 303,
+      "fileCategory": "code"
+    },
+    {
+      "path": "data/books/book_018_几何原本.js",
+      "language": "javascript",
+      "sizeLines": 608,
+      "fileCategory": "code"
+    },
+    {
+      "path": "data/books/book_019_卡拉马佐夫兄弟.js",
+      "language": "javascript",
+      "sizeLines": 826,
+      "fileCategory": "code"
+    },
+    {
+      "path": "data/books/book_020_社会契约论.js",
+      "language": "javascript",
+      "sizeLines": 283,
+      "fileCategory": "code"
+    },
+    {
+      "path": "data/books/book_021_第一哲学沉思集.js",
+      "language": "javascript",
+      "sizeLines": 216,
+      "fileCategory": "code"
+    },
+    {
+      "path": "data/books/book_022_传习录.js",
+      "language": "javascript",
+      "sizeLines": 244,
+      "fileCategory": "code"
+    },
+    {
+      "path": "data/books/book_023_绿野仙踪.js",
+      "language": "javascript",
+      "sizeLines": 143,
+      "fileCategory": "code"
+    },
+    {
+      "path": "data/books/book_024_爱丽丝梦游奇境.js",
+      "language": "javascript",
+      "sizeLines": 164,
+      "fileCategory": "code"
+    },
+    {
+      "path": "data/books/book_026_图书馆指南.js",
+      "language": "javascript",
+      "sizeLines": 90,
+      "fileCategory": "code"
+    },
+    {
+      "path": "data/books/book_027_飞鸟集.js",
+      "language": "javascript",
+      "sizeLines": 363,
+      "fileCategory": "code"
+    },
+    {
+      "path": "data/books/book_028_伊索寓言.js",
+      "language": "javascript",
+      "sizeLines": 288,
+      "fileCategory": "code"
+    },
+    {
+      "path": "data/books/book_029_菜根谭.js",
+      "language": "javascript",
+      "sizeLines": 340,
+      "fileCategory": "code"
+    },
+    {
+      "path": "data/curation_pairs.js",
+      "language": "javascript",
+      "sizeLines": 88,
+      "fileCategory": "code"
+    },
+    {
+      "path": "data/planes.js",
+      "language": "javascript",
+      "sizeLines": 87,
+      "fileCategory": "code"
+    },
+    {
+      "path": "data/plants.js",
+      "language": "javascript",
+      "sizeLines": 69,
+      "fileCategory": "code"
+    },
+    {
+      "path": "data/quests/pastoral_tasks.js",
+      "language": "javascript",
+      "sizeLines": 2057,
+      "fileCategory": "code"
+    },
+    {
+      "path": "data/signboards.js",
+      "language": "javascript",
+      "sizeLines": 55,
+      "fileCategory": "code"
+    },
+    {
+      "path": "data/tiergoals.js",
+      "language": "javascript",
+      "sizeLines": 163,
+      "fileCategory": "code"
+    },
+    {
+      "path": "data/visitor-events.js",
+      "language": "javascript",
+      "sizeLines": 1087,
+      "fileCategory": "code"
+    },
+    {
+      "path": "docs/2026-06-03-changelog.md",
+      "language": "markdown",
+      "sizeLines": 75,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/bugs/2026-06-04-smart-quote-syntax-error.md",
+      "language": "markdown",
+      "sizeLines": 54,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/diary/CLAUDE_DIARY.md",
+      "language": "markdown",
+      "sizeLines": 68,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/glossary.md",
+      "language": "markdown",
+      "sizeLines": 118,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/plans/focus-room-scene-2026-06-05.md",
+      "language": "markdown",
+      "sizeLines": 53,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/visitor-voice-guide.md",
+      "language": "markdown",
+      "sizeLines": 107,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "index.html",
+      "language": "html",
+      "sizeLines": 86,
+      "fileCategory": "markup"
+    },
+    {
+      "path": "js/achievements.js",
+      "language": "javascript",
+      "sizeLines": 274,
+      "fileCategory": "code"
+    },
+    {
+      "path": "js/actioncards.js",
+      "language": "javascript",
+      "sizeLines": 200,
+      "fileCategory": "code"
+    },
+    {
+      "path": "js/app.js",
+      "language": "javascript",
+      "sizeLines": 1200,
+      "fileCategory": "code"
+    },
+    {
+      "path": "js/atmosphere.js",
+      "language": "javascript",
+      "sizeLines": 18,
+      "fileCategory": "code"
+    },
+    {
+      "path": "js/audio.js",
+      "language": "javascript",
+      "sizeLines": 159,
+      "fileCategory": "code"
+    },
+    {
+      "path": "js/books.js",
+      "language": "javascript",
+      "sizeLines": 51,
+      "fileCategory": "code"
+    },
+    {
+      "path": "js/capacity.js",
+      "language": "javascript",
+      "sizeLines": 159,
+      "fileCategory": "code"
+    },
+    {
+      "path": "js/collection.js",
+      "language": "javascript",
+      "sizeLines": 130,
+      "fileCategory": "code"
+    },
+    {
+      "path": "js/curation.js",
+      "language": "javascript",
+      "sizeLines": 118,
+      "fileCategory": "code"
+    },
+    {
+      "path": "js/dailytasks.js",
+      "language": "javascript",
+      "sizeLines": 59,
+      "fileCategory": "code"
+    },
+    {
+      "path": "js/diary.js",
+      "language": "javascript",
+      "sizeLines": 326,
+      "fileCategory": "code"
+    },
+    {
+      "path": "js/guidequests.js",
+      "language": "javascript",
+      "sizeLines": 252,
+      "fileCategory": "code"
+    },
+    {
+      "path": "js/i18n/terms.js",
+      "language": "javascript",
+      "sizeLines": 140,
+      "fileCategory": "code"
+    },
+    {
+      "path": "js/intro.js",
+      "language": "javascript",
+      "sizeLines": 209,
+      "fileCategory": "code"
+    },
+    {
+      "path": "js/plants.js",
+      "language": "javascript",
+      "sizeLines": 231,
+      "fileCategory": "code"
+    },
+    {
+      "path": "js/quests.js",
+      "language": "javascript",
+      "sizeLines": 361,
+      "fileCategory": "code"
+    },
+    {
+      "path": "js/render/achievements.js",
+      "language": "javascript",
+      "sizeLines": 204,
+      "fileCategory": "code"
+    },
+    {
+      "path": "js/render/animations.js",
+      "language": "javascript",
+      "sizeLines": 256,
+      "fileCategory": "code"
+    },
+    {
+      "path": "js/render/archive.js",
+      "language": "javascript",
+      "sizeLines": 321,
+      "fileCategory": "code"
+    },
+    {
+      "path": "js/render/bookshelf.js",
+      "language": "javascript",
+      "sizeLines": 758,
+      "fileCategory": "code"
+    },
+    {
+      "path": "js/render/certificate.js",
+      "language": "javascript",
+      "sizeLines": 120,
+      "fileCategory": "code"
+    },
+    {
+      "path": "js/render/collection.js",
+      "language": "javascript",
+      "sizeLines": 171,
+      "fileCategory": "code"
+    },
+    {
+      "path": "js/render/common.js",
+      "language": "javascript",
+      "sizeLines": 61,
+      "fileCategory": "code"
+    },
+    {
+      "path": "js/render/focus.js",
+      "language": "javascript",
+      "sizeLines": 808,
+      "fileCategory": "code"
+    },
+    {
+      "path": "js/render/guidequests.js",
+      "language": "javascript",
+      "sizeLines": 137,
+      "fileCategory": "code"
+    },
+    {
+      "path": "js/render/index.js",
+      "language": "javascript",
+      "sizeLines": 13,
+      "fileCategory": "code"
+    },
+    {
+      "path": "js/render/library.js",
+      "language": "javascript",
+      "sizeLines": 341,
+      "fileCategory": "code"
+    },
+    {
+      "path": "js/render/momo-suggestion.js",
+      "language": "javascript",
+      "sizeLines": 173,
+      "fileCategory": "code"
+    },
+    {
+      "path": "js/render/plane.js",
+      "language": "javascript",
+      "sizeLines": 303,
+      "fileCategory": "code"
+    },
+    {
+      "path": "js/render/plants.js",
+      "language": "javascript",
+      "sizeLines": 229,
+      "fileCategory": "code"
+    },
+    {
+      "path": "js/render/quests.js",
+      "language": "javascript",
+      "sizeLines": 273,
+      "fileCategory": "code"
+    },
+    {
+      "path": "js/render/shop.js",
+      "language": "javascript",
+      "sizeLines": 772,
+      "fileCategory": "code"
+    },
+    {
+      "path": "js/render/tutorial-ui.js",
+      "language": "javascript",
+      "sizeLines": 316,
+      "fileCategory": "code"
+    },
+    {
+      "path": "js/render/visitors.js",
+      "language": "javascript",
+      "sizeLines": 387,
+      "fileCategory": "code"
+    },
+    {
+      "path": "js/render/writing.js",
+      "language": "javascript",
+      "sizeLines": 460,
+      "fileCategory": "code"
+    },
+    {
+      "path": "js/shop.js",
+      "language": "javascript",
+      "sizeLines": 274,
+      "fileCategory": "code"
+    },
+    {
+      "path": "js/state.js",
+      "language": "javascript",
+      "sizeLines": 536,
+      "fileCategory": "code"
+    },
+    {
+      "path": "js/storage.js",
+      "language": "javascript",
+      "sizeLines": 103,
+      "fileCategory": "code"
+    },
+    {
+      "path": "js/timer.js",
+      "language": "javascript",
+      "sizeLines": 125,
+      "fileCategory": "code"
+    },
+    {
+      "path": "js/tutorial.js",
+      "language": "javascript",
+      "sizeLines": 71,
+      "fileCategory": "code"
+    },
+    {
+      "path": "js/visitors.js",
+      "language": "javascript",
+      "sizeLines": 1108,
+      "fileCategory": "code"
+    },
+    {
+      "path": "package.json",
+      "language": "json",
+      "sizeLines": 14,
+      "fileCategory": "config"
+    },
+    {
+      "path": "visual/visitors/.gitkeep",
+      "language": "unknown",
+      "sizeLines": 0,
+      "fileCategory": "code"
+    },
+    {
+      "path": "visual/visitors/README.md",
+      "language": "markdown",
+      "sizeLines": 40,
+      "fileCategory": "docs"
+    }
+  ],
+  "totalFiles": 99,
+  "filteredByIgnore": 0,
+  "estimatedComplexity": "moderate",
+  "stats": {
+    "filesScanned": 99,
+    "byCategory": {
+      "docs": 8,
+      "config": 3,
+      "code": 86,
+      "markup": 2
+    },
+    "byLanguage": {
+      "markdown": 8,
+      "toml": 1,
+      "json": 2,
+      "wav": 6,
+      "css": 1,
+      "javascript": 79,
+      "html": 1,
+      "unknown": 1
+    }
+  }
+}
