@@ -73,14 +73,16 @@ export function updateBodyBackground() {
   document.body.style.backgroundImage = `linear-gradient(rgba(44,36,25,0.88), rgba(44,36,25,0.88)), url('${bgUrl}')`;
 }
 
+import { getAtmosphereLevel as _getAtmosphereLevel } from './core/economy.js';
+
 export function getAtmosphereLevel() {
   const v = state.library.atmosphere;
-  if (v <= 30) return { level: 1, name: '废墟', next: 30 - v };
-  if (v <= 80) return { level: 2, name: '破败', next: 80 - v };
-  if (v <= 160) return { level: 3, name: '陈旧', next: 160 - v };
-  if (v <= 300) return { level: 4, name: '温暖', next: 300 - v };
-  return { level: 5, name: '星辰', next: 0 };
+  const base = _getAtmosphereLevel(v);
+  const maxes = { 1: 30, 2: 80, 3: 160, 4: 300, 5: 500 };
+  return { ...base, next: (maxes[base.level] || 500) - v };
 }
+
+export { _getAtmosphereLevel as getAtmosphereLevelPure };
 
 export function updateStreak() {
   const today = new Date().toDateString();

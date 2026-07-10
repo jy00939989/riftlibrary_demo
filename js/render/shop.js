@@ -4,7 +4,7 @@ import { BOOKS } from '../../data/books.js';
 import { SHARED_POOL } from '../../data/book_pool.js';
 import { el, h, actions, updateStatusBar } from './common.js';
 import { playSfx } from '../audio.js';
-import { ensureShopState, getShopState, purchaseBook, getBorrowLevelPrice, upgradeBorrowLevel, getFocusLevelPrice, upgradeFocusLevel, purchaseSignboard, purchasePlanePortal, getPlanePortalPrice } from '../shop.js';
+import { ensureShopState, getShopState, purchaseBook, getBorrowLevelPrice, upgradeBorrowLevel, getFocusLevelPrice, upgradeFocusLevel, purchaseSignboard, purchasePlanePortal, getPlanePortalPrice, getActivePeizhouRec } from '../shop.js';
 import { getBookCapacity, getOwnedBookCount, getManuscriptSlots, getManuscriptBoxCount, getManuscriptSlotPrice, expandManuscriptSlots } from '../capacity.js';
 import { PLANES, canUnlockPlane } from '../../data/planes.js';
 import { showFocusRoomUpgrade } from './tutorial-ui.js';
@@ -377,14 +377,19 @@ function renderBookCard(slot, poolEntry, owned, isRotating, mBoxFull) {
     return card;
   }
 
+  const peizhouRec = getActivePeizhouRec();
+  const isPeizhouPick = peizhouRec && peizhouRec.bookId === slot.bookId;
+
   card.innerHTML = `
     <div class="text-center">
       ${poolEntry.starter ? '<div class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full inline-block mb-1 font-bold">🌱 新手推荐</div>' : ''}
+      ${isPeizhouPick ? '<div class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full inline-block mb-1 font-bold">📚 裴舟推荐 · 7折</div>' : ''}
       <div class="text-3xl mb-2">${poolEntry.emoji}</div>
       <div class="font-bold text-sm mb-1">${poolEntry.title}</div>
       <div class="text-xs text-ink-light mb-1">${poolEntry.author}</div>
       <div class="text-xs text-ink-light mb-2">${poolEntry.category} · ${poolEntry.totalWords.toLocaleString()}字</div>
       ${priceDisplay}
+      ${isPeizhouPick ? `<div class="text-xs text-amber-600 mt-1">原价 💰${slot.price.toLocaleString()} → 裴舟价 💰${Math.round(slot.price * 0.7).toLocaleString()}</div>` : ''}
     </div>
   `;
 

@@ -147,11 +147,11 @@ function unlock(id) {
 
 // ========== 辅助统计函数 ==========
 
-function countOwnedBooks(s) {
+export function countOwnedBooks(s) {
   return Object.keys(s.books).filter(id => s.books[id] && s.books[id].status !== 'locked').length;
 }
 
-function countCategoryBooks(s, category) {
+export function countCategoryBooks(s, category) {
   return Object.keys(s.books).filter(id => {
     const bs = s.books[id];
     if (!bs || bs.status === 'locked') return false;
@@ -160,24 +160,24 @@ function countCategoryBooks(s, category) {
   }).length;
 }
 
-function countMasteryLevel(s, level) {
+export function countMasteryLevel(s, level) {
   return Object.keys(s.books).filter(id => {
     const bs = s.books[id];
     return bs && bs.status !== 'locked' && bs.masteryLevel >= level;
   }).length;
 }
 
-function countTotalVisitors(s) {
+export function countTotalVisitors(s) {
   return s.borrowRecords.filter(r => r.status === 'returned').length;
 }
 
-function allVisitorsTriggered(s) {
+export function allVisitorsTriggered(s) {
   const triggered = new Set();
   s.borrowRecords.forEach(r => { if (r.event) triggered.add(r.charId); });
   return triggered.size >= 6; // 10位中至少触发过6位的事件
 }
 
-function countFocusDays(s) {
+export function countFocusDays(s) {
   // 从 history 中有 focus 记录的日期去重计数
   const days = new Set();
   (s.history || []).forEach(h => {
@@ -207,20 +207,12 @@ export function registerEmojiClick() {
  * 返回已解锁成就的聚合加成对象，供 speed / coins / inspiration 消费。
  * 纯函数，从 localStorage 读取，不依赖 state。
  */
+import { calcAchievementBonuses } from './core/achievement-stats.js';
+export { calcAchievementBonuses };
+
 export function getAchievementBonuses() {
-  const unlocked = loadUnlocked();
-  return {
-    // W06 七日不绝：连击系数从 0.02 提升至 0.03
-    streakMultiplier: unlocked['W06'] ? 0.03 : 0.02,
-    // L04 借阅进阶：缮写室升级每级系数从 0.05 提升至 0.07
-    focusLevelBonus: unlocked['L04'] ? 0.07 : 0.05,
-    // B07 五书精通：全书籍誊抄速度 +5%
-    speedFlat: unlocked['B07'] ? 0.05 : 0,
-    // V02 四海皆知：专注智慧之光收益 +10%
-    coinsBoost: unlocked['V02'] ? 0.10 : 0,
-    // W07 十万字匠 +1灵感 / B08 典藏大师 +2灵感（可叠加）
-    inspirationBonus: (unlocked['W07'] ? 1 : 0) + (unlocked['B08'] ? 2 : 0),
-  };
+  const unlocked = loadUnlocked(); // ← 读 localStorage（副作用）
+  return calcAchievementBonuses(new Set(Object.keys(unlocked)));
 }
 
 // ========== 检测入口 ==========

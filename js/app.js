@@ -10,7 +10,7 @@ import {
 } from './render/index.js';
 import { startTimer, togglePauseTimer, abandonTimer, setCompleteCallback } from './timer.js';
 import { BOOKS } from '../data/books.js';
-import { spawnVisitor, tickVisitorBrowsing, checkDueVisitors, collectReturn, buySalesBook, removeVisitor, getVisitorDef, getAuraSpeedBonus, getAuraCoinsMultiplier, getAuraSpawnBonus, getBorrowSpawnBonus, getStageWitnesses } from './visitors.js';
+import { spawnVisitor, tickVisitorBrowsing, checkDueVisitors, collectReturn, removeVisitor, getVisitorDef, getAuraSpeedBonus, getAuraCoinsMultiplier, getAuraSpawnBonus, getBorrowSpawnBonus, getStageWitnesses } from './visitors.js';
 import { removeFromManuscriptBox, isBookCapacityFull, placeOnShelf } from './capacity.js';
 import { upgradeBorrowLevel, getFocusSpeedMultiplier, hasSignboard } from './shop.js';
 import { getCurationFocusSpeed, getCurationCoinsBonus } from './curation.js';
@@ -19,7 +19,7 @@ import { showAchievementToast } from './render/achievements.js';
 import { addWaterOpportunity, checkWither } from './plants.js';
 import { addDiaryEntry, tryGenerateDailySummary } from './diary.js';
 import { tickPlaneVisitors, checkTaskCompletion } from './quests.js';
-import { initAudio, toggleMusic, onFirstInteraction, initSfx, playSfx } from './audio.js';
+import { initAudio, toggleMusic, onFirstInteraction, initSfx, playSfx, pauseMusic, resumeMusic } from './audio.js';
 import { showIntro } from './intro.js';
 import { checkAndShowTutorial } from './tutorial.js';
 import { TIER_GOALS, isTierComplete, countTierGoalsComplete } from '../data/tiergoals.js';
@@ -35,61 +35,9 @@ function getNow() {
   return window.__dev && window.__dev.getNow ? window.__dev.getNow() : Date.now();
 }
 
-// ========== 章节进度辅助 ==========
-
-function getChapterInfo(book, bookState) {
-  if (!book || !book.chapters || book.chapters.length === 0) return null;
-
-  const copyCount = bookState?.copyCount || 0;
-  const totalWords = book.totalWords || 1;
-  const effectiveWords = copyCount > 0 ? (bookState.copiedWords % totalWords) : bookState.copiedWords;
-
-  let currentChapter = null;
-  let chapterIndex = -1;
-  for (let i = book.chapters.length - 1; i >= 0; i--) {
-    if (effectiveWords >= book.chapters[i].unlockAt) {
-      currentChapter = book.chapters[i];
-      chapterIndex = i;
-      break;
-    }
-  }
-
-  if (!currentChapter) return null;
-
-  const chapterStart = currentChapter.unlockAt;
-  const progressInChapter = Math.min(currentChapter.words, effectiveWords - chapterStart);
-  const remainingWords = Math.max(0, currentChapter.words - progressInChapter);
-  const progressPct = Math.min(100, Math.round((progressInChapter / currentChapter.words) * 100));
-  const remainingMinutes = Math.ceil(remainingWords / 100);
-
-  return {
-    current: chapterIndex + 1,
-    total: book.chapters.length,
-    title: currentChapter.title,
-    progressPct,
-    remainingWords,
-    remainingMinutes,
-    highlight: currentChapter.highlight || currentChapter.preview
-  };
-}
-
-function getNextChapterPreview(book, bookState) {
-  if (!book || !book.chapters) return null;
-  const copyCount = bookState?.copyCount || 0;
-  const totalWords = book.totalWords || 1;
-  const effectiveWords = copyCount > 0 ? (bookState.copiedWords % totalWords) : bookState.copiedWords;
-
-  let chapterIndex = -1;
-  for (let i = book.chapters.length - 1; i >= 0; i--) {
-    if (effectiveWords >= book.chapters[i].unlockAt) {
-      chapterIndex = i;
-      break;
-    }
-  }
-
-  const nextChapter = book.chapters[chapterIndex + 1];
-  return nextChapter ? (nextChapter.preview || null) : null;
-}
+// 章节进度辅助（纯函数已移至 js/core/book-utils.js）
+import { getChapterInfo, getNextChapterPreview, getEffectiveCopiedWords } from './core/book-utils.js';
+export { getChapterInfo, getNextChapterPreview };
 
 // ========== 里程碑配置 ==========
 
@@ -143,6 +91,7 @@ function handleStartFocus() {
 
   function doStart() {
     startTimer();
+    resumeMusic();
     if (isFirstCopy) {
       const achResults = checkAchievements('copy_start');
       showAchievementBatch(achResults);
@@ -202,12 +151,13 @@ function handleCompleteFocus(isAuto = false) {
   if (!sess.active) return;
 
   const minutes = Math.round(sess.elapsedSeconds / 60);
-  if (minutes < 1) {
-    if (!isAuto) alert('专注时间太短，至少需要1分钟 ⌛');
+  if (minutes < 1 && !isAuto) {
+    alert('专注时间太短，至少需要1分钟 ⌛');
     return;
   }
 
   playSfx('focus_complete');
+  pauseMusic();
 
   // 手动完成时清除 interval；自动完成时 timer.js 已经 stopTimer 了
   if (!isAuto && sess.intervalId) {
@@ -241,7 +191,6 @@ function handleCompleteFocus(isAuto = false) {
   state.focus.totalMinutes += minutes;
   state.focus.totalWords += wordsGained;
   updateStreak();
-  onFirstInteraction(); // 首次专注完成后激活BGM
 
   // 植物浇水机会：番茄钟25分钟模式完成给一次浇水
   if (sess.mode === 'pomodoro' && minutes >= 20) {
@@ -260,7 +209,20 @@ function handleCompleteFocus(isAuto = false) {
   if (sess.bookId && state.books[sess.bookId]) {
     const bookState = state.books[sess.bookId];
     const book = BOOKS[sess.bookId];
-    bookState.copiedWords += wordsGained;
+    const totalWords = book.totalWords || 1;
+    const prevCopyCount = bookState.copyCount || 0;
+
+    // 当前周期内的有效进度：重抄时也显示为 0-100%，而不是 200%/300%
+    const startEffectiveWords = getEffectiveCopiedWords(bookState, totalWords);
+    const projectedEffective = startEffectiveWords + wordsGained;
+    const didComplete = projectedEffective >= totalWords;
+
+    // 封顶到本次完成边界：一次专注只能完成一个周期，禁止连跳多级
+    if (didComplete) {
+      bookState.copiedWords = (prevCopyCount + 1) * totalWords;
+    } else {
+      bookState.copiedWords = prevCopyCount * totalWords + projectedEffective;
+    }
 
     // 检查章节解锁
     const newlyUnlocked = [];
@@ -273,46 +235,42 @@ function handleCompleteFocus(isAuto = false) {
     });
     newlyUnlocked.forEach(u => checkTaskCompletion('chapter_unlocked', u));
 
-    // 检查书籍完成（支持短书一次专注多次完成 + 已完本重复誊抄提升熟练度）
-    const totalCopies = Math.floor(bookState.copiedWords / book.totalWords);
-    const prevCopies = bookState.copyCount || 0;
-    const newCompletions = totalCopies - prevCopies;
+    if (didComplete) {
+      const isFirstCompletion = prevCopyCount === 0;
 
-    if (newCompletions > 0) {
-      bookState.copyCount = totalCopies;
-      const wasFirst = (prevCopies === 0);
+      bookState.copyCount = prevCopyCount + 1;
+      if (!book.noMastery) {
+        bookState.masteryLevel = Math.min(5, bookState.copyCount);
+        bookMastery = bookState.masteryLevel;
+      }
 
-      if (wasFirst) {
+      if (isFirstCompletion) {
         bookState.status = 'completed';
       }
 
       // 灵感重抄完成 → 重置标记
-      if (bookState.reCopyUnlocked && !wasFirst) {
+      if (bookState.reCopyUnlocked) {
         bookState.reCopyUnlocked = false;
       }
 
-      if (!book.noMastery) {
-        bookState.masteryLevel = Math.min(5, totalCopies + 1);
-        bookMastery = bookState.masteryLevel;
-      }
+      // 发放单次完成奖励
+      addAtmosphere(book.totalWords < 30000 ? 3 : book.totalWords < 100000 ? 6 : 10);
+      addCoins(50);
 
-      // 按完成次数发放奖励
-      for (let i = 0; i < newCompletions; i++) {
-        addAtmosphere(book.totalWords < 30000 ? 3 : book.totalWords < 100000 ? 6 : 10);
-        addCoins(50);
-      }
       addHistory('achievement',
-        newCompletions > 1 ? `连破${newCompletions}重！《${book.title}》誊抄 ×${newCompletions}` : `完成《${book.title}》誊抄！`,
-        `第${totalCopies}次誊抄 · 熟练度 Lv${bookState.masteryLevel || Math.min(5, totalCopies + 1)}`);
-      addDiaryEntry('book_complete', { title: book.title, copyCount: totalCopies, mastery: bookState.masteryLevel || Math.min(5, totalCopies + 1) });
+        `完成《${book.title}》誊抄！`,
+        `第${bookState.copyCount}次誊抄 · 熟练度 Lv${bookState.masteryLevel || Math.min(5, bookState.copyCount)}`);
+      addDiaryEntry('book_complete', { title: book.title, copyCount: bookState.copyCount, mastery: bookState.masteryLevel || Math.min(5, bookState.copyCount) });
 
-      if (wasFirst) {
-        bookCompleted = true;
-        bookTitle = book.title;
-        bookEmoji = book.emoji;
-        completedBook = book;
-        checkTaskCompletion('book_completed', { bookId: sess.bookId });
+      // 每次完成（含重抄）都弹出卡面
+      bookCompleted = true;
+      bookTitle = book.title;
+      bookEmoji = book.emoji;
+      completedBook = book;
+      copyCount = bookState.copyCount;
+      checkTaskCompletion('book_completed', { bookId: sess.bookId });
 
+      if (isFirstCompletion) {
         // 手稿箱 → 书架：誊抄完成首次上架
         if (isBookCapacityFull()) {
           addHistory('action', '📦 书架已满，等待扩容', `《${book.title}》誊抄完成，暂存手稿箱——请前往商店扩充书架`);
@@ -322,7 +280,6 @@ function handleCompleteFocus(isAuto = false) {
           addHistory('action', '📚 上架', `《${book.title}》已从手稿箱移入书架`);
         }
       }
-      copyCount = totalCopies;
     }
   }
 
@@ -712,20 +669,6 @@ function handleCollectReturn(visitorId) {
   return result;
 }
 
-function handleBuySalesBook(bookMeta) {
-  const bookId = buySalesBook(bookMeta);
-  if (bookId) {
-    updateStatusBar();
-    playSfx('buy_success');
-    saveState();
-    renderBookshelfPage();
-    const bookAch = checkAchievements('purchase_book');
-    showAchievementBatch(bookAch);
-  } else {
-    alert('智慧之光不足 💰');
-  }
-}
-
 // ========== 成就通知 ==========
 
 function showAchievementBatch(results) {
@@ -954,7 +897,6 @@ setActions({
   abandonFocus: handleAbandonFocus,
   buyShelf: handleBuyShelf,
   collectReturn: handleCollectReturn,
-  buySalesBook: handleBuySalesBook,
   upgradeBorrowLevel: handleUpgradeBorrowLevel
 });
 
@@ -1138,7 +1080,7 @@ function init() {
     if (actualCopies > (bs.copyCount || 0)) {
       bs.copyCount = actualCopies;
       if (!book.noMastery) {
-        bs.masteryLevel = Math.min(5, actualCopies + 1);
+        bs.masteryLevel = Math.min(5, actualCopies);
       }
       if (bs.masteryLevel >= 5) {
         bs.status = 'completed';
@@ -1160,7 +1102,7 @@ function init() {
       bs.status = 'completed';
       bs.copyCount = Math.max(bs.copyCount || 1, Math.floor(bs.copiedWords / book.totalWords));
       if (!book.noMastery) {
-        bs.masteryLevel = Math.min(5, bs.copyCount + 1);
+        bs.masteryLevel = Math.min(5, bs.copyCount);
       }
       migratedBooks++;
     }
@@ -1172,6 +1114,12 @@ function init() {
         }
       });
     }
+
+    // 修正旧版 masteryLevel：旧公式为 copyCount + 1，新公式直接等于 copyCount
+    if (!book.noMastery && bs.copyCount > 0 && bs.masteryLevel > bs.copyCount) {
+      bs.masteryLevel = Math.min(5, bs.copyCount);
+      migratedBooks++;
+    }
   });
   if (migratedBooks > 0) {
     saveState();
@@ -1181,11 +1129,14 @@ function init() {
   // 注入回调
   setCompleteCallback(handleCompleteFocus);
 
-  // 默认选择第一本已开启过抄写的书
+  // 默认选择第一本已开启过抄写、且可以立即誊抄的书
   if (!state.currentSession.bookId) {
     const firstBook = Object.keys(state.books).find(id => {
       const bs = state.books[id];
-      return bs && bs.status !== 'locked' && bs.copiedWords > 0;
+      if (!bs || bs.status === 'locked') return false;
+      // 已完成的书必须已经解锁重抄，才默认选中
+      if (bs.status === 'completed' && !bs.reCopyUnlocked) return false;
+      return bs.copiedWords > 0 || bs.status === 'copying' || bs.status === 'unlocked';
     });
     if (firstBook) state.currentSession.bookId = firstBook;
   }

@@ -282,11 +282,17 @@ export function showVisitorEventModal(result, callback) {
       contentHtml += `<div class="mt-3 p-2 bg-magic-gold/10 rounded-lg text-xs">🗺️ 小萤发现了一张藏宝图！翻开获得：<b>${ev.reward.text}</b></div>`;
     } else if (ev.type === 'poem') {
       contentHtml += `<div class="mt-3 p-2 bg-wood/10 rounded-lg text-xs text-ink-light italic">🎵 "${ev.poem}"</div>`;
-    } else if (ev.type === 'sales_pitch') {
-      contentHtml += `<div class="mt-3 p-3 bg-magic-gold/10 rounded-lg">
-        <div class="text-magic-gold font-bold text-sm">📦 ${ev.vendor === 'peizhou' ? '裴舟' : '阿九'}推销一本书！</div>
-        <div class="text-ink-light text-sm">《${ev.book.title}》${ev.book.emoji}</div>
-        <div class="text-magic-blue font-bold text-xs mt-1">售价：${ev.book.price.toLocaleString()} 💰</div>
+    } else if (ev.type === 'peizhou_recommend') {
+      contentHtml += `<div class="mt-3 p-3 bg-magic-gold/10 rounded-lg border border-magic-gold/20">
+        <div class="text-magic-gold font-bold text-sm">📚 裴舟荐书</div>
+        <div class="text-ink-light text-sm">《${ev.title}》${ev.emoji} — 24h内在商店购买享额外7折</div>
+        <div class="text-xs text-ink-light mt-1">"这本在我书店里摆了好久，一直没人带走。"</div>
+      </div>`;
+    } else if (ev.type === 'peizhou_preview') {
+      contentHtml += `<div class="mt-3 p-3 bg-magic-gold/10 rounded-lg border border-magic-gold/20">
+        <div class="text-magic-gold font-bold text-sm">📖 裴舟翻了翻你的手稿箱</div>
+        <div class="text-xs text-ink-light mt-1">"这段我熟——以前书店里有这本书，我帮人补过好几页。"</div>
+        ${ev.boosted ? '<div class="text-xs text-magic-blue mt-1">✨ 手稿箱中一本未抄完的书进度 +3%</div>' : ''}
       </div>`;
     }
   }
@@ -348,23 +354,7 @@ export function showVisitorEventModal(result, callback) {
 
   // 按钮区
   const btnRow = el('div', 'flex justify-center gap-3 mt-4');
-  if (result.event && result.event.type === 'sales_pitch') {
-    const buyBtn = el('button', 'px-6 py-2 bg-magic-gold text-white rounded-lg font-bold hover:shadow-lg transition-all');
-    buyBtn.textContent = `购买 💰${result.event.book.price.toLocaleString()}`;
-    buyBtn.addEventListener('click', () => {
-      if (actions.buySalesBook) actions.buySalesBook(result.event.book);
-      overlay.remove();
-      if (callback) callback();
-    });
-    const cancelBtn = el('button', 'px-4 py-2 bg-wood/20 text-ink-light rounded-lg');
-    cancelBtn.textContent = '不买了';
-    cancelBtn.addEventListener('click', () => {
-      overlay.remove();
-      if (callback) callback();
-    });
-    btnRow.appendChild(buyBtn);
-    btnRow.appendChild(cancelBtn);
-  } else {
+  {
     const okBtn = el('button', 'px-6 py-3 bg-magic-gold text-white rounded-lg font-bold');
     okBtn.textContent = '知道了';
     okBtn.addEventListener('click', () => {

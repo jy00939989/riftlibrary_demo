@@ -94,6 +94,20 @@ export function toggleMusic() {
   }
 }
 
+export function pauseMusic() {
+  if (!musicEnabled || !currentAudio) return;
+  currentAudio.pause();
+}
+
+export function resumeMusic() {
+  if (!musicEnabled) return;
+  if (currentAudio) {
+    currentAudio.play().catch(() => {});
+  } else {
+    playCurrentTier();
+  }
+}
+
 // 用户首次交互后调用，解除浏览器自动播放限制
 export function onFirstInteraction() {
   initSfx();

@@ -193,7 +193,10 @@ export const state = {
   momoCommentUsedToday: { date: '', comments: [] },
 
   // 日志装帧升级奖励是否已领取
-  diaryLevelRewardsClaimed: []
+  diaryLevelRewardsClaimed: [],
+
+  // 裴舟荐书折扣 { bookId, discount, expiresAt }，null=无推荐
+  peizhouRec: null
 };
 
 // 默认书籍状态（新增/变更书籍时同步更新此处）
@@ -477,6 +480,9 @@ export function initState() {
       }
       if (state.library.manuscriptSlots === undefined) {
         state.library.manuscriptSlots = 5;
+      }
+      if (state.peizhouRec === undefined) {
+        state.peizhouRec = null;
       }
       // 旧存档迁移：shelves 从 [1, 2] 数字格式 → [[null×5], ...] 位置格式
       if (state.library.shelves.length > 0 && typeof state.library.shelves[0] === 'number') {

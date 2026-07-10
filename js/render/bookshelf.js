@@ -6,6 +6,7 @@ import { checkTaskCompletion } from '../quests.js';
 import { spendInspiration } from '../storage.js';
 import { getManuscriptSlots, getManuscriptBoxCount, getBookCapacity, getOwnedBookCount, placeOnShelf } from '../capacity.js';
 import { calcCurationEffects } from '../curation.js';
+import { getEffectiveCopiedWords } from '../core/book-utils.js';
 
 const SHELF_CAPACITY = 5;
 let currentFilter = 'all';
@@ -325,12 +326,15 @@ function applyFilters(books) {
 
 function renderBookCard(book) {
   const bookState = state.books[book.id];
-  const progress = book.totalWords > 0 ? Math.round((bookState.copiedWords / book.totalWords) * 100) : 0;
+  const effectiveWords = getEffectiveCopiedWords(bookState, book.totalWords);
+  const progress = book.totalWords > 0 ? Math.round((effectiveWords / book.totalWords) * 100) : 0;
   const masteryNames = ['', '初识', '熟悉', '精通', '大师', '传承'];
   const masteryName = masteryNames[bookState.masteryLevel] || '';
   const isCompleted = bookState.status === 'completed';
   const isCopying = bookState.status === 'copying' || (bookState.copiedWords > 0 && !isCompleted);
   const isUnstarted = !isCompleted && !isCopying;
+  const isJustCompleted = isCompleted && effectiveWords === 0;
+  const displayProgress = isJustCompleted ? 100 : progress;
   const starIcon = bookState.starred ? '⭐' : '☆';
   const cardDiv = el('div', `book-spine ${isCompleted ? 'completed' : isCopying ? 'copying' : 'unstarted'} flex flex-col min-h-[200px]`);
 
@@ -353,7 +357,7 @@ function renderBookCard(book) {
         ${isUnstarted ? '<span class="text-[10px] text-ink-light/50">点击开始</span>' : ''}
       </div>
       <div class="h-2 bg-wood/10 rounded-full overflow-hidden">
-        <div class="h-full rounded-full transition-all duration-700 ${isCompleted ? 'bg-magic-gold' : 'bg-magic-blue'}" style="width:${Math.min(100, progress)}%"></div>
+        <div class="h-full rounded-full transition-all duration-700 ${isCompleted ? 'bg-magic-gold' : 'bg-magic-blue'}" style="width:${Math.min(100, displayProgress)}%"></div>
       </div>
       <div class="text-[10px] text-ink-light/60 mt-1">
         ${isCompleted ? '已完成 ✓' : isCopying ? '誊抄中 ' + progress + '%' : '待誊抄'}
@@ -389,12 +393,8 @@ function renderChapterList(book) {
   const modal = el('div', 'fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4');
   const content = el('div', 'parchment-bg rounded-2xl p-6 max-w-lg w-full max-h-[80vh] overflow-y-auto magic-glow');
 
-  // 重抄灵感费用
-  const getReCopyCost = (b) => {
-    if (b.totalWords < 30000) return 2;
-    if (b.totalWords < 100000) return 3;
-    return 5;
-  };
+  // 重抄灵感费用：固定 2 灵感一次
+  const getReCopyCost = () => 2;
 
   const isCompleted = bookState.status === 'completed';
   const needReCopy = isCompleted && !bookState.reCopyUnlocked && !book.noMastery;
@@ -407,7 +407,7 @@ function renderChapterList(book) {
     <div class="text-sm text-ink-light mb-1">${book.author} · ${book.category} · ${book.totalWords.toLocaleString()}字</div>
     ${isCompleted ? `<div class="text-xs text-magic-gold mb-2">✦ 熟练度 Lv${bookState.masteryLevel} · 已抄 ${bookState.copyCount} 次</div>` : ''}
     ${needReCopy
-      ? `<button id="re-copy-btn" class="w-full px-4 py-2 mb-4 bg-purple-600 text-white rounded-lg font-bold text-sm hover:shadow-lg transition-all">🔮 花费灵感重抄 · ${getReCopyCost(book)} ✨</button>
+      ? `<button id="re-copy-btn" class="w-full px-4 py-2 mb-4 bg-purple-600 text-white rounded-lg font-bold text-sm hover:shadow-lg transition-all">🔮 花费灵感重抄 · ${getReCopyCost()} ✨</button>
          <div class="text-center text-xs text-ink-light mb-3">当前灵感：${state.inspiration || 0} ✨</div>`
       : `<button id="start-copy-btn" class="w-full px-4 py-2 mb-4 bg-magic-gold text-white rounded-lg font-bold text-sm hover:shadow-lg transition-all">📝 开始誊抄此书</button>`
     }
@@ -451,7 +451,7 @@ function renderChapterList(book) {
   const reCopyBtn = content.querySelector('#re-copy-btn');
   if (reCopyBtn) {
     reCopyBtn.addEventListener('click', () => {
-      const cost = getReCopyCost(book);
+      const cost = getReCopyCost();
       if (!spendInspiration(cost)) {
         alert(`灵感不足！需要 ${cost} ✨，当前拥有 ${state.inspiration || 0} ✨`);
         return;

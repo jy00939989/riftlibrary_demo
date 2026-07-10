@@ -7,9 +7,10 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <title>异世界图书馆</title>
+  <link rel="icon" href="data:,">
   <link rel="stylesheet" href="css/style.css?v=20260605">
   <link href="https://fonts.loli.net/css2?family=Ma+Shan+Zheng&family=Zhi+Mang+Xing&family=Noto+Serif+SC:wght@400;600;700&family=Cinzel:wght@400;600&display=swap" rel="stylesheet">
-  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="js/lib/tailwindcss.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script>
     tailwind.config = {
@@ -76,7 +77,7 @@
   <!-- 标签导航 -->
   <div class="max-w-6xl mx-auto px-4 pt-4">
     <div class="flex flex-wrap gap-1 mb-6" id="nav-tabs">
-      <button id="tab-focus" class="nav-btn active">🖋️ 缮写室</button>
+      <button id="tab-focus" class="nav-btn active"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-icon"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"></path><line x1="16" y1="8" x2="2" y2="22"></line><line x1="17.5" y1="15" x2="9" y2="15"></line></svg> 缮写室</button>
       <button id="tab-bookshelf" class="nav-btn">📖 大书库</button>
       <button id="tab-library" class="nav-btn">🏛️ 馆长办公室</button>
       <button id="tab-visitors" class="nav-btn">☕ 读者沙龙</button>

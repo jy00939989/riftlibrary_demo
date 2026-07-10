@@ -7,6 +7,7 @@ import { isMomoAccelerating } from '../timer.js';
 import { ensureDailyTasks, claimAllDoneBonus } from '../dailytasks.js';
 import { getActiveChapterTaskForBook } from '../quests.js';
 import { getActiveAuras } from '../visitors.js';
+import { getEffectiveCopiedWords } from '../core/book-utils.js';
 
 // 缮写室素材
 const FOCUS_IMG_NAMES = [
@@ -47,7 +48,7 @@ export function renderFocusPage() {
   banner.innerHTML = `
     <img src="visual/focusroom/${FOCUS_IMG_NAMES[flv]}" alt="缮写室 · ${FOCUS_LV_NAMES[flv]}" class="w-full h-48 object-cover">
     <div class="bg-ink/70 text-white text-center py-2 text-sm">
-      🖋️ 缮写室 · ${FOCUS_LV_NAMES[flv]}${flv > 0 ? ` · 誊抄速度 ${Math.round((1 + flv * 0.05) * 100)}%` : ''}
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-icon"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"></path><line x1="16" y1="8" x2="2" y2="22"></line><line x1="17.5" y1="15" x2="9" y2="15"></line></svg> 缮写室 ·${FOCUS_LV_NAMES[flv]}${flv > 0 ? ` · 誊抄速度 ${Math.round((1 + flv * 0.05) * 100)}%` : ''}
     </div>
   `;
   container.appendChild(banner);
@@ -112,9 +113,10 @@ function updateBookProgressDOM(sess) {
   const book = sess.bookId ? BOOKS[sess.bookId] : null;
   if (!book) return;
 
-  const copiedWords = state.books[sess.bookId]?.copiedWords || 0;
+  const bookState = state.books[sess.bookId];
   const totalWords = book.totalWords || 1;
-  const pct = Math.min(100, Math.round((copiedWords / totalWords) * 100));
+  const effectiveWords = getEffectiveCopiedWords(bookState, totalWords);
+  const pct = Math.min(100, Math.round((effectiveWords / totalWords) * 100));
 
   // 进度条
   const bar = document.getElementById('book-progress-bar');
@@ -122,7 +124,7 @@ function updateBookProgressDOM(sess) {
     bar.innerHTML = `
       <div class="flex items-center justify-between mb-1.5">
         <span class="text-xs font-bold text-ink">📖 《${book.title}》誊抄进度</span>
-        <span class="text-xs text-ink-light">${copiedWords.toLocaleString()} / ${totalWords.toLocaleString()} 字</span>
+        <span class="text-xs text-ink-light">${effectiveWords.toLocaleString()} / ${totalWords.toLocaleString()} 字</span>
       </div>
       <div class="h-2.5 bg-wood/20 rounded-full overflow-hidden">
         <div class="h-full bg-gradient-to-r from-amber-600 to-magic-gold rounded-full transition-all duration-500" style="width:${pct}%"></div>
@@ -133,7 +135,7 @@ function updateBookProgressDOM(sess) {
 
   // 字数显示（timer 区底下的 span）
   const wordsEl = document.getElementById('focus-book-words');
-  if (wordsEl) wordsEl.textContent = copiedWords.toLocaleString();
+  if (wordsEl) wordsEl.textContent = effectiveWords.toLocaleString();
 
   const miniTimer = document.getElementById('focus-mini-timer');
   if (miniTimer && sess.active) {
@@ -277,7 +279,8 @@ function renderBookSelector(sess) {
     const btn = el('button', `book-select flex-shrink-0 w-24 p-2 border-2 rounded-lg text-center transition-all ${
       active ? 'border-magic-gold bg-magic-gold/10' : 'border-wood/30 bg-white/50'
     }`);
-    const progress = book.totalWords > 0 ? Math.round((bs.copiedWords / book.totalWords) * 100) : 0;
+    const effectiveWords = getEffectiveCopiedWords(bs, book.totalWords);
+    const progress = book.totalWords > 0 ? Math.round((effectiveWords / book.totalWords) * 100) : 0;
     btn.innerHTML = `<div class="text-3xl mb-1">${book.emoji}</div><div class="font-bold text-xs">${book.title}</div><div class="text-xs text-ink-light">${progress}%</div>`;
     btn.addEventListener('click', () => {
       if (!state.currentSession.active) {
@@ -480,9 +483,10 @@ function updateQuestChapterIndicatorDOM(sess) {
 // ========== 本书誊抄进度条 ==========
 
 function renderBookProgress(sess, book) {
-  const copiedWords = state.books[sess.bookId]?.copiedWords || 0;
+  const bookState = state.books[sess.bookId];
   const totalWords = book.totalWords || 1;
-  const pct = Math.min(100, Math.round((copiedWords / totalWords) * 100));
+  const effectiveWords = getEffectiveCopiedWords(bookState, totalWords);
+  const pct = Math.min(100, Math.round((effectiveWords / totalWords) * 100));
 
   const div = el('div', 'mt-4 pt-4 border-t border-wood/20');
   div.id = 'book-progress-bar';
@@ -490,7 +494,7 @@ function renderBookProgress(sess, book) {
   div.innerHTML = `
     <div class="flex items-center justify-between mb-1.5">
       <span class="text-xs font-bold text-ink">📖 《${book.title}》誊抄进度</span>
-      <span class="text-xs text-ink-light">${copiedWords.toLocaleString()} / ${totalWords.toLocaleString()} 字</span>
+      <span class="text-xs text-ink-light">${effectiveWords.toLocaleString()} / ${totalWords.toLocaleString()} 字</span>
     </div>
     <div class="h-2.5 bg-wood/20 rounded-full overflow-hidden">
       <div class="h-full bg-gradient-to-r from-amber-600 to-magic-gold rounded-full transition-all duration-500" style="width:${pct}%"></div>

@@ -22,7 +22,7 @@ export function tryUnlockNewBook() {
   const randomId = lockedIds[Math.floor(Math.random() * lockedIds.length)];
   const book = BOOKS[randomId];
 
-  if (!unlockBook(randomId, { masteryLevel: 1 })) {
+  if (!unlockBook(randomId)) {
     addCoins(50);
     addHistory('unlock', '手稿箱已满，暂无法解锁新书', '获得50智慧之光补偿');
     return null;
@@ -33,19 +33,10 @@ export function tryUnlockNewBook() {
   return book;
 }
 
-export function getBookProgress(bookId) {
-  const book = BOOKS[bookId];
-  const bookState = state.books[bookId];
-  if (!book || !bookState) return 0;
-  return Math.round((bookState.copiedWords / book.totalWords) * 100);
-}
+import { getBookProgress as _getBookProgress, getUnlockedChapters as _getUnlockedChapters, canBorrowBook as _canBorrowBook } from './core/book-utils.js';
+import { state } from './state.js';
+import { BOOKS } from '../data/books.js';
 
-export function getUnlockedChapters(bookId) {
-  const bookState = state.books[bookId];
-  return bookState ? bookState.unlockedChapters : [];
-}
-
-export function canBorrowBook(bookId) {
-  const bookState = state.books[bookId];
-  return bookState && bookState.status === 'completed';
-}
+export function getBookProgress(bookId) { return _getBookProgress(bookId, state.books, BOOKS); }
+export function getUnlockedChapters(bookId) { return _getUnlockedChapters(bookId, state.books); }
+export function canBorrowBook(bookId) { return _canBorrowBook(bookId, state.books); }

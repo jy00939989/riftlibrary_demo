@@ -2,7 +2,11 @@
 import { state, saveState } from './state.js';
 import { addHistory, updateStreak } from './storage.js';
 import { getFocusSpeedMultiplier } from './shop.js';
+import { getAuraSpeedBonus } from './visitors.js';
+import { getCurationFocusSpeed } from './curation.js';
+import { getChapterInfo, getEffectiveCopiedWords } from './core/book-utils.js';
 import { renderFocusPage, updateTimerDisplay, formatTime } from './render/index.js';
+import { BOOKS } from '../data/books.js';
 
 let timerInterval = null;
 
@@ -40,6 +44,18 @@ export function startTimer() {
 
   // 首次专注：墨墨的魔法加速（10倍速）
   momoAccelerating = state.focus.totalMinutes === 0;
+
+  // 缓存本次专注的书籍信息，用于正计时自动完成判断
+  const bookId = sess.bookId;
+  if (bookId && BOOKS[bookId]) {
+    sess.bookCategory = BOOKS[bookId].category;
+    const bookState = state.books[bookId];
+    if (bookState) {
+      const chInfo = getChapterInfo(BOOKS[bookId], bookState);
+      sess.chapter90Sprint = chInfo && chInfo.progressPct >= 90;
+    }
+  }
+
   const interval = momoAccelerating ? 100 : 1000;
   timerInterval = setInterval(() => tick(), interval);
   sess.intervalId = timerInterval;
@@ -73,6 +89,40 @@ function tick() {
     }
   }
 
+  // 正计时/番茄钟/倒计时：书籍达到当前周期 100% 时自动完成
+  if (sess.bookId) {
+    const book = BOOKS[sess.bookId];
+    const bookState = state.books[sess.bookId];
+    if (book && bookState) {
+      const minutes = Math.round(sess.elapsedSeconds / 60);
+      const auraSpeed = getAuraSpeedBonus(sess.bookCategory);
+      const curationSpeed = getCurationFocusSpeed();
+      const focusMultiplier = getFocusSpeedMultiplier();
+      let wordsGained;
+      if (sess.teaBoost) {
+        const boostMin = Math.min(5, minutes);
+        const normalMin = minutes - boostMin;
+        wordsGained = Math.round((boostMin * 110 + normalMin * 100) * focusMultiplier * (1 + auraSpeed + curationSpeed));
+      } else {
+        wordsGained = Math.round(minutes * 100 * focusMultiplier * (1 + auraSpeed + curationSpeed));
+      }
+      if (sess.chapter90Sprint) wordsGained = Math.round(wordsGained * 1.20);
+
+      const effectiveWords = getEffectiveCopiedWords(bookState, book.totalWords);
+      const wordsNeeded = book.totalWords - effectiveWords;
+      if (wordsNeeded > 0 && wordsGained >= wordsNeeded) {
+        stopTimer();
+        if (onComplete) {
+          try { onComplete(true); } catch (e) {
+            console.error('书籍完成自动完成回调异常:', e);
+            renderFocusPage();
+          }
+        }
+        return;
+      }
+    }
+  }
+
   // 每分钟触发誊抄预览刷新
   if (sess.elapsedSeconds % 60 === 0) {
     sess.quoteIndex += 1;
@@ -85,9 +135,10 @@ function tick() {
   const timeStr = formatTime(Math.max(0, displaySeconds));
   const sessionEstimate = Math.round(sess.elapsedSeconds * 2 * getFocusSpeedMultiplier());
   const totalWords = state.focus.totalWords + sessionEstimate;
-  const bookWords = sess.bookId && state.books[sess.bookId]
-    ? state.books[sess.bookId].copiedWords + sessionEstimate
-    : 0;
+  const book = sess.bookId ? BOOKS[sess.bookId] : null;
+  const bookState = sess.bookId ? state.books[sess.bookId] : null;
+  const effectiveWords = book && bookState ? getEffectiveCopiedWords(bookState, book.totalWords) : 0;
+  const bookWords = book ? effectiveWords + sessionEstimate : 0;
   updateTimerDisplay(timeStr, totalWords, bookWords);
 }
 

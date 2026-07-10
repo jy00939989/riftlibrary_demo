@@ -14,7 +14,7 @@ export const meta = {
   authorBio: '拉宾德拉纳特·泰戈尔（1861-1941），印度诗人、哲学家，1913年获诺贝尔文学奖，是第一位获得该奖项的亚洲人。他的诗融合了印度古典哲学和现代人文精神，影响了整个20世纪的世界文学。',
   anecdotes: '《飞鸟集》写于1916年，是泰戈尔在访问日本期间创作的。据说他在横滨港看到海面上掠过的飞鸟，突然获得灵感，在短短几周内写下了三百多首短诗。郑振铎的中译本1922年出版，旋即风靡中国文坛，冰心、郭沫若等人都深受影响。',
   reviews: '冰心：「泰戈尔的诗如同一阵清风，吹过了中国新诗的湖面，激起了一圈又一圈的涟漪。」',
-  collectorCover: '🪶'
+  collectorCover: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-icon"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"></path><line x1="16" y1="8" x2="2" y2="22"></line><line x1="17.5" y1="15" x2="9" y2="15"></line></svg>'
 };
 
 export const chapters = [

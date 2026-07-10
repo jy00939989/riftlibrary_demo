@@ -143,7 +143,13 @@ export function purchaseBook(bookId, price) {
   const auraDiscount = getAuraShopDiscount();
   // 馆长推荐标志牌：额外 2% 折扣（叠乘）
   const signboardDiscount = hasSignboard('curator_pick') ? (SIGNBOARDS.curator_pick?.buff?.value || 0) : 0;
-  const actualPrice = Math.round(price * (1 - auraDiscount) * (1 - signboardDiscount));
+  // 裴舟荐书：限时额外折扣
+  let peizhouDiscount = 0;
+  const rec = getActivePeizhouRec();
+  if (rec && rec.bookId === bookId) {
+    peizhouDiscount = rec.discount;
+  }
+  const actualPrice = Math.round(price * (1 - auraDiscount) * (1 - signboardDiscount) * (1 - peizhouDiscount));
 
   if (state.books[bookId] && state.books[bookId].status !== 'locked') {
     return { ok: false, reason: 'already_owned' };
@@ -166,8 +172,14 @@ export function purchaseBook(bookId, price) {
   const parts = [];
   if (auraDiscount > 0) parts.push('裴舟光环9折');
   if (signboardDiscount > 0) parts.push('馆长推荐98折');
+  if (peizhouDiscount > 0) parts.push('裴舟荐书7折');
   const discountNote = parts.length > 0 ? ` (${parts.join('+')})` : '';
   addHistory('purchase', `购买《${title}》${discountNote}`, `花费${actualPrice}智慧之光`);
+
+  // 如果买了裴舟推荐的书，清除推荐
+  if (peizhouDiscount > 0) {
+    state.peizhouRec = null;
+  }
 
   // 标记已售出
   const now = getNow();
@@ -180,6 +192,18 @@ export function purchaseBook(bookId, price) {
 
   saveState();
   return { ok: true };
+}
+
+/** 获取当前有效的裴舟荐书（自动过期） */
+export function getActivePeizhouRec() {
+  const rec = state.peizhouRec;
+  if (!rec) return null;
+  if (Date.now() > rec.expiresAt) {
+    state.peizhouRec = null;
+    saveState();
+    return null;
+  }
+  return rec;
 }
 
 // 借阅区价格：500 × 1.5^(n-1)，封顶 5700

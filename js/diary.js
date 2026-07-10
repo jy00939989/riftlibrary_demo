@@ -281,12 +281,10 @@ export function tryGenerateDailySummary() {
 }
 
 // 日志集满30页后的装帧等级
+import { getDiaryBindingLevel as _getDiaryBindingLevel } from './core/achievement-stats.js';
+
 export function getDiaryBindingLevel() {
-  const count = (state.diaryLogs || []).length;
-  if (count >= 90) return { level: 4, name: '魔法装帧', icon: '✨' };
-  if (count >= 60) return { level: 3, name: '皮面精装', icon: '📔' };
-  if (count >= 30) return { level: 2, name: '线装布封', icon: '📒' };
-  return { level: 1, name: '简装手记', icon: '📓' };
+  return _getDiaryBindingLevel(state.diaryLogs);
 }
 
 // ========== 装帧升级奖励 ==========

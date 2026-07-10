@@ -66,7 +66,7 @@ export function tickPlaneVisitors(now) {
   saveState();
 }
 
-function findNextAvailableTask(planeId, charId, charData) {
+export function findNextAvailableTask(planeId, charId, charData) {
   const tasks = ALL_TASKS[planeId] || [];
   const candidates = tasks.filter(t =>
     t.characterId === charId &&
@@ -80,7 +80,7 @@ function findNextAvailableTask(planeId, charId, charData) {
 }
 
 // 检查任务条件是否已满足（旧档兜底：玩家接任务前已解锁/读完/完成对应内容）
-function isTaskConditionMet(taskDef) {
+export function isTaskConditionMet(taskDef) {
   const cond = taskDef.condition;
   if (!cond) return false;
   const bs = state.books[cond.bookId];
@@ -160,7 +160,7 @@ export function checkTaskCompletion(trigger, payload) {
   return changed;
 }
 
-function findTaskById(planeId, taskId) {
+export function findTaskById(planeId, taskId) {
   const tasks = ALL_TASKS[planeId] || [];
   return tasks.find(t => t.id === taskId) || null;
 }

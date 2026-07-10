@@ -7,6 +7,7 @@ import { isBookCapacityFull, addToManuscriptBox, createBookRecord, unlockBook } 
 import { getCurationBorrowBonus } from './curation.js';
 import { VISITOR_NARRATIVES } from '../data/visitor-events.js';
 import { SIGNBOARDS } from '../data/signboards.js';
+import { SHARED_POOL } from '../data/book_pool.js';
 
 // ========== 访客角色定义（10位，2026-05-27 重构） ==========
 
@@ -37,7 +38,7 @@ export const VISITOR_DEFS = {
     emoji: '📚',
     title: '前独立书店老板 · 旧书摊主',
     category: ['小说', '诗歌', '散文'],
-    events: ['sales_pitch'],
+    events: ['peizhou_action'],
     firstImpression: '这地方……让我想起我那家关掉的书店。书是好书，但缺了点人气。',
     aura: { name: '书商嗅觉', desc: '商店买书 9 折', type: 'shop_discount', value: 0.10 }
   },
@@ -204,7 +205,7 @@ const RETURN_QUOTES = {
   },
   qiaoyiyi: {
     book: [
-      '《{book}》——我撕了封底重新画了一张。原来的太丑了，我的版本更好看。不用谢。',
+      '《{book}》——我画了张藏书票塞在书里了。原封面丑得我手痒，但书没得罪我，所以只动了张纸。不用谢。',
       '这本《{book}》让我哭了一整晚。不是因为有人死了——是因为终于有人把我说不出来的话说出来了。算了，太矫情了，当我没说。'
     ],
     library: [
@@ -327,7 +328,7 @@ export const STAGE_WITNESS = {
 
 // ========== 内部工具 ==========
 
-function pickReturnQuote(charId, bookTitle, atmosphere) {
+export function pickReturnQuote(charId, bookTitle, atmosphere) {
   const pool = RETURN_QUOTES[charId];
   if (!pool) return '谢谢。';
 
@@ -358,7 +359,7 @@ const SHENMINGYUAN_BOOKS = ['book_010', 'book_021', 'book_022'];
 
 // ========== 借阅区等级配置表 ==========
 
-const BORROW_LEVEL_TABLE = [
+export const BORROW_LEVEL_TABLE = [
   null, // 索引0占位(Lv0)
   { cap:2, returnCoins:30, favorBonus:0,  returnAtmo:1, spawnBonus:0.05 },  // Lv1 陋室
   { cap:3, returnCoins:35, favorBonus:10, returnAtmo:1, spawnBonus:0.08 },  // Lv2 整洁
@@ -384,7 +385,7 @@ export function getBorrowSpawnBonus() {
 
 // ========== 光环引擎 ==========
 
-function getActiveBrowsingVisitors() {
+export function getActiveBrowsingVisitors() {
   return state.visitors.filter(v => v.status === 'browsing');
 }
 
@@ -487,15 +488,6 @@ export function getAuraReturnFavorBonus() {
 }
 
 // ========== 裴舟推销书籍池 ==========
-
-const PEIZHOU_BOOKS = [
-  { title: '《星尘往事》', words: 18000, emoji: '📙', category: '小说' },
-  { title: '《梦境漫游》', words: 22000, emoji: '📓', category: '童话' },
-  { title: '《古卷传奇》', words: 32000, emoji: '📔', category: '历史' },
-  { title: '《异世界植物志》', words: 28000, emoji: '🌿', category: '科学' },
-  { title: '《魔法药剂入门》', words: 15000, emoji: '🧪', category: '科学' },
-  { title: '《远古符文考》', words: 40000, emoji: '🗿', category: '神话' }
-];
 
 // ========== 内部工具 ==========
 
@@ -661,7 +653,7 @@ export function checkDueVisitors(now) {
 
 // ========== 访客叙事引擎（三层递进） ==========
 
-function getNarrativeState(charId) {
+export function getNarrativeState(charId) {
   if (!state.visitorNarratives) {
     state.visitorNarratives = {};
   }
@@ -966,7 +958,7 @@ function triggerEvent(charId, visitor) {
 
   switch (eventType) {
     case 'gift_book':      return eventGiftBook(visitor);
-    case 'sales_pitch':    return eventSalesPitch(visitor);
+    case 'peizhou_action': return eventPeizhouAction(visitor);
     case 'wave_poem':      return eventWavePoem(visitor);
     default:               return eventGeneric(charId, visitor);
   }
@@ -996,15 +988,67 @@ function eventGiftBook(visitor) {
   return { type: 'gift_book', bookId, mysteryTitle: book.title, emoji: book.emoji };
 }
 
-// --- 裴舟：推销书籍 ---
+// --- 裴舟：荐书折扣 / 赠阅残章 ---
 
-function eventSalesPitch(visitor) {
-  const book = pick(PEIZHOU_BOOKS);
-  const price = rand(500, 5000);
-  addHistory('event', '📦 裴舟推销一本书', `《${book.title}》售价${price.toLocaleString()}智慧之光`);
-  addDiaryEntry('special_event', { detail: `裴舟带来了一本《${book.title}》，售价${price.toLocaleString()}智慧之光。` });
+function eventPeizhouAction(visitor) {
+  const unowned = SHARED_POOL.filter(b => {
+    const bs = state.books[b.bookId];
+    return !bs || bs.status === 'locked';
+  });
+  if (unowned.length === 0) return null;
+
+  // 50% 荐书折扣 / 50% 赠阅残章
+  if (Math.random() < 0.5) {
+    return eventPeizhouRecommend(unowned);
+  } else {
+    return eventPeizhouPreview(unowned);
+  }
+}
+
+function eventPeizhouRecommend(pool) {
+  const entry = pick(pool);
+  const book = BOOKS[entry.bookId];
+  const discount = 0.30; // 商店价额外7折
+  const expiresAt = Date.now() + 24 * 3600 * 1000;
+
+  state.peizhouRec = { bookId: entry.bookId, discount, expiresAt };
+
+  addHistory('event', `📚 裴舟推荐《${book.title}》`, `24h内在商店购买享额外7折`);
+  addDiaryEntry('special_event', { detail: `裴舟推荐了《${book.title}》，说"这本在我书店里摆了好久，一直没人带走。"24小时内购买享额外折扣。` });
   saveState();
-  return { type: 'sales_pitch', vendor: 'peizhou', book: { ...book, price } };
+  return { type: 'peizhou_recommend', bookId: entry.bookId, title: book.title, emoji: book.emoji, discount };
+}
+
+function eventPeizhouPreview(pool) {
+  const entry = pick(pool);
+
+  // 从手稿箱里随机挑一本没抄完的，加 3% 进度
+  let boosted = false;
+  const mBox = state.manuscriptBox || [];
+  const unfinished = mBox.filter(id => {
+    const bs = state.books[id];
+    return bs && bs.status !== 'completed' && bs.status !== 'locked';
+  });
+  if (unfinished.length > 0) {
+    const targetId = pick(unfinished);
+    const bs = state.books[targetId];
+    const book = BOOKS[targetId];
+    if (book && book.totalWords) {
+      const bonus = Math.round(book.totalWords * 0.03);
+      bs.copiedWords += bonus;
+      if (bs.status === 'unlocked') bs.status = 'copying';
+      addHistory('event', `📖 裴舟帮你补了几笔《${book.title}》`, `誊抄进度 +${bonus.toLocaleString()}字（3%）`);
+      boosted = true;
+    }
+  }
+
+  if (!boosted) {
+    addHistory('event', `📖 裴舟聊起《${entry.title || '一本书'}》`, `"这本在我旧书摊上放过一阵子，没等到对的人。"`);
+  }
+
+  addDiaryEntry('special_event', { detail: `裴舟翻了翻你的手稿箱，挑出一本没抄完的。"这段我熟——以前书店里有这本书，我帮人补过好几页。给你添几笔。"` });
+  saveState();
+  return { type: 'peizhou_preview', boosted };
 }
 
 // --- 王小磊：波浪诗笺 ---
@@ -1042,24 +1086,6 @@ function eventGeneric(charId, visitor) {
   addDiaryEntry('special_event', { detail: `${evt.text}——${evt.msg}` });
   saveState();
   return { type: 'generic', charId, coins: reward, text: evt.text };
-}
-
-// ========== 阿九购买确认（由 UI 调用） ==========
-
-export function buySalesBook(bookMeta) {
-  if (state.coins < bookMeta.price) return false;
-  if (isManuscriptBoxFull()) return false;
-  addCoins(-bookMeta.price);
-
-  const bookId = 'sale_' + Date.now().toString(36);
-  state.books[bookId] = createBookRecord();
-  if (!state._mysteryBooks) state._mysteryBooks = {};
-  state._mysteryBooks[bookId] = bookMeta;
-  addToManuscriptBox(bookId);
-
-  addHistory('event', `🛒 购买了阿九推销的《${bookMeta.title}》`, `${(bookMeta.words || 0).toLocaleString()}字`);
-  saveState();
-  return bookId;
 }
 
 // ========== Dev 面板对接 ==========
