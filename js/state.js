@@ -195,6 +195,9 @@ export const state = {
   // 日志装帧升级奖励是否已领取
   diaryLevelRewardsClaimed: [],
 
+  // 音乐选择器：手动选择的曲目 ID，null=随氛围自动
+  musicManualTrack: null,
+
   // 裴舟荐书折扣 { bookId, discount, expiresAt }，null=无推荐
   peizhouRec: null
 };

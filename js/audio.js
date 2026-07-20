@@ -1,27 +1,67 @@
-// 音频管理模块 —— BGM 氛围联动 + 交叉淡入淡出 + SFX 音效
-import { state } from './state.js';
+// 音频管理模块 —— BGM 氛围联动 + 交叉淡入淡出 + SFX 音效 + 音乐选择器
+import { state, saveState } from './state.js';
 
-const TRACKS = {
-  ruined: [
-    'audio/图书馆 demo 荒废图书馆 2.mp3',
-    'audio/图书馆 demo 荒废图书馆 2 (1).mp3'
-  ],
-  cozy: [
-    'audio/图书馆 demo2 城镇风格.mp3',
-    'audio/图书馆 demo2 城镇风格 (1).mp3'
-  ],
-  stellar: [
-    'audio/图书馆 demo 星辰图书馆.mp3',
-    'audio/图书馆 demo 星辰图书馆 (1).mp3'
-  ]
-};
+// 曲目配置（所有 MP3 均已在 audio/ 目录下）
+const TRACK_DEFS = [
+  { id: 'theme',   name: '图书馆主题曲', emoji: '🎵', tier: 'always', file: 'audio/library-music-demo1.mp3' },
+  { id: 'ruin_a',  name: '荒废图书馆',   emoji: '🕯️', tier: 'ruined',  file: 'audio/图书馆 demo 荒废图书馆 2.mp3' },
+  { id: 'ruin_b',  name: '荒废·长夜变奏', emoji: '🌙', tier: 'ruined',  file: 'audio/图书馆 demo 荒废图书馆 2 (1).mp3' },
+  { id: 'cozy_a',  name: '城镇漫步',     emoji: '🏘️', tier: 'cozy',    file: 'audio/图书馆 demo2 城镇风格.mp3' },
+  { id: 'cozy_b',  name: '城镇·午后变奏', emoji: '☀️', tier: 'cozy',    file: 'audio/图书馆 demo2 城镇风格 (1).mp3' },
+  { id: 'star_a',  name: '星辰图书馆',   emoji: '🌟', tier: 'stellar', file: 'audio/图书馆 demo 星辰图书馆.mp3' },
+  { id: 'star_b',  name: '星辰·圣堂咏叹', emoji: '✨', tier: 'stellar', file: 'audio/图书馆 demo 星辰图书馆 (1).mp3' }
+];
+
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
 let currentAudio = null;
-let currentTier = null;
+let currentTrackId = null;
 let musicEnabled = true;
 let fadeTimer = null;
 
-function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+// ========== 工具 ==========
+
+function tierForAtmo(v) {
+  if (v > 300) return 'stellar';
+  if (v > 80) return 'cozy';
+  return 'ruined';
+}
+
+/** 获取所有已解锁的曲目 */
+export function getAvailableTracks() {
+  const atmo = state.library?.atmosphere || 0;
+  const currentTier = tierForAtmo(atmo);
+  return TRACK_DEFS.filter(t => {
+    if (t.tier === 'always') return true;
+    return t.tier === currentTier ||  // 当前所在档位
+           (t.tier === 'ruined') ||
+           (t.tier === 'cozy' && (currentTier === 'stellar'));
+  });
+}
+
+/** 获取曲目定义 */
+export function getTrackDef(trackId) {
+  return TRACK_DEFS.find(t => t.id === trackId) || null;
+}
+
+/** 获取所有曲目定义（含锁定状态） */
+export function getAllTrackDefs() {
+  const atmo = state.library?.atmosphere || 0;
+  const currentTier = tierForAtmo(atmo);
+  return TRACK_DEFS.map(t => ({
+    ...t,
+    unlocked: t.tier === 'always' || t.tier === currentTier ||
+              (t.tier === 'ruined') ||
+              (t.tier === 'cozy' && currentTier === 'stellar')
+  }));
+}
+
+/** 获取当前播放的曲目 ID */
+export function getCurrentTrackId() {
+  return currentTrackId;
+}
+
+// ========== BGM 播放 ==========
 
 function updateToggleIcon() {
   const btn = document.getElementById('music-toggle');
@@ -35,19 +75,21 @@ export function initAudio() {
   updateToggleIcon();
 }
 
-function tierForAtmo(v) {
-  if (v > 300) return 'stellar';
-  if (v > 80) return 'cozy';
-  return 'ruined';
-}
-
-function playCurrentTier() {
+/**
+ * 播放指定曲目
+ * @param {string} trackId - TRACK_DEFS 中的 id，不传则自动根据氛围选择
+ */
+export function playTrack(trackId) {
   if (!musicEnabled) return;
-  const tier = tierForAtmo(state.library.atmosphere);
-  if (tier === currentTier) return;
-  currentTier = tier;
 
-  const src = encodeURI(pick(TRACKS[tier]));
+  const def = trackId ? TRACK_DEFS.find(t => t.id === trackId) : null;
+  const actualDef = def || pick(getAvailableTracks());
+
+  if (!actualDef) return;
+  if (actualDef.id === currentTrackId && currentAudio && !currentAudio.paused) return;
+
+  currentTrackId = actualDef.id;
+  const src = encodeURI(actualDef.file);
   const next = new Audio(src);
   next.loop = true;
   next.volume = 0;
@@ -72,12 +114,40 @@ function playCurrentTier() {
 
   next.play().catch(() => {});
   currentAudio = next;
+  updateNowPlayingUI();
 }
 
-// 外部调用：氛围变化时更新曲目
+function pickDefaultTrack() {
+  const available = getAvailableTracks();
+  return available.length > 0 ? pick(available).id : null;
+}
+
 export function refreshBGM() {
   if (!musicEnabled) return;
-  playCurrentTier();
+  const manualId = state.musicManualTrack;
+  if (manualId) {
+    playTrack(manualId);
+  } else {
+    playTrack(null);
+  }
+}
+
+/** 用户手动选择曲目，此后不再随氛围自动切换 */
+export function selectTrack(trackId) {
+  state.musicManualTrack = trackId;
+  saveState();
+  playTrack(trackId);
+}
+
+/** 切换回自动模式（随氛围自动选曲） */
+export function setAutoMode() {
+  state.musicManualTrack = null;
+  saveState();
+  playTrack(null);
+}
+
+export function isManualMode() {
+  return !!state.musicManualTrack;
 }
 
 export function toggleMusic() {
@@ -86,11 +156,11 @@ export function toggleMusic() {
   updateToggleIcon();
 
   if (musicEnabled) {
-    currentTier = null;
-    playCurrentTier();
+    const manualId = state.musicManualTrack;
+    playTrack(manualId || null);
   } else {
     if (currentAudio) { currentAudio.pause(); currentAudio = null; }
-    currentTier = null;
+    currentTrackId = null;
   }
 }
 
@@ -104,7 +174,8 @@ export function resumeMusic() {
   if (currentAudio) {
     currentAudio.play().catch(() => {});
   } else {
-    playCurrentTier();
+    const manualId = state.musicManualTrack;
+    playTrack(manualId || null);
   }
 }
 
@@ -112,8 +183,30 @@ export function resumeMusic() {
 export function onFirstInteraction() {
   initSfx();
   if (musicEnabled) {
-    // 尝试播放当前 tier 的音乐
-    playCurrentTier();
+    const manualId = state.musicManualTrack;
+    playTrack(manualId || null);
+  }
+}
+
+// ========== "正在播放" 小指示器 ==========
+
+function updateNowPlayingUI() {
+  const el = document.getElementById('now-playing');
+  if (!el) return;
+  const def = TRACK_DEFS.find(t => t.id === currentTrackId);
+  if (def && musicEnabled) {
+    el.innerHTML = `${def.emoji} ${def.name}`;
+    el.style.display = '';
+    el.title = '点击切换音乐';
+    el.style.cursor = 'pointer';
+    el.onclick = () => { window._openMusicSelector?.(); };
+  } else if (!musicEnabled) {
+    el.innerHTML = '🔇 音乐已关闭';
+    el.style.display = '';
+    el.style.cursor = '';
+    el.onclick = null;
+  } else {
+    el.style.display = 'none';
   }
 }
 

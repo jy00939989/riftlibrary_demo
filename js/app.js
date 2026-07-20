@@ -29,6 +29,7 @@ import { showCertificate } from './render/certificate.js';
 import { ensureDailyTasks, markTaskDone, claimAllDoneBonus } from './dailytasks.js';
 import { ensureGuideQuests, checkGuideQuest, tryCompleteAllDone, getQuestProgress } from './guidequests.js';
 import { renderGuideQuestWidget, showQuestCompleteToast } from './render/index.js';
+import { initMusicSelector } from './render/music-selector.js';
 import { renderMomoSuggestion, resetMomoSuggestion } from './render/momo-suggestion.js';
 
 function getNow() {
@@ -1241,6 +1242,7 @@ function init() {
   const musicBtn = document.getElementById('music-toggle');
   if (musicBtn) musicBtn.addEventListener('click', toggleMusic);
   initAudio();
+  initMusicSelector();
   initSfx();
   // 回头客自动播放BGM+SFX，新用户等首次专注完成后触发
   if (state.focus.totalMinutes > 0) {
