@@ -7,7 +7,7 @@ import { isMomoAccelerating } from '../timer.js';
 import { ensureDailyTasks, claimAllDoneBonus } from '../dailytasks.js';
 import { getActiveChapterTaskForBook } from '../quests.js';
 import { getActiveAuras } from '../visitors.js';
-import { getEffectiveCopiedWords } from '../core/book-utils.js';
+import { getEffectiveCopiedWords, getRepairProgress } from '../core/book-utils.js';
 
 // 缮写室素材
 const FOCUS_IMG_NAMES = [
@@ -117,10 +117,24 @@ function updateBookProgressDOM(sess) {
   const totalWords = book.totalWords || 1;
   const effectiveWords = getEffectiveCopiedWords(bookState, totalWords);
   const pct = Math.min(100, Math.round((effectiveWords / totalWords) * 100));
+  const repair = getRepairProgress(bookState);
 
   // 进度条
   const bar = document.getElementById('book-progress-bar');
   if (bar) {
+    let repairHtml = '';
+    if (repair) {
+      repairHtml = `
+        <div class="flex items-center justify-between mb-1 mt-3">
+          <span class="text-xs font-bold text-amber-700">🔧 修复进度</span>
+          <span class="text-xs text-amber-600">${(repair.done || 0).toLocaleString()} / ${repair.total.toLocaleString()} 字</span>
+        </div>
+        <div class="h-2 bg-wood/20 rounded-full overflow-hidden mb-3">
+          <div class="h-full bg-gradient-to-r from-amber-500 to-amber-400 rounded-full transition-all duration-500" style="width:${repair.pct}%"></div>
+        </div>
+        <div class="text-right text-xs text-amber-600 mb-1">${repair.pct}% · 修书中速度 +5%</div>
+      `;
+    }
     bar.innerHTML = `
       <div class="flex items-center justify-between mb-1.5">
         <span class="text-xs font-bold text-ink">📖 《${book.title}》誊抄进度</span>
@@ -130,6 +144,7 @@ function updateBookProgressDOM(sess) {
         <div class="h-full bg-gradient-to-r from-amber-600 to-magic-gold rounded-full transition-all duration-500" style="width:${pct}%"></div>
       </div>
       <div class="text-right text-xs text-ink-light mt-0.5">${pct}%</div>
+      ${repairHtml}
     `;
   }
 
@@ -276,12 +291,15 @@ function renderBookSelector(sess) {
   eligibleBooks.forEach(book => {
     const bs = state.books[book.id];
     const active = sess.bookId === book.id;
+    const repair = getRepairProgress(bs);
+    const isDamaged = bs && bs.damaged;
     const btn = el('button', `book-select flex-shrink-0 w-24 p-2 border-2 rounded-lg text-center transition-all ${
-      active ? 'border-magic-gold bg-magic-gold/10' : 'border-wood/30 bg-white/50'
+      active ? 'border-magic-gold bg-magic-gold/10' : isDamaged ? 'border-amber-400 bg-amber-50' : 'border-wood/30 bg-white/50'
     }`);
     const effectiveWords = getEffectiveCopiedWords(bs, book.totalWords);
     const progress = book.totalWords > 0 ? Math.round((effectiveWords / book.totalWords) * 100) : 0;
-    btn.innerHTML = `<div class="text-3xl mb-1">${book.emoji}</div><div class="font-bold text-xs">${book.title}</div><div class="text-xs text-ink-light">${progress}%</div>`;
+    const repairHtml = repair ? `<div class="text-[10px] text-amber-600 font-bold mt-0.5">🔧 修复中 ${repair.pct}%</div>` : '';
+    btn.innerHTML = `<div class="text-3xl mb-1">${book.emoji}</div><div class="font-bold text-xs">${book.title}</div><div class="text-xs text-ink-light">${progress}%</div>${repairHtml}`;
     btn.addEventListener('click', () => {
       if (!state.currentSession.active) {
         state.currentSession.bookId = book.id;
@@ -487,9 +505,24 @@ function renderBookProgress(sess, book) {
   const totalWords = book.totalWords || 1;
   const effectiveWords = getEffectiveCopiedWords(bookState, totalWords);
   const pct = Math.min(100, Math.round((effectiveWords / totalWords) * 100));
+  const repair = getRepairProgress(bookState);
 
   const div = el('div', 'mt-4 pt-4 border-t border-wood/20');
   div.id = 'book-progress-bar';
+
+  let repairBarHtml = '';
+  if (repair) {
+    repairBarHtml = `
+      <div class="flex items-center justify-between mb-1 mt-3">
+        <span class="text-xs font-bold text-amber-700">🔧 修复进度</span>
+        <span class="text-xs text-amber-600">${(repair.done || 0).toLocaleString()} / ${repair.total.toLocaleString()} 字</span>
+      </div>
+      <div class="h-2 bg-wood/20 rounded-full overflow-hidden mb-3">
+        <div class="h-full bg-gradient-to-r from-amber-500 to-amber-400 rounded-full transition-all duration-500" style="width:${repair.pct}%"></div>
+      </div>
+      <div class="text-right text-xs text-amber-600 mb-1">${repair.pct}% · 修书中速度 +5%</div>
+    `;
+  }
 
   div.innerHTML = `
     <div class="flex items-center justify-between mb-1.5">
@@ -500,6 +533,7 @@ function renderBookProgress(sess, book) {
       <div class="h-full bg-gradient-to-r from-amber-600 to-magic-gold rounded-full transition-all duration-500" style="width:${pct}%"></div>
     </div>
     <div class="text-right text-xs text-ink-light mt-0.5">${pct}%</div>
+    ${repairBarHtml}
   `;
 
   return div;
@@ -508,6 +542,28 @@ function renderBookProgress(sess, book) {
 // ========== 誊抄预览卡片 ==========
 
 function renderCopyPreview(book) {
+  const bs = state.books[book.id];
+  const isDamaged = bs && bs.damaged;
+
+  if (isDamaged) {
+    const repair = getRepairProgress(bs);
+    const remainStr = repair ? `还剩 ${repair.remaining.toLocaleString()} 字待修复` : '';
+    return h(`
+      <div class="mt-4 rounded-xl p-4 border-2 border-amber-300 animate-fade-in" style="background:linear-gradient(135deg, rgba(251,243,219,0.9), rgba(245,225,180,0.7))">
+        <div class="flex items-start gap-3">
+          <span class="text-2xl">🔧</span>
+          <div class="flex-1">
+            <div class="text-sm font-bold text-amber-800 mb-1">正在修复中…</div>
+            <div class="text-xs text-amber-700 leading-relaxed mb-2">
+              上次访客还书时这本书有些损坏。专注誊抄就是在修复它——你之前抄过的内容已经在你心里了，再来一遍会更快。
+            </div>
+            ${remainStr ? `<div class="text-xs text-amber-600 font-bold">${remainStr} · 修书速度 +5%</div>` : ''}
+          </div>
+        </div>
+      </div>
+    `);
+  }
+
   const template = COPY_TEMPLATES[state.currentSession.quoteIndex % COPY_TEMPLATES.length];
   const quotes = book.quotes;
   const quoteKeys = Object.keys(quotes);

@@ -9,6 +9,15 @@ let currentAnim = null;
 // 羽毛笔 SVG 图标（Windows 10 不支持 🪶 emoji，用 SVG 替代）
 const FEATHER_ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-icon"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"></path><line x1="16" y1="8" x2="2" y2="22"></line><line x1="17.5" y1="15" x2="9" y2="15"></line></svg>`;
 
+// 清洗章节内容中的 Markdown 格式符号（几何原本等书的章节含 **粗体** / ## 标题）
+function stripMarkdown(text) {
+  return text
+    .replace(/^#{1,6}\s+/gm, '')    // 去除 ## 标题标记
+    .replace(/\*\*(.+?)\*\*/g, '$1') // 去除 **粗体**
+    .replace(/^-\s+/gm, '')         // 去除 - 列表标记（保留缩进列表的文本）
+    .replace(/^>\s+/gm, '');        // 去除 > 引用标记
+}
+
 export function startWriting(container, book, options) {
   stopWriting();
   currentAnim = new WritingAnim(container, book, options);
@@ -231,7 +240,7 @@ class WritingAnim {
     this.showingQuote = false;
     if (this.chapters.length === 0) { this.running = false; return; }
     const ch = this.chapters[idx % this.chapters.length];
-    const raw = (ch.content || ch.preview || '').replace(/\n\s*/g, '');
+    const raw = stripMarkdown((ch.content || ch.preview || '').replace(/\n\s*/g, ''));
     if (!raw) { this.loadChapter(idx + 1); return; }
     this.allLines = this.typeset(raw);
     this.lineIndex = 0;

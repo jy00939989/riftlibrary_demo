@@ -36,7 +36,7 @@ function getNow() {
 }
 
 // 章节进度辅助（纯函数已移至 js/core/book-utils.js）
-import { getChapterInfo, getNextChapterPreview, getEffectiveCopiedWords } from './core/book-utils.js';
+import { getChapterInfo, getNextChapterPreview, getEffectiveCopiedWords, getRepairProgress } from './core/book-utils.js';
 export { getChapterInfo, getNextChapterPreview };
 
 // ========== 里程碑配置 ==========
@@ -169,13 +169,17 @@ function handleCompleteFocus(isAuto = false) {
   // 热茶 buff：前5分钟速度 +10%
   const curationSpeed = getCurationFocusSpeed();
 
+  // 修复加成：损坏的书正在修复中，熟能生巧 +5%
+  const bookIsDamaged = sess.bookId && state.books[sess.bookId] && state.books[sess.bookId].damaged;
+  const repairSpeedBonus = bookIsDamaged ? 0.05 : 0;
+
   let wordsGained;
   if (sess.teaBoost) {
     const boostMin = Math.min(5, minutes);
     const normalMin = minutes - boostMin;
-    wordsGained = Math.round((boostMin * 110 + normalMin * 100) * getFocusSpeedMultiplier() * (1 + auraSpeed + curationSpeed));
+    wordsGained = Math.round((boostMin * 110 + normalMin * 100) * getFocusSpeedMultiplier() * (1 + auraSpeed + curationSpeed + repairSpeedBonus));
   } else {
-    wordsGained = Math.round(minutes * 100 * getFocusSpeedMultiplier() * (1 + auraSpeed + curationSpeed));
+    wordsGained = Math.round(minutes * 100 * getFocusSpeedMultiplier() * (1 + auraSpeed + curationSpeed + repairSpeedBonus));
   }
 
   // 章节收尾冲刺：专注开始时章节进度 ≥90% → +20% 速度
@@ -288,6 +292,27 @@ function handleCompleteFocus(isAuto = false) {
   const achieveBonuses = getAchievementBonuses();
   const coinsEarned = Math.round(minutes * 0.8 * (1 + auraCoinsMult + curationCoins) * (1 + achieveBonuses.coinsBoost));
   addCoins(coinsEarned);
+
+  // 修复进度追踪：损坏的书正在被修复
+  let repairCompleted = false;
+  let repairBookTitle = '';
+  if (bookIsDamaged && sess.bookId) {
+    const bookState = state.books[sess.bookId];
+    bookState.repairProgress = (bookState.repairProgress || 0) + wordsGained;
+    if (bookState.repairProgress >= bookState.repairWords && bookState.repairWords > 0) {
+      repairCompleted = true;
+      repairBookTitle = BOOKS[sess.bookId]?.title || '';
+      bookState.damaged = false;
+      bookState.repairProgress = 0;
+      bookState.repairWords = 0;
+      addCoins(80);
+      addInspiration(2);
+      addAtmosphere(2);
+      addHistory('repair', `🩹 《${repairBookTitle}》修复完成！`, `+80智慧之光 · +2✨灵感 · +2氛围`);
+      addDiaryEntry('special_event', { detail: `🩹 墨墨检查了《${repairBookTitle}》——损毁的页面已经补好了，墨迹新鲜，羊皮纸平整。你比上一任守护者用心。` });
+    }
+  }
+
   // 灵感：不再随每次专注 +1，仅通过烛台/沙漏/成就获得
   if (sess.candleInspiration) {
     addInspiration(1);
@@ -302,6 +327,14 @@ function handleCompleteFocus(isAuto = false) {
     } else if (roll < 0.30) {
       addInspiration(1);
       addHistory('action', '⏳ 时光沙漏微微发光', '额外 +1 灵感（25%）');
+    }
+  }
+  // 连续专注灵感：坚持三天以上，专注中偶有灵光闪现
+  if (!repairCompleted && (state.focus.streak || 0) >= 3) {
+    const inspChance = (state.focus.streak || 0) >= 7 ? 0.25 : 0.15;
+    if (Math.random() < inspChance) {
+      addInspiration(1);
+      addHistory('action', '✨ 灵感闪现', '+1 灵感（连续专注的馈赠）');
     }
   }
   addHistory('focus', `专注 ${minutes} 分钟`, `誊抄 ${wordsGained.toLocaleString()} 字 · +${coinsEarned}智慧之光`);
@@ -346,8 +379,8 @@ function handleCompleteFocus(isAuto = false) {
       bookCompleted, bookTitle, bookEmoji, copyCount, completedBook, bookMastery,
       isFirstBookComplete,
       newMilestones,
-      chapterInfo,
-      nextPreview
+      chapterInfo, nextPreview,
+      repairCompleted, repairBookTitle
     });
 
     // 专注完成后访客到来
@@ -410,7 +443,8 @@ function handlePostFocusEffects(effects) {
     bookCompleted, bookTitle, bookEmoji, copyCount, completedBook, bookMastery,
     isFirstBookComplete,
     newMilestones,
-    chapterInfo, nextPreview
+    chapterInfo, nextPreview,
+    repairCompleted, repairBookTitle
   } = effects;
 
   // 构建回调链（从后往前串联）
@@ -474,6 +508,12 @@ function handlePostFocusEffects(effects) {
     // 完成时吸引访客
     const bv = spawnVisitor();
     if (bv) triggerQuestCheck('visitor_arrive');
+  }
+
+  // 修复完成弹窗（最外层，先弹）
+  if (repairCompleted) {
+    const repairNext = next;
+    next = () => showRepairCompleteCard(repairBookTitle, repairNext);
   }
 
   next();
@@ -544,6 +584,50 @@ function checkAndShowFocusCompleteTutorial() {
   if (trigger) {
     dispatchTutorialUI(trigger);
   }
+}
+
+// ========== 里程碑 ==========
+
+function showRepairCompleteCard(bookTitle, callback) {
+  const overlay = document.createElement('div');
+  overlay.className = 'fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4';
+  const card = document.createElement('div');
+  card.className = 'parchment-bg rounded-2xl p-6 max-w-sm w-full text-center magic-glow animate-scale-in';
+
+  card.innerHTML = `
+    <div class="text-5xl mb-3">🩹</div>
+    <div class="text-xs text-magic-gold font-bold mb-2">书籍修复</div>
+    <h3 class="font-display text-xl font-bold mb-2">《${bookTitle}》修复完成</h3>
+    <div class="grid grid-cols-3 gap-2 mb-3">
+      <div class="bg-white/60 rounded-lg p-3">
+        <div class="text-lg font-bold text-magic-gold">+80</div>
+        <div class="text-xs text-ink-light">智慧之光</div>
+      </div>
+      <div class="bg-white/60 rounded-lg p-3">
+        <div class="text-lg font-bold text-purple-500">+2✨</div>
+        <div class="text-xs text-ink-light">灵感</div>
+      </div>
+      <div class="bg-white/60 rounded-lg p-3">
+        <div class="text-lg font-bold text-green-600">+2</div>
+        <div class="text-xs text-ink-light">氛围</div>
+      </div>
+    </div>
+    <p class="text-sm text-ink-light mb-4 leading-relaxed">损毁的页面已经补好了，墨迹新鲜，羊皮纸平整——你比上一任守护者用心。</p>
+    <button class="px-6 py-3 bg-magic-gold text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all">继续 →</button>
+  `;
+
+  overlay.appendChild(card);
+  document.body.appendChild(overlay);
+
+  const btn = card.querySelector('button');
+  btn.addEventListener('click', () => {
+    overlay.style.opacity = '0';
+    overlay.style.transition = 'opacity 0.3s';
+    setTimeout(() => {
+      overlay.remove();
+      if (callback) callback();
+    }, 300);
+  });
 }
 
 // ========== 里程碑 ==========

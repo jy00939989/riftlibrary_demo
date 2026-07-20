@@ -210,6 +210,7 @@ const DEFAULT_BOOKS = {
     starred: false,
     damaged: false,
     repairWords: 0,
+    repairProgress: 0,
     readChapters: [],
     reCopyUnlocked: false
   },
@@ -222,6 +223,7 @@ const DEFAULT_BOOKS = {
     starred: false,
     damaged: false,
     repairWords: 0,
+    repairProgress: 0,
     readChapters: [],
     reCopyUnlocked: false
   },
@@ -234,6 +236,7 @@ const DEFAULT_BOOKS = {
     starred: false,
     damaged: false,
     repairWords: 0,
+    repairProgress: 0,
     readChapters: [],
     reCopyUnlocked: false
   },
@@ -246,6 +249,7 @@ const DEFAULT_BOOKS = {
     starred: false,
     damaged: false,
     repairWords: 0,
+    repairProgress: 0,
     readChapters: [],
     reCopyUnlocked: false
   },
@@ -258,6 +262,7 @@ const DEFAULT_BOOKS = {
     starred: false,
     damaged: false,
     repairWords: 0,
+    repairProgress: 0,
     readChapters: [],
     reCopyUnlocked: false
   }
@@ -288,6 +293,9 @@ export function initState() {
           }
           if (state.books[id].repairWords === undefined) {
             state.books[id].repairWords = 0;
+          }
+          if (state.books[id].repairProgress === undefined) {
+            state.books[id].repairProgress = 0;
           }
           if (state.books[id].starred === undefined) {
             state.books[id].starred = false;
@@ -325,11 +333,19 @@ export function initState() {
             commonTriggered: [],
             occasionalCompleted: [],
             rareTriggered: false,
+            rareEligibleCount: 0,
             postRareTriggered: false,
             postRareCommonTriggered: [],
             postRareOccasionalCompleted: [],
             expansionLevel: 0
           };
+        });
+      } else {
+        // 已有 visitorNarratives 但可能缺少 rareEligibleCount 字段
+        Object.keys(state.visitorNarratives).forEach(id => {
+          if (state.visitorNarratives[id].rareEligibleCount === undefined) {
+            state.visitorNarratives[id].rareEligibleCount = 0;
+          }
         });
       }
       // 确保 currentSession 不会从上次恢复
@@ -539,4 +555,9 @@ export function saveState() {
     quoteIndex: 0
   };
   localStorage.setItem('library_state', JSON.stringify(toSave));
+}
+
+// 调试：本地开发时暴露 state 到全局控制台（生产部署不生效）
+if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+  window.state = state;
 }

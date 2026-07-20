@@ -262,8 +262,10 @@ export function showVisitorEventModal(result, callback) {
 
   // 损坏提示
   if (result.damaged) {
-    contentHtml += `<div class="mt-3 p-2 bg-red-50 rounded-lg text-xs text-red-700">
-      ⚠️ 《${result.bookTitle}》在归还时发现轻微损毁，需要重新修复部分内容。
+    contentHtml += `<div class="mt-3 p-2 bg-amber-50 rounded-lg text-xs text-amber-800 border border-amber-200">
+      ⚠️ 《${result.bookTitle}》在归还时发现轻微损毁，损失了约 ${Math.round((state.books[result.bookId]?.repairWords || 0) / (state.books[result.bookId]?.repairWords + state.books[result.bookId]?.copiedWords || 1) * 100)}%的抄写进度。<br>
+      <span class="font-bold">🔧 不用担心！继续在缮写室专注誊抄就是在修复它，修书时速度还会 +5%。</span><br>
+      <span class="text-amber-600">修复完成后墨墨会给你额外奖励 ✨</span>
     </div>`;
   }
 

@@ -15,6 +15,7 @@ const CANONICAL_BOOK_FIELDS = {
   starred: false,
   damaged: false,
   repairWords: 0,
+  repairProgress: 0,
   readChapters: [],
   reCopyUnlocked: false
 };
@@ -88,13 +89,22 @@ export function getBookCapacity() {
 }
 
 export function getOwnedBookCount() {
+  normalizeShelves();
   const mBox = state.manuscriptBox || [];
+  // 收集所有已在书架上的书
+  const shelfBookIds = new Set();
+  state.library.shelves.forEach(shelf => {
+    shelf.forEach(slot => { if (slot) shelfBookIds.add(slot); });
+  });
+
   return Object.entries(state.books || {}).filter(([id, b]) => {
     if (!b || b.status === 'locked') return false;
-    // 手稿箱中且 status 为 unlocked（未誊抄）→ 不占书架位
-    // 手稿箱中且 status 为 completed（待上架）→ 占书架位
-    if (mBox.includes(id) && b.status === 'unlocked') return false;
-    return true;
+    // 已在书架上 → 占位
+    if (shelfBookIds.has(id)) return true;
+    // 手稿箱中且已完成（待上架）→ 占位
+    if (mBox.includes(id) && b.status === 'completed') return true;
+    // 其他状态（unlocked/copying 仍在誊抄中）→ 不占书架位
+    return false;
   }).length;
 }
 

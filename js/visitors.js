@@ -662,6 +662,7 @@ export function getNarrativeState(charId) {
       commonTriggered: [],
       occasionalCompleted: [],
       rareTriggered: false,
+      rareEligibleCount: 0,
       postRareTriggered: false,
       postRareCommonTriggered: [],
       postRareOccasionalCompleted: [],
@@ -743,8 +744,11 @@ function triggerNarrative(charId) {
     }
   }
 
-  // 3. 稀层：偶层全完成 + 好感≥60 + 稀层未触发 → 10% 概率
-  if (allOccDone && !ns.rareTriggered && favor >= 60 && narrative.rare && Math.random() < 0.10) {
+  // 3. 稀层：偶层全完成 + 好感≥60 + 稀层未触发 → 10% 概率（保底：第5次必定触发）
+  if (allOccDone && !ns.rareTriggered && favor >= 60 && narrative.rare) {
+    ns.rareEligibleCount = (ns.rareEligibleCount || 0) + 1;
+    const rareChance = ns.rareEligibleCount >= 5 ? 1.0 : 0.10;
+    if (Math.random() < rareChance) {
     ns.rareTriggered = true;
     result.rare = narrative.rare;
     // 常层再次扩容
@@ -774,6 +778,7 @@ function triggerNarrative(charId) {
     addDiaryEntry('special_event', {
       detail: `${narrative.rare.title} —— ${narrative.rare.text}\n\n附信：${narrative.rare.letter?.title || ''}`
     });
+    }
   }
 
   // 4. 稀层后终局：稀层已触发 + 终局未触发 → 100%
@@ -917,6 +922,7 @@ export function collectReturn(visitorId) {
     const book = BOOKS[bookId];
     bs.damaged = true;
     bs.repairWords = Math.round(bs.copiedWords * 0.25);
+    bs.repairProgress = 0;
     if (bs.repairWords > 0) {
       bs.copiedWords = Math.max(0, bs.copiedWords - bs.repairWords);
       if (bs.status === 'completed' && book && bs.copiedWords < book.totalWords) {

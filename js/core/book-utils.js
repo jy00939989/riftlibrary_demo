@@ -11,6 +11,7 @@ const CANONICAL_BOOK_FIELDS = {
   starred: false,
   damaged: false,
   repairWords: 0,
+  repairProgress: 0,
   readChapters: [],
   reCopyUnlocked: false
 };
@@ -101,4 +102,17 @@ export function getUnlockedChapters(bookId, booksData) {
 export function canBorrowBook(bookId, booksData) {
   const bookState = booksData[bookId];
   return bookState && bookState.status === 'completed';
+}
+
+/**
+ * 获取书籍修复进度信息
+ * @returns {object|null} { remaining, total, pct } 或 null（书未损坏）
+ */
+export function getRepairProgress(bookState) {
+  if (!bookState || !bookState.damaged || !bookState.repairWords) return null;
+  const total = bookState.repairWords || 1;
+  const done = bookState.repairProgress || 0;
+  const remaining = Math.max(0, total - done);
+  const pct = Math.min(100, Math.round((done / total) * 100));
+  return { remaining, total, done, pct };
 }

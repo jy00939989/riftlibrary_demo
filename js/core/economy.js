@@ -74,9 +74,12 @@ export function getOwnedBookCount(booksData, shelves, manuscriptBox) {
   const mBox = manuscriptBox || [];
   return Object.entries(booksData || {}).filter(([id, b]) => {
     if (!b || b.status === 'locked') return false;
+    // 已在书架上 → 占位
     if (allShelfIds.has(id)) return true;
-    if (mBox.includes(id) && b.status === 'unlocked') return false;
-    return true;
+    // 手稿箱中且已完成（待上架）→ 占位
+    if (mBox.includes(id) && b.status === 'completed') return true;
+    // 其他状态（unlocked/copying 仍在誊抄中）→ 不占书架位
+    return false;
   }).length;
 }
 
