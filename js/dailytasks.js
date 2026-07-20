@@ -1,6 +1,6 @@
 // 今日馆务 —— 每日任务逻辑
 import { state, saveState } from './state.js';
-import { addCoins, addAtmosphere } from './storage.js';
+import { addCoins, addAtmosphere, addInspiration } from './storage.js';
 
 function todayKey() {
   return new Date().toISOString().slice(0, 10); // YYYY-MM-DD
@@ -49,8 +49,9 @@ export function claimAllDoneBonus(stateCtx) {
     dt.allClaimed = true;
     addCoins(20);
     addAtmosphere(3);
+    addInspiration(3);
     saveState();
-    return { coins: 20, atmo: 3 };
+    return { coins: 20, atmo: 3, inspiration: 3 };
   }
   return null;
 }
