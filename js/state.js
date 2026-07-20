@@ -553,8 +553,3 @@ export function saveState() {
   };
   localStorage.setItem('library_state', JSON.stringify(toSave));
 }
-
-// 调试：本地开发时暴露 state 到全局控制台（生产部署不生效）
-if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
-  window.state = state;
-}

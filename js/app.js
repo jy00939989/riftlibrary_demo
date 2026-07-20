@@ -30,7 +30,6 @@ import { ensureDailyTasks, markTaskDone, claimAllDoneBonus } from './dailytasks.
 import { ensureGuideQuests, checkGuideQuest, tryCompleteAllDone, getQuestProgress } from './guidequests.js';
 import { renderGuideQuestWidget, showQuestCompleteToast } from './render/index.js';
 import { renderMomoSuggestion, resetMomoSuggestion } from './render/momo-suggestion.js';
-import { initDevConsole } from './dev-console.js';
 
 function getNow() {
   return window.__dev && window.__dev.getNow ? window.__dev.getNow() : Date.now();
@@ -1314,9 +1313,6 @@ function init() {
 
   console.log('📚 异世界图书馆已就绪');
   console.log(`   ${state.library.name} · 氛围 ${state.library.atmosphere}/500 · 连续专注 ${state.focus.streak} 天`);
-
-  // 调试控制台（仅 localhost 生效）
-  initDevConsole();
 
   // 初始化完成
 

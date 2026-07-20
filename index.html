@@ -96,5 +96,11 @@
 
   <script type="module" src="js/app.js"></script>
   <script type="module" src="js/save-manager.js"></script>
+  <!-- 调试控制台：仅本地开发加载，生产环境文件不在仓库中，静默跳过 -->
+  <script type="module">
+    if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+      import('./js/dev-console.js').then(m => m.initDevConsole()).catch(() => {});
+    }
+  </script>
 </body>
 </html>

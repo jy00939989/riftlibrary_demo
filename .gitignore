@@ -20,3 +20,6 @@ __pycache__/
 
 # Claude 配置
 .claude/
+
+# 调试工具（仅本地开发，不纳入版本管理）
+js/dev-console.js
