@@ -19,8 +19,13 @@ function countCompletedBooks(s) {
 }
 
 function countUniqueVisitors(s) {
-  if (!s.visitorFavors) return 0;
-  return Object.values(s.visitorFavors).filter(v => v > 0).length;
+  // 从借阅记录里统计出现过多少位不同访客（比 visitorFavors 更可靠，不受好感度变化影响）
+  const records = s.borrowRecords || [];
+  const seen = new Set();
+  records.forEach(r => { if (r.charId) seen.add(r.charId); });
+  // 也统计当前在馆的访客
+  (s.visitors || []).forEach(v => { if (v.charId) seen.add(v.charId); });
+  return seen.size;
 }
 
 function hasBorrowedOrVisited(s) {
