@@ -308,21 +308,18 @@ export function initState() {
           }
         }
       });
-      // 旧存档迁移：visitorFavors
+      // 旧存档迁移：visitorFavors（旧版 4 人 → 新版 10 人）
       if (!state.visitorFavors) {
-        // 旧版访客好感度迁移（4 人 → 10 人）
-      if (!state.visitorFavors || Object.keys(state.visitorFavors).length <= 4) {
         state.visitorFavors = {
-          shenmingyuan: state.visitorFavors?.shenmingyuan || 0,
-          chengyuan: 0, peizhou: state.visitorFavors?.ajiu || 0,
-          jianan: 0, jiangyoushu: 0,
-          guyu: 0,
-          qiaoyiyi: state.visitorFavors?.xiaoying || 0,
-          xierugui: 0,
-          xiachan: 0,
-          wangxiaolei: state.visitorFavors?.yunyou || 0
+          shenmingyuan: 0, chengyuan: 0, peizhou: 0, jianan: 0, jiangyoushu: 0,
+          guyu: 0, qiaoyiyi: 0, xierugui: 0, xiachan: 0, wangxiaolei: 0
         };
-      }
+      } else {
+        // 确保新版 10 人都存在
+        const ALL_IDS = ['shenmingyuan','chengyuan','peizhou','jianan','jiangyoushu','guyu','qiaoyiyi','xierugui','xiachan','wangxiaolei'];
+        ALL_IDS.forEach(id => {
+          if (state.visitorFavors[id] === undefined) state.visitorFavors[id] = 0;
+        });
       }
       // 旧存档迁移：visitorNarratives（10 人叙事进度追踪）
       if (!state.visitorNarratives || Object.keys(state.visitorNarratives).length === 0) {

@@ -109,6 +109,7 @@ function buildContent() {
     <button class="dc-btn" onclick="window._dcAction('forceReturn')">📥 强制收书（所有到期）</button>
     <button class="dc-btn" onclick="window._dcAction('addInspiration5')">✨ +5 灵感</button>
     <button class="dc-btn" onclick="window._dcAction('addCoins500')">💰 +500 智慧之光</button>
+    <button class="dc-btn" style="background:rgba(200,150,0,0.3);" onclick="window._dcAction('rebuildFavors')">🔄 从历史重建好感度</button>
     <button class="dc-btn" onclick="window._dcAction('damageBook')">⚠️ 损坏当前书</button>
     <button class="dc-btn" style="background:rgba(200,80,80,0.3);" onclick="window._dcAction('resetState')">💣 重置存档</button>
   </div>
@@ -249,6 +250,39 @@ async function doAction(action) {
       localStorage.removeItem('library_state_backup');
       location.reload();
       return;
+
+    case 'rebuildFavors': {
+      // 从历史记录中重建所有访客的好感度
+      const ALL_IDS = ['shenmingyuan','chengyuan','peizhou','jianan','jiangyoushu','guyu','qiaoyiyi','xierugui','xiachan','wangxiaolei'];
+      const favors = {};
+      ALL_IDS.forEach(id => { favors[id] = 0; });
+
+      let count = 0;
+      (state.history || []).forEach(h => {
+        if (h.type === 'visitor' && h.detail) {
+          const match = h.detail.match(/好感\+(\d+)/);
+          if (match) {
+            const amount = parseInt(match[1]);
+            // 从 title 里找访客名
+            for (const id of ALL_IDS) {
+              const defs = { shenmingyuan:'沈明远', chengyuan:'程远', peizhou:'裴舟', jianan:'简安', jiangyoushu:'江有树', guyu:'谷雨', qiaoyiyi:'乔一一', xierugui:'谢如归', xiachan:'夏蝉', wangxiaolei:'王小磊' };
+              if (h.title.includes(defs[id])) {
+                favors[id] += amount;
+                count++;
+                break;
+              }
+            }
+          }
+        }
+      });
+
+      state.visitorFavors = favors;
+      const { saveState } = await import('./state.js');
+      saveState();
+      toast(`从 ${count} 条记录重建了 10 人好感度`);
+      refresh();
+      return;
+    }
   }
 }
 
