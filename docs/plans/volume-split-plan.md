@@ -421,7 +421,7 @@ export const quotes = { /* 全书名言，或保留原 quotes */ };
 
 | 文件 | 改动 |
 |---|---|
-| `js/core/economy.js` | **修改**：`getAvailableBooks` 增加动态轻偏置 + 临门一脚保底；新增 `getRefreshWeight` / `getGuaranteedVolumeEntries`（见 7.1）；单卷按普通书过滤（已拥有且完好的卷权重置 0） |
+| `js/core/economy.js` | **修改**：`getAvailableBooks` 增加动态轻偏置 + 临门一脚保底；新增 `getRefreshWeight` / `getGuaranteedVolumeEntries`（见 7.1）；单卷按普通书过滤（**已拥有的卷权重置 0，含损坏卷**，损坏卷走修复室路径） |
 | `js/shop.js` | **修改**：单卷走普通 `purchaseBook`；`ensureShopState` / 补货逻辑改为调用 `core/economy.js` 的 `getAvailableBooks` 或 `getRefreshWeight`，确保轻偏置生效；裴舟推荐过滤为只推荐缺失单卷（见 7.5） |
 | `js/capacity.js` | **新增修缮箱操作**：`canStoreInRestorationBox` / `storeInRestorationBox` / `removeFromRestorationBox`；`createBookRecord` 通用；单卷购买即入手稿箱（一次一卷） |
 | `js/volumes.js` | **新增**：`canCollectVolumeGroup` / `collectVolumeGroup`（含借出/修缮箱检查 + 上架回退，见 7.2） |
