@@ -364,10 +364,10 @@ function renderDailyTasks() {
     ${allDone && !dt.allClaimed ? `
       <button class="claim-all-btn w-full px-4 py-2.5 text-xs font-bold tracking-wider transition-all duration-300"
               style="background:linear-gradient(135deg, rgba(201,162,39,0.85) 0%, rgba(180,140,20,0.9) 100%); color:#fff; letter-spacing:0.06em;">
-        🎁 领取全勤奖励 · 💰20 + ✨3
+        🎁 领取全勤奖励 · 💰20 + ✨3 + 💡3
       </button>
     ` : allDone ? `
-      <div class="text-center py-2 text-[11px] tracking-wider font-bold" style="color:#6b5010;">✦ 今日馆务已悉数完成 ✦</div>
+      <div class="text-center py-2 text-[11px] tracking-wider font-bold" style="color:#6b5010;">✦ 今日馆务已悉数完成 · 全勤奖励已领取 ✦</div>
     ` : ''}
   `;
 
@@ -377,7 +377,7 @@ function renderDailyTasks() {
     claimBtn.addEventListener('click', () => {
       const bonus = claimAllDoneBonus(state);
       if (bonus) {
-        claimBtn.textContent = '✓ 已领取';
+        claimBtn.textContent = '✓ 已获得 💰20 + ✨3 + 💡3';
         claimBtn.disabled = true;
         claimBtn.style.opacity = '0.6';
         updateStatusBar();
