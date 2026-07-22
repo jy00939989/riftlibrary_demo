@@ -7,7 +7,6 @@ import { spendInspiration } from '../storage.js';
 import { getManuscriptSlots, getManuscriptBoxCount, getBookCapacity, getOwnedBookCount, placeOnShelf } from '../capacity.js';
 import { calcCurationEffects } from '../curation.js';
 import { getEffectiveCopiedWords } from '../core/book-utils.js';
-import { renderVolumeTracker } from './volumeTracker.js';
 
 const SHELF_CAPACITY = 5;
 let currentFilter = 'all';
@@ -63,11 +62,6 @@ export function renderBookshelfPage() {
 
   // 筛选栏
   card.appendChild(renderFilterBar());
-
-  // 长书分卷追踪面板
-  const trackerContainer = el('div', '');
-  renderVolumeTracker(trackerContainer);
-  card.appendChild(trackerContainer);
 
   // 应用筛选（只影响可见性，不影响位置）
   const visibleBookIds = new Set(applyFilters(allDisplayBooks).map(b => b.id));
