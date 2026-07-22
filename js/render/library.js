@@ -261,8 +261,7 @@ function renderDecorationTab(container) {
   try {
     renderDecorationPage();
   } catch (e) {
-    console.error('布置页面渲染失败:', e);
-    content.innerHTML = `<p class="text-center text-red-500 py-8">布置页面加载失败: ${e.message}</p>`;
+    content.innerHTML = `<p class="text-center text-red-500 py-8">布置页面加载失败</p>`;
   }
 }
 
@@ -348,10 +347,8 @@ function renderCollectionTab(container) {
   if (!content) return;
   try {
     renderCollection(content);
-    console.log('✅ 收藏室渲染完成');
   } catch (e) {
-    console.error('收藏室渲染失败:', e);
-    content.innerHTML = `<p class="text-center text-red-500 py-8">收藏室加载失败: ${e.message}</p>`;
+    content.innerHTML = `<p class="text-center text-red-500 py-8">收藏室加载失败</p>`;
   }
 }
 

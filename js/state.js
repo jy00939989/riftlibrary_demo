@@ -632,7 +632,7 @@ export function initState() {
       saveState(); // 迁移后立即持久化
       return true;
     } catch (e) {
-      console.warn('存档损坏，使用默认状态');
+      // 存档损坏，使用默认状态
     }
   }
   return false;

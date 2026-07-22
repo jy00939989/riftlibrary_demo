@@ -58,10 +58,7 @@ export function collectVolumeGroup(group) {
   // 典藏版上架；满架则回退到手稿箱
   const placed = placeOnShelf(group.collectedBookId);
   if (!placed) {
-    const ok = addToManuscriptBox(group.collectedBookId);
-    if (!ok) {
-      console.warn('[volumes] 典藏版上架失败且手稿箱已满：', group.collectedBookId);
-    }
+    addToManuscriptBox(group.collectedBookId);
   }
 
   // 奖励

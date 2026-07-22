@@ -257,7 +257,7 @@ export function checkAchievements(trigger, payload) {
         }
       }
     } catch (e) {
-      console.warn(`成就检测异常 [${ach.id}]:`, e);
+      // 单个成就检测异常不应中断整体流程
     }
   });
 

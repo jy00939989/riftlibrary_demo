@@ -425,7 +425,6 @@ function handleCompleteFocus(isAuto = false) {
       triggerQuestCheck('book_complete');
     }
   } catch (e) {
-    console.error('结算弹窗链异常:', e);
     // 弹窗链失败时至少重建页面，避免界面卡死
     renderFocusPage();
     updateStatusBar();
@@ -1128,17 +1127,14 @@ function init() {
   // 全局错误兜底：防止单点 JS 异常 → 全站白屏
   window.addEventListener('error', (e) => {
     const msg = e.error?.message || e.message || '未知错误';
-    const stack = e.error?.stack || '';
     const file = e.filename || '';
     const line = e.lineno || '';
-    console.error('📚 图书馆异常:', msg, file, line, stack);
     // 非外部资源加载错误（JS 运行时错误）→ 显示恢复面板
     if (e.error || (file && line)) {
       showCrashRecovery(msg, file, line);
     }
   });
   window.addEventListener('unhandledrejection', (e) => {
-    console.error('📚 异步异常:', e.reason);
     if (e.reason?.message) {
       showCrashRecovery(e.reason.message, '', '');
     }
@@ -1211,7 +1207,6 @@ function init() {
   });
   if (migratedBooks > 0) {
     saveState();
-    console.log(`📚 迁移修正了 ${migratedBooks} 本书籍状态`);
   }
 
   // 注入回调
@@ -1315,9 +1310,6 @@ function init() {
     // 隐藏加载屏：等引导启动后再淡出，避免闪烁
     hideLoadingScreen();
   }, state.introCompleted ? 500 : 5000); // 有引导时等引导结束
-
-  console.log('📚 异世界图书馆已就绪');
-  console.log(`   ${state.library.name} · 氛围 ${state.library.atmosphere}/500 · 连续专注 ${state.focus.streak} 天`);
 
   // 初始化完成
 

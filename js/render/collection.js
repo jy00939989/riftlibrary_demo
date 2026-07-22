@@ -6,7 +6,6 @@ export function renderCollection(container) {
   try {
     categories = getCollectionState();
   } catch (e) {
-    console.error('收集数据读取失败:', e);
     container.innerHTML = `<p class="text-center text-ink-light py-8">收集系统加载中…</p>`;
     return;
   }

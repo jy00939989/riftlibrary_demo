@@ -171,7 +171,6 @@ function showLetterModal(taskId, mode, planeId, charId, char) {
   const tasks = getAllTasks(planeId);
   const task = tasks.find(t => t.id === taskId);
   if (!task) {
-    console.warn('任务数据未找到:', taskId);
     return;
   }
 

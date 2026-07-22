@@ -96,7 +96,6 @@ export function renderAchievements(container) {
     unlocked = list.filter(a => a.unlocked).length;
     total = list.length;
   } catch (e) {
-    console.error('成就状态读取失败:', e);
     container.innerHTML = '<p class="text-center text-ink-light py-8">成就系统加载中…</p>';
     return;
   }

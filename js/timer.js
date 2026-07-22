@@ -81,7 +81,6 @@ function tick() {
       stopTimer();
       if (onComplete) {
         try { onComplete(true); } catch (e) {
-          console.error('自动完成回调异常:', e);
           renderFocusPage();
         }
       }
@@ -114,7 +113,6 @@ function tick() {
         stopTimer();
         if (onComplete) {
           try { onComplete(true); } catch (e) {
-            console.error('书籍完成自动完成回调异常:', e);
             renderFocusPage();
           }
         }
