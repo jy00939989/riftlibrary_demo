@@ -1,6 +1,7 @@
 // 成就检测引擎 —— 纯逻辑模块，不碰 DOM
 import { state, saveState } from './state.js';
 import { BOOKS, CATEGORIES } from '../data/books.js';
+import { isVolumeBookId, getVolumeGroupByVolumeId } from '../data/volume_groups.js';
 
 // ========== 成就定义（30个） ==========
 
@@ -70,6 +71,9 @@ const ACHIEVEMENTS = [
   { id: 'B08', name: '典藏大师', rarity: '铂金', category: '书籍收集',
     desc: '3本书达到mastery Lv5',
     check: (s, t) => t === 'book' && countMasteryLevel(s, 5) >= 3 },
+  { id: 'B09', name: '卷轴收藏家', rarity: '黄金', category: '书籍收集',
+    desc: '在古籍修复室首次合成一本典藏版',
+    check: (s, t) => t === 'volume_collect' },
 
   // ---- 图书馆重建 ----
   { id: 'L01', name: '初见光明', rarity: '青铜', category: '图书馆重建',
@@ -147,24 +151,48 @@ function unlock(id) {
 
 // ========== 辅助统计函数 ==========
 
+// 单卷归并到典藏版 ID，避免 24 单卷冲掉"拥有 10 本书"进度
+function normalizeBookIdForStats(id) {
+  if (isVolumeBookId(id)) {
+    const group = getVolumeGroupByVolumeId(id);
+    return group ? group.collectedBookId : id;
+  }
+  return id;
+}
+
 export function countOwnedBooks(s) {
-  return Object.keys(s.books).filter(id => s.books[id] && s.books[id].status !== 'locked').length;
+  const seen = new Set();
+  Object.keys(s.books || {}).forEach(id => {
+    const bs = s.books[id];
+    if (!bs || bs.status === 'locked') return;
+    seen.add(normalizeBookIdForStats(id));
+  });
+  return seen.size;
 }
 
 export function countCategoryBooks(s, category) {
-  return Object.keys(s.books).filter(id => {
+  const seen = new Set();
+  Object.keys(s.books || {}).forEach(id => {
     const bs = s.books[id];
-    if (!bs || bs.status === 'locked') return false;
-    const book = BOOKS[id];
-    return book && book.category === category;
-  }).length;
+    if (!bs || bs.status === 'locked') return;
+    const normalized = normalizeBookIdForStats(id);
+    if (seen.has(normalized)) return;
+    const book = BOOKS[normalized];
+    if (book && book.category === category) {
+      seen.add(normalized);
+    }
+  });
+  return seen.size;
 }
 
 export function countMasteryLevel(s, level) {
-  return Object.keys(s.books).filter(id => {
+  const seen = new Set();
+  Object.keys(s.books || {}).forEach(id => {
     const bs = s.books[id];
-    return bs && bs.status !== 'locked' && bs.masteryLevel >= level;
-  }).length;
+    if (!bs || bs.status === 'locked' || bs.masteryLevel < level) return;
+    seen.add(normalizeBookIdForStats(id));
+  });
+  return seen.size;
 }
 
 export function countTotalVisitors(s) {

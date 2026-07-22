@@ -2,6 +2,7 @@
 // 书架策展 · 连携计算引擎
 import { BOOKS } from '../../data/books.js';
 import { CURATION_PAIRS } from '../../data/curation_pairs.js';
+import { isVolumeBookId } from '../../data/volume_groups.js';
 
 const CHAIN_BONUS = { 3: 0.01, 4: 0.015, 5: 0.02 };
 
@@ -10,7 +11,8 @@ function scanRow(row, shelfIdx, attr) {
   let start = -1;
   for (let i = 0; i <= row.length; i++) {
     const currentId = i < row.length ? row[i] : null;
-    const currentVal = currentId && BOOKS[currentId] ? BOOKS[currentId][attr] : null;
+    // 单卷不参与连携
+    const currentVal = currentId && !isVolumeBookId(currentId) && BOOKS[currentId] ? BOOKS[currentId][attr] : null;
 
     if (start === -1) {
       if (currentVal) { start = i; }
@@ -41,7 +43,7 @@ function scanRow(row, shelfIdx, attr) {
 }
 
 function scanPairs(row, shelfIdx) {
-  const bookSet = new Set(row.filter(Boolean));
+  const bookSet = new Set(row.filter(id => id && !isVolumeBookId(id)));
   const found = [];
   for (const pair of CURATION_PAIRS) {
     if (pair.books.every(bid => bookSet.has(bid))) {

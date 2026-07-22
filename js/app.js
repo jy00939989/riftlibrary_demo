@@ -11,7 +11,7 @@ import {
 import { startTimer, togglePauseTimer, abandonTimer, setCompleteCallback } from './timer.js';
 import { BOOKS } from '../data/books.js';
 import { spawnVisitor, tickVisitorBrowsing, checkDueVisitors, collectReturn, removeVisitor, getVisitorDef, getAuraSpeedBonus, getAuraCoinsMultiplier, getAuraSpawnBonus, getBorrowSpawnBonus, getStageWitnesses } from './visitors.js';
-import { removeFromManuscriptBox, isBookCapacityFull, placeOnShelf } from './capacity.js';
+import { removeFromManuscriptBox, isBookCapacityFull, placeOnShelf, getRestorationRepairSpeedBonus, isRestorationUnlocked } from './capacity.js';
 import { upgradeBorrowLevel, getFocusSpeedMultiplier, hasSignboard } from './shop.js';
 import { getCurationFocusSpeed, getCurationCoinsBonus } from './curation.js';
 import { checkAchievements, checkAllOnInit, getAchievementBonuses } from './achievements.js';
@@ -170,9 +170,9 @@ function handleCompleteFocus(isAuto = false) {
   // 热茶 buff：前5分钟速度 +10%
   const curationSpeed = getCurationFocusSpeed();
 
-  // 修复加成：损坏的书正在修复中，熟能生巧 +5%
+  // 修复加成：损坏的书正在修复中，修复室开放后基础 +5% + 等级加成
   const bookIsDamaged = sess.bookId && state.books[sess.bookId] && state.books[sess.bookId].damaged;
-  const repairSpeedBonus = bookIsDamaged ? 0.05 : 0;
+  const repairSpeedBonus = (bookIsDamaged && isRestorationUnlocked()) ? (0.05 + getRestorationRepairSpeedBonus()) : 0;
 
   let wordsGained;
   if (sess.teaBoost) {
@@ -258,9 +258,12 @@ function handleCompleteFocus(isAuto = false) {
         bookState.reCopyUnlocked = false;
       }
 
-      // 发放单次完成奖励
-      addAtmosphere(book.totalWords < 30000 ? 3 : book.totalWords < 100000 ? 6 : 10);
-      addCoins(50);
+      // 发放单次完成奖励：单卷奖励减半（典藏版合成后才是完整一本）
+      const isVolume = book.isVolume === true;
+      const atmoReward = (book.totalWords < 30000 ? 3 : book.totalWords < 100000 ? 6 : 10) * (isVolume ? 0.5 : 1);
+      const coinReward = 50 * (isVolume ? 0.5 : 1);
+      addAtmosphere(Math.floor(atmoReward));
+      addCoins(Math.floor(coinReward));
 
       addHistory('achievement',
         `完成《${book.title}》誊抄！`,

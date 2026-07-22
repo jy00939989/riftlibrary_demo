@@ -148,6 +148,33 @@ export function showLibraryOpenGuide(callback) {
   document.body.appendChild(overlay);
 }
 
+// 首次解锁古籍修复室：解释修缮箱 + 卷组合成
+export function showRestorationUnlockGuide(callback) {
+  const { overlay, card, dismiss } = makeOverlay(`
+    <div class="text-5xl mb-4">📜</div>
+    <h3 class="font-display text-2xl font-bold mb-2">古籍修复室已开放</h3>
+    <p class="text-ink-light leading-relaxed mb-3 text-base">
+      这里专门管理<strong>长书分卷</strong>：那些太过厚重、必须拆成多卷誊抄的典籍。
+    </p>
+    <div class="text-left text-base text-ink-light mb-3 space-y-1.5">
+      <div>🧩 <strong>卷组进度</strong> — 查看每套长书的已抄分卷</div>
+      <div>✨ <strong>合成典藏版</strong> — 集齐某套长书全部分卷后，可合成完整典藏版</div>
+      <div>🔒 <strong>修缮箱</strong> — 锁入珍贵单卷，防止被访客借出或损坏</div>
+      <div>📈 <strong>升级修复室</strong> — 提升修复损坏书籍的速度</div>
+    </div>
+    <button class="px-6 py-3 bg-magic-gold text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all">去看看 →</button>
+  `);
+
+  card.querySelector('button').addEventListener('click', () => {
+    dismiss(() => {
+      markTutorialSeen('restoration_unlock');
+      if (callback) callback();
+    });
+  });
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) card.querySelector('button').click(); });
+  document.body.appendChild(overlay);
+}
+
 // 通用升级大卡片：金边 + 大图 + 文字
 function showUpgradeCard({ imageUrl, badge, title, narrative, footer, onDismiss }) {
   const overlay = el('div', 'fixed inset-0 z-[150] flex items-center justify-center p-4');
@@ -304,6 +331,10 @@ export function dispatchTutorialUI(trigger, callback) {
       }
       if (trigger.event === 'library_open') {
         showLibraryOpenGuide(callback);
+        return true;
+      }
+      if (trigger.event === 'restoration_unlock') {
+        showRestorationUnlockGuide(callback);
         return true;
       }
       return false;

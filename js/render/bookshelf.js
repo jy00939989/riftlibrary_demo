@@ -7,6 +7,7 @@ import { spendInspiration } from '../storage.js';
 import { getManuscriptSlots, getManuscriptBoxCount, getBookCapacity, getOwnedBookCount, placeOnShelf } from '../capacity.js';
 import { calcCurationEffects } from '../curation.js';
 import { getEffectiveCopiedWords } from '../core/book-utils.js';
+import { renderVolumeTracker } from './volumeTracker.js';
 
 const SHELF_CAPACITY = 5;
 let currentFilter = 'all';
@@ -63,6 +64,11 @@ export function renderBookshelfPage() {
   // 筛选栏
   card.appendChild(renderFilterBar());
 
+  // 长书分卷追踪面板
+  const trackerContainer = el('div', '');
+  renderVolumeTracker(trackerContainer);
+  card.appendChild(trackerContainer);
+
   // 应用筛选（只影响可见性，不影响位置）
   const visibleBookIds = new Set(applyFilters(allDisplayBooks).map(b => b.id));
 
@@ -98,7 +104,7 @@ export function renderBookshelfPage() {
           return `
             <div class="p-3 rounded-lg border ${isCompleted ? 'bg-green-50/60 border-green-300' : 'bg-white/70 border-wood/20'} text-center">
               <div class="text-2xl mb-1">${book.emoji}</div>
-              <div class="text-xs font-bold text-ink">${book.title}</div>
+              <div class="text-xs font-bold text-ink">${book.volumeTitle || book.title}</div>
               <div class="text-[10px] text-ink-light mt-0.5">
                 ${isCompleted ? '✅ 已誊抄 · 待上架' : '📝 待誊抄'}
               </div>
@@ -344,7 +350,7 @@ function renderBookCard(book) {
     <!-- 封面区 -->
     <div class="book-cover flex-1 flex flex-col items-center justify-center p-4 relative min-h-[130px]">
       <div class="text-5xl mb-2 drop-shadow-sm">${book.emoji}</div>
-      <div class="font-bold text-sm text-center text-ink leading-tight">${book.title}</div>
+      <div class="font-bold text-sm text-center text-ink leading-tight">${book.volumeTitle || book.title}</div>
       <div class="text-[10px] text-ink-light/60 mt-1">${book.author}</div>
       ${isCompleted ? '<div class="absolute top-2 left-2 text-xs">🏆</div>' : ''}
     </div>
@@ -401,7 +407,7 @@ function renderChapterList(book) {
 
   content.innerHTML = `
     <div class="flex items-center justify-between mb-4">
-      <h2 class="font-display text-xl font-bold">${book.emoji} ${book.title}</h2>
+      <h2 class="font-display text-xl font-bold">${book.emoji} ${book.volumeTitle || book.title}</h2>
       <button class="text-2xl text-ink-light hover:text-ink close-modal">✕</button>
     </div>
     <div class="text-sm text-ink-light mb-1">${book.author} · ${book.category} · ${book.totalWords.toLocaleString()}字</div>
@@ -527,7 +533,7 @@ function renderReadingPage(book, chapter) {
   // 标题区
   const header = el('div', 'text-center mb-3');
   header.innerHTML = `
-    <h2 class="font-display text-lg font-bold" style="color:#c9a227">${book.emoji} ${book.title}</h2>
+    <h2 class="font-display text-lg font-bold" style="color:#c9a227">${book.emoji} ${book.volumeTitle || book.title}</h2>
     <p class="text-xs mt-1" style="color:rgba(245,230,200,0.5)">${chapter.title}</p>
   `;
   bookContainer.appendChild(header);
@@ -716,7 +722,7 @@ export function showMasteryDetail(book) {
 
   content.innerHTML = `
     <div class="flex items-center justify-between mb-4">
-      <h2 class="font-display text-xl font-bold">${book.emoji} ${book.title} · 典藏档案</h2>
+      <h2 class="font-display text-xl font-bold">${book.emoji} ${book.volumeTitle || book.title} · 典藏档案</h2>
       <button class="text-2xl text-ink-light hover:text-ink close-modal">✕</button>
     </div>
     <div class="text-sm text-ink-light mb-4">${book.author} · ${book.category} · 共${bookState.copyCount}次誊抄</div>

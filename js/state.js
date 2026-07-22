@@ -1,5 +1,8 @@
 // 单一数据源 —— 整个应用只有一个 state 对象
 
+import { BOOKS } from '../data/books.js';
+import { VOLUME_GROUPS } from '../data/volume_groups.js';
+
 export const state = {
   // 用户统计
   focus: {
@@ -138,7 +141,8 @@ export const state = {
     firstBorrowUpgradeDone: false,  // 首次借阅区升级引导完成
     firstShopOpen: false,           // 首次打开位面商店
     firstLibraryOpen: false,        // 首次打开馆长办公室
-    firstBookComplete: false        // 首次完成一本书
+    firstBookComplete: false,       // 首次完成一本书
+    firstRestorationUnlock: false   // 首次解锁古籍修复室
   },
 
   // 休息行动卡
@@ -199,7 +203,16 @@ export const state = {
   musicManualTrack: null,
 
   // 裴舟荐书折扣 { bookId, discount, expiresAt }，null=无推荐
-  peizhouRec: null
+  peizhouRec: null,
+
+  // 古籍修复室：修缮箱（保护单卷不被借出/损坏，仍可合成）
+  restorationBox: [],
+  restorationBoxSlots: 3,
+  restorationLevel: 0,      // 修复室等级 0-5
+  restorationUnlocked: false, // 需购买 Lv0 后才开放
+
+  // 卷组吐槽冷却（二阶段叙事用）
+  quipCooldown: { recent: [], groupVisits: {} }
 };
 
 // 默认书籍状态（新增/变更书籍时同步更新此处）
@@ -436,6 +449,9 @@ export function initState() {
       if (state.tutorialFlags.firstBorrowUpgradeDone === undefined) {
         state.tutorialFlags.firstBorrowUpgradeDone = false;
       }
+      if (state.tutorialFlags.firstRestorationUnlock === undefined) {
+        state.tutorialFlags.firstRestorationUnlock = false;
+      }
       if (state.inspiration === undefined) {
         state.inspiration = 0;
       }
@@ -517,6 +533,102 @@ export function initState() {
         }
         state.library.shelves = newShelves;
       }
+      // 旧存档迁移：长书分卷
+      // 清理书架上残留的旧长书 ID，它们现在只是典藏版占位
+      const collectedIds = new Set(Object.keys(VOLUME_GROUPS));
+      (state.library.shelves || []).forEach(shelf => {
+        if (!Array.isArray(shelf)) return;
+        shelf.forEach((slot, idx) => {
+          if (collectedIds.has(slot)) shelf[idx] = null;
+        });
+      });
+
+      Object.keys(VOLUME_GROUPS).forEach(collectedId => {
+        const group = VOLUME_GROUPS[collectedId];
+        const oldBook = state.books[collectedId];
+        if (!oldBook || oldBook.status === 'locked') return;
+
+        if (oldBook.status === 'completed') {
+          group.volumeIds.forEach(id => {
+            const volDef = BOOKS[id];
+            const chapterIds = (volDef && volDef.chapters || []).map(c => c.id);
+            state.books[id] = {
+              unlockedChapters: chapterIds.length ? chapterIds : [1],
+              copyCount: 1,
+              masteryLevel: 1,
+              copiedWords: volDef ? volDef.totalWords : 0,
+              status: 'completed',
+              starred: false,
+              damaged: false,
+              repairWords: 0,
+              repairProgress: 0,
+              readChapters: [],
+              reCopyUnlocked: false
+            };
+          });
+        } else {
+          let remainingWords = oldBook.copiedWords || 0;
+          const oldUnlocked = new Set(oldBook.unlockedChapters || [1]);
+          group.volumeIds.forEach(id => {
+            const volDef = BOOKS[id];
+            const volWords = volDef ? volDef.totalWords : 0;
+            const copied = Math.min(remainingWords, volWords);
+            const volChapterIds = (volDef && volDef.chapters || []).map(c => c.id);
+            const intersection = volChapterIds.filter(cid => oldUnlocked.has(cid));
+            const unlockedChapters = intersection.length > 0 ? intersection : [1];
+            const completed = copied >= volWords;
+            state.books[id] = {
+              unlockedChapters,
+              copyCount: completed ? 1 : 0,
+              masteryLevel: completed ? 1 : 0,
+              copiedWords: copied,
+              status: completed ? 'completed' : (copied > 0 ? 'copying' : 'unlocked'),
+              starred: false,
+              damaged: false,
+              repairWords: 0,
+              repairProgress: 0,
+              readChapters: [],
+              reCopyUnlocked: false
+            };
+            remainingWords -= copied;
+          });
+        }
+
+        // 旧长书记录重置为 locked，等待合成
+        state.books[collectedId] = {
+          unlockedChapters: [1],
+          copyCount: 0,
+          masteryLevel: 0,
+          copiedWords: 0,
+          status: 'locked',
+          starred: false,
+          damaged: false,
+          repairWords: 0,
+          repairProgress: 0,
+          readChapters: [],
+          reCopyUnlocked: false
+        };
+      });
+
+      // 旧存档迁移：修缮箱
+      if (!state.restorationBox) {
+        state.restorationBox = [];
+      }
+      if (state.restorationBoxSlots === undefined) {
+        state.restorationBoxSlots = 3;
+      }
+      if (state.restorationLevel === undefined) {
+        state.restorationLevel = 0;
+      }
+      // 旧存档迁移：修复室是否已开放（已有等级>0 或 修缮箱非空 视为已开放）
+      if (state.restorationUnlocked === undefined) {
+        state.restorationUnlocked = (state.restorationLevel > 0) || (state.restorationBox && state.restorationBox.length > 0);
+      }
+      // 旧存档迁移：卷组吐槽冷却
+      if (!state.quipCooldown) {
+        state.quipCooldown = { recent: [], groupVisits: {} };
+      }
+
       saveState(); // 迁移后立即持久化
       return true;
     } catch (e) {

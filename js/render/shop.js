@@ -279,9 +279,24 @@ function renderLibraryUpgrades() {
   });
   grid.appendChild(mCard);
 
-  // === 三个占位项 ===
+  // === 古籍修复室入口 ===
+  const restorationCard = el('div', 'bg-amber-50 rounded-xl p-4 border-2 border-amber-200 flex items-center gap-3 cursor-pointer hover:shadow-lg hover:border-amber-400 transition-all');
+  restorationCard.innerHTML = `
+    <span class="text-2xl">📜</span>
+    <div class="flex-1">
+      <span class="font-bold text-sm">古籍修复室</span>
+      <span class="text-xs text-ink-light ml-2">修复损毁珍本 · 合成典藏版</span>
+    </div>
+    <span class="text-xs text-amber-700 bg-amber-100 px-2 py-0.5 rounded font-bold">进入 →</span>
+  `;
+  restorationCard.addEventListener('click', () => {
+    if (window.switchTab) window.switchTab('library');
+    if (window.switchLibrarySubTab) window.switchLibrarySubTab('restoration');
+  });
+  grid.appendChild(restorationCard);
+
+  // === 其他占位项 ===
   const placeholders = [
-    { icon: '📜', name: '古籍修复室', desc: '修复损毁珍本' },
     { icon: '☕', name: '咖啡角', desc: '延长访客停留时间' },
     { icon: '🔬', name: '研究区', desc: '深度研究书籍获得加成' },
     { icon: '🚪', name: '位面串门', desc: '参观其他馆长的图书馆' },
@@ -342,15 +357,21 @@ function renderBookCard(slot, poolEntry, owned, isRotating, mBoxFull) {
   if (owned) disabledReason = '✅ 已拥有';
   else if (mBoxFull) disabledReason = '📦 手稿箱已满';
 
+  const displayTitle = poolEntry.volumeTitle || poolEntry.title;
+  const volumeBadge = poolEntry.type === 'volume'
+    ? `<div class="absolute top-2 right-2 text-[10px] bg-magic-blue/10 text-magic-blue px-1.5 py-0.5 rounded font-bold">${poolEntry.subtitle || ''}</div>`
+    : '';
+
   const card = el('div', `book-card rounded-xl p-4 border-2 transition-all relative ${
     disabled ? 'bg-gray-100 border-gray-200 opacity-50' : 'bg-white border-wood/20 hover:border-magic-gold/50 hover:shadow-lg cursor-pointer'
   }`);
 
   if (disabled) {
     card.innerHTML = `
+      ${volumeBadge}
       <div class="text-center">
         <div class="text-3xl mb-2">${poolEntry.emoji}</div>
-        <div class="font-bold text-sm mb-1">${poolEntry.title}</div>
+        <div class="font-bold text-sm mb-1">${displayTitle}</div>
         <div class="text-xs text-ink-light mb-2">${poolEntry.author} · ${poolEntry.category}</div>
         <div class="text-xs text-magic-gold font-bold">${disabledReason}</div>
       </div>
@@ -367,9 +388,10 @@ function renderBookCard(slot, poolEntry, owned, isRotating, mBoxFull) {
 
   if (soldText) {
     card.innerHTML = `
+      ${volumeBadge}
       <div class="text-center">
         <div class="text-3xl mb-2">${poolEntry.emoji}</div>
-        <div class="font-bold text-sm mb-1">${poolEntry.title}</div>
+        <div class="font-bold text-sm mb-1">${displayTitle}</div>
         <div class="text-xs text-ink-light mb-2">${poolEntry.author}</div>
         <div class="text-xs text-magic-blue shop-countdown" data-soldat="${slot.soldAt}">⏰ ${soldText}</div>
       </div>
@@ -381,11 +403,12 @@ function renderBookCard(slot, poolEntry, owned, isRotating, mBoxFull) {
   const isPeizhouPick = peizhouRec && peizhouRec.bookId === slot.bookId;
 
   card.innerHTML = `
+    ${volumeBadge}
     <div class="text-center">
       ${poolEntry.starter ? '<div class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full inline-block mb-1 font-bold">🌱 新手推荐</div>' : ''}
       ${isPeizhouPick ? '<div class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full inline-block mb-1 font-bold">📚 裴舟推荐 · 7折</div>' : ''}
       <div class="text-3xl mb-2">${poolEntry.emoji}</div>
-      <div class="font-bold text-sm mb-1">${poolEntry.title}</div>
+      <div class="font-bold text-sm mb-1">${displayTitle}</div>
       <div class="text-xs text-ink-light mb-1">${poolEntry.author}</div>
       <div class="text-xs text-ink-light mb-2">${poolEntry.category} · ${poolEntry.totalWords.toLocaleString()}字</div>
       ${priceDisplay}
@@ -414,13 +437,21 @@ function showPurchaseModal(poolEntry, price, originalPrice, discount) {
     ? `<span class="text-gray-400 line-through mr-2">💰${originalPrice}</span><span class="text-magic-gold font-bold text-lg">💰${price}</span> <span class="text-xs text-red-500">${Math.round(discount * 10)}折</span>`
     : `<span class="text-magic-gold font-bold text-lg">💰${price}</span>`;
 
+  const displayTitle = poolEntry.volumeTitle || poolEntry.title;
+  const volumeSubtitle = poolEntry.type === 'volume'
+    ? `<p class="text-xs text-magic-blue font-bold mb-1">${poolEntry.subtitle || ''}</p>`
+    : '';
+  const bookDef = BOOKS[poolEntry.bookId];
+  const chapterCount = bookDef?.chapters?.length || poolEntry.chapterCount || 0;
+
   const content = el('div', 'parchment-bg rounded-2xl p-6 max-w-sm w-full magic-glow animate-scale-in');
   content.innerHTML = `
     <div class="text-center mb-4">
       <div class="text-5xl mb-3">${poolEntry.emoji}</div>
-      <h3 class="font-display text-xl font-bold mb-1">${poolEntry.title}</h3>
+      ${volumeSubtitle}
+      <h3 class="font-display text-xl font-bold mb-1">${displayTitle}</h3>
       <p class="text-sm text-ink-light">${poolEntry.author} · ${poolEntry.category}</p>
-      <p class="text-xs text-ink-light mt-1">${poolEntry.totalWords.toLocaleString()}字 · ${poolEntry.chapterCount}章</p>
+      <p class="text-xs text-ink-light mt-1">${poolEntry.totalWords.toLocaleString()}字 · ${chapterCount}章</p>
     </div>
     <div class="bg-white/60 rounded-lg p-3 mb-4">
       <p class="text-sm text-ink-light">${shortDesc}</p>

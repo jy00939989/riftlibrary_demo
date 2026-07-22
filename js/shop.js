@@ -8,6 +8,7 @@ import { unlockPlane } from './quests.js';
 import { getAuraShopDiscount, getAuraFocusUpgradeDiscount } from './visitors.js';
 import { isManuscriptBoxFull, addToManuscriptBox, createBookRecord } from './capacity.js';
 import { getAchievementBonuses } from './achievements.js';
+import { getRefreshWeight, getGuaranteedVolumeEntries, weightedPick } from './core/economy.js';
 
 export function hasSignboard(id) {
   return state.signboards.includes(id);
@@ -57,10 +58,17 @@ export function ensureShopState() {
   const expired = !shopState.lastRefresh || (now - shopState.lastRefresh) >= 24 * 3600 * 1000;
 
   if (expired) {
+    // 1. 当前可用商品
     const available = getAvailableBooks();
-    const shuffled = shuffle(available);
 
-    // 新手短书固定位（始终出现在固定区前 N 位，价格便宜）
+    // 2. 保底卷：gap === 1 时每轮最多 1 条
+    const guaranteed = getGuaranteedVolumeEntries(SHARED_POOL, state.books);
+
+    // 3. 排除保底卷后的候选池（避免保底卷被权重抽中重复出现）
+    const guaranteedIds = new Set(guaranteed.map(e => e.bookId));
+    const candidates = available.filter(b => !guaranteedIds.has(b.bookId));
+
+    // 4. 新手短书固定位
     const starterBooks = SHARED_POOL.filter(b => b.starter);
     const ownedIds = Object.keys(state.books).filter(id => state.books[id]?.status !== 'locked');
     const starterSlots = starterBooks
@@ -71,30 +79,51 @@ export function ensureShopState() {
         soldAt: null
       }));
 
-    // 剩余随机书填充固定区至 5 本
-    const starterIds = new Set(starterSlots.map(s => s.bookId));
-    const nonStarter = shuffled.filter(b => !starterIds.has(b.bookId));
-    const randomSlots = nonStarter.slice(0, 5 - starterSlots.length).map(b => ({
-      bookId: b.bookId,
-      price: rand(500, 800),
-      soldAt: null
-    }));
+    // 5. 固定区：starter + 保底卷 + 权重随机填充至 5 本
+    const fixedSlots = [...starterSlots];
+    if (guaranteed.length > 0 && !fixedSlots.some(s => s.bookId === guaranteed[0].bookId)) {
+      fixedSlots.push({
+        bookId: guaranteed[0].bookId,
+        price: guaranteed[0].price,
+        soldAt: null
+      });
+    }
 
-    shopState.fixed = [...starterSlots, ...randomSlots];
+    const fixedIds = new Set(fixedSlots.map(s => s.bookId));
+    while (fixedSlots.length < 5) {
+      const remaining = candidates.filter(b => !fixedIds.has(b.bookId));
+      const weights = remaining.map(b => getRefreshWeight(b, state.books));
+      const picked = weightedPick(remaining, weights);
+      if (!picked) break;
+      fixedSlots.push({
+        bookId: picked.entry.bookId,
+        price: picked.entry.price || rand(500, 800),
+        soldAt: null
+      });
+      fixedIds.add(picked.entry.bookId);
+    }
 
-    // 特价区3本（从剩余 shuffle 里取）
+    shopState.fixed = fixedSlots;
+
+    // 6. 特价区：从剩余候选中权重抽取 3 本
     const usedIds = new Set(shopState.fixed.map(s => s.bookId));
-    shopState.rotating = shuffled.filter(b => !usedIds.has(b.bookId)).slice(0, 3).map(b => {
-      const originalPrice = rand(500, 800);
+    shopState.rotating = [];
+    while (shopState.rotating.length < 3) {
+      const remaining = candidates.filter(b => !usedIds.has(b.bookId));
+      const weights = remaining.map(b => getRefreshWeight(b, state.books));
+      const picked = weightedPick(remaining, weights);
+      if (!picked) break;
+      const originalPrice = picked.entry.price || rand(500, 800);
       const discount = rand(30, 70) / 100;
-      return {
-        bookId: b.bookId,
+      shopState.rotating.push({
+        bookId: picked.entry.bookId,
         originalPrice,
         discount,
         price: Math.floor(originalPrice * discount),
         soldAt: null
-      };
-    });
+      });
+      usedIds.add(picked.entry.bookId);
+    }
 
     shopState.lastRefresh = now;
   }
@@ -106,9 +135,11 @@ export function ensureShopState() {
       const usedIds = [...shopState.fixed, ...shopState.rotating]
         .filter(s => s.bookId && !s.soldAt)
         .map(s => s.bookId);
-      const newBook = available.find(b => !usedIds.includes(b.bookId));
-      if (newBook) {
-        Object.assign(slot, { bookId: newBook.bookId, price: rand(500, 800), soldAt: null });
+      const candidates = available.filter(b => !usedIds.includes(b.bookId));
+      const weights = candidates.map(b => getRefreshWeight(b, state.books));
+      const picked = weightedPick(candidates, weights);
+      if (picked) {
+        Object.assign(slot, { bookId: picked.entry.bookId, price: picked.entry.price || rand(500, 800), soldAt: null });
       }
     }
   });
@@ -120,12 +151,14 @@ export function ensureShopState() {
       const usedIds = [...shopState.fixed, ...shopState.rotating]
         .filter(s => s.bookId && !s.soldAt)
         .map(s => s.bookId);
-      const newBook = available.find(b => !usedIds.includes(b.bookId));
-      if (newBook) {
-        const originalPrice = rand(500, 800);
+      const candidates = available.filter(b => !usedIds.includes(b.bookId));
+      const weights = candidates.map(b => getRefreshWeight(b, state.books));
+      const picked = weightedPick(candidates, weights);
+      if (picked) {
+        const originalPrice = picked.entry.price || rand(500, 800);
         const discount = rand(30, 70) / 100;
         Object.assign(slot, {
-          bookId: newBook.bookId,
+          bookId: picked.entry.bookId,
           originalPrice,
           discount,
           price: Math.floor(originalPrice * discount),

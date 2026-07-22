@@ -1,4 +1,4 @@
-// 图书馆 & 收藏室页面渲染（子标签页：概况 / 成就柜 / 收藏室 / 布置 / 攻略）
+// 图书馆 & 收藏室页面渲染（子标签页：概况 / 成就柜 / 收藏室 / 布置 / 攻略 / 古籍修复室）
 import { state } from '../state.js';
 import { ATMOSPHERE_STAGES, getAtmosphereStage, getRandomDescription } from '../../data/atmosphere.js';
 import { getAtmosphereLevel } from '../storage.js';
@@ -7,6 +7,16 @@ import { renderAchievements } from './achievements.js';
 import { renderCollection } from './collection.js';
 import { renderDecorationPage } from './plants.js';
 import { TIER_GOALS, getTierStatus, countTierGoalsComplete } from '../../data/tiergoals.js';
+import { BOOKS } from '../../data/books.js';
+import { VOLUME_GROUPS, getVolumeGroupProgress, isVolumeBookId } from '../../data/volume_groups.js';
+import { canCollectVolumeGroup, collectVolumeGroup } from '../volumes.js';
+import { storeInRestorationBox, removeFromRestorationBox, getRestorationBoxSlots, getRestorationBoxCount, getRestorationSlotPrice, expandRestorationBoxSlots, getRestorationLevel, getRestorationUpgradePrice, upgradeRestorationLevel, getRestorationRepairSpeedBonus, isRestorationUnlocked, unlockRestorationRoom, getRestorationUnlockPrice } from '../capacity.js';
+import { updateStatusBar } from './common.js';
+import { playSfx } from '../audio.js';
+import { checkAchievements } from '../achievements.js';
+import { showAchievementToast } from './achievements.js';
+import { checkAndShowTutorial } from '../tutorial.js';
+import { dispatchTutorialUI } from './tutorial-ui.js';
 
 // 氛围阶段 → 背景图映射
 const STAGE_BG = {
@@ -53,6 +63,10 @@ export function renderLibraryPage() {
           ${activeSubTab === 'collection' ? 'bg-white text-magic-gold border-b-2 border-magic-gold -mb-0.5' : 'text-ink-light hover:text-ink hover:bg-white/50'}">
           📦 收藏室
         </button>
+        <button data-subtab="restoration" class="subtab-btn flex-shrink-0 px-3 sm:px-5 py-3 text-sm font-bold transition-all
+          ${activeSubTab === 'restoration' ? 'bg-white text-magic-gold border-b-2 border-magic-gold -mb-0.5' : 'text-ink-light hover:text-ink hover:bg-white/50'}">
+          📜 古籍修复室
+        </button>
         <button data-subtab="decoration" class="subtab-btn flex-shrink-0 px-3 sm:px-5 py-3 text-sm font-bold transition-all
           ${activeSubTab === 'decoration' ? 'bg-white text-magic-gold border-b-2 border-magic-gold -mb-0.5' : 'text-ink-light hover:text-ink hover:bg-white/50'}">
           🏺 布置
@@ -83,6 +97,7 @@ export function renderLibraryPage() {
       case 'overview': renderOverview(contentArea, stage, levelInfo, desc, maxAtmo, atmoPercent); break;
       case 'achievements': renderAchievementsTab(contentArea); break;
       case 'collection': renderCollectionTab(contentArea); break;
+      case 'restoration': renderRestorationTab(contentArea); break;
       case 'decoration': renderDecorationTab(contentArea); break;
       case 'guide': renderGuideTab(contentArea); break;
     }
@@ -338,4 +353,284 @@ function renderCollectionTab(container) {
     console.error('收藏室渲染失败:', e);
     content.innerHTML = `<p class="text-center text-red-500 py-8">收藏室加载失败: ${e.message}</p>`;
   }
+}
+
+// ========== 古籍修复室子标签 ==========
+
+function renderRestorationTab(container) {
+  container.innerHTML = '';
+  const wrapper = document.createElement('div');
+  wrapper.className = 'space-y-6';
+
+  // 0. 修复室是否已解锁
+  if (!isRestorationUnlocked()) {
+    const unlockCard = document.createElement('div');
+    unlockCard.className = 'bg-amber-50/80 rounded-xl p-6 border-2 border-amber-200 text-center';
+    unlockCard.innerHTML = `
+      <div class="text-4xl mb-3">🔒</div>
+      <h3 class="font-display text-lg font-bold mb-2">古籍修复室尚未开放</h3>
+      <p class="text-sm text-ink-light mb-4">残破的修复室堆满灰尘，需要先修缮才能使用。</p>
+      <button class="unlock-restoration-btn px-5 py-2 bg-magic-gold text-white text-sm font-bold rounded-lg hover:shadow-lg transition-all">
+        修缮开放 💰${getRestorationUnlockPrice().toLocaleString()}
+      </button>
+    `;
+    unlockCard.querySelector('.unlock-restoration-btn').addEventListener('click', () => {
+      if (unlockRestorationRoom()) {
+        playSfx('buy_success');
+        updateStatusBar();
+        renderRestorationTab(container);
+        // 首次解锁后触发教学
+        const trigger = checkAndShowTutorial('restoration_unlock');
+        if (trigger) {
+          setTimeout(() => dispatchTutorialUI(trigger), 300);
+        }
+      } else {
+        alert('智慧之光不足 💰');
+      }
+    });
+    container.appendChild(unlockCard);
+    return;
+  }
+
+  // 1. 修复室等级
+  const level = getRestorationLevel();
+  const maxLevel = 5;
+  const upgradePrice = getRestorationUpgradePrice();
+  const repairBonus = Math.round(getRestorationRepairSpeedBonus() * 100);
+  const levelCard = document.createElement('div');
+  levelCard.className = 'bg-white/60 rounded-xl p-5 border border-wood/20';
+  levelCard.innerHTML = `
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <span class="text-3xl">📜</span>
+        <div>
+          <div class="font-bold text-ink">古籍修复室 Lv.${level}</div>
+          <div class="text-xs text-ink-light">修复时额外速度 +${5 + repairBonus}%（基础 5% + 等级 ${repairBonus}%）</div>
+        </div>
+      </div>
+      ${level < maxLevel
+        ? `<button class="upgrade-restoration-level-btn px-3 py-1.5 bg-magic-gold text-white text-xs font-bold rounded-lg hover:shadow-lg transition-all">
+            升级 💰${upgradePrice.toLocaleString()}
+           </button>`
+        : '<span class="text-xs text-magic-gold font-bold">已满级 ✨</span>'}
+    </div>
+  `;
+  const upgradeLevelBtn = levelCard.querySelector('.upgrade-restoration-level-btn');
+  if (upgradeLevelBtn) {
+    upgradeLevelBtn.addEventListener('click', () => {
+      if (upgradeRestorationLevel()) {
+        playSfx('buy_success');
+        updateStatusBar();
+        renderRestorationTab(container);
+      } else {
+        alert('智慧之光不足 💰');
+      }
+    });
+  }
+  wrapper.appendChild(levelCard);
+
+  // 1. 卷组进度与合成
+  const groupsSection = document.createElement('div');
+  groupsSection.className = 'bg-white/60 rounded-xl p-5 border border-wood/20';
+  groupsSection.innerHTML = `<h3 class="font-display text-lg font-bold mb-4">📜 长书卷组</h3>`;
+
+  const groupsGrid = document.createElement('div');
+  groupsGrid.className = 'grid grid-cols-1 md:grid-cols-2 gap-4';
+
+  Object.values(VOLUME_GROUPS).forEach(group => {
+    const card = document.createElement('div');
+    card.className = 'bg-white rounded-xl p-4 border border-wood/10';
+
+    const progress = getVolumeGroupProgress(group, state.books);
+    const collectable = canCollectVolumeGroup(group);
+    const volRows = group.volumeIds.map(id => renderVolumeRow(id)).join('');
+
+    // 卷组标题神秘感：未获得任何一卷时隐藏书名
+    const groupUnlocked = group.volumeIds.some(id => {
+      const bs = state.books[id];
+      return bs && bs.status !== 'locked';
+    });
+    const groupEmoji = groupUnlocked ? group.emoji : '❓';
+    const groupTitle = groupUnlocked ? group.title : '❓ ???';
+
+    const percent = Math.round((progress.completed / progress.total) * 100);
+    card.innerHTML = `
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">${groupEmoji}</span>
+          <div>
+            <div class="font-bold text-ink">${groupTitle}</div>
+            <div class="text-xs text-ink-light">${progress.completed}/${progress.total} 卷已抄完</div>
+          </div>
+        </div>
+        ${collectable ? `<button class="collect-btn px-3 py-1.5 bg-magic-gold text-white text-xs font-bold rounded-lg hover:shadow-lg transition-all" data-group="${group.collectedBookId}">合成典藏版</button>` : ''}
+      </div>
+      <div class="w-full h-2 bg-wood/10 rounded-full mb-3 overflow-hidden">
+        <div class="h-full bg-magic-gold rounded-full" style="width:${percent}%"></div>
+      </div>
+      <div class="space-y-1.5">${volRows}</div>
+    `;
+
+    const collectBtn = card.querySelector('.collect-btn');
+    if (collectBtn) {
+      collectBtn.addEventListener('click', () => {
+        const g = VOLUME_GROUPS[collectBtn.dataset.group];
+        if (!g) return;
+        const result = collectVolumeGroup(g);
+        if (result.ok) {
+          playSfx('buy_success');
+          const ach = checkAchievements('volume_collect');
+          if (ach.length > 0) showAchievementToast(ach[0]);
+          updateStatusBar();
+          renderRestorationTab(container);
+        }
+      });
+    }
+
+    groupsGrid.appendChild(card);
+  });
+
+  groupsSection.appendChild(groupsGrid);
+  wrapper.appendChild(groupsSection);
+
+  // 2. 修缮箱
+  const boxSection = document.createElement('div');
+  boxSection.className = 'bg-white/60 rounded-xl p-5 border border-wood/20';
+  const slots = getRestorationBoxSlots();
+  const count = getRestorationBoxCount();
+  const boxPrice = getRestorationSlotPrice();
+  const canExpand = slots < 20;
+
+  const boxItems = (state.restorationBox || []).map(id => {
+    const book = BOOKS[id];
+    return `
+      <div class="flex items-center justify-between bg-amber-50/60 border border-amber-200 rounded-lg px-3 py-2">
+        <div class="flex items-center gap-2">
+          <span>${book ? book.emoji : '📜'}</span>
+          <span class="text-sm font-bold">${book ? (book.volumeTitle || book.title) : id}</span>
+        </div>
+        <button class="remove-restoration-btn text-xs px-2 py-1 bg-wood/10 hover:bg-wood/20 rounded" data-id="${id}">取出</button>
+      </div>
+    `;
+  }).join('');
+
+  boxSection.innerHTML = `
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-display text-lg font-bold">🧰 修缮箱</h3>
+      <div class="text-xs text-ink-light">${count}/${slots} 格</div>
+    </div>
+    <p class="text-xs text-ink-light mb-3">锁入修缮箱的单卷不会被访客借出、不会损坏，仍可参与合成典藏版。</p>
+    ${boxItems ? `<div class="space-y-2 mb-4">${boxItems}</div>` : '<p class="text-sm text-ink-light mb-4">修缮箱为空。</p>'}
+    ${canExpand ? `
+      <button class="expand-restoration-btn px-3 py-1.5 bg-amber-100 text-amber-700 text-xs font-bold rounded-lg hover:bg-amber-200 transition-all">
+        + 扩容至 ${slots + 1} 格 💰${boxPrice.toLocaleString()}
+      </button>
+    ` : '<span class="text-xs text-magic-gold font-bold">已达到最大 20 格</span>'}
+  `;
+
+  const expandBtn = boxSection.querySelector('.expand-restoration-btn');
+  if (expandBtn) {
+    expandBtn.addEventListener('click', () => {
+      if (expandRestorationBoxSlots()) {
+        playSfx('buy_success');
+        updateStatusBar();
+        renderRestorationTab(container);
+      } else {
+        alert('智慧之光不足 💰');
+      }
+    });
+  }
+
+  boxSection.querySelectorAll('.remove-restoration-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (removeFromRestorationBox(btn.dataset.id)) {
+        renderRestorationTab(container);
+      }
+    });
+  });
+
+  wrapper.appendChild(boxSection);
+
+  // 3. 可锁入修缮箱的单卷
+  const storeSection = document.createElement('div');
+  storeSection.className = 'bg-white/60 rounded-xl p-5 border border-wood/20';
+
+  const storeableIds = Object.values(VOLUME_GROUPS).flatMap(g => g.volumeIds).filter(id => {
+    const bs = state.books[id];
+    if (!bs || bs.status === 'locked') return false;
+    if ((state.restorationBox || []).includes(id)) return false;
+    return true;
+  });
+
+  const storeRows = storeableIds.map(id => {
+    const book = BOOKS[id];
+    return `
+      <div class="flex items-center justify-between bg-white border border-wood/10 rounded-lg px-3 py-2">
+        <div class="flex items-center gap-2">
+          <span>${book ? book.emoji : '📜'}</span>
+          <span class="text-sm font-bold">${book ? (book.volumeTitle || book.title) : id}</span>
+        </div>
+        <button class="store-restoration-btn text-xs px-2 py-1 bg-amber-100 text-amber-700 hover:bg-amber-200 rounded" data-id="${id}">锁入修缮箱</button>
+      </div>
+    `;
+  }).join('');
+
+  storeSection.innerHTML = `
+    <h3 class="font-display text-lg font-bold mb-3">🔒 可保护的单卷</h3>
+    ${storeRows ? `<div class="space-y-2">${storeRows}</div>` : '<p class="text-sm text-ink-light">没有可锁入的单卷。</p>'}
+  `;
+
+  storeSection.querySelectorAll('.store-restoration-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (storeInRestorationBox(btn.dataset.id)) {
+        renderRestorationTab(container);
+      } else {
+        alert('修缮箱已满或该卷无法锁入');
+      }
+    });
+  });
+
+  wrapper.appendChild(storeSection);
+  container.appendChild(wrapper);
+}
+
+function renderVolumeRow(bookId) {
+  const bs = state.books[bookId];
+  const book = BOOKS[bookId];
+  if (!book) return '';
+
+  const isLocked = !bs || bs.status === 'locked';
+  let statusText = '未获得';
+  let statusClass = 'text-gray-400';
+  let extra = '';
+
+  if (!isLocked) {
+    const borrowed = (state.visitors || []).some(v =>
+      v.bookId === bookId && (v.status === 'borrowed' || v.status === 'due')
+    );
+    if (bs.damaged) {
+      statusText = '损坏待修';
+      statusClass = 'text-red-500';
+    } else if (borrowed) {
+      statusText = '外借中';
+      statusClass = 'text-amber-500';
+    } else if (bs.status === 'completed') {
+      statusText = '已抄完';
+      statusClass = 'text-green-600';
+    } else {
+      statusText = '誊抄中';
+      statusClass = 'text-magic-blue';
+    }
+    extra = bs.damaged ? ' 🩹' : (borrowed ? ' 📤' : (bs.status === 'completed' ? ' ✓' : ' ✎'));
+  }
+
+  // 未获得的卷保持神秘感，不显示卷名
+  const displayName = isLocked ? '❓ ???' : (book.volumeTitle || book.title);
+
+  return `
+    <div class="flex items-center justify-between text-xs bg-wood/5 rounded-lg px-3 py-1.5">
+      <span class="font-medium">${displayName}</span>
+      <span class="${statusClass}">${statusText}${extra}</span>
+    </div>
+  `;
 }

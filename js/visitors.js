@@ -8,6 +8,7 @@ import { getCurationBorrowBonus } from './curation.js';
 import { VISITOR_NARRATIVES } from '../data/visitor-events.js';
 import { SIGNBOARDS } from '../data/signboards.js';
 import { SHARED_POOL } from '../data/book_pool.js';
+import { VOLUME_GROUPS, getIncompleteVolumeGroups, isVolumeBookId } from '../data/volume_groups.js';
 
 // ========== 访客角色定义（10位，2026-05-27 重构） ==========
 
@@ -593,7 +594,8 @@ export function tickVisitorBrowsing(now) {
 function getCompletedBooks() {
   return Object.values(BOOKS).filter(book => {
     const bs = state.books[book.id];
-    return bs && bs.status === 'completed' && !bs.damaged &&
+    const inRestoration = (state.restorationBox || []).includes(book.id);
+    return bs && bs.status === 'completed' && !bs.damaged && !inRestoration &&
            !state.visitors.some(v => v.bookId === book.id && (v.status === 'borrowed' || v.status === 'due'));
   });
 }
@@ -620,18 +622,19 @@ function attemptBorrow(visitor, completedBooks, now) {
 
   visitor.status = 'borrowed';
   visitor.bookId = book.id;
-  visitor.bookTitle = book.title;
+  visitor.bookTitle = book.volumeTitle || book.title;
   visitor.borrowTime = now;
   visitor.dueTime = dueTime;
   const borrowFavor = Math.round(3 * (1 + getBorrowLevelConfig().favorBonus / 100));
   visitor.favorability = (visitor.favorability || 0) + borrowFavor;
   addVisitorFavor(visitor.charId, borrowFavor);
 
-  addHistory('visitor', `${visitor.emoji} ${visitor.name} 借走了《${book.title}》`,
+  const displayTitle = book.volumeTitle || book.title;
+  addHistory('visitor', `${visitor.emoji} ${visitor.name} 借走了《${displayTitle}》`,
     `${borrowHours}小时后归还 · 好感+3`);
   if (!state.diaryFirsts.visitorBorrow) {
     state.diaryFirsts.visitorBorrow = true;
-    addDiaryEntry('visitor_borrow', { emoji: visitor.emoji, name: visitor.name, bookTitle: book.title });
+    addDiaryEntry('visitor_borrow', { emoji: visitor.emoji, name: visitor.name, bookTitle: displayTitle });
   }
   saveState();
 }
@@ -915,11 +918,12 @@ export function collectReturn(visitorId) {
   // 还书语录
   const quote = pickReturnQuote(charId, bookTitle, state.library.atmosphere);
 
-  // 判定 1：损毁（~3%）
+  // 判定 1：损毁（~3%），典藏版与修缮箱中的卷不会损坏
   let damaged = false;
-  if (Math.random() < 0.03 && bookId && state.books[bookId]) {
-    const bs = state.books[bookId];
-    const book = BOOKS[bookId];
+  const book = bookId ? BOOKS[bookId] : null;
+  const bs = bookId ? state.books[bookId] : null;
+  const inRestoration = (state.restorationBox || []).includes(bookId);
+  if (Math.random() < 0.03 && bookId && bs && !book?.indestructible && !inRestoration) {
     bs.damaged = true;
     bs.repairWords = Math.round(bs.copiedWords * 0.25);
     bs.repairProgress = 0;
@@ -1012,7 +1016,14 @@ function eventPeizhouAction(visitor) {
 }
 
 function eventPeizhouRecommend(pool) {
-  const entry = pick(pool);
+  // 优先推荐"已拥有部分卷但未集齐"卷组中的缺失单卷
+  const incompleteGroups = getIncompleteVolumeGroups(state.books);
+  const missingGroupIds = new Set(incompleteGroups.map(g => g.collectedBookId));
+  const missingVolumes = pool.filter(b =>
+    b.type === 'volume' && missingGroupIds.has(b.volumeGroupId)
+  );
+
+  const entry = missingVolumes.length > 0 ? pick(missingVolumes) : pick(pool);
   const book = BOOKS[entry.bookId];
   const discount = 0.30; // 商店价额外7折
   const expiresAt = Date.now() + 24 * 3600 * 1000;

@@ -137,7 +137,7 @@ function updateBookProgressDOM(sess) {
     }
     bar.innerHTML = `
       <div class="flex items-center justify-between mb-1.5">
-        <span class="text-xs font-bold text-ink">📖 《${book.title}》誊抄进度</span>
+        <span class="text-xs font-bold text-ink">📖 《${book.volumeTitle || book.title}》誊抄进度</span>
         <span class="text-xs text-ink-light">${effectiveWords.toLocaleString()} / ${totalWords.toLocaleString()} 字</span>
       </div>
       <div class="h-2.5 bg-wood/20 rounded-full overflow-hidden">
@@ -194,7 +194,7 @@ function renderTimerOrAnimation(sess, book) {
   } else {
     wrapper.innerHTML = `
       <div class="text-6xl md:text-7xl font-display font-bold text-ink mb-2">00:00</div>
-      ${sess.bookId && book ? `<div class="text-magic-blue font-medium">缮写《${book.title}》</div>` : ''}
+      ${sess.bookId && book ? `<div class="text-magic-blue font-medium">缮写《${book.volumeTitle || book.title}》</div>` : ''}
       <div class="text-sm text-ink-light mt-1">本书 ${book ? (state.books[book.id]?.copiedWords || 0).toLocaleString() : 0} 字 · 累计 ${state.focus.totalWords.toLocaleString()} 字</div>
     `;
   }
@@ -299,7 +299,7 @@ function renderBookSelector(sess) {
     const effectiveWords = getEffectiveCopiedWords(bs, book.totalWords);
     const progress = book.totalWords > 0 ? Math.round((effectiveWords / book.totalWords) * 100) : 0;
     const repairHtml = repair ? `<div class="text-[10px] text-amber-600 font-bold mt-0.5">🔧 修复中 ${repair.pct}%</div>` : '';
-    btn.innerHTML = `<div class="text-3xl mb-1">${book.emoji}</div><div class="font-bold text-xs">${book.title}</div><div class="text-xs text-ink-light">${progress}%</div>${repairHtml}`;
+    btn.innerHTML = `<div class="text-3xl mb-1">${book.emoji}</div><div class="font-bold text-xs">${book.volumeTitle || book.title}</div><div class="text-xs text-ink-light">${progress}%</div>${repairHtml}`;
     btn.addEventListener('click', () => {
       if (!state.currentSession.active) {
         state.currentSession.bookId = book.id;
@@ -526,7 +526,7 @@ function renderBookProgress(sess, book) {
 
   div.innerHTML = `
     <div class="flex items-center justify-between mb-1.5">
-      <span class="text-xs font-bold text-ink">📖 《${book.title}》誊抄进度</span>
+      <span class="text-xs font-bold text-ink">📖 《${book.volumeTitle || book.title}》誊抄进度</span>
       <span class="text-xs text-ink-light">${effectiveWords.toLocaleString()} / ${totalWords.toLocaleString()} 字</span>
     </div>
     <div class="h-2.5 bg-wood/20 rounded-full overflow-hidden">
@@ -579,7 +579,7 @@ function renderCopyPreview(book) {
           <blockquote class="text-ink italic border-l-4 border-magic-gold pl-3 py-1 my-2">
             「${quote}」
           </blockquote>
-          <div class="text-xs text-ink-light">——《${book.title}》</div>
+          <div class="text-xs text-ink-light">——《${book.volumeTitle || book.title}》</div>
           <div class="text-xs text-magic-blue mt-1">${template.closing}</div>
         </div>
       </div>
@@ -732,7 +732,7 @@ export function showCompletionCard({ minutes, words, coins, book, streak, totalW
     const quoteKeys = Object.keys(book.quotes);
     const key = quoteKeys[Math.floor(Math.random() * quoteKeys.length)];
     quoteText = book.quotes[key];
-    quoteSource = `——《${book.title}》`;
+    quoteSource = `——《${book.volumeTitle || book.title}》`;
   }
   if (!quoteText) {
     const generalQuotes = [

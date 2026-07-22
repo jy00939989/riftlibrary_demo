@@ -1,10 +1,11 @@
 # 长书分卷方案 · 程序改动设计
 
-> 状态：**待架构师三审（v2.3 修订版）**  
-> 版本：v2.3（2026-07-21）  
+> 状态：**已实施（v2.4 实施版）**  
+> 版本：v2.4（2026-07-22）  
 > 作者：克克（Claude Code）  
 > 适用范围：异世界图书馆 / 归墟图书馆  
-> 修订说明：v2.3 根据架构师二审反馈修复：① P1 吐槽占位符 `{title}`/`{missingVol}` 未替换（新增 `fillQuip`）；② P2-a `getRefreshWeight` 已拥有损坏卷仍刷出；③ P2-b 保底卷与加权抽取去重防重复上架；④ P2-c `collectVolumeGroup`/`canCollectVolumeGroup` 统一读 `state` 去除 books/visitors 参数；⑤ ⚪ 进度函数复用、`VOLUME_QUIPS` 条目形状、未用参数说明；⑥ 🔎 单卷+典藏双计数的目标稀释观察。
+> 修订说明：v2.3 根据架构师二审反馈修复：① P1 吐槽占位符 `{title}`/`{missingVol}` 未替换（新增 `fillQuip`）；② P2-a `getRefreshWeight` 已拥有损坏卷仍刷出；③ P2-b 保底卷与加权抽取去重防重复上架；④ P2-c `collectVolumeGroup`/`canCollectVolumeGroup` 统一读 `state` 去除 books/visitors 参数；⑤ ⚪ 进度函数复用、`VOLUME_QUIPS` 条目形状、未用参数说明；⑥ 🔎 单卷+典藏双计数的目标稀释观察。  
+> **v2.4 实施备注**：2026-07-22 已完成全部程序改动并本地验证通过。新增古籍修复室等级（修复速度加成）、未获得单卷在修复室显示「???」神秘感。
 
 ---
 

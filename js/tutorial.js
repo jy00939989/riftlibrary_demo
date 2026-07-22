@@ -22,6 +22,10 @@ const TRIGGERS = {
   book_complete: {
     flag: 'firstBookComplete',
     type: 'certificate'
+  },
+  restoration_unlock: {
+    flag: 'firstRestorationUnlock',
+    type: 'context-card'
   }
 };
 
