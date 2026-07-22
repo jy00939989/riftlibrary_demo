@@ -1,4 +1,11 @@
 // 应用入口 —— 初始化 + 页面切换 + 全局操作
+
+// 生产环境关闭控制台调试输出（仅 localhost/127.0.0.1 保留）
+if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+  console.log = () => {};
+  console.warn = () => {};
+}
+
 import { state, initState, saveState, ensureAllBooksInManuscriptBox } from './state.js';
 import { addCoins, spendCoins, addHistory, updateStreak, addAtmosphere, updateBodyBackground, getAtmosphereLevel, onStageCross, addInspiration } from './storage.js';
 import { canDrawActionCards, drawActionCards, applyAction } from './actioncards.js';
