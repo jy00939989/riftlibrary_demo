@@ -5,13 +5,15 @@ import { SHARED_POOL } from '../../data/book_pool.js';
 import { el, h, actions, updateStatusBar } from './common.js';
 import { playSfx } from '../audio.js';
 import { ensureShopState, getShopState, purchaseBook, getBorrowLevelPrice, upgradeBorrowLevel, getFocusLevelPrice, upgradeFocusLevel, purchaseSignboard, purchasePlanePortal, getPlanePortalPrice, getActivePeizhouRec } from '../shop.js';
-import { getBookCapacity, getOwnedBookCount, getManuscriptSlots, getManuscriptBoxCount, getManuscriptSlotPrice, expandManuscriptSlots } from '../capacity.js';
+import { getManuscriptSlots, getManuscriptBoxCount, isRestorationUnlocked, unlockRestorationRoom, getRestorationUnlockPrice } from '../capacity.js';
 import { PLANES, canUnlockPlane } from '../../data/planes.js';
 import { showFocusRoomUpgrade } from './tutorial-ui.js';
 import { getBorrowLevelConfig } from '../visitors.js';
 import { PLANT_TYPES } from '../../data/plants.js';
 import { checkAchievements } from '../achievements.js';
 import { showAchievementToast } from './achievements.js';
+import { checkAndShowTutorial } from '../tutorial.js';
+import { dispatchTutorialUI } from './tutorial-ui.js';
 import { SIGNBOARDS } from '../../data/signboards.js';
 import { plantSeed, canFertilize, fertilizePlant, canWater, waterPlant, canHarvest, harvestPlant } from '../plants.js';
 import { getAmbientDefs, buyAmbient } from '../ambient.js';
@@ -241,62 +243,43 @@ function renderLibraryUpgrades() {
     grid.appendChild(plaqueCard);
   }
 
-  // === 书架容量 ===
-  const cap = getBookCapacity();
-  const owned = getOwnedBookCount();
-  const shelfCard = el('div', `bg-white rounded-xl p-4 border-2 flex items-center gap-3 ${owned >= cap ? 'border-red-300 bg-red-50' : 'border-wood/20'}`);
-  shelfCard.innerHTML = `
-    <span class="text-2xl">📚</span>
-    <div class="flex-1">
-      <span class="font-bold text-sm">书架容量</span>
-      <span class="text-xs text-ink-light ml-2">${owned >= cap ? '已满' : '存放已完成的书籍'}</span>
-    </div>
-    <span class="font-bold text-sm ${owned >= cap ? 'text-red-500' : 'text-ink'}">${owned}/${cap}</span>
-  `;
-  grid.appendChild(shelfCard);
-
-  // === 手稿箱 ===
-  const mSlots = getManuscriptSlots();
-  const mCount = getManuscriptBoxCount();
-  const mPrice = getManuscriptSlotPrice();
-  const mFull = mCount >= mSlots;
-  const mCard = el('div', `bg-white rounded-xl p-4 border-2 flex items-center gap-3 ${mFull ? 'border-red-300 bg-red-50' : 'border-wood/20'}`);
-  mCard.innerHTML = `
-    <span class="text-2xl">📦</span>
-    <div class="flex-1">
-      <span class="font-bold text-sm">手稿箱</span>
-      <span class="text-xs text-ink-light ml-2">${mFull ? '已满' : '存放待誊抄的稿子'}</span>
-    </div>
-    <span class="font-bold text-sm ${mFull ? 'text-red-500' : 'text-ink'} mr-2">${mCount}/${mSlots}</span>
-    <button class="m-expand-btn px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs font-bold hover:bg-amber-200 transition-all">+💰${mPrice}</button>
-  `;
-  const mExpandBtn = mCard.querySelector('.m-expand-btn');
-  mExpandBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    if (expandManuscriptSlots()) {
-      playSfx('buy_success');
-      updateStatusBar();
-      renderShopPage();
-    } else if (mPrice > 0) {
-      alert('智慧之光不足！');
-    }
-  });
-  grid.appendChild(mCard);
-
   // === 古籍修复室入口 ===
-  const restorationCard = el('div', 'bg-amber-50 rounded-xl p-4 border-2 border-amber-200 flex items-center gap-3 cursor-pointer hover:shadow-lg hover:border-amber-400 transition-all');
+  const restorationUnlocked = isRestorationUnlocked();
+  const restorationCard = el('div', `bg-amber-50 rounded-xl p-4 border-2 border-amber-200 flex items-center gap-3 ${restorationUnlocked ? 'cursor-pointer hover:shadow-lg hover:border-amber-400 transition-all' : ''}`);
   restorationCard.innerHTML = `
     <span class="text-2xl">📜</span>
     <div class="flex-1">
       <span class="font-bold text-sm">古籍修复室</span>
-      <span class="text-xs text-ink-light ml-2">修复损毁珍本 · 合成典藏版</span>
+      <span class="text-xs text-ink-light ml-2">${restorationUnlocked ? '修复损毁珍本 · 合成典藏版' : '残破的房间堆满灰尘，需先修缮'}</span>
     </div>
-    <span class="text-xs text-amber-700 bg-amber-100 px-2 py-0.5 rounded font-bold">进入 →</span>
+    ${restorationUnlocked
+      ? '<span class="text-xs text-amber-700 bg-amber-100 px-2 py-0.5 rounded font-bold">进入 →</span>'
+      : `<button class="buy-restoration-btn px-3 py-1.5 bg-magic-gold text-white text-xs font-bold rounded-lg hover:shadow-lg transition-all" data-stop-propagation>
+          解锁 💰${getRestorationUnlockPrice().toLocaleString()}
+         </button>`}
   `;
-  restorationCard.addEventListener('click', () => {
-    if (window.switchTab) window.switchTab('library');
-    if (window.switchLibrarySubTab) window.switchLibrarySubTab('restoration');
-  });
+  if (restorationUnlocked) {
+    restorationCard.addEventListener('click', () => {
+      if (window.switchTab) window.switchTab('library');
+      if (window.switchLibrarySubTab) window.switchLibrarySubTab('restoration');
+    });
+  } else {
+    const buyBtn = restorationCard.querySelector('.buy-restoration-btn');
+    if (buyBtn) {
+      buyBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (unlockRestorationRoom()) {
+          playSfx('buy_success');
+          updateStatusBar();
+          const trigger = checkAndShowTutorial('restoration_unlock');
+          if (trigger) dispatchTutorialUI(trigger);
+          renderShopPage();
+        } else {
+          alert('智慧之光不足 💰');
+        }
+      });
+    }
+  }
   grid.appendChild(restorationCard);
 
   // === 其他占位项 ===

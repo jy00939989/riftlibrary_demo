@@ -10,13 +10,11 @@ import { TIER_GOALS, getTierStatus, countTierGoalsComplete } from '../../data/ti
 import { BOOKS } from '../../data/books.js';
 import { VOLUME_GROUPS, getVolumeGroupProgress, isVolumeBookId } from '../../data/volume_groups.js';
 import { canCollectVolumeGroup, collectVolumeGroup } from '../volumes.js';
-import { storeInRestorationBox, removeFromRestorationBox, getRestorationBoxSlots, getRestorationBoxCount, getRestorationSlotPrice, expandRestorationBoxSlots, getRestorationLevel, getRestorationUpgradePrice, upgradeRestorationLevel, getRestorationRepairSpeedBonus, isRestorationUnlocked, unlockRestorationRoom, getRestorationUnlockPrice } from '../capacity.js';
+import { storeInRestorationBox, removeFromRestorationBox, getRestorationBoxSlots, getRestorationBoxCount, getRestorationSlotPrice, expandRestorationBoxSlots, getRestorationLevel, getRestorationUpgradePrice, upgradeRestorationLevel, getRestorationRepairSpeedBonus, isRestorationUnlocked, getRestorationUnlockPrice } from '../capacity.js';
 import { updateStatusBar } from './common.js';
 import { playSfx } from '../audio.js';
 import { checkAchievements } from '../achievements.js';
 import { showAchievementToast } from './achievements.js';
-import { checkAndShowTutorial } from '../tutorial.js';
-import { dispatchTutorialUI } from './tutorial-ui.js';
 
 // 修复室等级 → 场景图映射
 const RESTORATION_BG = {
@@ -377,23 +375,12 @@ function renderRestorationTab(container) {
       <div class="text-4xl mb-3">🔒</div>
       <h3 class="font-display text-lg font-bold mb-2">古籍修复室尚未开放</h3>
       <p class="text-sm text-ink-light mb-4">残破的修复室堆满灰尘，需要先修缮才能使用。</p>
-      <button class="unlock-restoration-btn px-5 py-2 bg-magic-gold text-white text-sm font-bold rounded-lg hover:shadow-lg transition-all">
-        修缮开放 💰${getRestorationUnlockPrice().toLocaleString()}
+      <button class="goto-shop-restoration-btn px-5 py-2 bg-magic-gold text-white text-sm font-bold rounded-lg hover:shadow-lg transition-all">
+        前往位面商店解锁 💰${getRestorationUnlockPrice().toLocaleString()}
       </button>
     `;
-    unlockCard.querySelector('.unlock-restoration-btn').addEventListener('click', () => {
-      if (unlockRestorationRoom()) {
-        playSfx('buy_success');
-        updateStatusBar();
-        renderRestorationTab(container);
-        // 首次解锁后触发教学
-        const trigger = checkAndShowTutorial('restoration_unlock');
-        if (trigger) {
-          setTimeout(() => dispatchTutorialUI(trigger), 300);
-        }
-      } else {
-        alert('智慧之光不足 💰');
-      }
+    unlockCard.querySelector('.goto-shop-restoration-btn').addEventListener('click', () => {
+      if (window.switchTab) window.switchTab('shop');
     });
     container.appendChild(unlockCard);
     return;

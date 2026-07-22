@@ -1,10 +1,11 @@
 // 书架页面渲染
 import { state, saveState } from '../state.js';
 import { BOOKS, CATEGORIES } from '../../data/books.js';
-import { el, actions } from './common.js';
+import { el, actions, updateStatusBar } from './common.js';
+import { playSfx } from '../audio.js';
 import { checkTaskCompletion } from '../quests.js';
 import { spendInspiration } from '../storage.js';
-import { getManuscriptSlots, getManuscriptBoxCount, getBookCapacity, getOwnedBookCount, placeOnShelf } from '../capacity.js';
+import { getManuscriptSlots, getManuscriptBoxCount, getManuscriptSlotPrice, expandManuscriptSlots, getBookCapacity, getOwnedBookCount, placeOnShelf } from '../capacity.js';
 import { calcCurationEffects } from '../curation.js';
 import { getEffectiveCopiedWords } from '../core/book-utils.js';
 
@@ -79,15 +80,22 @@ export function renderBookshelfPage() {
   header.appendChild(buyBtn);
   card.appendChild(header);
 
-  // 手稿箱区域
+  // 手稿箱区域（始终显示，方便随时扩容）
   const mBox2 = state.manuscriptBox || [];
-  if (mBox2.length > 0) {
+  const mSlots2 = getManuscriptSlots();
+  const mCount2 = getManuscriptBoxCount();
+  const mPrice2 = getManuscriptSlotPrice();
+  const mMaxed2 = mSlots2 >= 20;
+  {
     const mSection = el('div', 'mb-6 p-4 rounded-xl border-2 border-dashed border-amber-400/40 bg-amber-50/30');
-    const mSlots = getManuscriptSlots();
-    const mCount = getManuscriptBoxCount();
     mSection.innerHTML = `
       <div class="flex items-center justify-between mb-3">
-        <h3 class="font-display text-sm font-bold text-ink">📦 手稿箱 <span class="text-xs font-normal text-ink-light">(${mCount}/${mSlots} 格)</span></h3>
+        <h3 class="font-display text-sm font-bold text-ink">📦 手稿箱 <span class="text-xs font-normal text-ink-light">(${mCount2}/${mSlots2} 格)</span></h3>
+        ${mMaxed2
+          ? '<span class="text-xs text-magic-gold font-bold">已满 20 格 ✨</span>'
+          : `<button class="m-expand-btn px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs font-bold hover:bg-amber-200 transition-all">
+              + 扩容 💰${mPrice2.toLocaleString()}
+             </button>`}
       </div>
       <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
         ${mBox2.map(bookId => {
@@ -105,13 +113,27 @@ export function renderBookshelfPage() {
             </div>
           `;
         }).join('')}
-        ${Array.from({ length: Math.max(0, mSlots - mCount) }, () => `
+        ${Array.from({ length: Math.max(0, mSlots2 - mCount2) }, () => `
           <div class="p-3 rounded-lg border border-dashed border-wood/20 flex items-center justify-center min-h-[80px]">
             <span class="text-wood/20 text-lg">+</span>
           </div>
         `).join('')}
       </div>
     `;
+
+    const mExpandBtn = mSection.querySelector('.m-expand-btn');
+    if (mExpandBtn) {
+      mExpandBtn.addEventListener('click', () => {
+        if (expandManuscriptSlots()) {
+          playSfx('buy_success');
+          updateStatusBar();
+          renderBookshelfPage();
+        } else if (mPrice2 > 0) {
+          alert('智慧之光不足 💰');
+        }
+      });
+    }
+
     card.appendChild(mSection);
   }
 
