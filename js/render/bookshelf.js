@@ -407,8 +407,8 @@ function renderChapterList(book) {
     <div class="text-sm text-ink-light mb-1">${book.author} · ${book.category} · ${book.totalWords.toLocaleString()}字</div>
     ${isCompleted ? `<div class="text-xs text-magic-gold mb-2">✦ 熟练度 Lv${bookState.masteryLevel} · 已抄 ${bookState.copyCount} 次</div>` : ''}
     ${needReCopy
-      ? `<button id="re-copy-btn" class="w-full px-4 py-2 mb-4 bg-purple-600 text-white rounded-lg font-bold text-sm hover:shadow-lg transition-all">🔮 花费灵感重抄 · ${getReCopyCost()} ✨</button>
-         <div class="text-center text-xs text-ink-light mb-3">当前灵感：${state.inspiration || 0} ✨</div>`
+      ? `<button id="re-copy-btn" class="w-full px-4 py-2 mb-4 bg-purple-600 text-white rounded-lg font-bold text-sm hover:shadow-lg transition-all">🔮 花费灵感重抄 · ${getReCopyCost()} 💡</button>
+         <div class="text-center text-xs text-ink-light mb-3">当前灵感：${state.inspiration || 0} 💡</div>`
       : `<button id="start-copy-btn" class="w-full px-4 py-2 mb-4 bg-magic-gold text-white rounded-lg font-bold text-sm hover:shadow-lg transition-all">📝 开始誊抄此书</button>`
     }
     <div class="space-y-2">
@@ -453,7 +453,7 @@ function renderChapterList(book) {
     reCopyBtn.addEventListener('click', () => {
       const cost = getReCopyCost();
       if (!spendInspiration(cost)) {
-        alert(`灵感不足！需要 ${cost} ✨，当前拥有 ${state.inspiration || 0} ✨`);
+        alert(`灵感不足！需要 ${cost} 💡，当前拥有 ${state.inspiration || 0} 💡`);
         return;
       }
       bookState.reCopyUnlocked = true;

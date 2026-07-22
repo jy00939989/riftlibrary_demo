@@ -18,6 +18,16 @@ import { showAchievementToast } from './achievements.js';
 import { checkAndShowTutorial } from '../tutorial.js';
 import { dispatchTutorialUI } from './tutorial-ui.js';
 
+// 修复室等级 → 场景图映射
+const RESTORATION_BG = {
+  0: 'visual/restoration/restoration_lv0_ruins.jpg',
+  1: 'visual/restoration/restoration_lv1_shelter.jpg',
+  2: 'visual/restoration/restoration_lv2_tidy.jpg',
+  3: 'visual/restoration/restoration_lv3_bright.jpg',
+  4: 'visual/restoration/restoration_lv4_elegant.jpg',
+  5: 'visual/restoration/restoration_lv5_sanctum.jpg'
+};
+
 // 氛围阶段 → 背景图映射
 const STAGE_BG = {
   1: 'visual/background/library_bg_01_abandoned.jpg',
@@ -395,21 +405,24 @@ function renderRestorationTab(container) {
   const upgradePrice = getRestorationUpgradePrice();
   const repairBonus = Math.round(getRestorationRepairSpeedBonus() * 100);
   const levelCard = document.createElement('div');
-  levelCard.className = 'bg-white/60 rounded-xl p-5 border border-wood/20';
+  levelCard.className = 'bg-white/60 rounded-xl overflow-hidden border border-wood/20';
   levelCard.innerHTML = `
-    <div class="flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <span class="text-3xl">📜</span>
-        <div>
-          <div class="font-bold text-ink">古籍修复室 Lv.${level}</div>
-          <div class="text-xs text-ink-light">修复时额外速度 +${5 + repairBonus}%（基础 5% + 等级 ${repairBonus}%）</div>
-        </div>
+    <div class="relative h-40 overflow-hidden">
+      <img src="${RESTORATION_BG[level]}" alt="古籍修复室 Lv.${level}" class="w-full h-full object-cover">
+      <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+      <div class="absolute bottom-3 left-4 text-white">
+        <div class="font-bold" style="text-shadow:0 1px 4px rgba(0,0,0,0.8)">古籍修复室 Lv.${level}</div>
       </div>
-      ${level < maxLevel
-        ? `<button class="upgrade-restoration-level-btn px-3 py-1.5 bg-magic-gold text-white text-xs font-bold rounded-lg hover:shadow-lg transition-all">
-            升级 💰${upgradePrice.toLocaleString()}
-           </button>`
-        : '<span class="text-xs text-magic-gold font-bold">已满级 ✨</span>'}
+    </div>
+    <div class="p-5">
+      <div class="flex items-center justify-between">
+        <div class="text-xs text-ink-light">修复时额外速度 +${repairBonus}%（Lv0 解锁修复功能，升级后每级 +5%）</div>
+        ${level < maxLevel
+          ? `<button class="upgrade-restoration-level-btn px-3 py-1.5 bg-magic-gold text-white text-xs font-bold rounded-lg hover:shadow-lg transition-all">
+              升级 💰${upgradePrice.toLocaleString()}
+             </button>`
+          : '<span class="text-xs text-magic-gold font-bold">已满级 ✨</span>'}
+      </div>
     </div>
   `;
   const upgradeLevelBtn = levelCard.querySelector('.upgrade-restoration-level-btn');

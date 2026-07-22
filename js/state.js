@@ -211,6 +211,14 @@ export const state = {
   restorationLevel: 0,      // 修复室等级 0-5
   restorationUnlocked: false, // 需购买 Lv0 后才开放
 
+  // 环境音（白噪音）
+  ambientSounds: {
+    unlocked: [],   // 已解锁的环境音 ID
+    current: null,  // 当前播放 ID
+    volume: 0.5,    // 音量 0-1
+    enabled: true   // 是否启用
+  },
+
   // 卷组吐槽冷却（二阶段叙事用）
   quipCooldown: { recent: [], groupVisits: {} }
 };
@@ -627,6 +635,10 @@ export function initState() {
       // 旧存档迁移：卷组吐槽冷却
       if (!state.quipCooldown) {
         state.quipCooldown = { recent: [], groupVisits: {} };
+      }
+      // 旧存档迁移：环境音系统
+      if (!state.ambientSounds) {
+        state.ambientSounds = { unlocked: [], current: null, volume: 0.5, enabled: true };
       }
 
       saveState(); // 迁移后立即持久化

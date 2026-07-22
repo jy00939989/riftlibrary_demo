@@ -14,6 +14,7 @@ import { checkAchievements } from '../achievements.js';
 import { showAchievementToast } from './achievements.js';
 import { SIGNBOARDS } from '../../data/signboards.js';
 import { plantSeed, canFertilize, fertilizePlant, canWater, waterPlant, canHarvest, harvestPlant } from '../plants.js';
+import { getAmbientDefs, buyAmbient } from '../ambient.js';
 
 let countdownInterval = null;
 
@@ -34,6 +35,9 @@ export function renderShopPage() {
   // ========== 新书区 ==========
   wrapper.appendChild(renderBookSection('📚 新书上架', shopState.fixed, false));
   wrapper.appendChild(renderBookSection('🔥 限时特惠', shopState.rotating, true));
+
+  // ========== 环境音商店 ==========
+  wrapper.appendChild(renderAmbientShop());
 
   // ========== 馆内装潢区 ==========
   wrapper.appendChild(renderDecorationShop());
@@ -592,6 +596,52 @@ function formatCountdown(soldAt) {
   const m = Math.floor((remaining % 3600000) / 60000);
   const s = Math.floor((remaining % 60000) / 1000);
   return `补货中 ${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
+// ========== 环境音商店 ==========
+
+function renderAmbientShop() {
+  const section = el('div', 'parchment-bg rounded-2xl p-6 magic-glow');
+  section.innerHTML = `<h2 class="font-display text-xl font-bold mb-4">🎧 环境音</h2>
+    <p class="text-xs text-ink-light mb-4">专注时播放的白噪音与氛围音，可与背景音乐同时开启。</p>`;
+
+  const grid = el('div', 'grid grid-cols-1 md:grid-cols-2 gap-3');
+  const ambients = getAmbientDefs();
+
+  ambients.forEach(a => {
+    const card = el('div', `bg-white rounded-xl p-4 border-2 ${a.unlocked ? 'border-wood/20' : 'border-wood/10 opacity-80'} flex items-center gap-3`);
+    card.innerHTML = `
+      <span class="text-3xl flex-shrink-0">${a.emoji}</span>
+      <div class="flex-1 min-w-0">
+        <div class="font-bold text-sm text-ink">${a.name}</div>
+        <div class="text-xs text-ink-light truncate">${a.unlocked ? '已解锁 · 可在音乐选择器中切换' : `解锁后可在专注时播放`}</div>
+      </div>
+      ${a.unlocked
+        ? '<span class="text-xs text-magic-gold font-bold">已拥有 ✓</span>'
+        : `<button class="buy-ambient-btn px-3 py-1.5 bg-magic-gold text-white text-xs font-bold rounded-lg hover:shadow-lg transition-all" data-id="${a.id}">
+            💰${a.price.toLocaleString()}
+           </button>`}
+    `;
+
+    const buyBtn = card.querySelector('.buy-ambient-btn');
+    if (buyBtn) {
+      buyBtn.addEventListener('click', () => {
+        const result = buyAmbient(buyBtn.dataset.id);
+        if (result.ok) {
+          playSfx('buy_success');
+          updateStatusBar();
+          renderShopPage();
+        } else if (result.reason === 'no_coins') {
+          alert('智慧之光不足 💰');
+        }
+      });
+    }
+
+    grid.appendChild(card);
+  });
+
+  section.appendChild(grid);
+  return section;
 }
 
 // ========== 馆内装潢 ==========

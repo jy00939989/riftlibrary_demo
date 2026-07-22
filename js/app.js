@@ -177,9 +177,9 @@ function handleCompleteFocus(isAuto = false) {
   // 热茶 buff：前5分钟速度 +10%
   const curationSpeed = getCurationFocusSpeed();
 
-  // 修复加成：损坏的书正在修复中，修复室开放后基础 +5% + 等级加成
+  // 修复加成：损坏的书正在修复中，Lv0 仅解锁修复功能，Lv1 起每级 +5%
   const bookIsDamaged = sess.bookId && state.books[sess.bookId] && state.books[sess.bookId].damaged;
-  const repairSpeedBonus = (bookIsDamaged && isRestorationUnlocked()) ? (0.05 + getRestorationRepairSpeedBonus()) : 0;
+  const repairSpeedBonus = (bookIsDamaged && isRestorationUnlocked()) ? getRestorationRepairSpeedBonus() : 0;
 
   let wordsGained;
   if (sess.teaBoost) {

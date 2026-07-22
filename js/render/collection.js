@@ -63,8 +63,8 @@ function renderBooksCategory(cat, p) {
         <div class="h-full bg-gradient-to-r from-magic-blue to-magic-gold" style="width:${p.percent}%"></div>
       </div>
       <div class="flex items-center gap-4 text-xs text-ink-light mb-4">
-        <span>📖 已上架 <b>${p.owned}</b> 本</span>
-        <span>✅ 已完成 <b>${p.completed}</b> 本</span>
+        <span>📖 已入库 <b>${p.owned}</b> 本</span>
+        <span>✅ 已上架 <b>${p.completed}</b> 本</span>
       </div>
   `;
 

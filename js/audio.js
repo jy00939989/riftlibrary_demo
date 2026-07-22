@@ -1,5 +1,6 @@
 // 音频管理模块 —— BGM 氛围联动 + 交叉淡入淡出 + SFX 音效 + 音乐选择器
 import { state, saveState } from './state.js';
+import { initAmbient, setAmbientEnabled, isAmbientEnabled } from './ambient.js';
 
 // 曲目配置（所有 MP3 均已在 audio/ 目录下）
 const TRACK_DEFS = [
@@ -73,6 +74,7 @@ export function isMusicOn() { return musicEnabled; }
 export function initAudio() {
   musicEnabled = localStorage.getItem('library_music') !== 'off';
   updateToggleIcon();
+  initAmbient();
 }
 
 /**
