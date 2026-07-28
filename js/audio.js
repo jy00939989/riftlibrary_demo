@@ -18,6 +18,7 @@ function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 let currentAudio = null;
 let currentTrackId = null;
 let musicEnabled = true;
+let musicVolume = 0.7;
 let fadeTimer = null;
 
 // ========== 工具 ==========
@@ -71,8 +72,19 @@ function updateToggleIcon() {
 
 export function isMusicOn() { return musicEnabled; }
 
+export function getMusicVolume() { return musicVolume; }
+
+export function setMusicVolume(value) {
+  musicVolume = Math.max(0, Math.min(1, value));
+  localStorage.setItem('library_music_volume', musicVolume.toString());
+  if (currentAudio) currentAudio.volume = musicVolume;
+  return musicVolume;
+}
+
 export function initAudio() {
   musicEnabled = localStorage.getItem('library_music') !== 'off';
+  const savedVol = parseFloat(localStorage.getItem('library_music_volume'));
+  musicVolume = isNaN(savedVol) ? 0.7 : Math.max(0, Math.min(1, savedVol));
   updateToggleIcon();
   initAmbient();
 }
@@ -95,6 +107,11 @@ export function playTrack(trackId) {
   const next = new Audio(src);
   next.loop = true;
   next.volume = 0;
+  next.onerror = () => {
+    // BGM 加载失败：重置状态，避免卡在当前曲目
+    currentAudio = null;
+    currentTrackId = null;
+  };
 
   if (currentAudio) {
     const old = currentAudio;
@@ -102,8 +119,8 @@ export function playTrack(trackId) {
     clearInterval(fadeTimer);
     fadeTimer = setInterval(() => {
       step++;
-      old.volume = Math.max(0, 0.7 - step * 0.07);
-      next.volume = Math.min(0.7, step * 0.07);
+      old.volume = Math.max(0, musicVolume - step * (musicVolume / 10));
+      next.volume = Math.min(musicVolume, step * (musicVolume / 10));
       if (step >= 10) {
         clearInterval(fadeTimer);
         old.pause();
@@ -111,7 +128,7 @@ export function playTrack(trackId) {
       }
     }, 120);
   } else {
-    next.volume = 0.7;
+    next.volume = musicVolume;
   }
 
   next.play().catch(() => {});
@@ -226,23 +243,47 @@ const SFX_FILES = {
 const sfxCache = {};
 let sfxEnabled = true;
 let sfxInitialized = false;
+let sfxVolume = 0.5; // 0-1 主音量，最终音量 = sfxVolume * 基础音量
+
+function getBaseSfxVolume(name) {
+  return name === 'button_click' ? 0.3 : 0.5;
+}
 
 /** 预加载所有音效（首次用户交互后调用） */
 export function initSfx() {
   if (sfxInitialized) return;
   sfxInitialized = true;
   sfxEnabled = localStorage.getItem('library_sfx') !== 'off';
+  const savedVol = parseFloat(localStorage.getItem('library_sfx_volume'));
+  sfxVolume = isNaN(savedVol) ? 0.5 : Math.max(0, Math.min(1, savedVol));
 
   Object.entries(SFX_FILES).forEach(([name, src]) => {
     try {
       const audio = new Audio(encodeURI(src));
       audio.preload = 'auto';
-      audio.volume = name === 'button_click' ? 0.15 : 0.25;
+      audio.volume = getBaseSfxVolume(name) * sfxVolume;
       sfxCache[name] = audio;
     } catch (e) {
       // 音效加载失败不阻塞
     }
   });
+}
+
+/** 设置音效总音量 0-1 */
+export function setSfxVolume(value) {
+  sfxVolume = Math.max(0, Math.min(1, value));
+  localStorage.setItem('library_sfx_volume', sfxVolume.toString());
+  Object.entries(sfxCache).forEach(([name, audio]) => {
+    try {
+      audio.volume = getBaseSfxVolume(name) * sfxVolume;
+    } catch (e) {}
+  });
+  return sfxVolume;
+}
+
+/** 获取音效总音量 0-1 */
+export function getSfxVolume() {
+  return sfxVolume;
 }
 
 /** 播放指定音效 */
@@ -252,6 +293,7 @@ export function playSfx(name) {
   if (!audio) return;
   try {
     audio.currentTime = 0;
+    audio.volume = getBaseSfxVolume(name) * sfxVolume;
     audio.play().catch(() => {});
   } catch (e) {
     // 播放失败静默

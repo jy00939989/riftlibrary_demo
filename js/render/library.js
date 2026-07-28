@@ -11,10 +11,11 @@ import { BOOKS } from '../../data/books.js';
 import { VOLUME_GROUPS, getVolumeGroupProgress, isVolumeBookId } from '../../data/volume_groups.js';
 import { canCollectVolumeGroup, collectVolumeGroup } from '../volumes.js';
 import { storeInRestorationBox, removeFromRestorationBox, getRestorationBoxSlots, getRestorationBoxCount, getRestorationSlotPrice, expandRestorationBoxSlots, getRestorationLevel, getRestorationUpgradePrice, upgradeRestorationLevel, getRestorationRepairSpeedBonus, isRestorationUnlocked, getRestorationUnlockPrice } from '../capacity.js';
-import { updateStatusBar } from './common.js';
+import { updateStatusBar, getBookTitle } from './common.js';
 import { playSfx } from '../audio.js';
 import { checkAchievements } from '../achievements.js';
 import { showAchievementToast } from './achievements.js';
+import { t, getAtmosphereStageName } from '../i18n/terms.js';
 
 // 修复室等级 → 场景图映射
 const RESTORATION_BG = {
@@ -61,27 +62,27 @@ export function renderLibraryPage() {
       <div class="flex border-b-2 border-wood/20 bg-wood/5 overflow-x-auto flex-nowrap" style="-webkit-overflow-scrolling:touch;scrollbar-width:none">
         <button data-subtab="overview" class="subtab-btn flex-shrink-0 px-3 sm:px-5 py-3 text-sm font-bold transition-all
           ${activeSubTab === 'overview' ? 'bg-white text-magic-gold border-b-2 border-magic-gold -mb-0.5' : 'text-ink-light hover:text-ink hover:bg-white/50'}">
-          📊 概况
+          📊 ${t('subtabOverview')}
         </button>
         <button data-subtab="achievements" class="subtab-btn flex-shrink-0 px-3 sm:px-5 py-3 text-sm font-bold transition-all
           ${activeSubTab === 'achievements' ? 'bg-white text-magic-gold border-b-2 border-magic-gold -mb-0.5' : 'text-ink-light hover:text-ink hover:bg-white/50'}">
-          🏆 成就柜
+          🏆 ${t('subtabAchievements')}
         </button>
         <button data-subtab="collection" class="subtab-btn flex-shrink-0 px-3 sm:px-5 py-3 text-sm font-bold transition-all
           ${activeSubTab === 'collection' ? 'bg-white text-magic-gold border-b-2 border-magic-gold -mb-0.5' : 'text-ink-light hover:text-ink hover:bg-white/50'}">
-          📦 收藏室
+          📦 ${t('subtabCollection')}
         </button>
         <button data-subtab="restoration" class="subtab-btn flex-shrink-0 px-3 sm:px-5 py-3 text-sm font-bold transition-all
           ${activeSubTab === 'restoration' ? 'bg-white text-magic-gold border-b-2 border-magic-gold -mb-0.5' : 'text-ink-light hover:text-ink hover:bg-white/50'}">
-          📜 古籍修复室
+          📜 ${t('restorationRoom')}
         </button>
         <button data-subtab="decoration" class="subtab-btn flex-shrink-0 px-3 sm:px-5 py-3 text-sm font-bold transition-all
           ${activeSubTab === 'decoration' ? 'bg-white text-magic-gold border-b-2 border-magic-gold -mb-0.5' : 'text-ink-light hover:text-ink hover:bg-white/50'}">
-          🏺 布置
+          🏺 ${t('subtabDecoration')}
         </button>
         <button data-subtab="guide" class="subtab-btn flex-shrink-0 px-3 sm:px-5 py-3 text-sm font-bold transition-all
           ${activeSubTab === 'guide' ? 'bg-white text-magic-gold border-b-2 border-magic-gold -mb-0.5' : 'text-ink-light hover:text-ink hover:bg-white/50'}">
-          📖 馆长手册
+          📖 ${t('subtabGuide')}
         </button>
       </div>
 
@@ -112,6 +113,17 @@ export function renderLibraryPage() {
   }
 }
 
+function getTierTerm(tier, suffix) {
+  return t(`tierGoal${suffix}${tier.level}`);
+}
+
+function getVolumeGroupTitle(group, unlocked) {
+  if (!unlocked) return '❓ ???';
+  const key = `volumeGroupTitle_${group.collectedBookId}`;
+  const term = t(key);
+  return term === key ? group.title : term;
+}
+
 // ========== 馆长目标阶梯渲染 ==========
 
 function renderTierGoals(stage) {
@@ -121,12 +133,10 @@ function renderTierGoals(stage) {
   const completedTiers = TIER_GOALS.filter(t => getTierStatus(t, curAtmo) === 'completed');
   let completedHTML = '';
   if (completedTiers.length > 0) {
-    const names = completedTiers.map(t => `${t.emoji} ${t.name}`).join(' → ');
-    const totalGoals = completedTiers.reduce((s, t) => s + t.goals.length, 0);
-    const totalDone = completedTiers.reduce((s, t) => s + countTierGoalsComplete(t, state), 0);
+    const names = completedTiers.map(t => `${t.emoji} ${getTierTerm(t, 'Name')}`).join(' → ');
     completedHTML = `
       <div class="mb-3 bg-green-50/30 border border-green-300/30 rounded-lg px-4 py-2.5 flex items-center gap-2">
-        <span class="text-sm font-bold text-green-700">✅ 已完成的阶段</span>
+        <span class="text-sm font-bold text-green-700">${t('completedStage')}</span>
         <span class="text-xs text-green-600">${names}</span>
       </div>`;
   }
@@ -142,7 +152,7 @@ function renderTierGoals(stage) {
       return `
         <div class="flex items-center gap-2 text-xs ${done ? 'text-green-700' : 'text-ink-light'}">
           <span class="flex-shrink-0 w-4 text-center">${done ? '✅' : '○'}</span>
-          <span>${g.icon} ${g.label}</span>
+          <span>${g.icon} ${t(g.id)}</span>
         </div>`;
     }).join('');
 
@@ -155,18 +165,18 @@ function renderTierGoals(stage) {
           <div class="flex-1 min-w-0">
             <div class="flex items-center justify-between mb-1 flex-wrap gap-1">
               <div>
-                <span class="font-bold text-sm">${activeTier.name}</span>
-                <span class="text-xs text-ink-light ml-2">${activeTier.subtitle}</span>
+                <span class="font-bold text-sm">${getTierTerm(activeTier, 'Name')}</span>
+                <span class="text-xs text-ink-light ml-2">${getTierTerm(activeTier, 'Subtitle')}</span>
               </div>
-              <span class="text-xs px-2 py-0.5 rounded-full bg-magic-gold/20 text-magic-gold font-bold">进行中</span>
+              <span class="text-xs px-2 py-0.5 rounded-full bg-magic-gold/20 text-magic-gold font-bold">${t('inProgress')}</span>
             </div>
             <p class="text-xs leading-relaxed italic text-ink-light mb-1">
-              " ${activeTier.flavor} "
+              " ${getTierTerm(activeTier, 'Flavor')} "
             </p>
             <div class="space-y-1.5 pt-3 mt-3 border-t border-magic-gold/20">
               ${items}
               <div class="mt-2 pt-2 border-t border-ink/5">
-                <span class="text-xs text-ink-light">目标进度：${goalsComplete}/${goalsTotal}</span>
+                <span class="text-xs text-ink-light">${t('goalProgress').replace('{current}', goalsComplete).replace('{total}', goalsTotal)}</span>
               </div>
             </div>
           </div>
@@ -178,17 +188,21 @@ function renderTierGoals(stage) {
   const nextTier = TIER_GOALS.find(t => getTierStatus(t, curAtmo) === 'locked');
   let nextHTML = '';
   if (nextTier) {
+    const preview = t('nextTierPreview')
+      .replace('{emoji}', nextTier.emoji)
+      .replace('{name}', getTierTerm(nextTier, 'Name'))
+      .replace('{atmosphere}', nextTier.stageMin);
     nextHTML = `
       <div class="mt-3 text-center text-xs text-ink-light/60">
-        🔜 下一阶段「${nextTier.emoji} ${nextTier.name}」—— 氛围达到 <span class="font-bold text-magic-blue">${nextTier.stageMin}</span> 解锁
+        ${preview}
       </div>`;
   }
 
   return `
     <div class="mb-6">
       <div class="flex items-center justify-between mb-3">
-        <h3 class="font-display text-sm text-magic-gold font-bold">🏛️ 馆长目标 · 复兴之路</h3>
-        <span class="text-xs px-2 py-0.5 rounded-full bg-magic-gold/10 text-magic-gold font-bold">阶段 ${stage.level}/5</span>
+        <h3 class="font-display text-sm text-magic-gold font-bold">${t('curatorGoalTitle')}</h3>
+        <span class="text-xs px-2 py-0.5 rounded-full bg-magic-gold/10 text-magic-gold font-bold">${t('stageLevel').replace('{level}', stage.level)}</span>
       </div>
       ${completedHTML}
       ${activeHTML}
@@ -200,21 +214,20 @@ function renderTierGoals(stage) {
 
 function renderOverview(container, stage, levelInfo, desc, maxAtmo, atmoPercent) {
   const curAtmo = state.library.atmosphere;
-  const currStageDef = ATMOSPHERE_STAGES[stage.level - 1];
-  const stageMin = currStageDef ? currStageDef.min : 0;
-  const stageMax = currStageDef ? currStageDef.max : 30;
+  const stageName = getAtmosphereStageName(stage.level);
+  const stageMin = stage.min;
+  const stageMax = stage.max;
   const stageRange = stageMax - stageMin;
   const stageProgress = Math.min(100, Math.round(((curAtmo - stageMin) / stageRange) * 100));
-  const nextStageDef = stage.level < 5 ? ATMOSPHERE_STAGES[stage.level] : null;
 
   container.innerHTML = `
     ${renderTierGoals(stage)}
 
     <!-- 氛围阶段背景图 -->
     <div class="mb-6 rounded-xl overflow-hidden border-2 border-wood/30 shadow-lg">
-      <img src="${STAGE_BG[stage.level]}" alt="图书馆 · ${stage.name}" class="w-full h-48 object-cover">
+      <img src="${STAGE_BG[stage.level]}" alt="${t('libraryStageAlt').replace('{stage}', stageName)}" class="w-full h-48 object-cover">
       <div class="bg-ink/70 text-white text-center py-2 text-sm">
-        ${stage.name} · ${state.library.name}
+        ${t('libraryStageOverlay').replace('{stage}', stageName).replace('{name}', state.library.name)}
       </div>
     </div>
 
@@ -222,7 +235,7 @@ function renderOverview(container, stage, levelInfo, desc, maxAtmo, atmoPercent)
       <h2 class="font-display text-2xl font-bold mb-2">${state.library.name}</h2>
       <div class="inline-flex items-center gap-2 bg-wood/10 px-4 py-2 rounded-full mb-3">
         <span class="text-magic-gold">✨</span>
-        <span class="font-bold">氛围等级：${stage.name} Lv.${levelInfo.level}</span>
+        <span class="font-bold">${t('atmosphereLevelLabel').replace('{stage}', stageName).replace('{level}', levelInfo.level)}</span>
       </div>
       <div class="max-w-md mx-auto mb-3">
         <div class="flex justify-between text-sm text-ink-light mb-1">
@@ -232,21 +245,21 @@ function renderOverview(container, stage, levelInfo, desc, maxAtmo, atmoPercent)
           <div class="h-full bg-gradient-to-r from-wood via-magic-gold to-magic-gold" style="width:${atmoPercent}%"></div>
         </div>
       </div>
-      ${levelInfo.next > 0 ? `<p class="text-sm text-ink-light">还需 ${levelInfo.next} 点氛围升级至下一阶段</p>` : '<p class="text-sm text-magic-gold">图书馆已完全复苏！</p>'}
+      ${levelInfo.next > 0 ? `<p class="text-sm text-ink-light">${t('needMoreAtmosphere').replace('{n}', levelInfo.next)}</p>` : `<p class="text-sm text-magic-gold">${t('libraryFullyRestored')}</p>`}
     </div>
     <div class="bg-wood/5 border-2 border-wood/20 rounded-xl p-4 mb-6">
-      <h3 class="font-bold mb-2 flex items-center gap-2"><span>📖</span> 今日图书馆</h3>
+      <h3 class="font-bold mb-2 flex items-center gap-2"><span>📖</span> ${t('todayLibrary')}</h3>
       <p class="text-sm leading-relaxed text-ink-light">${desc}</p>
     </div>
     <div class="grid grid-cols-3 gap-3">
       <div class="bg-white/50 rounded-lg p-3 text-center">
-        <div class="text-2xl mb-1">📝</div><div class="text-xs text-ink-light">誊抄速度</div><div class="font-bold text-magic-blue">${Math.round(getFocusSpeedMultiplier() * 100)}%</div>
+        <div class="text-2xl mb-1">📝</div><div class="text-xs text-ink-light">${t('transcribeSpeedLabel')}</div><div class="font-bold text-magic-blue">${Math.round(getFocusSpeedMultiplier() * 100)}%</div>
       </div>
       <div class="bg-white/50 rounded-lg p-3 text-center">
-        <div class="text-2xl mb-1">💰</div><div class="text-xs text-ink-light">智慧之光获取</div><div class="font-bold text-magic-blue">基准</div>
+        <div class="text-2xl mb-1">💰</div><div class="text-xs text-ink-light">${t('coinsGainLabel')}</div><div class="font-bold text-magic-blue">${t('baseline')}</div>
       </div>
       <div class="bg-white/50 rounded-lg p-3 text-center">
-        <div class="text-2xl mb-1">👥</div><div class="text-xs text-ink-light">访客好感</div><div class="font-bold text-magic-blue">基准</div>
+        <div class="text-2xl mb-1">👥</div><div class="text-xs text-ink-light">${t('visitorFavorLabel')}</div><div class="font-bold text-magic-blue">${t('baseline')}</div>
       </div>
     </div>
   `;
@@ -269,7 +282,7 @@ function renderDecorationTab(container) {
   try {
     renderDecorationPage();
   } catch (e) {
-    content.innerHTML = `<p class="text-center text-red-500 py-8">布置页面加载失败</p>`;
+    content.innerHTML = `<p class="text-center text-red-500 py-8">${t('decorationPageLoadFailed')}</p>`;
   }
 }
 
@@ -281,64 +294,64 @@ function renderGuideTab(container) {
 
       <!-- 5个子标签说明 -->
       <section class="bg-white/60 rounded-xl p-5 border border-wood/20">
-        <h3 class="font-display text-lg font-bold mb-3">🏛️ 馆长办公室指南</h3>
+        <h3 class="font-display text-lg font-bold mb-3">${t('curatorOfficeGuide')}</h3>
         <div class="space-y-2 text-sm text-ink-light">
           <div class="bg-white rounded-lg p-3 flex items-start gap-2">
             <span class="text-lg">📊</span>
-            <div><strong>概况</strong> — 图书馆数据总览、氛围进度条、修改馆名</div>
+            <div>${t('guideOverviewDesc')}</div>
           </div>
           <div class="bg-white rounded-lg p-3 flex items-start gap-2">
             <span class="text-lg">🏆</span>
-            <div><strong>成就柜</strong> — 查看已解锁成就和未达成条件</div>
+            <div>${t('guideAchievementsDesc')}</div>
           </div>
           <div class="bg-white rounded-lg p-3 flex items-start gap-2">
             <span class="text-lg">📦</span>
-            <div><strong>收藏室</strong> — 浏览收集品进度</div>
+            <div>${t('guideCollectionDesc')}</div>
           </div>
           <div class="bg-white rounded-lg p-3 flex items-start gap-2">
             <span class="text-lg">🏺</span>
-            <div><strong>布置</strong> — 植物盆栽、种子库存、标志牌</div>
+            <div>${t('guideDecorationDesc')}</div>
           </div>
           <div class="bg-white rounded-lg p-3 flex items-start gap-2">
             <span class="text-lg">📖</span>
-            <div><strong>馆长手册</strong> — 你正在看这里</div>
+            <div>${t('guideGuideDesc')}</div>
           </div>
         </div>
       </section>
 
       <!-- 核心循环 -->
       <section class="bg-magic-gold/10 border border-magic-gold/30 rounded-xl p-5 text-center">
-        <p class="font-bold text-ink mb-1">🖋️ 专注誊抄 → 💰 赚智慧之光 → 🏛️ 升级设施 → 👥 吸引访客 → 📚 解锁更多书籍</p>
-        <p class="text-xs text-ink-light">这是图书馆复苏的核心循环，一切操作都围绕它展开。</p>
+        <p class="font-bold text-ink mb-1">${t('coreLoopDesc')}</p>
+        <p class="text-xs text-ink-light">${t('coreLoopDetail')}</p>
       </section>
 
       <!-- 常见问题 -->
       <section class="bg-white/60 rounded-xl p-5 border border-wood/20">
-        <h3 class="font-display text-lg font-bold mb-3">❓ 常见问题</h3>
+        <h3 class="font-display text-lg font-bold mb-3">${t('faq')}</h3>
         <div class="space-y-3 text-sm">
           <div class="bg-white rounded-lg p-3">
-            <div class="font-bold mb-1">Q: 忘了收归还的书怎么办？</div>
-            <p class="text-ink-light">不会有损失。访客会一直等待，直到你去收取。</p>
+            <div class="font-bold mb-1">${t('faqQ1')}</div>
+            <p class="text-ink-light">${t('faqA1')}</p>
           </div>
           <div class="bg-white rounded-lg p-3">
-            <div class="font-bold mb-1">Q: 氛围怎么涨？</div>
-            <p class="text-ink-light">完成书籍、访客还书、里程碑和成就奖励都会提升氛围。</p>
+            <div class="font-bold mb-1">${t('faqQ2')}</div>
+            <p class="text-ink-light">${t('faqA2')}</p>
           </div>
           <div class="bg-white rounded-lg p-3">
-            <div class="font-bold mb-1">Q: 智慧之光怎么赚？</div>
-            <p class="text-ink-light">专注结算（每分钟 0.8）、访客还书、成就奖励、连续 7 天专注奖励。</p>
+            <div class="font-bold mb-1">${t('faqQ3')}</div>
+            <p class="text-ink-light">${t('faqA3')}</p>
           </div>
           <div class="bg-white rounded-lg p-3">
-            <div class="font-bold mb-1">Q: 如何修改图书馆名字？</div>
-            <p class="text-ink-light">馆长办公室 → 概况页，点击馆名即可修改。</p>
+            <div class="font-bold mb-1">${t('faqQ4')}</div>
+            <p class="text-ink-light">${t('faqA4')}</p>
           </div>
           <div class="bg-white rounded-lg p-3">
-            <div class="font-bold mb-1">Q: 存档在哪里？</div>
-            <p class="text-ink-light">保存在浏览器的 localStorage 中，清除浏览器数据会导致存档丢失。</p>
+            <div class="font-bold mb-1">${t('faqQ5')}</div>
+            <p class="text-ink-light">${t('faqA5')}</p>
           </div>
           <div class="bg-white rounded-lg p-3">
-            <div class="font-bold mb-1">Q: 怎么关背景音乐？</div>
-            <p class="text-ink-light">点击顶部导航栏右侧的 🔈 按钮即可。</p>
+            <div class="font-bold mb-1">${t('faqQ6')}</div>
+            <p class="text-ink-light">${t('faqA6')}</p>
           </div>
         </div>
       </section>
@@ -356,7 +369,7 @@ function renderCollectionTab(container) {
   try {
     renderCollection(content);
   } catch (e) {
-    content.innerHTML = `<p class="text-center text-red-500 py-8">收藏室加载失败</p>`;
+    content.innerHTML = `<p class="text-center text-red-500 py-8">${t('collectionLoadFailed')}</p>`;
   }
 }
 
@@ -373,10 +386,10 @@ function renderRestorationTab(container) {
     unlockCard.className = 'bg-amber-50/80 rounded-xl p-6 border-2 border-amber-200 text-center';
     unlockCard.innerHTML = `
       <div class="text-4xl mb-3">🔒</div>
-      <h3 class="font-display text-lg font-bold mb-2">古籍修复室尚未开放</h3>
-      <p class="text-sm text-ink-light mb-4">残破的修复室堆满灰尘，需要先修缮才能使用。</p>
+      <h3 class="font-display text-lg font-bold mb-2">${t('restorationRoomLocked')}</h3>
+      <p class="text-sm text-ink-light mb-4">${t('restorationRoomLockedDesc')}</p>
       <button class="goto-shop-restoration-btn px-5 py-2 bg-magic-gold text-white text-sm font-bold rounded-lg hover:shadow-lg transition-all">
-        前往位面商店解锁 💰${getRestorationUnlockPrice().toLocaleString()}
+        ${t('gotoShopUnlock').replace('{price}', getRestorationUnlockPrice().toLocaleString())}
       </button>
     `;
     unlockCard.querySelector('.goto-shop-restoration-btn').addEventListener('click', () => {
@@ -395,20 +408,20 @@ function renderRestorationTab(container) {
   levelCard.className = 'bg-white/60 rounded-xl overflow-hidden border border-wood/20';
   levelCard.innerHTML = `
     <div class="relative h-40 overflow-hidden">
-      <img src="${RESTORATION_BG[level]}" alt="古籍修复室 Lv.${level}" class="w-full h-full object-cover">
+      <img src="${RESTORATION_BG[level]}" alt="${t('restorationRoomLevelTitle').replace('{level}', level)}" class="w-full h-full object-cover">
       <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
       <div class="absolute bottom-3 left-4 text-white">
-        <div class="font-bold" style="text-shadow:0 1px 4px rgba(0,0,0,0.8)">古籍修复室 Lv.${level}</div>
+        <div class="font-bold" style="text-shadow:0 1px 4px rgba(0,0,0,0.8)">${t('restorationRoomLevelTitle').replace('{level}', level)}</div>
       </div>
     </div>
     <div class="p-5">
       <div class="flex items-center justify-between">
-        <div class="text-xs text-ink-light">修复时额外速度 +${repairBonus}%（Lv0 解锁修复功能，升级后每级 +5%）</div>
+        <div class="text-xs text-ink-light">${t('restorationRepairSpeedDesc').replace('{bonus}', repairBonus)}</div>
         ${level < maxLevel
           ? `<button class="upgrade-restoration-level-btn px-3 py-1.5 bg-magic-gold text-white text-xs font-bold rounded-lg hover:shadow-lg transition-all">
-              升级 💰${upgradePrice.toLocaleString()}
+              ${t('upgrade')} 💰${upgradePrice.toLocaleString()}
              </button>`
-          : '<span class="text-xs text-magic-gold font-bold">已满级 ✨</span>'}
+          : `<span class="text-xs text-magic-gold font-bold">${t('maxLevel')} ✨</span>`}
       </div>
     </div>
   `;
@@ -420,7 +433,7 @@ function renderRestorationTab(container) {
         updateStatusBar();
         renderRestorationTab(container);
       } else {
-        alert('智慧之光不足 💰');
+        alert(t('insufficientCoinsExclamation') + ' 💰');
       }
     });
   }
@@ -429,7 +442,7 @@ function renderRestorationTab(container) {
   // 1. 卷组进度与合成
   const groupsSection = document.createElement('div');
   groupsSection.className = 'bg-white/60 rounded-xl p-5 border border-wood/20';
-  groupsSection.innerHTML = `<h3 class="font-display text-lg font-bold mb-4">📜 长书卷组</h3>`;
+  groupsSection.innerHTML = `<h3 class="font-display text-lg font-bold mb-4">${t('volumeGroupsTitle')}</h3>`;
 
   const groupsGrid = document.createElement('div');
   groupsGrid.className = 'grid grid-cols-1 md:grid-cols-2 gap-4';
@@ -448,7 +461,7 @@ function renderRestorationTab(container) {
       return bs && bs.status !== 'locked';
     });
     const groupEmoji = groupUnlocked ? group.emoji : '❓';
-    const groupTitle = groupUnlocked ? group.title : '❓ ???';
+    const groupTitle = getVolumeGroupTitle(group, groupUnlocked);
 
     const percent = Math.round((progress.completed / progress.total) * 100);
     card.innerHTML = `
@@ -457,10 +470,10 @@ function renderRestorationTab(container) {
           <span class="text-2xl">${groupEmoji}</span>
           <div>
             <div class="font-bold text-ink">${groupTitle}</div>
-            <div class="text-xs text-ink-light">${progress.completed}/${progress.total} 卷已抄完</div>
+            <div class="text-xs text-ink-light">${t('volumesCopied').replace('{current}', progress.completed).replace('{total}', progress.total)}</div>
           </div>
         </div>
-        ${collectable ? `<button class="collect-btn px-3 py-1.5 bg-magic-gold text-white text-xs font-bold rounded-lg hover:shadow-lg transition-all" data-group="${group.collectedBookId}">合成典藏版</button>` : ''}
+        ${collectable ? `<button class="collect-btn px-3 py-1.5 bg-magic-gold text-white text-xs font-bold rounded-lg hover:shadow-lg transition-all" data-group="${group.collectedBookId}">${t('craftCollectorEdition')}</button>` : ''}
       </div>
       <div class="w-full h-2 bg-wood/10 rounded-full mb-3 overflow-hidden">
         <div class="h-full bg-magic-gold rounded-full" style="width:${percent}%"></div>
@@ -504,25 +517,25 @@ function renderRestorationTab(container) {
       <div class="flex items-center justify-between bg-amber-50/60 border border-amber-200 rounded-lg px-3 py-2">
         <div class="flex items-center gap-2">
           <span>${book ? book.emoji : '📜'}</span>
-          <span class="text-sm font-bold">${book ? (book.volumeTitle || book.title) : id}</span>
+          <span class="text-sm font-bold">${book ? getBookTitle(book) : id}</span>
         </div>
-        <button class="remove-restoration-btn text-xs px-2 py-1 bg-wood/10 hover:bg-wood/20 rounded" data-id="${id}">取出</button>
+        <button class="remove-restoration-btn text-xs px-2 py-1 bg-wood/10 hover:bg-wood/20 rounded" data-id="${id}">${t('takeOut')}</button>
       </div>
     `;
   }).join('');
 
   boxSection.innerHTML = `
     <div class="flex items-center justify-between mb-4">
-      <h3 class="font-display text-lg font-bold">🧰 修缮箱</h3>
-      <div class="text-xs text-ink-light">${count}/${slots} 格</div>
+      <h3 class="font-display text-lg font-bold">${t('restorationBoxTitle')}</h3>
+      <div class="text-xs text-ink-light">${t('slotsStatus').replace('{current}', count).replace('{total}', slots)}</div>
     </div>
-    <p class="text-xs text-ink-light mb-3">锁入修缮箱的单卷不会被访客借出、不会损坏，仍可参与合成典藏版。</p>
-    ${boxItems ? `<div class="space-y-2 mb-4">${boxItems}</div>` : '<p class="text-sm text-ink-light mb-4">修缮箱为空。</p>'}
+    <p class="text-xs text-ink-light mb-3">${t('restorationBoxDesc')}</p>
+    ${boxItems ? `<div class="space-y-2 mb-4">${boxItems}</div>` : `<p class="text-sm text-ink-light mb-4">${t('restorationBoxEmpty')}</p>`}
     ${canExpand ? `
       <button class="expand-restoration-btn px-3 py-1.5 bg-amber-100 text-amber-700 text-xs font-bold rounded-lg hover:bg-amber-200 transition-all">
-        + 扩容至 ${slots + 1} 格 💰${boxPrice.toLocaleString()}
+        ${t('expandSlotsTo').replace('{n}', slots + 1)} 💰${boxPrice.toLocaleString()}
       </button>
-    ` : '<span class="text-xs text-magic-gold font-bold">已达到最大 20 格</span>'}
+    ` : `<span class="text-xs text-magic-gold font-bold">${t('maxSlotsReached').replace('{n}', 20)}</span>`}
   `;
 
   const expandBtn = boxSection.querySelector('.expand-restoration-btn');
@@ -533,7 +546,7 @@ function renderRestorationTab(container) {
         updateStatusBar();
         renderRestorationTab(container);
       } else {
-        alert('智慧之光不足 💰');
+        alert(t('insufficientCoinsExclamation') + ' 💰');
       }
     });
   }
@@ -565,16 +578,16 @@ function renderRestorationTab(container) {
       <div class="flex items-center justify-between bg-white border border-wood/10 rounded-lg px-3 py-2">
         <div class="flex items-center gap-2">
           <span>${book ? book.emoji : '📜'}</span>
-          <span class="text-sm font-bold">${book ? (book.volumeTitle || book.title) : id}</span>
+          <span class="text-sm font-bold">${book ? getBookTitle(book) : id}</span>
         </div>
-        <button class="store-restoration-btn text-xs px-2 py-1 bg-amber-100 text-amber-700 hover:bg-amber-200 rounded" data-id="${id}">锁入修缮箱</button>
+        <button class="store-restoration-btn text-xs px-2 py-1 bg-amber-100 text-amber-700 hover:bg-amber-200 rounded" data-id="${id}">${t('storeInRestorationBoxLabel')}</button>
       </div>
     `;
   }).join('');
 
   storeSection.innerHTML = `
-    <h3 class="font-display text-lg font-bold mb-3">🔒 可保护的单卷</h3>
-    ${storeRows ? `<div class="space-y-2">${storeRows}</div>` : '<p class="text-sm text-ink-light">没有可锁入的单卷。</p>'}
+    <h3 class="font-display text-lg font-bold mb-3">${t('protectableVolumes')}</h3>
+    ${storeRows ? `<div class="space-y-2">${storeRows}</div>` : `<p class="text-sm text-ink-light">${t('noProtectableVolumes')}</p>`}
   `;
 
   storeSection.querySelectorAll('.store-restoration-btn').forEach(btn => {
@@ -582,7 +595,7 @@ function renderRestorationTab(container) {
       if (storeInRestorationBox(btn.dataset.id)) {
         renderRestorationTab(container);
       } else {
-        alert('修缮箱已满或该卷无法锁入');
+        alert(t('restorationBoxFullOrInvalid'));
       }
     });
   });
@@ -597,7 +610,7 @@ function renderVolumeRow(bookId) {
   if (!book) return '';
 
   const isLocked = !bs || bs.status === 'locked';
-  let statusText = '未获得';
+  let statusText = t('notObtained');
   let statusClass = 'text-gray-400';
   let extra = '';
 
@@ -606,23 +619,23 @@ function renderVolumeRow(bookId) {
       v.bookId === bookId && (v.status === 'borrowed' || v.status === 'due')
     );
     if (bs.damaged) {
-      statusText = '损坏待修';
+      statusText = t('damagedPendingRepair');
       statusClass = 'text-red-500';
     } else if (borrowed) {
-      statusText = '外借中';
+      statusText = t('onLoan');
       statusClass = 'text-amber-500';
     } else if (bs.status === 'completed') {
-      statusText = '已抄完';
+      statusText = t('copiedCompleted');
       statusClass = 'text-green-600';
     } else {
-      statusText = '誊抄中';
+      statusText = t('copying');
       statusClass = 'text-magic-blue';
     }
     extra = bs.damaged ? ' 🩹' : (borrowed ? ' 📤' : (bs.status === 'completed' ? ' ✓' : ' ✎'));
   }
 
   // 未获得的卷保持神秘感，不显示卷名
-  const displayName = isLocked ? '❓ ???' : (book.volumeTitle || book.title);
+  const displayName = isLocked ? '❓ ???' : getBookTitle(book);
 
   return `
     <div class="flex items-center justify-between text-xs bg-wood/5 rounded-lg px-3 py-1.5">

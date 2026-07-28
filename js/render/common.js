@@ -1,6 +1,7 @@
 // 渲染工具函数 + 状态栏更新（共享，避免循环引用）
 import { state } from '../state.js';
 import { BOOKS } from '../../data/books.js';
+import { t, getLocale } from '../i18n/terms.js';
 
 // 由 app.js 在初始化时注入
 export let actions = {};
@@ -50,7 +51,9 @@ export function updateTimerDisplay(timeStr, totalWords, bookWords) {
   if (display) display.textContent = timeStr;
   const wordEl = document.querySelector('#page-focus .text-sm.text-ink-light.mt-1');
   if (wordEl && totalWords !== undefined) {
-    wordEl.textContent = `本书 ${(bookWords || 0).toLocaleString()} 字 · 累计 ${totalWords.toLocaleString()} 字`;
+    wordEl.textContent = t('bookWordCount')
+      .replace('{book}', (bookWords || 0).toLocaleString())
+      .replace('{total}', totalWords.toLocaleString());
   }
   const miniTimer = document.getElementById('focus-mini-timer');
   if (miniTimer) miniTimer.textContent = timeStr;
@@ -58,4 +61,49 @@ export function updateTimerDisplay(timeStr, totalWords, bookWords) {
   if (activeWords && totalWords !== undefined) activeWords.textContent = totalWords.toLocaleString();
   const bookWordEl = document.getElementById('focus-book-words');
   if (bookWordEl && bookWords !== undefined) bookWordEl.textContent = bookWords.toLocaleString();
+}
+
+// ========== 本地化书籍字段访问（优先英文） ==========
+
+export function getBookTitle(book) {
+  if (getLocale() === 'en') {
+    return book.volumeTitle || book.titleEn || book.title;
+  }
+  return book.volumeTitle || book.title;
+}
+
+export function getBookDescription(book) {
+  return getLocale() === 'en' && book.descriptionEn ? book.descriptionEn : book.description;
+}
+
+export function getBookCertMessage(book) {
+  return getLocale() === 'en' && book.certMessageEn ? book.certMessageEn : book.certMessage;
+}
+
+export function getBookAuthorBio(book) {
+  return getLocale() === 'en' && book.authorBioEn ? book.authorBioEn : book.authorBio;
+}
+
+export function getBookAnecdotes(book) {
+  return getLocale() === 'en' && book.anecdotesEn ? book.anecdotesEn : book.anecdotes;
+}
+
+export function getBookReviews(book) {
+  return getLocale() === 'en' && book.reviewsEn ? book.reviewsEn : book.reviews;
+}
+
+export function getChapterTitle(chapter) {
+  return getLocale() === 'en' && chapter.titleEn ? chapter.titleEn : chapter.title;
+}
+
+export function getChapterPreview(chapter) {
+  return getLocale() === 'en' && chapter.previewEn ? chapter.previewEn : chapter.preview;
+}
+
+export function getChapterContent(chapter) {
+  return getLocale() === 'en' && chapter.contentEn ? chapter.contentEn : chapter.content;
+}
+
+export function getBookQuotes(book) {
+  return getLocale() === 'en' && book.quotesEn ? book.quotesEn : book.quotes;
 }

@@ -1,5 +1,5 @@
 // 渲染模块统一入口
-export { setActions, updateStatusBar } from './common.js';
+export { setActions, updateStatusBar, getBookTitle, getChapterTitle, getBookAuthorBio, getBookAnecdotes, getBookReviews } from './common.js';
 export { formatTime, updateTimerDisplay } from './common.js';
 export { renderFocusPage, showCompletionCard, showActionCards } from './focus.js';
 export { renderBookshelfPage, showMasteryDetail } from './bookshelf.js';

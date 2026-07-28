@@ -1,7 +1,13 @@
 // 访客中心页面渲染
 import { state } from '../state.js';
-import { el, actions } from './common.js';
+import { BOOKS } from '../../data/books.js';
+import { el, actions, getBookTitle } from './common.js';
 import { getBorrowLevelConfig, getVisitorCap, getVisitorDef } from '../visitors.js';
+
+function getVisitorBookTitle(bookId, fallback) {
+  const book = bookId ? BOOKS[bookId] : null;
+  return book ? getBookTitle(book) : fallback;
+}
 
 function timeLeft(dueTime) {
   const now = Date.now();
@@ -177,7 +183,7 @@ export function renderVisitorsPage() {
             <span class="font-bold text-sm">${v.name}</span>
             <span class="text-xs text-magic-blue">⏰ ${tl.text}</span>
           </div>
-          <div class="text-xs text-ink-light truncate">《${v.bookTitle}》</div>
+          <div class="text-xs text-ink-light truncate">《${getVisitorBookTitle(v.bookId, v.bookTitle)}》</div>
           <div class="mt-1.5 h-1.5 bg-wood/10 rounded-full overflow-hidden">
             <div class="h-full rounded-full transition-all duration-[2000ms] ${pct > 80 ? 'bg-magic-gold' : 'bg-magic-blue'}" style="width:${pct}%"></div>
           </div>
@@ -196,7 +202,7 @@ export function renderVisitorsPage() {
     due.forEach(v => {
       const row = el('div', 'flex items-center gap-3 bg-magic-gold/10 rounded-lg p-3 mb-2 border border-magic-gold/30 animate-pulse-glow');
       row.innerHTML = `<span class="text-2xl due-book-emoji">${v.emoji}</span>
-        <div class="flex-1"><span class="font-bold">${v.name}</span><span class="text-sm text-ink-light ml-2">《${v.bookTitle}》</span></div>`;
+        <div class="flex-1"><span class="font-bold">${v.name}</span><span class="text-sm text-ink-light ml-2">《${getVisitorBookTitle(v.bookId, v.bookTitle)}》</span></div>`;
       const btn = el('button', 'px-4 py-2 bg-magic-gold text-white rounded-lg text-sm font-bold hover:shadow-lg transition-all');
       btn.textContent = '📥 收取';
       btn.addEventListener('click', () => {
@@ -255,7 +261,7 @@ export function showVisitorEventModal(result, callback) {
   const visitorEmoji = result.visitorEmoji || '👤';
   let contentHtml = `
     <div class="flex justify-center mb-2">${getVisitorPortrait(charId, visitorEmoji, 'lg')}</div>
-    <div class="font-bold text-ink">${result.visitorName || '访客'} 归还了《${result.bookTitle || '书'}》</div>
+    <div class="font-bold text-ink">${result.visitorName || '访客'} 归还了《${getVisitorBookTitle(result.bookId, result.bookTitle) || '书'}》</div>
     ${quoteHtml}
     ${rewardsHtml}
   `;
@@ -263,7 +269,7 @@ export function showVisitorEventModal(result, callback) {
   // 损坏提示
   if (result.damaged) {
     contentHtml += `<div class="mt-3 p-2 bg-amber-50 rounded-lg text-xs text-amber-800 border border-amber-200">
-      ⚠️ 《${result.bookTitle}》在归还时发现轻微损毁，损失了约 ${Math.round((state.books[result.bookId]?.repairWords || 0) / (state.books[result.bookId]?.repairWords + state.books[result.bookId]?.copiedWords || 1) * 100)}%的抄写进度。<br>
+      ⚠️ 《${getVisitorBookTitle(result.bookId, result.bookTitle)}》在归还时发现轻微损毁，损失了约 ${Math.round((state.books[result.bookId]?.repairWords || 0) / (state.books[result.bookId]?.repairWords + state.books[result.bookId]?.copiedWords || 1) * 100)}%的抄写进度。<br>
       <span class="font-bold">🔧 不用担心！继续在缮写室专注誊抄就是在修复它，修书时速度还会 +5%。</span><br>
       <span class="text-amber-600">修复完成后墨墨会给你额外奖励 ✨</span>
     </div>`;

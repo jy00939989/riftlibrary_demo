@@ -1,5 +1,6 @@
 // 图书馆档案页面渲染（馆史档案 + 墨墨日志 + 位面 子标签）
 import { state } from '../state.js';
+import { t, getLocale, getDiaryBindingName } from '../i18n/terms.js';
 import { getDiaryEntries, getDiaryBindingLevel } from '../diary.js';
 import { PLANES, canUnlockPlane } from '../../data/planes.js';
 import { getPlaneQuestState } from '../quests.js';
@@ -17,9 +18,9 @@ export function renderArchivePage() {
   const nav = document.createElement('div');
   nav.className = 'flex gap-2 mb-6';
   nav.innerHTML = `
-    <button class="archive-sub-tab px-4 py-2 rounded-lg font-bold text-sm transition-all ${archiveTab === 'history' ? 'bg-magic-gold text-white shadow-lg' : 'bg-parchment-dark text-ink'}">📊 馆史档案</button>
-    <button class="archive-sub-tab px-4 py-2 rounded-lg font-bold text-sm transition-all ${archiveTab === 'diary' ? 'bg-magic-gold text-white shadow-lg' : 'bg-parchment-dark text-ink'}">📜 墨墨日志</button>
-    <button class="archive-sub-tab px-4 py-2 rounded-lg font-bold text-sm transition-all ${archiveTab === 'planes' ? 'bg-magic-gold text-white shadow-lg' : 'bg-parchment-dark text-ink'}">🌍 位面</button>
+    <button class="archive-sub-tab px-4 py-2 rounded-lg font-bold text-sm transition-all ${archiveTab === 'history' ? 'bg-magic-gold text-white shadow-lg' : 'bg-parchment-dark text-ink'}">📊 ${t('subtabHistory')}</button>
+    <button class="archive-sub-tab px-4 py-2 rounded-lg font-bold text-sm transition-all ${archiveTab === 'diary' ? 'bg-magic-gold text-white shadow-lg' : 'bg-parchment-dark text-ink'}">📜 ${t('subtabDiary')}</button>
+    <button class="archive-sub-tab px-4 py-2 rounded-lg font-bold text-sm transition-all ${archiveTab === 'planes' ? 'bg-magic-gold text-white shadow-lg' : 'bg-parchment-dark text-ink'}">🌍 ${t('subtabPlanes')}</button>
   `;
   container.appendChild(nav);
 
@@ -46,27 +47,27 @@ function renderHistoryTab() {
   const div = document.createElement('div');
   div.className = 'parchment-bg rounded-2xl p-6 magic-glow';
   div.innerHTML = `
-    <h2 class="font-display text-xl font-bold mb-6">馆史档案</h2>
+    <h2 class="font-display text-xl font-bold mb-6">${t('tabArchive')}</h2>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
       <div class="bg-white rounded-lg p-3 text-center shadow">
         <div class="text-2xl font-bold text-magic-blue">${state.focus.totalMinutes}</div>
-        <div class="text-xs text-ink-light">总专注分钟</div>
+        <div class="text-xs text-ink-light">${t('totalFocusMinutes')}</div>
       </div>
       <div class="bg-white rounded-lg p-3 text-center shadow">
         <div class="text-2xl font-bold text-magic-gold">${Object.values(state.books).filter(b => b.status === 'completed').length}</div>
-        <div class="text-xs text-ink-light">完成书籍</div>
+        <div class="text-xs text-ink-light">${t('completedBooks')}</div>
       </div>
       <div class="bg-white rounded-lg p-3 text-center shadow">
         <div class="text-2xl font-bold text-purple-600">🔥 ${state.focus.streak}</div>
-        <div class="text-xs text-ink-light">连续专注天数</div>
+        <div class="text-xs text-ink-light">${t('consecutiveFocusDays')}</div>
       </div>
       <div class="bg-white rounded-lg p-3 text-center shadow">
         <div class="text-2xl font-bold text-green-600">${state.coins}</div>
-        <div class="text-xs text-ink-light">累计智慧之光</div>
+        <div class="text-xs text-ink-light">${t('totalCoinsLabel')}</div>
       </div>
     </div>
     ${state.history.length > 0 ? `
-      <h3 class="font-bold mb-3">事件历史</h3>
+      <h3 class="font-bold mb-3">${t('eventHistory')}</h3>
       <div class="space-y-3">
         ${state.history.slice(0, 10).map(h => `
           <div class="flex gap-3">
@@ -75,14 +76,14 @@ function renderHistoryTab() {
               <div class="w-0.5 h-full bg-wood/20"></div>
             </div>
             <div class="pb-4">
-              <div class="text-xs text-ink-light">${new Date(h.time).toLocaleString('zh-CN')}</div>
+              <div class="text-xs text-ink-light">${new Date(h.time).toLocaleString(getLocale())}</div>
               <div class="font-bold">${h.title}</div>
               <div class="text-sm text-ink-light">${h.detail}</div>
             </div>
           </div>
         `).join('')}
       </div>
-    ` : '<p class="text-ink-light text-center py-8">暂无记录，开始你的第一次专注吧 ✨</p>'}
+    ` : '<p class="text-ink-light text-center py-8">' + t('noHistoryRecords') + '</p>'}
   `;
   return div;
 }
@@ -130,7 +131,17 @@ function showDiaryReviewModal() {
   overlay.className = 'fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4';
   overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
 
-  const typeLabels = { focus_complete: '专注完成', focus_abandon: '专注中断', visitor_arrive: '访客到来', visitor_borrow: '访客借书', visitor_return: '访客还书', book_complete: '书籍完成', milestone: '里程碑', special_event: '特殊事件', daily: '每日回顾' };
+  const typeLabels = {
+    focus_complete: t('focusCompleted'),
+    focus_abandon: t('focusAbandoned'),
+    visitor_arrive: t('visitorArrived'),
+    visitor_borrow: t('visitorBorrowed'),
+    visitor_return: t('visitorReturned'),
+    book_complete: t('bookCompleted'),
+    milestone: t('milestone'),
+    special_event: t('specialEvent'),
+    daily: t('dailyReview')
+  };
 
   let typeHtml = '';
   Object.entries(summary.typeCounts).forEach(([type, count]) => {
@@ -139,27 +150,27 @@ function showDiaryReviewModal() {
 
   let bookHtml = '';
   summary.topBooks.forEach(([name, count]) => {
-    bookHtml += `<div class="text-xs text-ink-light">📖 《${name}》— ${count}次提及</div>`;
+    bookHtml += `<div class="text-xs text-ink-light">📖 ${t('bookMentionCount').replace('{name}', name).replace('{count}', count)}</div>`;
   });
 
   let visitorHtml = '';
   summary.topVisitors.forEach(([name, count]) => {
-    visitorHtml += `<div class="text-xs text-ink-light">👤 ${name} — ${count}次出现</div>`;
+    visitorHtml += `<div class="text-xs text-ink-light">👤 ${t('visitorAppearanceCount').replace('{name}', name).replace('{count}', count)}</div>`;
   });
 
   const card = document.createElement('div');
   card.className = 'parchment-bg rounded-2xl p-6 max-w-md w-full magic-glow animate-scale-in max-h-[80vh] overflow-y-auto';
   card.innerHTML = `
-    <h2 class="font-display text-lg font-bold mb-4">📖 日志回顾</h2>
-    <p class="text-sm text-ink-light mb-4">墨墨翻阅了共 <b>${summary.totalEntries}</b> 页日志，总结如下：</p>
-    ${typeHtml ? `<div class="mb-3"><div class="text-xs font-bold text-magic-gold mb-1">📊 事件类型</div><div class="flex flex-wrap gap-1">${typeHtml}</div></div>` : ''}
-    ${bookHtml ? `<div class="mb-3"><div class="text-xs font-bold text-magic-gold mb-1">📚 最常提及的书</div>${bookHtml}</div>` : ''}
-    ${visitorHtml ? `<div class="mb-3"><div class="text-xs font-bold text-magic-gold mb-1">👥 最常出现的访客</div>${visitorHtml}</div>` : ''}
+    <h2 class="font-display text-lg font-bold mb-4">${t('diaryReviewTitle')}</h2>
+    <p class="text-sm text-ink-light mb-4">${t('diaryReviewSummary').replace('{count}', summary.totalEntries)}</p>
+    ${typeHtml ? `<div class="mb-3"><div class="text-xs font-bold text-magic-gold mb-1">${t('eventTypes')}</div><div class="flex flex-wrap gap-1">${typeHtml}</div></div>` : ''}
+    ${bookHtml ? `<div class="mb-3"><div class="text-xs font-bold text-magic-gold mb-1">${t('mostMentionedBooks')}</div>${bookHtml}</div>` : ''}
+    ${visitorHtml ? `<div class="mb-3"><div class="text-xs font-bold text-magic-gold mb-1">${t('mostFrequentVisitors')}</div>${visitorHtml}</div>` : ''}
     <div class="mb-3">
-      <div class="text-xs font-bold text-magic-gold mb-1">📝 最早记录</div>
-      ${summary.firstEntries.map(e => `<div class="text-xs text-ink-light mb-1 border-l-2 border-magic-gold/30 pl-2">${new Date(e.time).toLocaleString('zh-CN')} — ${e.text.slice(0, 60)}…</div>`).join('')}
+      <div class="text-xs font-bold text-magic-gold mb-1">${t('earliestRecords')}</div>
+      ${summary.firstEntries.map(e => `<div class="text-xs text-ink-light mb-1 border-l-2 border-magic-gold/30 pl-2">${new Date(e.time).toLocaleString(getLocale())} — ${e.text.slice(0, 60)}…</div>`).join('')}
     </div>
-    <button class="mt-3 px-6 py-2 bg-magic-gold text-white rounded-lg font-bold hover:shadow-lg transition-all w-full">关闭</button>
+    <button class="mt-3 px-6 py-2 bg-magic-gold text-white rounded-lg font-bold hover:shadow-lg transition-all w-full">${t('close')}</button>
   `;
 
   overlay.appendChild(card);
@@ -180,10 +191,10 @@ function renderDiaryTab() {
     bindingHtml = `
       <div class="parchment-bg rounded-2xl p-4 mb-4 magic-glow text-center ${levelClass}">
         <div class="text-3xl mb-1">${binding.icon}</div>
-        <div class="font-display font-bold text-lg">${binding.name}</div>
-        <div class="text-xs text-ink-light">${binding.level < 4 ? `已记录 ${entries.length} 页 · 距下一级还差 ${30 - (entries.length % 30)} 页` : '墨墨的日志已臻至化境 ✨'}</div>
+        <div class="font-display font-bold text-lg">${getDiaryBindingName(binding.level)}</div>
+        <div class="text-xs text-ink-light">${binding.level < 4 ? t('diaryBindingProgress').replace('{count}', entries.length).replace('{remaining}', 30 - (entries.length % 30)) : t('diaryBindingMax')}</div>
         ${binding.level < 4 ? `<div class="mt-2 h-1.5 bg-wood/20 rounded-full overflow-hidden"><div class="h-full bg-magic-gold rounded-full" style="width:${progressPct}%"></div></div>` : ''}
-        ${binding.level >= 3 ? `<button class="diary-review-btn mt-2 px-4 py-1.5 bg-magic-gold/10 border border-magic-gold/30 rounded-lg text-xs font-bold text-magic-gold hover:bg-magic-gold/20 transition-all">📖 回顾</button>` : ''}
+        ${binding.level >= 3 ? `<button class="diary-review-btn mt-2 px-4 py-1.5 bg-magic-gold/10 border border-magic-gold/30 rounded-lg text-xs font-bold text-magic-gold hover:bg-magic-gold/20 transition-all">${t('review')}</button>` : ''}
       </div>
     `;
   }
@@ -193,8 +204,8 @@ function renderDiaryTab() {
     entriesHtml = `
       <div class="parchment-bg rounded-2xl p-8 text-center magic-glow">
         <div class="text-4xl mb-3">📜</div>
-        <p class="text-ink-light">墨墨还没有开始写日志……</p>
-        <p class="text-ink-light text-sm mt-1">完成一次专注后，墨墨会在日志里记录下今天的故事。</p>
+        <p class="text-ink-light">${t('diaryEmptyTitle')}</p>
+        <p class="text-ink-light text-sm mt-1">${t('diaryEmptyHint')}</p>
       </div>
     `;
   } else {
@@ -203,7 +214,7 @@ function renderDiaryTab() {
       const sparkle = (binding.level >= 4 && isSpecial) ? '✨ ' : '';
       return `
         <div class="parchment-bg rounded-xl p-4 mb-3 magic-glow ${i === 0 ? 'border-l-4 border-magic-gold' : ''}">
-          <div class="text-xs text-ink-light mb-2">${sparkle}${new Date(entry.time).toLocaleString('zh-CN')}</div>
+          <div class="text-xs text-ink-light mb-2">${sparkle}${new Date(entry.time).toLocaleString(getLocale())}</div>
           <div class="text-sm text-ink whitespace-pre-line leading-relaxed">${entry.text}</div>
         </div>
       `;
@@ -211,7 +222,7 @@ function renderDiaryTab() {
   }
 
   div.innerHTML = `
-    <h2 class="font-display text-xl font-bold mb-4">📜 墨墨日志</h2>
+    <h2 class="font-display text-xl font-bold mb-4">📜 ${t('subtabDiary')}</h2>
     ${bindingHtml}
     ${entriesHtml}
   `;
@@ -235,7 +246,7 @@ function renderPlanesTab() {
 
   // 标题
   const header = document.createElement('div');
-  header.innerHTML = '<h2 class="font-display text-xl font-bold mb-2">🌍 位面</h2><p class="text-xs text-ink-light mb-4">归墟图书馆连接的诸世界。开启传送门，迎接来自其他位面的访客。</p>';
+  header.innerHTML = `<h2 class="font-display text-xl font-bold mb-2">🌍 ${t('subtabPlanes')}</h2><p class="text-xs text-ink-light mb-4">${t('planesDescription')}</p>`;
   div.appendChild(header);
 
   // 位面列表
@@ -265,21 +276,21 @@ function renderPlanesTab() {
           <div>
             <div class="flex items-center gap-2">
               <h3 class="font-display font-bold text-lg">${plane.name}</h3>
-              ${unlocked ? `<span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">第${pq ? pq.stage : 1}幕</span>` : ''}
-              ${canUnlock ? '<span class="text-xs bg-magic-gold/20 text-magic-gold px-2 py-0.5 rounded-full">可开启</span>' : ''}
-              ${!unlocked && !canUnlock ? '<span class="text-xs bg-gray-200 text-gray-500 px-2 py-0.5 rounded-full">🔒 未解锁</span>' : ''}
-              ${pendingCount > 0 ? `<span class="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full">✉️ ${pendingCount}封待回信</span>` : ''}
+              ${unlocked ? `<span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">${t('actNumber').replace('{n}', pq ? pq.stage : 1)}</span>` : ''}
+              ${canUnlock ? '<span class="text-xs bg-magic-gold/20 text-magic-gold px-2 py-0.5 rounded-full">' + t('canUnlock') + '</span>' : ''}
+              ${!unlocked && !canUnlock ? '<span class="text-xs bg-gray-200 text-gray-500 px-2 py-0.5 rounded-full">🔒 ' + t('locked') + '</span>' : ''}
+              ${pendingCount > 0 ? `<span class="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full">✉️ ${t('pendingReplies').replace('{n}', pendingCount)}</span>` : ''}
             </div>
             <p class="text-xs text-ink-light mt-1 max-w-md">${plane.desc}</p>
             ${unlocked && charsTotal > 0 ? `
               <div class="flex items-center gap-3 mt-2 text-xs text-ink-light">
-                <span>👥 角色 ${charsMet}/${charsTotal} 已到访</span>
-                ${pq && pq.mementos.length > 0 ? `<span>🏛️ 信物 ${pq.mementos.length} 件</span>` : ''}
+                <span>👥 ${t('charactersVisited').replace('{met}', charsMet).replace('{total}', charsTotal)}</span>
+                ${pq && pq.mementos.length > 0 ? `<span>🏛️ ${t('mementosCollected').replace('{n}', pq.mementos.length)}</span>` : ''}
               </div>
             ` : ''}
             ${!unlocked && plane.unlock ? `
               <div class="text-xs text-ink-light/60 mt-1">
-                需要：氛围 ≥${plane.unlock.atmo} · 拥有 ≥${plane.unlock.books} 本书 · 购买传送门
+                ${t('planeUnlockRequirements').replace('{atmo}', plane.unlock.atmo).replace('{books}', plane.unlock.books)}
               </div>
             ` : ''}
           </div>
@@ -309,9 +320,9 @@ function renderPlanesTab() {
     <div class="flex items-center gap-4">
       <span class="text-4xl">🔒</span>
       <div>
-        <h3 class="font-display font-bold text-lg">？？？</h3>
-        <p class="text-xs text-ink-light">新的传送门尚未开启……裂隙的另一侧传来隐约的回声。</p>
-        <p class="text-xs text-ink-light/50 mt-1 italic">"麦浪翻涌……有人在歌唱……"</p>
+        <h3 class="font-display font-bold text-lg">${t('unknownPlane')}</h3>
+        <p class="text-xs text-ink-light">${t('placeholderPlaneDesc')}</p>
+        <p class="text-xs text-ink-light/50 mt-1 italic">${t('placeholderPlaneWhisper')}</p>
       </div>
     </div>
   `;

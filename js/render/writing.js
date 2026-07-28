@@ -1,6 +1,8 @@
 // 缮写动画引擎 —— 左→右→翻页 + canvas精确排版 + 羽笔先行
 // 模块级单例
 
+import { getBookTitle, getBookQuotes, getChapterContent } from './common.js';
+
 const BASE_SPEED = 150;  // ms/字
 const PEN_DELAY = 40;    // 羽笔到位后延迟出字
 
@@ -73,7 +75,7 @@ class WritingAnim {
 
     // 书源
     this.chapters = this.book.chapters || [];
-    this.quotes = this.book.quotes ? Object.values(this.book.quotes) : [];
+    this.quotes = getBookQuotes(this.book) ? Object.values(getBookQuotes(this.book)) : [];
     this.chapterIdx = 0;
     this.showingQuote = false;
 
@@ -240,7 +242,7 @@ class WritingAnim {
     this.showingQuote = false;
     if (this.chapters.length === 0) { this.running = false; return; }
     const ch = this.chapters[idx % this.chapters.length];
-    const raw = stripMarkdown((ch.content || ch.preview || '').replace(/\n\s*/g, ''));
+    const raw = stripMarkdown((getChapterContent(ch) || ch.preview || '').replace(/\n\s*/g, ''));
     if (!raw) { this.loadChapter(idx + 1); return; }
     this.allLines = this.typeset(raw);
     this.lineIndex = 0;
@@ -251,7 +253,7 @@ class WritingAnim {
     this.showingQuote = true;
     if (this.quotes.length === 0) { this.advanceChapter(); return; }
     const q = this.quotes[Math.floor(Math.random() * this.quotes.length)];
-    this.allLines = this.typeset(`「${q}」 ——《${this.book.title}》`);
+    this.allLines = this.typeset(`「${q}」 ——《${getBookTitle(this.book)}》`);
     this.lineIndex = 0;
     this.charIndex = 0;
   }

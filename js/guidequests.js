@@ -2,93 +2,95 @@
 import { state, saveState } from './state.js';
 import { addCoins, addAtmosphere, getAtmosphereLevel } from './storage.js';
 
+import { t } from './i18n/terms.js';
+
 const QUESTS = [
   {
     id: 'q01',
-    title: '推开馆门',
+    title: t('gqTitle_q01'),
     phase: 1,
-    desc: '你站在门外太久了。门缝里漏出的光浮动着灰尘和某种古老的回响。它已经等了很久——推门进去吧。这座图书馆，现在是你的了。',
+    desc: t('gqDesc_q01'),
     trigger: 'intro_complete',
     rewardCoins: 10,
     rewardAtmo: 0
   },
   {
     id: 'q02',
-    title: '初试缮写',
+    title: t('gqTitle_q02'),
     phase: 1,
-    desc: '缮写室的旧书桌上，一支羽笔静静地躺着。墨水在玻璃瓶里微微反光，像在等什么人。选一本书，落下第一笔——这是你与这座图书馆之间的第一份契约。',
+    desc: t('gqDesc_q02'),
     trigger: 'focus_start',
     rewardCoins: 20,
     rewardAtmo: 0
   },
   {
     id: 'q03',
-    title: '誊抄初成',
+    title: t('gqTitle_q03'),
     phase: 1,
-    desc: '搁下笔的瞬间，指尖还残留着微微的震颤。书页上的墨迹未干，但空气里已经浮起细碎的金色光点。那是图书馆的回赠——它记得每一个认真誊抄的人。',
+    desc: t('gqDesc_q03'),
     trigger: 'focus_complete',
     rewardCoins: 30,
     rewardAtmo: 5
   },
   {
     id: 'q04',
-    title: '书库探秘',
+    title: t('gqTitle_q04'),
     phase: 1,
-    desc: '大书库里，有三本书在手稿箱里等你。童话、寓言——还有一本《图书馆指南》。建议先从誊抄《图书馆指南》开始，它会告诉你这个地方怎么运转。一座图书馆的故事，是从认出第一本书脊的颜色开始的。',
+    desc: t('gqDesc_q04'),
     trigger: 'tab_bookshelf',
     rewardCoins: 10,
     rewardAtmo: 0
   },
   {
     id: 'q05',
-    title: '商店初访',
+    title: t('gqTitle_q05'),
     phase: 2,
-    desc: '墨墨把你领到了商店。书架上空着的位置还很多，缮写室和借阅区也等着修缮——用誊抄换来的智慧之光，可以买下新书、升级设施。这是馆长才有的权力：决定图书馆接下来变成什么样子。',
+    desc: t('gqDesc_q05'),
     trigger: 'tab_shop',
     rewardCoins: 20,
     rewardAtmo: 0
   },
   {
     id: 'q06',
-    title: '借阅开张',
+    title: t('gqTitle_q06'),
     phase: 2,
-    desc: '书有了，缮写室有了——现在缺的是坐下来读它们的人。买下借阅区，把空置的旧房间变成一个可以阅读的角落。放上椅子，点亮灯，等某个推门而入的身影。',
+    desc: t('gqDesc_q06'),
     trigger: 'borrow_upgrade',
     rewardCoins: 40,
     rewardAtmo: 0
   },
   {
     id: 'q07',
-    title: '初成之书',
+    title: t('gqTitle_q07'),
     phase: 2,
-    desc: '最后一个句号落笔。书脊上浮现出极淡的金色纹路——那是一本书被真正拥有的印记。不是占有，而是守护。从今往后，它有资格被传递到另一个人手中了。',
+    desc: t('gqDesc_q07'),
     trigger: 'book_complete',
     rewardCoins: 40,
     rewardAtmo: 10
   },
   {
     id: 'q08',
-    title: '墨香来客',
+    title: t('gqTitle_q08'),
     phase: 2,
-    desc: '门被推开了。有人走了进来，带着外面世界的风和好奇，在你的书架前停下。这是第一位读者。记住这个声音——你守护的东西，开始有人来寻了。',
+    desc: t('gqDesc_q08'),
     trigger: 'visitor_arrive',
     rewardCoins: 30,
     rewardAtmo: 5
   },
   {
     id: 'q09',
-    title: '墨墨相伴',
+    title: t('gqTitle_q09'),
     phase: 3,
-    desc: '你在缮写室累计专注了整整一个小时的时光。墨墨不知道什么时候养成了假装睡觉、其实是偷看你的习惯。有时候它会伸个懒腰，尾巴轻轻扫过你正在誊抄的那一页——像是在检查进度。',
+    desc: t('gqDesc_q09'),
     trigger: 'focus_60min',
     rewardCoins: 0,
     rewardAtmo: 10
   },
   {
     id: 'q10',
-    title: '图南寄语',
+    title: t('gqTitle_q10'),
     phase: 3,
-    desc: '你不是新人了。从倒塌的书架和漏雨的屋顶，到如今有人愿意穿越大半个城市来寻访的地方——每一个专注的深夜、每一次落笔、每一本被借走的书，都是证据。接下来，故事继续。欢迎来到这座图书馆的深处。',
+    desc: t('gqDesc_q10'),
     trigger: 'all_done',
     rewardCoins: 50,
     rewardAtmo: 15

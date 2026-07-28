@@ -2,11 +2,14 @@
 import { state } from '../state.js';
 import { el } from './common.js';
 import { getCurrentQuest, getQuestProgress, getAllQuests } from '../guidequests.js';
+import { t } from '../i18n/terms.js';
 
 let widgetEl = null;
 let isExpanded = false;
 
-const PHASE_NAMES = { 1: '初入图书馆', 2: '筑巢引凤', 3: '渐入佳境' };
+function getPhaseName(phase) {
+  return t(`guidePhase${phase}`) || '';
+}
 
 export function renderGuideQuestWidget() {
   const progress = getQuestProgress();
@@ -49,7 +52,7 @@ function buildWidget(current, progress) {
 }
 
 function widgetHTML(current, progress) {
-  const phase = PHASE_NAMES[current.phase] || '';
+  const phase = getPhaseName(current.phase);
   return `
     <div class="parchment-bg rounded-xl shadow-lg border border-wood/30 cursor-pointer hover:shadow-xl transition-all"
          style="box-shadow: 0 4px 24px rgba(139,105,20,0.15);">
@@ -63,12 +66,12 @@ function widgetHTML(current, progress) {
         ${isExpanded ? `
           <div class="mt-2 text-ink-light text-sm leading-relaxed">${current.desc}</div>
           <div class="mt-2 text-xs text-ink-light">
-            ${current.rewardCoins > 0 ? `智慧之光 +${current.rewardCoins}` : ''}
+            ${current.rewardCoins > 0 ? `+${current.rewardCoins} ${t('coins')}` : ''}
             ${current.rewardCoins > 0 && current.rewardAtmo > 0 ? ' · ' : ''}
-            ${current.rewardAtmo > 0 ? `氛围 +${current.rewardAtmo}` : ''}
+            ${current.rewardAtmo > 0 ? `+${current.rewardAtmo} ${t('atmosphere')}` : ''}
           </div>
         ` : `
-          <div class="text-xs text-ink-light mt-0.5">点击查看详情</div>
+          <div class="text-xs text-ink-light mt-0.5">${t('clickToViewDetails')}</div>
         `}
       </div>
     </div>
@@ -119,12 +122,12 @@ export function showQuestCompleteToast(quest) {
   toast.innerHTML = `
     <div class="parchment-bg rounded-xl px-5 py-3 shadow-lg border border-magic-gold/40 text-center"
          style="box-shadow: 0 0 20px rgba(201,162,39,0.3);">
-      <div class="text-xs text-magic-gold mb-1">任务完成</div>
+      <div class="text-xs text-magic-gold mb-1">${t('questCompleted')}</div>
       <div class="font-bold text-ink text-base">${quest.title}</div>
       <div class="text-xs text-ink-light mt-1">
-        ${quest.rewardCoins > 0 ? `智慧之光 +${quest.rewardCoins}` : ''}
+        ${quest.rewardCoins > 0 ? `+${quest.rewardCoins} ${t('coins')}` : ''}
         ${quest.rewardCoins > 0 && quest.rewardAtmo > 0 ? ' · ' : ''}
-        ${quest.rewardAtmo > 0 ? `氛围 +${quest.rewardAtmo}` : ''}
+        ${quest.rewardAtmo > 0 ? `+${quest.rewardAtmo} ${t('atmosphere')}` : ''}
       </div>
     </div>
   `;

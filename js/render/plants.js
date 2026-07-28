@@ -4,6 +4,7 @@ import { updateStatusBar } from './common.js';
 import { PLANT_TYPES, SEED_EXCHANGE } from '../../data/plants.js';
 import { SIGNBOARDS } from '../../data/signboards.js';
 import { canHarvest, harvestPlant, canExchangeSeed, exchangeSeed, getActivePlantDef, canWater, canFertilize } from '../plants.js';
+import { t } from '../i18n/terms.js';
 
 export function renderDecorationPage() {
   const container = document.getElementById('decoration-content');
@@ -92,7 +93,10 @@ function renderPlantArea() {
   const harvestBtn = card.querySelector('#dec-harvest-btn');
   if (harvestBtn) {
     harvestBtn.addEventListener('click', () => {
-      harvestPlant();
+      const result = harvestPlant();
+      if (result) {
+        showPlantHarvestPopup(def, result);
+      }
       updateStatusBar();
       if (typeof window.renderShopPage === 'function') window.renderShopPage();
       refresh();
@@ -226,4 +230,75 @@ function renderStickerPlaceholder() {
     <span class="text-xs text-ink-light bg-gray-200 px-2 py-0.5 rounded mt-2 inline-block">🏗️ 规划中…</span>
   `;
   return section;
+}
+
+// ========== 植物弹窗 ==========
+
+/** 植物成熟提示（右下角自动消失卡片） */
+export function showPlantMaturityToast(def) {
+  const overlay = document.createElement('div');
+  overlay.className = 'fixed bottom-6 right-6 z-[120] animate-slide-in-right';
+  overlay.innerHTML = `
+    <div class="parchment-bg rounded-xl p-5 shadow-2xl border-2 border-yellow-400/30 max-w-xs">
+      <div class="flex items-start gap-3">
+        <div class="text-4xl">${def.emoji}</div>
+        <div class="flex-1 min-w-0">
+          <p class="text-xs text-yellow-600 font-bold mb-1">${t('plantMatured')}</p>
+          <p class="text-ink font-bold">${def.name}</p>
+          <p class="text-ink-light text-xs">${t('plantMaturedHint').replace('{name}', def.name)}</p>
+        </div>
+        <button class="plant-toast-close text-ink-light/50 hover:text-ink ml-2 text-sm leading-none">&times;</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  const close = () => {
+    overlay.style.opacity = '0';
+    overlay.style.transition = 'opacity 0.3s';
+    setTimeout(() => overlay.remove(), 300);
+  };
+  overlay.querySelector('.plant-toast-close').addEventListener('click', close);
+  overlay.addEventListener('click', close);
+  setTimeout(close, 8000);
+}
+
+/** 植物收获奖励弹窗 */
+export function showPlantHarvestPopup(def, result) {
+  const overlay = document.createElement('div');
+  overlay.className = 'fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4';
+  const seedText = result.seedDropped
+    ? `<p class="text-sm text-magic-gold font-bold mb-2">🌰 ${t('seedObtained').replace('{name}', def.name)}</p>`
+    : '';
+  overlay.innerHTML = `
+    <div class="parchment-bg rounded-2xl p-6 max-w-sm w-full text-center magic-glow animate-scale-in">
+      <div class="text-5xl mb-3">${def.emoji}</div>
+      <div class="text-yellow-600 text-sm mb-2 font-bold">${t('plantHarvested')}</div>
+      <h3 class="font-display text-xl font-bold mb-2">${def.name}</h3>
+      <div class="grid grid-cols-2 gap-3 mb-4">
+        <div class="bg-white/60 rounded-lg p-3">
+          <div class="text-lg font-bold text-magic-blue">+${def.harvestAtmosphere}</div>
+          <div class="text-xs text-ink-light">${t('atmosphere')}</div>
+        </div>
+        <div class="bg-white/60 rounded-lg p-3">
+          <div class="text-lg font-bold text-magic-gold">+${def.harvestCoins}</div>
+          <div class="text-xs text-ink-light">${t('coins')}</div>
+        </div>
+      </div>
+      ${seedText}
+      <p class="text-xs text-ink-light mb-4">${t('plantHarvestEmptyPot')}</p>
+      <button class="px-6 py-3 bg-magic-gold text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all">${t('continueBtn')}</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  const close = () => {
+    overlay.style.opacity = '0';
+    overlay.style.transition = 'opacity 0.3s';
+    setTimeout(() => overlay.remove(), 300);
+  };
+  overlay.querySelector('button').addEventListener('click', close);
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) close();
+  });
 }

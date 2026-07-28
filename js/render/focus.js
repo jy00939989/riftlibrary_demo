@@ -1,7 +1,8 @@
 // 缮写室（专注页面）渲染
 import { state } from '../state.js';
 import { BOOKS, COPY_TEMPLATES } from '../../data/books.js';
-import { el, h, formatTime, actions, updateStatusBar } from './common.js';
+import { el, h, formatTime, actions, updateStatusBar, getBookTitle, getBookQuotes, getChapterTitle, getChapterPreview } from './common.js';
+import { t, getAtmosphereStageName, getFocusRoomLevelName } from '../i18n/terms.js';
 import { startWriting, pauseWriting, resumeWriting, stopWriting, isWriting } from './writing.js';
 import { isMomoAccelerating } from '../timer.js';
 import { ensureDailyTasks, claimAllDoneBonus } from '../dailytasks.js';
@@ -19,7 +20,7 @@ const FOCUS_IMG_NAMES = [
   'focusroom_lv5_final_1.jpg',
   'focusroom_lv6_sanctuary_16x9_1.jpg'
 ];
-const FOCUS_LV_NAMES = ['残破', '陋室', '整洁', '明亮', '静雅', '华美', '缮写圣堂'];
+// 等级名通过 getFocusRoomLevelName(level) 从 i18n 获取
 
 // ========== 主入口 ==========
 
@@ -46,9 +47,9 @@ export function renderFocusPage() {
   const flv = state.library.focusLevel || 0;
   const banner = el('div', 'mb-6 rounded-xl overflow-hidden border-2 border-wood/30 shadow-lg');
   banner.innerHTML = `
-    <img src="visual/focusroom/${FOCUS_IMG_NAMES[flv]}" alt="缮写室 · ${FOCUS_LV_NAMES[flv]}" class="w-full h-48 object-cover">
+    <img src="visual/focusroom/${FOCUS_IMG_NAMES[flv]}" alt="${t('tabScriptorium')} · ${getFocusRoomLevelName(flv)}" class="w-full h-48 object-cover">
     <div class="bg-ink/70 text-white text-center py-2 text-sm">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-icon"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"></path><line x1="16" y1="8" x2="2" y2="22"></line><line x1="17.5" y1="15" x2="9" y2="15"></line></svg> 缮写室 ·${FOCUS_LV_NAMES[flv]}${flv > 0 ? ` · 誊抄速度 ${Math.round((1 + flv * 0.05) * 100)}%` : ''}
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-icon"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"></path><line x1="16" y1="8" x2="2" y2="22"></line><line x1="17.5" y1="15" x2="9" y2="15"></line></svg> ${t('tabScriptorium')} ·${getFocusRoomLevelName(flv)}${flv > 0 ? ` · ${t('transcribeSpeed').replace('{value}', Math.round((1 + flv * 0.05) * 100))}` : ''}
     </div>
   `;
   container.appendChild(banner);
@@ -99,7 +100,7 @@ export function renderFocusPage() {
 function updateActiveControlsDOM(sess) {
   const pauseBtn = document.querySelector('.focus-pause-btn');
   if (pauseBtn) {
-    pauseBtn.innerHTML = sess.paused ? '▶️ 继续' : '⏸️ 暂停';
+    pauseBtn.innerHTML = sess.paused ? t('resume') : t('pause');
   }
   if (sess.paused) pauseWriting(); else resumeWriting();
   // 实时更新进度条和字数显示
@@ -126,19 +127,19 @@ function updateBookProgressDOM(sess) {
     if (repair) {
       repairHtml = `
         <div class="flex items-center justify-between mb-1 mt-3">
-          <span class="text-xs font-bold text-amber-700">🔧 修复进度</span>
-          <span class="text-xs text-amber-600">${(repair.done || 0).toLocaleString()} / ${repair.total.toLocaleString()} 字</span>
+          <span class="text-xs font-bold text-amber-700">${t('repairProgress')}</span>
+          <span class="text-xs text-amber-600">${(repair.done || 0).toLocaleString()} / ${repair.total.toLocaleString()} ${t('wordsUnit')}</span>
         </div>
         <div class="h-2 bg-wood/20 rounded-full overflow-hidden mb-3">
           <div class="h-full bg-gradient-to-r from-amber-500 to-amber-400 rounded-full transition-all duration-500" style="width:${repair.pct}%"></div>
         </div>
-        <div class="text-right text-xs text-amber-600 mb-1">${repair.pct}% · 修书中速度 +5%</div>
+        <div class="text-right text-xs text-amber-600 mb-1">${t('repairSpeedBoost').replace('{pct}', repair.pct).replace('{n}', 5)}</div>
       `;
     }
     bar.innerHTML = `
       <div class="flex items-center justify-between mb-1.5">
-        <span class="text-xs font-bold text-ink">📖 《${book.volumeTitle || book.title}》誊抄进度</span>
-        <span class="text-xs text-ink-light">${effectiveWords.toLocaleString()} / ${totalWords.toLocaleString()} 字</span>
+        <span class="text-xs font-bold text-ink">📖 ${t('copyProgressLabel').replace('{title}', '《' + getBookTitle(book) + '》')}</span>
+        <span class="text-xs text-ink-light">${effectiveWords.toLocaleString()} / ${totalWords.toLocaleString()} ${t('wordsUnit')}</span>
       </div>
       <div class="h-2.5 bg-wood/20 rounded-full overflow-hidden">
         <div class="h-full bg-gradient-to-r from-amber-600 to-magic-gold rounded-full transition-all duration-500" style="width:${pct}%"></div>
@@ -178,11 +179,11 @@ function renderTimerOrAnimation(sess, book) {
     const bookWords = book ? state.books[book.id]?.copiedWords || 0 : 0;
     wrapper.innerHTML = `
       <div id="writing-anim-container" class="writing-anim-wrapper mx-auto"></div>
-      <div class="writing-status-bar" id="writing-status-bar">🖋️ 缮写中… 第1页</div>
-      ${isMomoAccelerating() ? '<div class="text-xs text-magic-gold mt-1 animate-pulse">✨ 墨墨的魔法加速中……</div>' : ''}
+      <div class="writing-status-bar" id="writing-status-bar">${t('writingStatus').replace('{n}', 1)}</div>
+      ${isMomoAccelerating() ? `<div class="text-xs text-magic-gold mt-1 animate-pulse">${t('momoMagicAccelerating')}</div>` : ''}
       <div class="text-xs text-ink-light mt-1">
-        本书 <span id="focus-book-words">${bookWords.toLocaleString()}</span> 字
-        · 累计 <span id="focus-active-words">${state.focus.totalWords.toLocaleString()}</span> 字
+        ${t('thisBook')} <span id="focus-book-words">${bookWords.toLocaleString()}</span> ${t('wordsUnit')}
+        · ${t('totalWordsLabel').replace('{n}', `<span id="focus-active-words">${state.focus.totalWords.toLocaleString()}</span>`)}
         · <span id="focus-mini-timer">${formatTime(0)}</span>
       </div>
     `;
@@ -194,8 +195,8 @@ function renderTimerOrAnimation(sess, book) {
   } else {
     wrapper.innerHTML = `
       <div class="text-6xl md:text-7xl font-display font-bold text-ink mb-2">00:00</div>
-      ${sess.bookId && book ? `<div class="text-magic-blue font-medium">缮写《${book.volumeTitle || book.title}》</div>` : ''}
-      <div class="text-sm text-ink-light mt-1">本书 ${book ? (state.books[book.id]?.copiedWords || 0).toLocaleString() : 0} 字 · 累计 ${state.focus.totalWords.toLocaleString()} 字</div>
+      ${sess.bookId && book ? `<div class="text-magic-blue font-medium">${t('copyBookLabel').replace('{title}', '《' + getBookTitle(book) + '》')}</div>` : ''}
+      <div class="text-sm text-ink-light mt-1">${t('bookWordCount').replace('{book}', book ? (state.books[book.id]?.copiedWords || 0).toLocaleString() : 0).replace('{total}', state.focus.totalWords.toLocaleString())}</div>
     `;
   }
 
@@ -206,18 +207,18 @@ function renderTimerOrAnimation(sess, book) {
 
 function renderModeSelector(sess) {
   const modes = [
-    { id: 'pomodoro', name: '番茄钟', icon: '🍅', target: 25 },
-    { id: 'countdown', name: '倒计时', icon: '⏲️', target: 45 },
-    { id: 'stopwatch', name: '正计时', icon: '⏱️', target: 0 }
+    { id: 'pomodoro', name: t('focusModePomodoro'), icon: '🍅', target: 25 },
+    { id: 'countdown', name: t('focusModeCountdown'), icon: '⏲️', target: 45 },
+    { id: 'stopwatch', name: t('focusModeStopwatch'), icon: '⏱️', target: 0 }
   ];
 
   const div = el('div', 'mb-6');
-  div.appendChild(el('h2', 'font-display text-lg font-bold mb-3', { text: '选择专注模式' }));
+  div.appendChild(el('h2', 'font-display text-lg font-bold mb-3', { text: t('selectFocusMode') }));
   const grid = el('div', 'grid grid-cols-3 gap-3');
 
   modes.forEach(m => {
     const active = sess.mode === m.id;
-    const desc = m.id === 'stopwatch' ? '无限制' : `${sess.mode === m.id ? sess.targetMinutes : m.target}分钟`;
+    const desc = m.id === 'stopwatch' ? t('noLimit') : t('durationMinutes').replace('{n}', sess.mode === m.id ? sess.targetMinutes : m.target);
     const btn = el('button', `mode-btn p-3 border-2 rounded-lg text-center transition-all ${
       active ? 'border-magic-gold bg-magic-gold/20 ring-2 ring-magic-gold' : 'border-wood bg-wood/10 hover:bg-wood/20'
     }${sess.active ? ' opacity-50 cursor-not-allowed' : ''}`);
@@ -240,11 +241,11 @@ function renderModeSelector(sess) {
   if (!sess.active && sess.mode !== 'stopwatch') {
     const row = el('div', 'flex items-center gap-2 mt-3 justify-center');
     row.innerHTML = `
-      <label class="text-sm text-ink-light">设定时间：</label>
+      <label class="text-sm text-ink-light">${t('setTime')}</label>
       <input type="number" id="custom-target-minutes"
         class="w-16 px-2 py-1 text-center border border-wood rounded bg-white text-ink font-bold text-sm"
         value="${sess.targetMinutes}" min="1" max="180" step="5">
-      <span class="text-sm text-ink-light">分钟</span>
+      <span class="text-sm text-ink-light">${t('minutesSuffix')}</span>
     `;
     row.querySelector('input').addEventListener('input', (e) => {
       const v = Math.max(1, Math.min(180, parseInt(e.target.value) || 1));
@@ -266,7 +267,7 @@ function renderModeSelector(sess) {
 
 function renderBookSelector(sess) {
   const div = el('div', 'mb-8');
-  div.appendChild(el('h2', 'font-display text-lg font-bold mb-3', { text: '选择誊抄书籍' }));
+  div.appendChild(el('h2', 'font-display text-lg font-bold mb-3', { text: t('selectBookToTranscribe') }));
   const flex = el('div', 'flex gap-3 overflow-x-auto pb-2');
 
   const eligibleBooks = Object.values(BOOKS).filter(book => {
@@ -283,7 +284,7 @@ function renderBookSelector(sess) {
 
   if (eligibleBooks.length === 0) {
     const tip = el('p', 'text-ink-light text-sm py-4');
-    tip.textContent = '去书架选一本书开始誊抄吧 📚';
+    tip.textContent = t('goToShelfSelectBook');
     div.appendChild(tip);
     return div;
   }
@@ -298,8 +299,8 @@ function renderBookSelector(sess) {
     }`);
     const effectiveWords = getEffectiveCopiedWords(bs, book.totalWords);
     const progress = book.totalWords > 0 ? Math.round((effectiveWords / book.totalWords) * 100) : 0;
-    const repairHtml = repair ? `<div class="text-[10px] text-amber-600 font-bold mt-0.5">🔧 修复中 ${repair.pct}%</div>` : '';
-    btn.innerHTML = `<div class="text-3xl mb-1">${book.emoji}</div><div class="font-bold text-xs">${book.volumeTitle || book.title}</div><div class="text-xs text-ink-light">${progress}%</div>${repairHtml}`;
+    const repairHtml = repair ? `<div class="text-[10px] text-amber-600 font-bold mt-0.5">${t('repairing').replace('{pct}', repair.pct)}</div>` : '';
+    btn.innerHTML = `<div class="text-3xl mb-1">${book.emoji}</div><div class="font-bold text-xs">${getBookTitle(book)}</div><div class="text-xs text-ink-light">${progress}%</div>${repairHtml}`;
     btn.addEventListener('click', () => {
       if (!state.currentSession.active) {
         state.currentSession.bookId = book.id;
@@ -321,9 +322,9 @@ function renderDailyTasks() {
   const allDone = done === 3;
 
   const tasks = [
-    { icon: '🖋️', label: '专注 25 分钟', done: dt.focusDone, reward: '💰 30' },
-    { icon: '📥', label: '收取一本还书', done: dt.returnDone, reward: '✨ 5' },
-    { icon: '🌱', label: '给植物浇水', done: dt.waterDone, reward: '💰 10' }
+    { icon: '🖋️', label: t('dailyFocus25Min'), done: dt.focusDone, reward: '💰 30' },
+    { icon: '📥', label: t('dailyReturnBook'), done: dt.returnDone, reward: '✨ 5' },
+    { icon: '🌱', label: t('dailyWaterPlant'), done: dt.waterDone, reward: '💰 10' }
   ];
 
   const card = el('div', 'mb-4 rounded-xl overflow-hidden border border-wood/20');
@@ -333,30 +334,30 @@ function renderDailyTasks() {
   card.innerHTML = `
     <div class="flex items-center gap-2 px-4 pt-3 pb-1">
       <span class="text-sm">📜</span>
-      <span class="text-xs font-bold tracking-wider" style="color:#6b5010">今日馆务</span>
-      <span class="text-[11px] ml-auto font-bold" style="color:${allDone ? '#c9a227' : '#2c2419'}">${allDone ? '✦ 全数了却' : `${done}/3`}</span>
+      <span class="text-xs font-bold tracking-wider" style="color:#6b5010">${t('dailyTask')}</span>
+      <span class="text-[11px] ml-auto font-bold" style="color:${allDone ? '#c9a227' : '#2c2419'}">${allDone ? t('allDoneText') : `${done}/3`}</span>
     </div>
     <div class="px-3 pb-1">
-      ${tasks.map((t, i) => `
-        <div class="flex items-center gap-3 px-2 py-2 rounded-lg transition-all duration-500 ${t.done ? '' : ''}"
-             style="${t.done
+      ${tasks.map((task, i) => `
+        <div class="flex items-center gap-3 px-2 py-2 rounded-lg transition-all duration-500 ${task.done ? '' : ''}"
+             style="${task.done
                ? 'background:linear-gradient(90deg, rgba(201,162,39,0.1) 0%, transparent 100%);'
                : ''}${i < 2 ? 'margin-bottom:2px;' : ''}">
           <div class="flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center text-base transition-all duration-500"
-               style="${t.done
+               style="${task.done
                  ? 'background:rgba(201,162,39,0.18); box-shadow:0 0 8px rgba(201,162,39,0.12);'
                  : 'background:rgba(44,36,25,0.06);'}">
-            ${t.icon}
+            ${task.icon}
           </div>
           <div class="flex-1 min-w-0">
             <div class="text-[13px] font-bold transition-all duration-500"
-                 style="color:${t.done ? '#6b5010' : '#2c2419'}">
-              ${t.done ? '✓ ' : ''}${t.label}
+                 style="color:${task.done ? '#6b5010' : '#2c2419'}">
+              ${task.done ? '✓ ' : ''}${task.label}
             </div>
           </div>
           <div class="text-[11px] transition-all duration-500 font-bold"
-               style="color:${t.done ? '#b08818' : '#5c4d3c'}">
-            ${t.done ? t.reward : t.reward}
+               style="color:${task.done ? '#b08818' : '#5c4d3c'}">
+            ${task.done ? task.reward : task.reward}
           </div>
         </div>
       `).join('')}
@@ -364,10 +365,10 @@ function renderDailyTasks() {
     ${allDone && !dt.allClaimed ? `
       <button class="claim-all-btn w-full px-4 py-2.5 text-xs font-bold tracking-wider transition-all duration-300"
               style="background:linear-gradient(135deg, rgba(201,162,39,0.85) 0%, rgba(180,140,20,0.9) 100%); color:#fff; letter-spacing:0.06em;">
-        🎁 领取全勤奖励 · 💰20 + ✨3 + 💡3
+        ${t('claimAllDoneReward')}
       </button>
     ` : allDone ? `
-      <div class="text-center py-2 text-[11px] tracking-wider font-bold" style="color:#6b5010;">✦ 今日馆务已悉数完成 · 全勤奖励已领取 ✦</div>
+      <div class="text-center py-2 text-[11px] tracking-wider font-bold" style="color:#6b5010;">${t('dailyTasksAllCompleted')}</div>
     ` : ''}
   `;
 
@@ -377,7 +378,7 @@ function renderDailyTasks() {
     claimBtn.addEventListener('click', () => {
       const bonus = claimAllDoneBonus(state);
       if (bonus) {
-        claimBtn.textContent = '✓ 已获得 💰20 + ✨3 + 💡3';
+        claimBtn.textContent = t('rewardClaimed');
         claimBtn.disabled = true;
         claimBtn.style.opacity = '0.6';
         updateStatusBar();
@@ -396,25 +397,25 @@ function renderControls(sess) {
   if (!sess.active) {
     const startBtn = el('button',
       'px-8 py-3 bg-magic-gold text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all animate-glow text-lg');
-    startBtn.textContent = '✨ 开始专注';
+    startBtn.textContent = t('startFocus');
     startBtn.addEventListener('click', () => actions.startFocus());
     div.appendChild(startBtn);
   } else {
     const pauseBtn = el('button',
       `focus-pause-btn px-5 py-2 ${sess.paused ? 'bg-magic-gold' : 'bg-wood'} text-white rounded-lg font-bold text-sm hover:shadow-lg transition-all`);
-    pauseBtn.innerHTML = sess.paused ? '▶️ 继续' : '⏸️ 暂停';
+    pauseBtn.innerHTML = sess.paused ? t('resume') : t('pause');
     pauseBtn.addEventListener('click', () => actions.togglePause());
 
     const doneBtn = el('button',
       'px-5 py-2 bg-green-600 text-white rounded-lg font-bold text-sm hover:shadow-lg transition-all');
-    doneBtn.textContent = '✅ 完成';
+    doneBtn.textContent = t('complete');
     doneBtn.addEventListener('click', () => actions.completeFocus());
 
     const abandonBtn = el('button',
       'px-5 py-2 bg-red-700/60 text-white rounded-lg font-bold text-sm hover:bg-red-700 transition-all');
-    abandonBtn.textContent = '✋ 放弃';
+    abandonBtn.textContent = '✋ ' + t('abandon');
     abandonBtn.addEventListener('click', () => {
-      if (confirm('确定要放弃本次专注吗？已完成时间将计入50%。')) {
+      if (confirm(t('confirmAbandonFocus').replace('{pct}', 50))) {
         actions.abandonFocus();
       }
     });
@@ -428,6 +429,26 @@ function renderControls(sess) {
 }
 
 // ========== 位面任务章节指示器 ==========
+
+function getPlanePageLink() {
+  return `<a href="#" class="underline font-bold text-magic-blue" onclick="window.switchTab('archive')">${t('planePage')}</a>`;
+}
+
+function buildChapterUnlockedMessage(chapterNum, chapter) {
+  return t('chapterUnlockedPrompt')
+    .replace('{n}', chapterNum)
+    .replace('{title}', getChapterTitle(chapter))
+    .replace('{link}', getPlanePageLink());
+}
+
+function buildCopyingChapterMessage(questInfo, chapterNum, chapter, wordsNeeded) {
+  const character = `<b>${questInfo.characterEmoji} ${questInfo.characterName}</b>`;
+  return t('copyingChapterFor')
+    .replace('{character}', character)
+    .replace('{n}', chapterNum)
+    .replace('{title}', getChapterTitle(chapter))
+    .replace('{words}', wordsNeeded.toLocaleString());
+}
 
 function renderQuestChapterIndicator(sess, book) {
   const questInfo = getActiveChapterTaskForBook(sess.bookId);
@@ -449,14 +470,14 @@ function renderQuestChapterIndicator(sess, book) {
     div.innerHTML = `
       <div class="flex items-center gap-2 text-xs bg-green-50 border border-green-200 rounded-lg px-3 py-2">
         <span>✅</span>
-        <span class="text-green-800">第${chapterNum}章「${chapter.title}」已解锁！去<a href="#" class="underline font-bold text-magic-blue" onclick="window.switchTab('archive')">位面页面</a>回信提交吧</span>
+        <span class="text-green-800">${buildChapterUnlockedMessage(chapterNum, chapter)}</span>
       </div>
     `;
   } else {
     div.innerHTML = `
       <div class="flex items-center gap-2 text-xs bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
         <span>✉️</span>
-        <span class="text-amber-900">正在为 <b>${questInfo.characterEmoji} ${questInfo.characterName}</b> 誊抄第${chapterNum}章「${chapter.title}」 · 还需约 <b>${wordsNeeded.toLocaleString()}</b> 字解锁</span>
+        <span class="text-amber-900">${buildCopyingChapterMessage(questInfo, chapterNum, chapter, wordsNeeded)}</span>
       </div>
     `;
   }
@@ -485,14 +506,14 @@ function updateQuestChapterIndicatorDOM(sess) {
     div.innerHTML = `
       <div class="flex items-center gap-2 text-xs bg-green-50 border border-green-200 rounded-lg px-3 py-2">
         <span>✅</span>
-        <span class="text-green-800">第${chapterNum}章「${chapter.title}」已解锁！去<a href="#" class="underline font-bold text-magic-blue" onclick="window.switchTab('archive')">位面页面</a>回信提交吧</span>
+        <span class="text-green-800">${buildChapterUnlockedMessage(chapterNum, chapter)}</span>
       </div>
     `;
   } else {
     div.innerHTML = `
       <div class="flex items-center gap-2 text-xs bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
         <span>✉️</span>
-        <span class="text-amber-900">正在为 <b>${questInfo.characterEmoji} ${questInfo.characterName}</b> 誊抄第${chapterNum}章「${chapter.title}」 · 还需约 <b>${wordsNeeded.toLocaleString()}</b> 字解锁</span>
+        <span class="text-amber-900">${buildCopyingChapterMessage(questInfo, chapterNum, chapter, wordsNeeded)}</span>
       </div>
     `;
   }
@@ -514,20 +535,20 @@ function renderBookProgress(sess, book) {
   if (repair) {
     repairBarHtml = `
       <div class="flex items-center justify-between mb-1 mt-3">
-        <span class="text-xs font-bold text-amber-700">🔧 修复进度</span>
-        <span class="text-xs text-amber-600">${(repair.done || 0).toLocaleString()} / ${repair.total.toLocaleString()} 字</span>
+        <span class="text-xs font-bold text-amber-700">${t('repairProgress')}</span>
+        <span class="text-xs text-amber-600">${(repair.done || 0).toLocaleString()} / ${repair.total.toLocaleString()} ${t('wordsUnit')}</span>
       </div>
       <div class="h-2 bg-wood/20 rounded-full overflow-hidden mb-3">
         <div class="h-full bg-gradient-to-r from-amber-500 to-amber-400 rounded-full transition-all duration-500" style="width:${repair.pct}%"></div>
       </div>
-      <div class="text-right text-xs text-amber-600 mb-1">${repair.pct}% · 修书中速度 +5%</div>
+      <div class="text-right text-xs text-amber-600 mb-1">${t('repairSpeedBoost').replace('{pct}', repair.pct).replace('{n}', 5)}</div>
     `;
   }
 
   div.innerHTML = `
     <div class="flex items-center justify-between mb-1.5">
-      <span class="text-xs font-bold text-ink">📖 《${book.volumeTitle || book.title}》誊抄进度</span>
-      <span class="text-xs text-ink-light">${effectiveWords.toLocaleString()} / ${totalWords.toLocaleString()} 字</span>
+      <span class="text-xs font-bold text-ink">📖 ${t('copyProgressLabel').replace('{title}', '《' + getBookTitle(book) + '》')}</span>
+      <span class="text-xs text-ink-light">${effectiveWords.toLocaleString()} / ${totalWords.toLocaleString()} ${t('wordsUnit')}</span>
     </div>
     <div class="h-2.5 bg-wood/20 rounded-full overflow-hidden">
       <div class="h-full bg-gradient-to-r from-amber-600 to-magic-gold rounded-full transition-all duration-500" style="width:${pct}%"></div>
@@ -547,17 +568,17 @@ function renderCopyPreview(book) {
 
   if (isDamaged) {
     const repair = getRepairProgress(bs);
-    const remainStr = repair ? `还剩 ${repair.remaining.toLocaleString()} 字待修复` : '';
+    const remainStr = repair ? t('repairRemaining').replace('{words}', repair.remaining.toLocaleString()) : '';
     return h(`
       <div class="mt-4 rounded-xl p-4 border-2 border-amber-300 animate-fade-in" style="background:linear-gradient(135deg, rgba(251,243,219,0.9), rgba(245,225,180,0.7))">
         <div class="flex items-start gap-3">
           <span class="text-2xl">🔧</span>
           <div class="flex-1">
-            <div class="text-sm font-bold text-amber-800 mb-1">正在修复中…</div>
+            <div class="text-sm font-bold text-amber-800 mb-1">${t('repairingTitle')}</div>
             <div class="text-xs text-amber-700 leading-relaxed mb-2">
-              上次访客还书时这本书有些损坏。专注誊抄就是在修复它——你之前抄过的内容已经在你心里了，再来一遍会更快。
+              ${t('repairFlavourText')}
             </div>
-            ${remainStr ? `<div class="text-xs text-amber-600 font-bold">${remainStr} · 修书速度 +5%</div>` : ''}
+            ${remainStr ? `<div class="text-xs text-amber-600 font-bold">${remainStr} · ${t('repairSpeedBoost').replace('{pct}', repair.pct).replace('{n}', 5)}</div>` : ''}
           </div>
         </div>
       </div>
@@ -565,7 +586,7 @@ function renderCopyPreview(book) {
   }
 
   const template = COPY_TEMPLATES[state.currentSession.quoteIndex % COPY_TEMPLATES.length];
-  const quotes = book.quotes;
+  const quotes = getBookQuotes(book);
   const quoteKeys = Object.keys(quotes);
   const randomKey = quoteKeys[Math.floor(Math.random() * quoteKeys.length)];
   const quote = quotes[randomKey];
@@ -579,7 +600,7 @@ function renderCopyPreview(book) {
           <blockquote class="text-ink italic border-l-4 border-magic-gold pl-3 py-1 my-2">
             「${quote}」
           </blockquote>
-          <div class="text-xs text-ink-light">——《${book.volumeTitle || book.title}》</div>
+          <div class="text-xs text-ink-light">${t('bookSource').replace('{title}', getBookTitle(book))}</div>
           <div class="text-xs text-magic-blue mt-1">${template.closing}</div>
         </div>
       </div>
@@ -628,7 +649,7 @@ export function showActionCards(cards, callback) {
   const wrapper = document.createElement('div');
   wrapper.className = 'w-full flex flex-col items-center';
   wrapper.innerHTML = `
-    <p class="text-white/80 text-sm mb-3 font-bold">☕ 休息一下，选一件事做吧</p>
+    <p class="text-white/80 text-sm mb-3 font-bold">${t('takeABreakChooseAction')}</p>
   `;
   wrapper.appendChild(container);
 
@@ -648,7 +669,7 @@ function renderAuraIndicator() {
   const lines = auras.map(a => {
     // 目前光环无时限，预留 duration 字段
     const timerHtml = a.duration
-      ? `<span class="text-xs text-magic-blue ml-1">${Math.ceil(a.duration / 60000)}分钟</span>`
+      ? `<span class="text-xs text-magic-blue ml-1">${t('durationMinutes').replace('{n}', Math.ceil(a.duration / 60000))}</span>`
       : '';
     return `
       <div class="flex items-center gap-2 text-xs text-ink-light">
@@ -661,7 +682,7 @@ function renderAuraIndicator() {
   }).join('');
 
   wrapper.innerHTML = `
-    <div class="text-xs text-magic-gold font-bold mb-1.5">🛋️ 在馆光环（${auras.length}）</div>
+    <div class="text-xs text-magic-gold font-bold mb-1.5">${t('activeAurasCount').replace('{n}', auras.length)}</div>
     <div class="space-y-1">${lines}</div>
   `;
 
@@ -672,46 +693,46 @@ function renderAuraIndicator() {
 
 const MOMO_REVIEWS = {
   _generic: [
-    '墨墨觉得作者写到这一段的时候，窗外一定下着雨。',
-    '有些句子像被遗忘在旧书页里的珍珠，等着人来发现。',
-    '读完这一章，墨墨在书架间沉默了很久。好书就是这样，让人不想说话。',
-    '这一章的节奏真好，像一首渐入佳境的曲子。',
-    '墨墨偷偷在这一页角上画了一颗小星星。值得的。',
-    '文字是有温度的——这一章的温度大概是一杯热茶，不烫嘴，刚好。',
-    '墨墨蹲在横梁上看完了这一章。差点掉下来。',
-    '如果每一本书都是一扇门，这一章就是刚推开时漏出来的那道光。'
+    'momoReviewGeneric0',
+    'momoReviewGeneric1',
+    'momoReviewGeneric2',
+    'momoReviewGeneric3',
+    'momoReviewGeneric4',
+    'momoReviewGeneric5',
+    'momoReviewGeneric6',
+    'momoReviewGeneric7'
   ],
   book_001: [
-    '小王子说重要的东西用眼睛是看不见的。墨墨说重要的书用字数也衡量不了。',
-    '玫瑰和小王子的对话让墨墨想起了图书馆刚有第一位访客的时候。'
+    'momoReviewBook001_0',
+    'momoReviewBook001_1'
   ],
   book_016: [
-    '孙悟空被压了五百年才等到唐僧。你抄这一章才用了几十分钟，效率高多了。',
-    '墨墨觉得菩提祖师的教学方法有问题——七十二变和筋斗云是体育课，不是文化课。'
+    'momoReviewBook016_0',
+    'momoReviewBook016_1'
   ],
   book_017: [
-    '鲁滨逊一个人在岛上待了二十八年。你有整个图书馆陪着，不算孤独。',
-    '星期五出现的时候墨墨差点鼓掌。一个人住太久了，连脚印都是好消息。'
+    'momoReviewBook017_0',
+    'momoReviewBook017_1'
   ],
   book_023: [
-    '多萝西走了那么远的路才发现，回家的能力一直都在自己脚上。',
-    '铁皮人想要一颗心，稻草人想要脑子，狮子想要勇气。墨墨觉得他们本来就都有。'
+    'momoReviewBook023_0',
+    'momoReviewBook023_1'
   ],
   book_024: [
-    '爱丽丝掉进兔子洞的时候一定没想到这会是一本流传百年的书。',
-    '柴郡猫的笑脸让墨墨想起了图书馆里那些会发光的书脊。'
+    'momoReviewBook024_0',
+    'momoReviewBook024_1'
   ],
   book_027: [
-    '三百多首短诗，像三百多只鸟停在窗台上。墨墨数了数，一只都没飞走。',
-    '泰戈尔说生如夏花之绚烂，墨墨觉得抄书的人比夏花还安静。'
+    'momoReviewBook027_0',
+    'momoReviewBook027_1'
   ],
   book_028: [
-    '狐狸、乌鸦、乌龟轮番登场。墨墨看完觉得自己也变聪明了一点。',
-    '两千年前的故事到现在还是灵的。人性这东西，比龟兔赛跑的路线还稳定。'
+    'momoReviewBook028_0',
+    'momoReviewBook028_1'
   ],
   book_029: [
-    '咬得菜根则百事可做。墨墨觉得抄这本书的人，心里一定很安静。',
-    '儒释道三家煮成一锅汤，墨墨喝了一口，觉得人生通透了不少。'
+    'momoReviewBook029_0',
+    'momoReviewBook029_1'
   ]
 };
 
@@ -719,7 +740,8 @@ function getMomoReview(book) {
   if (Math.random() > 0.3) return null;
   const pool = (book && MOMO_REVIEWS[book.id]) ? MOMO_REVIEWS[book.id] : [];
   const fullPool = pool.length > 0 ? [...pool, ...MOMO_REVIEWS._generic] : MOMO_REVIEWS._generic;
-  return fullPool[Math.floor(Math.random() * fullPool.length)];
+  const key = fullPool[Math.floor(Math.random() * fullPool.length)];
+  return t(key);
 }
 
 // ========== 专注完成结算卡片 ==========
@@ -728,17 +750,17 @@ export function showCompletionCard({ minutes, words, coins, book, streak, totalW
   const momoReview = getMomoReview(book);
   let quoteText = '';
   let quoteSource = '';
-  if (book && book.quotes) {
-    const quoteKeys = Object.keys(book.quotes);
+  if (book && getBookQuotes(book)) {
+    const quoteKeys = Object.keys(getBookQuotes(book));
     const key = quoteKeys[Math.floor(Math.random() * quoteKeys.length)];
-    quoteText = book.quotes[key];
-    quoteSource = `——《${book.volumeTitle || book.title}》`;
+    quoteText = getBookQuotes(book)[key];
+    quoteSource = t('bookSource').replace('{title}', getBookTitle(book));
   }
   if (!quoteText) {
     const generalQuotes = [
-      '每一页抄写都是对知识的致敬。',
-      '持之以恒，终有回响。',
-      '文字因你的笔触而重生。'
+      t('completionQuote1'),
+      t('completionQuote2'),
+      t('completionQuote3')
     ];
     quoteText = generalQuotes[Math.floor(Math.random() * generalQuotes.length)];
   }
@@ -749,30 +771,38 @@ export function showCompletionCard({ minutes, words, coins, book, streak, totalW
     const pct = Math.min(99, Math.round(totalWords / nextMilestone * 100));
     milestoneHtml = `
       <div class="bg-white/60 rounded-lg p-2 mb-1">
-        <div class="text-xs text-ink-light mb-1">🎯 下一里程碑：${nextMilestone.toLocaleString()} 字</div>
+        <div class="text-xs text-ink-light mb-1">${t('nextMilestoneLabel').replace('{n}', nextMilestone.toLocaleString())}</div>
         <div class="h-1.5 bg-wood/20 rounded-full overflow-hidden">
           <div class="h-full bg-magic-gold rounded-full" style="width:${pct}%"></div>
         </div>
-        <div class="text-xs text-ink-light mt-0.5">进度 ${pct}%</div>
+        <div class="text-xs text-ink-light mt-0.5">${t('progressPct').replace('{n}', pct)}</div>
       </div>
     `;
   }
 
   // 本书章节进度
+  const currentChapter = chapterInfo && book && book.chapters[chapterInfo.current - 1] ? book.chapters[chapterInfo.current - 1] : null;
+  const nextChapter = chapterInfo && book && book.chapters[chapterInfo.current] ? book.chapters[chapterInfo.current] : null;
+  const localizedChapterTitle = currentChapter ? getChapterTitle(currentChapter) : (chapterInfo ? chapterInfo.title : '');
+  const localizedHighlight = currentChapter
+    ? (currentChapter.highlight || getChapterPreview(currentChapter))
+    : (chapterInfo ? chapterInfo.highlight : '');
+  const localizedNextPreview = nextChapter ? getChapterPreview(nextChapter) : nextPreview;
+
   let chapterHtml = '';
   if (chapterInfo && book) {
     chapterHtml = `
       <div class="bg-white/60 rounded-lg p-3 mb-3 text-left">
         <div class="flex items-center justify-between mb-1.5">
-          <span class="text-xs font-bold text-ink">📖 ${chapterInfo.title}</span>
-          <span class="text-xs text-ink-light">第 ${chapterInfo.current}/${chapterInfo.total} 章</span>
+          <span class="text-xs font-bold text-ink">📖 ${localizedChapterTitle}</span>
+          <span class="text-xs text-ink-light">${t('chapterProgress').replace('{current}', chapterInfo.current).replace('{total}', chapterInfo.total)}</span>
         </div>
         <div class="h-2 bg-wood/20 rounded-full overflow-hidden mb-1">
           <div class="h-full bg-gradient-to-r from-amber-500 to-magic-gold rounded-full transition-all duration-700" style="width:${chapterInfo.progressPct}%"></div>
         </div>
         <div class="flex justify-between text-xs text-ink-light">
-          <span>已抄 ${chapterInfo.progressPct}%</span>
-          <span>还需约 <b class="text-ink">${chapterInfo.remainingMinutes}</b> 分钟</span>
+          <span>${t('copiedPct').replace('{n}', chapterInfo.progressPct)}</span>
+          <span>${t('remainingMinutes').replace('{n}', chapterInfo.remainingMinutes)}</span>
         </div>
       </div>
     `;
@@ -780,22 +810,22 @@ export function showCompletionCard({ minutes, words, coins, book, streak, totalW
 
   // 句子回显
   let echoHtml = '';
-  if (chapterInfo && chapterInfo.highlight) {
+  if (localizedHighlight) {
     echoHtml = `
       <div class="bg-amber-50/80 border-l-4 border-magic-gold rounded-r-lg p-3 mb-3 text-left">
-        <div class="text-xs text-magic-gold font-bold mb-1">🖋️ 刚抄完的句子</div>
-        <p class="text-sm text-ink italic leading-relaxed">「${chapterInfo.highlight}」</p>
+        <div class="text-xs text-magic-gold font-bold mb-1">${t('justCopiedSentence')}</div>
+        <p class="text-sm text-ink italic leading-relaxed">「${localizedHighlight}」</p>
       </div>
     `;
   }
 
   // 下一章引文预告
   let nextPreviewHtml = '';
-  if (nextPreview) {
+  if (localizedNextPreview) {
     nextPreviewHtml = `
       <div class="bg-stone-50/80 border-l-4 border-stone-300 rounded-r-lg p-3 mb-3 text-left">
-        <div class="text-xs text-ink-light font-bold mb-1">📮 下一章引文预告</div>
-        <p class="text-sm text-ink-light leading-relaxed">${nextPreview}</p>
+        <div class="text-xs text-ink-light font-bold mb-1">${t('nextChapterQuotePreview')}</div>
+        <p class="text-sm text-ink-light leading-relaxed">${localizedNextPreview}</p>
       </div>
     `;
   }
@@ -808,7 +838,7 @@ export function showCompletionCard({ minutes, words, coins, book, streak, totalW
         <div class="flex items-start gap-2">
           <span class="text-xl flex-shrink-0">🦉</span>
           <div class="text-left">
-            <span class="text-xs text-magic-gold font-bold">墨墨的书评</span>
+            <span class="text-xs text-magic-gold font-bold">${t('momosBookReview')}</span>
             <p class="text-xs text-ink-light leading-relaxed mt-0.5">${momoReview}</p>
           </div>
         </div>
@@ -821,24 +851,24 @@ export function showCompletionCard({ minutes, words, coins, book, streak, totalW
 
   card.innerHTML = `
     <div class="text-4xl mb-3">✨</div>
-    <h3 class="font-display text-xl font-bold mb-4">专注完成</h3>
+    <h3 class="font-display text-xl font-bold mb-4">${t('focusCompleted')}</h3>
     <div class="grid grid-cols-3 gap-2 mb-4">
       <div class="bg-white/60 rounded-lg p-3">
         <div class="text-lg font-bold text-magic-blue">${minutes}</div>
-        <div class="text-xs text-ink-light">分钟</div>
+        <div class="text-xs text-ink-light">${t('unitMinutes')}</div>
       </div>
       <div class="bg-white/60 rounded-lg p-3">
         <div class="text-lg font-bold text-magic-blue">${words.toLocaleString()}</div>
-        <div class="text-xs text-ink-light">誊抄字</div>
+        <div class="text-xs text-ink-light">${t('copiedWordsLabel')}</div>
       </div>
       <div class="bg-white/60 rounded-lg p-3">
         <div class="text-lg font-bold text-magic-gold">+${coins}</div>
-        <div class="text-xs text-ink-light">智慧之光</div>
+        <div class="text-xs text-ink-light">${t('coins')}</div>
       </div>
     </div>
     ${streak !== undefined ? `<div class="flex justify-center gap-4 mb-3 text-sm">
-      <span>🔥 连续专注 <span class="font-bold text-purple-600">${streak}</span> 天</span>
-      ${totalWords !== undefined ? `<span>📝 累计 <span class="font-bold text-magic-blue">${totalWords.toLocaleString()}</span> 字</span>` : ''}
+      <span>🔥 ${t('streakDays').replace('{n}', streak)}</span>
+      ${totalWords !== undefined ? `<span>📝 ${t('totalWordsLabel').replace('{n}', totalWords.toLocaleString())}</span>` : ''}
     </div>` : ''}
     ${milestoneHtml}
     ${chapterHtml}
@@ -846,7 +876,7 @@ export function showCompletionCard({ minutes, words, coins, book, streak, totalW
     ${nextPreviewHtml}
     <div class="italic text-ink-light mb-3 text-sm">「${quoteText}」${quoteSource}</div>
     ${momoHtml}
-    <button class="px-6 py-3 bg-magic-gold text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all">继续 →</button>
+    <button class="px-6 py-3 bg-magic-gold text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all">${t('continueText')}</button>
   `;
 
   overlay.appendChild(card);

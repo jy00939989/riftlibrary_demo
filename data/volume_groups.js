@@ -72,6 +72,16 @@ export const VOLUME_GROUPS = {
     volumeIds: ['book_019_vol1', 'book_019_vol2', 'book_019_vol3'],
     volumePrice: 400,
     volumeCount: 3
+  },
+  book_013: {
+    collectedBookId: 'book_013',
+    title: '理想国',
+    emoji: '🏺',
+    category: '哲学',
+    author: '柏拉图',
+    volumeIds: ['book_013_vol1', 'book_013_vol2'],
+    volumePrice: 400,
+    volumeCount: 2
   }
 };
 
@@ -142,6 +152,7 @@ export const VOLUME_CHAPTER_RANGES = {
   book_007: [[0, 1, 2, 3, 4, 5], [6, 7, 8, 9, 10, 11]],
   book_008: [[0, 1, 2, 3, 4, 5, 6], [7, 8, 9, 10, 11, 12, 13, 14]],
   book_009: [[0, 1, 2, 3, 4, 5, 6, 7], [8, 9, 10, 11, 12, 13, 14, 15], [16, 17, 18, 19, 20, 21, 22, 23]],
+  book_013: [[0, 1, 2, 3, 4], [5, 6, 7, 8, 9]],
   book_014: [[0, 1, 2], [3, 4, 5], [6, 7], [8, 9]],
   book_016: [[0, 1, 2], [3, 4], [5, 6], [7, 8, 9], [10, 11, 12], [13, 14]],
   book_018: [[0, 1, 2], [3, 4, 5], [6, 7, 8], [9, 10, 11, 12]],

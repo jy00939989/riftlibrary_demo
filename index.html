@@ -6,7 +6,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>异世界图书馆</title>
+  <title id="page-title">异世界图书馆</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="css/style.css?v=20260605">
   <!-- 字体：楷体本地优先，无外部依赖 -->
@@ -54,7 +54,7 @@
         <span class="text-3xl">📚</span>
         <div>
           <h1 class="font-display text-xl font-bold text-ink" id="nav-library-name">归墟图书馆</h1>
-          <p class="text-xs text-ink-light">夹缝中的归墟 · 位面枢纽</p>
+          <p class="text-xs text-ink-light" id="nav-library-subtitle">夹缝中的归墟 · 位面枢纽</p>
         </div>
       </div>
       <div class="flex items-center gap-4">
@@ -66,12 +66,16 @@
           💡 <span class="text-purple-400 font-bold" id="status-inspiration">0</span>
         </div>
         <div class="text-sm text-ink-light">
-          ✨ <span class="hidden sm:inline">氛围 </span><span class="text-magic-blue font-bold" id="status-atmosphere">0/500</span>
+          ✨ <span class="hidden sm:inline" id="atmosphere-label">氛围 </span><span class="text-magic-blue font-bold" id="status-atmosphere">0/500</span>
         </div>
         <span id="now-playing" class="text-xs text-ink-light/60 mx-1 hidden"></span>
-        <button id="music-selector-btn" class="text-lg cursor-pointer hover:scale-110 transition-transform" title="选择音乐">🎼</button>
-        <button id="music-toggle" class="text-lg cursor-pointer hover:scale-110 transition-transform" title="开关音乐">🔈</button>
-        <button id="save-mgr-btn" class="text-lg cursor-pointer hover:scale-110 transition-transform" title="存档管理">💾</button>
+        <select id="lang-selector" class="bg-wood/20 text-ink text-sm rounded-lg px-2 py-1 border border-wood/30 focus:outline-none focus:ring-1 focus:ring-magic-gold cursor-pointer">
+          <option value="zh">中文</option>
+          <option value="en">English</option>
+        </select>
+        <button type="button" id="music-selector-btn" class="text-lg cursor-pointer hover:scale-110 transition-transform" title="选择音乐">🎼</button>
+        <button type="button" id="music-toggle" class="text-lg cursor-pointer hover:scale-110 transition-transform" title="开关音乐">🔈</button>
+        <button type="button" id="save-mgr-btn" class="text-lg cursor-pointer hover:scale-110 transition-transform" title="存档管理">💾</button>
       </div>
     </div>
   </nav>
@@ -79,12 +83,12 @@
   <!-- 标签导航 -->
   <div class="max-w-6xl mx-auto px-4 pt-4">
     <div class="flex flex-wrap gap-1 mb-6" id="nav-tabs">
-      <button id="tab-focus" class="nav-btn active"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-icon"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"></path><line x1="16" y1="8" x2="2" y2="22"></line><line x1="17.5" y1="15" x2="9" y2="15"></line></svg> 缮写室</button>
-      <button id="tab-bookshelf" class="nav-btn">📖 大书库</button>
-      <button id="tab-library" class="nav-btn">🏛️ 馆长办公室</button>
-      <button id="tab-visitors" class="nav-btn">☕ 读者沙龙</button>
-      <button id="tab-archive" class="nav-btn">📜 馆史档案</button>
-      <button id="tab-shop" class="nav-btn">🌌 位面商店</button>
+      <button id="tab-focus" class="nav-btn active"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-icon"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"></path><line x1="16" y1="8" x2="2" y2="22"></line><line x1="17.5" y1="15" x2="9" y2="15"></line></svg> <span class="tab-label">缮写室</span></button>
+      <button id="tab-bookshelf" class="nav-btn"><span class="mr-1">📖</span><span class="tab-label">大书库</span></button>
+      <button id="tab-library" class="nav-btn"><span class="mr-1">🏛️</span><span class="tab-label">馆长办公室</span></button>
+      <button id="tab-visitors" class="nav-btn"><span class="mr-1">☕</span><span class="tab-label">读者沙龙</span></button>
+      <button id="tab-archive" class="nav-btn"><span class="mr-1">📜</span><span class="tab-label">馆史档案</span></button>
+      <button id="tab-shop" class="nav-btn"><span class="mr-1">🌌</span><span class="tab-label">位面商店</span></button>
     </div>
 
     <!-- 页面容器 -->

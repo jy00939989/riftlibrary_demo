@@ -1,17 +1,37 @@
 // 收藏室 UI 渲染
 import { getCollectionState } from '../collection.js';
+import { t } from '../i18n/terms.js';
+
+const CATEGORY_LABEL_KEYS = {
+  '童话': 'categoryFairyTale',
+  '寓言': 'categoryFable',
+  '小说': 'categoryNovel',
+  '诗歌': 'categoryPoetry',
+  '戏剧': 'categoryDrama',
+  '散文': 'categoryProse',
+  '哲学': 'categoryPhilosophy',
+  '传记': 'categoryBiography',
+  '历史': 'categoryHistory',
+  '科学': 'categoryScience',
+  '神话': 'categoryMythology',
+  '志怪': 'categoryZhiguai',
+};
+
+function getCategoryLabel(c) {
+  return t(CATEGORY_LABEL_KEYS[c] || c) || c;
+}
 
 export function renderCollection(container) {
   let categories;
   try {
     categories = getCollectionState();
   } catch (e) {
-    container.innerHTML = `<p class="text-center text-ink-light py-8">收集系统加载中…</p>`;
+    container.innerHTML = `<p class="text-center text-ink-light py-8">${t('collectionLoading')}</p>`;
     return;
   }
 
   if (!categories || categories.length === 0) {
-    container.innerHTML = '<p class="text-center text-ink-light py-8">暂无收集数据</p>';
+    container.innerHTML = `<p class="text-center text-ink-light py-8">${t('collectionEmpty')}</p>`;
     return;
   }
 
@@ -28,9 +48,9 @@ export function renderCollection(container) {
             <h4 class="font-bold flex items-center gap-2">
               <span class="text-2xl">${cat.emoji}</span> ${cat.name}
             </h4>
-            <span class="text-xs bg-gray-200 text-gray-500 px-2 py-0.5 rounded-full">🏗️ 规划中</span>
+            <span class="text-xs bg-gray-200 text-gray-500 px-2 py-0.5 rounded-full">🏗️ ${t('collectionInPlanning')}</span>
           </div>
-          <p class="text-xs text-ink-light">该收集品类将在后续版本中开放。</p>
+          <p class="text-xs text-ink-light">${t('collectionCategoryFutureRelease')}</p>
         </div>
       `;
       return;
@@ -63,8 +83,8 @@ function renderBooksCategory(cat, p) {
         <div class="h-full bg-gradient-to-r from-magic-blue to-magic-gold" style="width:${p.percent}%"></div>
       </div>
       <div class="flex items-center gap-4 text-xs text-ink-light mb-4">
-        <span>📖 已入库 <b>${p.owned}</b> 本</span>
-        <span>✅ 已上架 <b>${p.completed}</b> 本</span>
+        <span>📖 ${t('collectionBooksOwned').replace('{n}', p.owned)}</span>
+        <span>✅ ${t('collectionBooksShelved').replace('{n}', p.completed)}</span>
       </div>
   `;
 
@@ -75,7 +95,7 @@ function renderBooksCategory(cat, p) {
       const catPercent = stats.total > 0 ? Math.round((stats.owned / stats.total) * 100) : 0;
       html += `
         <div class="bg-wood/5 rounded-lg p-2 text-center">
-          <div class="text-xs font-bold">${name}</div>
+          <div class="text-xs font-bold">${getCategoryLabel(name)}</div>
           <div class="text-lg font-bold text-magic-blue">${stats.owned}<span class="text-xs text-ink-light font-normal">/${stats.total}</span></div>
           <div class="h-1 bg-gray-200 rounded-full mt-1 overflow-hidden">
             <div class="h-full bg-magic-gold" style="width:${catPercent}%"></div>
@@ -104,7 +124,7 @@ function renderMilestonesCategory(cat, p) {
 
   if (p.items) {
     p.items.forEach(item => {
-      const hasValue = item.value !== '0' && item.value !== '0 个' && item.value !== 'Lv.0' && item.value !== '废墟';
+      const hasValue = item.hasValue;
       html += `
         <div class="rounded-lg p-3 text-center ${hasValue ? 'bg-amber-50 border border-amber-200' : 'bg-gray-50 border border-gray-100 opacity-60'}">
           <div class="text-xl mb-1">${item.icon}</div>
@@ -130,7 +150,7 @@ function renderPlaneArchive(cat, p) {
         <h4 class="font-bold flex items-center gap-2">
           <span class="text-2xl">${cat.emoji}</span> ${cat.name}
         </h4>
-        <span class="text-sm font-bold text-magic-blue">${p.acquired}/${p.total} 已开启</span>
+        <span class="text-sm font-bold text-magic-blue">${t('collectionPlanesOpened').replace('{current}', p.acquired).replace('{total}', p.total)}</span>
       </div>
 
       <div class="space-y-3">
@@ -146,12 +166,12 @@ function renderPlaneArchive(cat, p) {
             <div>
               <div class="font-bold text-sm">${pl.name}</div>
               <div class="text-xs text-ink-light">
-                ${pl.charsMet > 0 ? `📖 角色 ${pl.charsMet}/${pl.charsTotal}` : '传送门已开启'}
-                ${pl.mementoCount > 0 ? ` · 🏛️ 纪念品 ${pl.mementoCount}件` : ''}
+                ${pl.charsMet > 0 ? t('charactersVisited').replace('{met}', pl.charsMet).replace('{total}', pl.charsTotal) : t('portalOpened')}
+                ${pl.mementoCount > 0 ? ` · 🏛️ ${t('mementosCollected').replace('{n}', pl.mementoCount)}` : ''}
               </div>
             </div>
           </div>
-          <span class="text-xs text-magic-gold">第${pl.stage || 1}幕 →</span>
+          <span class="text-xs text-magic-gold">${t('actNumber').replace('{n}', pl.stage || 1)} →</span>
         </div>
       </div>
     `;
@@ -161,7 +181,7 @@ function renderPlaneArchive(cat, p) {
   html += `
     <div class="bg-gray-50 rounded-lg p-3 border-2 border-dashed border-gray-200 opacity-60 text-center">
       <span class="text-xl">🔒</span>
-      <div class="text-xs text-ink-light mt-1">新的传送门尚未开启…</div>
+      <div class="text-xs text-ink-light mt-1">${t('collectionNewPortalHint')}</div>
     </div>
   `;
 

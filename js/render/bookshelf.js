@@ -1,7 +1,8 @@
 // 书架页面渲染
 import { state, saveState } from '../state.js';
 import { BOOKS, CATEGORIES } from '../../data/books.js';
-import { el, actions, updateStatusBar } from './common.js';
+import { t } from '../i18n/terms.js';
+import { el, actions, updateStatusBar, getBookTitle, getChapterTitle, getChapterPreview, getChapterContent, getBookAuthorBio, getBookAnecdotes, getBookReviews } from './common.js';
 import { playSfx } from '../audio.js';
 import { checkTaskCompletion } from '../quests.js';
 import { spendInspiration } from '../storage.js';
@@ -17,6 +18,25 @@ let currentSort = 'default';
 // 拖拽状态（模块级，不持久化）
 let dragFromShelf = -1;
 let dragFromSlot = -1;
+
+const CATEGORY_LABEL_KEYS = {
+  '童话': 'categoryFairyTale',
+  '寓言': 'categoryFable',
+  '小说': 'categoryNovel',
+  '诗歌': 'categoryPoetry',
+  '戏剧': 'categoryDrama',
+  '散文': 'categoryProse',
+  '哲学': 'categoryPhilosophy',
+  '传记': 'categoryBiography',
+  '历史': 'categoryHistory',
+  '科学': 'categoryScience',
+  '神话': 'categoryMythology',
+  '志怪': 'categoryZhiguai',
+};
+
+function getCategoryLabel(c) {
+  return t(CATEGORY_LABEL_KEYS[c] || c) || c;
+}
 
 export function renderBookshelfPage() {
   const container = document.getElementById('page-bookshelf');
@@ -69,11 +89,12 @@ export function renderBookshelfPage() {
 
   // 标题栏
   const header = el('div', 'flex items-center justify-between mb-6');
-  header.innerHTML = `<h2 class="font-display text-xl font-bold">我的书架 <span class="text-sm font-normal text-ink-light">(${allShelfBookIds.size}本)</span></h2>`;
+  const shelfCountText = t('bookCount').replace('{n}', allShelfBookIds.size);
+  header.innerHTML = `<h2 class="font-display text-xl font-bold">${t('myBookshelf')} <span class="text-sm font-normal text-ink-light">(${shelfCountText})</span></h2>`;
   const n = state.library.shelves.length;
   const price = Math.min(4800, 300 * Math.pow(2, n - 1));
   const buyBtn = el('button', 'px-4 py-2 bg-magic-gold text-white rounded-lg text-sm font-bold shadow hover:shadow-lg transition-all');
-  buyBtn.textContent = `+ 购买新书架 💰${price.toLocaleString()}`;
+  buyBtn.textContent = t('purchaseNewShelf').replace('{price}', price.toLocaleString());
   buyBtn.addEventListener('click', () => {
     actions.buyShelf();
   });
@@ -88,13 +109,14 @@ export function renderBookshelfPage() {
   const mMaxed2 = mSlots2 >= 20;
   {
     const mSection = el('div', 'mb-6 p-4 rounded-xl border-2 border-dashed border-amber-400/40 bg-amber-50/30');
+    const slotsText = t('slotsStatus').replace('{current}', mCount2).replace('{total}', mSlots2);
     mSection.innerHTML = `
       <div class="flex items-center justify-between mb-3">
-        <h3 class="font-display text-sm font-bold text-ink">📦 手稿箱 <span class="text-xs font-normal text-ink-light">(${mCount2}/${mSlots2} 格)</span></h3>
+        <h3 class="font-display text-sm font-bold text-ink">📦 ${t('manuscriptBox')} <span class="text-xs font-normal text-ink-light">(${slotsText})</span></h3>
         ${mMaxed2
-          ? '<span class="text-xs text-magic-gold font-bold">已满 20 格 ✨</span>'
+          ? `<span class="text-xs text-magic-gold font-bold">${t('maxSlotsReached').replace('{n}', 20)}</span>`
           : `<button class="m-expand-btn px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs font-bold hover:bg-amber-200 transition-all">
-              + 扩容 💰${mPrice2.toLocaleString()}
+              + ${t('expand')} 💰${mPrice2.toLocaleString()}
              </button>`}
       </div>
       <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
@@ -106,9 +128,9 @@ export function renderBookshelfPage() {
           return `
             <div class="p-3 rounded-lg border ${isCompleted ? 'bg-green-50/60 border-green-300' : 'bg-white/70 border-wood/20'} text-center">
               <div class="text-2xl mb-1">${book.emoji}</div>
-              <div class="text-xs font-bold text-ink">${book.volumeTitle || book.title}</div>
+              <div class="text-xs font-bold text-ink">${getBookTitle(book)}</div>
               <div class="text-[10px] text-ink-light mt-0.5">
-                ${isCompleted ? '✅ 已誊抄 · 待上架' : '📝 待誊抄'}
+                ${isCompleted ? t('completedPendingShelve') : t('pendingTranscription')}
               </div>
             </div>
           `;
@@ -129,7 +151,7 @@ export function renderBookshelfPage() {
           updateStatusBar();
           renderBookshelfPage();
         } else if (mPrice2 > 0) {
-          alert('智慧之光不足 💰');
+          alert(t('insufficientCoinsExclamation'));
         }
       });
     }
@@ -146,7 +168,7 @@ export function renderBookshelfPage() {
   shelves.forEach((shelf, shelfIdx) => {
     if (!Array.isArray(shelf)) return;
     const shelfDiv = el('div', '');
-    shelfDiv.innerHTML = `<div class="text-xs text-ink-light mb-2 font-bold">📚 书架 ${shelfIdx + 1}</div>`;
+    shelfDiv.innerHTML = `<div class="text-xs text-ink-light mb-2 font-bold">${t('shelfLabel').replace('{n}', shelfIdx + 1)}</div>`;
     const row = el('div', 'grid grid-cols-5 gap-3');
 
     shelf.forEach((bookId, slotIdx) => {
@@ -246,15 +268,15 @@ function handleDrop(e) {
   // Toast 通知
   const toasts = [];
   for (const chain of newChains) {
-    const typeLabel = chain.type === 'category' ? '分类共鸣' : '时代共鸣';
-    const tierLabel = chain.length >= 5 ? '圆满' : chain.length >= 4 ? '大成' : '小成';
+    const typeLabel = chain.type === 'category' ? t('categoryResonance') : t('eraResonance');
+    const tierLabel = chain.length >= 5 ? t('resonanceTierPerfect') : chain.length >= 4 ? t('resonanceTierLarge') : t('resonanceTierSmall');
     toasts.push(`✦ ${typeLabel}：${chain.value} ×${chain.length}「${tierLabel}」`);
   }
   for (const pair of newPairs) {
-    toasts.push(`🔗 作者对话：${pair.name}`);
+    toasts.push(`🔗 ${t('authorDialogue')}：${pair.name}`);
     // 首次触发墨墨点评
     if (pair.momoComment) {
-      toasts.push(`🦉 墨墨：${pair.momoComment}`);
+      toasts.push(`🦉 ${t('momo')}：${pair.momoComment}`);
     }
   }
 
@@ -285,8 +307,8 @@ function renderFilterBar() {
   const bar = el('div', 'flex flex-wrap items-center gap-2 mb-4');
 
   const tabs = [
-    { id: 'all', label: '全部' },
-    { id: 'starred', label: '⭐收藏' }
+    { id: 'all', label: t('all') },
+    { id: 'starred', label: t('starred') }
   ];
 
   tabs.forEach(tab => {
@@ -304,7 +326,7 @@ function renderFilterBar() {
   // 分类下拉
   const select = document.createElement('select');
   select.className = 'px-3 py-1 rounded-full text-xs font-bold bg-wood/10 text-ink-light border border-wood/20 cursor-pointer';
-  select.innerHTML = `<option value="all">全部分类</option>${CATEGORIES.map(c => `<option value="${c}" ${currentCategory === c ? 'selected' : ''}>${c}</option>`).join('')}`;
+  select.innerHTML = `<option value="all">${t('allCategories')}</option>${CATEGORIES.map(c => `<option value="${c}" ${currentCategory === c ? 'selected' : ''}>${getCategoryLabel(c)}</option>`).join('')}`;
   select.addEventListener('change', () => {
     currentCategory = select.value;
     renderBookshelfPage();
@@ -313,7 +335,7 @@ function renderFilterBar() {
 
   // 排序按钮
   const sortBtn = el('button', 'px-3 py-1 rounded-full text-xs font-bold bg-wood/10 text-ink-light hover:bg-wood/20');
-  const labels = { 'default': '默认排序', 'words-asc': '字数 ↑', 'words-desc': '字数 ↓' };
+  const labels = { 'default': t('sortDefault'), 'words-asc': t('sortWordsAsc'), 'words-desc': t('sortWordsDesc') };
   sortBtn.textContent = labels[currentSort];
   sortBtn.addEventListener('click', () => {
     const order = ['default', 'words-asc', 'words-desc'];
@@ -350,7 +372,7 @@ function renderBookCard(book) {
   const bookState = state.books[book.id];
   const effectiveWords = getEffectiveCopiedWords(bookState, book.totalWords);
   const progress = book.totalWords > 0 ? Math.round((effectiveWords / book.totalWords) * 100) : 0;
-  const masteryNames = ['', '初识', '熟悉', '精通', '大师', '传承'];
+  const masteryNames = ['', t('masteryName1'), t('masteryName2'), t('masteryName3'), t('masteryName4'), t('masteryName5')];
   const masteryName = masteryNames[bookState.masteryLevel] || '';
   const isCompleted = bookState.status === 'completed';
   const isCopying = bookState.status === 'copying' || (bookState.copiedWords > 0 && !isCompleted);
@@ -366,7 +388,7 @@ function renderBookCard(book) {
     <!-- 封面区 -->
     <div class="book-cover flex-1 flex flex-col items-center justify-center p-4 relative min-h-[130px]">
       <div class="text-5xl mb-2 drop-shadow-sm">${book.emoji}</div>
-      <div class="font-bold text-sm text-center text-ink leading-tight">${book.volumeTitle || book.title}</div>
+      <div class="font-bold text-sm text-center text-ink leading-tight">${getBookTitle(book)}</div>
       <div class="text-[10px] text-ink-light/60 mt-1">${book.author}</div>
       ${isCompleted ? '<div class="absolute top-2 left-2 text-xs">🏆</div>' : ''}
     </div>
@@ -374,15 +396,15 @@ function renderBookCard(book) {
     <!-- 书脊信息区 -->
     <div class="bg-white/80 px-3 py-2.5 border-t border-wood/10">
       <div class="flex items-center justify-between mb-1.5">
-        <span class="text-[10px] text-ink-light">${book.totalWords.toLocaleString()}字</span>
+        <span class="text-[10px] text-ink-light">${t('wordsCount').replace('{n}', book.totalWords.toLocaleString())}</span>
         ${masteryName ? `<span class="text-[10px] font-bold text-magic-gold">✦ ${masteryName}</span>` : ''}
-        ${isUnstarted ? '<span class="text-[10px] text-ink-light/50">点击开始</span>' : ''}
+        ${isUnstarted ? `<span class="text-[10px] text-ink-light/50">${t('clickToStart')}</span>` : ''}
       </div>
       <div class="h-2 bg-wood/10 rounded-full overflow-hidden">
         <div class="h-full rounded-full transition-all duration-700 ${isCompleted ? 'bg-magic-gold' : 'bg-magic-blue'}" style="width:${Math.min(100, displayProgress)}%"></div>
       </div>
       <div class="text-[10px] text-ink-light/60 mt-1">
-        ${isCompleted ? '已完成 ✓' : isCopying ? '誊抄中 ' + progress + '%' : '待誊抄'}
+        ${isCompleted ? `${t('completed')} ✓` : isCopying ? `${t('copying')} ${progress}%` : t('pendingTranscription')}
       </div>
     </div>
   `;
@@ -423,15 +445,15 @@ function renderChapterList(book) {
 
   content.innerHTML = `
     <div class="flex items-center justify-between mb-4">
-      <h2 class="font-display text-xl font-bold">${book.emoji} ${book.volumeTitle || book.title}</h2>
+      <h2 class="font-display text-xl font-bold">${book.emoji} ${getBookTitle(book)}</h2>
       <button class="text-2xl text-ink-light hover:text-ink close-modal">✕</button>
     </div>
-    <div class="text-sm text-ink-light mb-1">${book.author} · ${book.category} · ${book.totalWords.toLocaleString()}字</div>
-    ${isCompleted ? `<div class="text-xs text-magic-gold mb-2">✦ 熟练度 Lv${bookState.masteryLevel} · 已抄 ${bookState.copyCount} 次</div>` : ''}
+    <div class="text-sm text-ink-light mb-1">${book.author} · ${getCategoryLabel(book.category)} · ${t('wordsCount').replace('{n}', book.totalWords.toLocaleString())}</div>
+    ${isCompleted ? `<div class="text-xs text-magic-gold mb-2">${t('masteryLevelLabel').replace('{level}', bookState.masteryLevel).replace('{count}', bookState.copyCount)}</div>` : ''}
     ${needReCopy
-      ? `<button id="re-copy-btn" class="w-full px-4 py-2 mb-4 bg-purple-600 text-white rounded-lg font-bold text-sm hover:shadow-lg transition-all">🔮 花费灵感重抄 · ${getReCopyCost()} 💡</button>
-         <div class="text-center text-xs text-ink-light mb-3">当前灵感：${state.inspiration || 0} 💡</div>`
-      : `<button id="start-copy-btn" class="w-full px-4 py-2 mb-4 bg-magic-gold text-white rounded-lg font-bold text-sm hover:shadow-lg transition-all">📝 开始誊抄此书</button>`
+      ? `<button id="re-copy-btn" class="w-full px-4 py-2 mb-4 bg-purple-600 text-white rounded-lg font-bold text-sm hover:shadow-lg transition-all">${t('reCopyCost').replace('{cost}', getReCopyCost())}</button>
+         <div class="text-center text-xs text-ink-light mb-3">${t('currentInspiration').replace('{n}', state.inspiration || 0)}</div>`
+      : `<button id="start-copy-btn" class="w-full px-4 py-2 mb-4 bg-magic-gold text-white rounded-lg font-bold text-sm hover:shadow-lg transition-all">${t('startTranscribeThisBook')}</button>`
     }
     <div class="space-y-2">
       ${book.chapters.map((ch, i) => {
@@ -440,12 +462,12 @@ function renderChapterList(book) {
         return `
           <div class="chapter-item p-3 rounded-lg border ${unlocked ? 'bg-white border-wood cursor-pointer hover:shadow' : 'bg-gray-100 border-gray-200 opacity-60'}">
             <div class="flex items-center justify-between">
-              <div class="font-bold text-sm">${isRead ? '✓ ' : ''}${ch.title}</div>
+              <div class="font-bold text-sm">${isRead ? '✓ ' : ''}${getChapterTitle(ch)}</div>
               <div class="text-xs ${unlocked ? (isRead ? 'text-magic-gold' : 'text-green-600') : 'text-gray-500'}">
-                ${unlocked ? (isRead ? '📖 已读' : '🔓 已解锁') : '🔒 需誊抄' + ch.unlockAt.toLocaleString() + '字'}
+                ${unlocked ? (isRead ? `📖 ${t('statusRead')}` : `🔓 ${t('statusUnlocked')}`) : `🔒 ${t('needTranscribeWords').replace('{words}', ch.unlockAt.toLocaleString())}`}
               </div>
             </div>
-            ${unlocked ? `<div class="text-xs text-ink-light mt-1">${ch.preview}</div>` : ''}
+            ${unlocked ? `<div class="text-xs text-ink-light mt-1">${getChapterPreview(ch)}</div>` : ''}
           </div>
         `;
       }).join('')}
@@ -475,7 +497,7 @@ function renderChapterList(book) {
     reCopyBtn.addEventListener('click', () => {
       const cost = getReCopyCost();
       if (!spendInspiration(cost)) {
-        alert(`灵感不足！需要 ${cost} 💡，当前拥有 ${state.inspiration || 0} 💡`);
+        alert(t('insufficientInspiration').replace('{cost}', cost).replace('{current}', state.inspiration || 0));
         return;
       }
       bookState.reCopyUnlocked = true;
@@ -511,9 +533,10 @@ function renderReadingPage(book, chapter) {
   const prevChapter = chapterIndex > 0 ? book.chapters[chapterIndex - 1] : null;
   const nextChapter = chapterIndex < book.chapters.length - 1 ? book.chapters[chapterIndex + 1] : null;
 
+  const chapterContent = getChapterContent(chapter);
   // 分页：按 ---page--- 切分，无标记则全文为 1 页
-  const rawPages = chapter.content.split('---page---').map(p => p.trim()).filter(p => p);
-  const pages = rawPages.length > 0 ? rawPages : [chapter.content.trim()];
+  const rawPages = chapterContent.split('---page---').map(p => p.trim()).filter(p => p);
+  const pages = rawPages.length > 0 ? rawPages : [chapterContent.trim()];
   const totalPages = pages.length;
 
   let currentPage = 0;
@@ -549,8 +572,8 @@ function renderReadingPage(book, chapter) {
   // 标题区
   const header = el('div', 'text-center mb-3');
   header.innerHTML = `
-    <h2 class="font-display text-lg font-bold" style="color:#c9a227">${book.emoji} ${book.volumeTitle || book.title}</h2>
-    <p class="text-xs mt-1" style="color:rgba(245,230,200,0.5)">${chapter.title}</p>
+    <h2 class="font-display text-lg font-bold" style="color:#c9a227">${book.emoji} ${getBookTitle(book)}</h2>
+    <p class="text-xs mt-1" style="color:rgba(245,230,200,0.5)">${getChapterTitle(chapter)}</p>
   `;
   bookContainer.appendChild(header);
 
@@ -624,7 +647,7 @@ function renderReadingPage(book, chapter) {
   }
 
   function updateControls() {
-    pageIndicator.textContent = `第 ${currentPage + 1}/${totalPages} 页`;
+    pageIndicator.textContent = t('pageIndicator').replace('{current}', currentPage + 1).replace('{total}', totalPages);
     prevPageBtn.style.visibility = currentPage > 0 ? 'visible' : 'hidden';
     nextPageBtn.style.visibility = currentPage < totalPages - 1 ? 'visible' : 'hidden';
 
@@ -645,7 +668,7 @@ function renderReadingPage(book, chapter) {
     chapterNav.innerHTML = '';
     if (prevChapter && isChapterUnlocked(chapterIndex - 1)) {
       const prevBtn = el('button', '');
-      prevBtn.textContent = `← ${prevChapter.title}`;
+      prevBtn.textContent = `← ${getChapterTitle(prevChapter)}`;
       prevBtn.addEventListener('click', () => {
         markChapterRead();
         closeReading();
@@ -655,13 +678,13 @@ function renderReadingPage(book, chapter) {
     }
 
     const label = el('span', 'reading-chapter-label');
-    const readMark = bookState.readChapters.includes(chapterIndex) ? ' ✓已读' : '';
+    const readMark = bookState.readChapters.includes(chapterIndex) ? ` ✓${t('statusRead')}` : '';
     label.textContent = `${chapterIndex + 1}/${book.chapters.length}${readMark}`;
     chapterNav.appendChild(label);
 
     if (nextChapter && isChapterUnlocked(chapterIndex + 1)) {
       const nextBtn = el('button', '');
-      nextBtn.textContent = `${nextChapter.title} →`;
+      nextBtn.textContent = `${getChapterTitle(nextChapter)} →`;
       nextBtn.addEventListener('click', () => {
         markChapterRead();
         closeReading();
@@ -723,14 +746,14 @@ export function showMasteryDetail(book) {
   const level = bookState.masteryLevel;
   const container = document.getElementById('page-bookshelf');
 
-  const titles = ['', '初识', '熟悉', '精通', '大师', '传承'];
+  const titles = ['', t('masteryName1'), t('masteryName2'), t('masteryName3'), t('masteryName4'), t('masteryName5')];
   const contents = [
     null,
-    '书籍上架 · 可供访客借阅',
-    book.authorBio || '作者小传待发现',
-    book.anecdotes || '创作轶闻待发现',
-    book.reviews || '名家书评待发现',
-    `典藏封面 · 金光特效 · ${book.collectorCover || '🌟'}`
+    t('bookShelvedAvailable'),
+    getBookAuthorBio(book) || t('authorBioMissing'),
+    getBookAnecdotes(book) || t('anecdotesMissing'),
+    getBookReviews(book) || t('reviewsMissing'),
+    t('collectorCoverEffect').replace('{cover}', book.collectorCover || '🌟')
   ];
 
   const modal = el('div', 'fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4');
@@ -738,10 +761,10 @@ export function showMasteryDetail(book) {
 
   content.innerHTML = `
     <div class="flex items-center justify-between mb-4">
-      <h2 class="font-display text-xl font-bold">${book.emoji} ${book.volumeTitle || book.title} · 典藏档案</h2>
+      <h2 class="font-display text-xl font-bold">${book.emoji} ${getBookTitle(book)} · ${t('collectorArchive')}</h2>
       <button class="text-2xl text-ink-light hover:text-ink close-modal">✕</button>
     </div>
-    <div class="text-sm text-ink-light mb-4">${book.author} · ${book.category} · 共${bookState.copyCount}次誊抄</div>
+    <div class="text-sm text-ink-light mb-4">${book.author} · ${getCategoryLabel(book.category)} · ${t('totalCopies').replace('{n}', bookState.copyCount)}</div>
     <div class="space-y-3 mb-4">
       ${[1,2,3,4,5].map(lv => {
         const unlocked = lv <= level;
@@ -750,14 +773,14 @@ export function showMasteryDetail(book) {
             <div class="flex items-center gap-2 mb-1">
               <span class="text-sm">${unlocked ? '🔓' : '🔒'}</span>
               <span class="font-bold text-sm">Lv${lv} · ${titles[lv]}</span>
-              ${lv === level ? '<span class="text-xs text-magic-gold font-bold">← 当前</span>' : ''}
+              ${lv === level ? `<span class="text-xs text-magic-gold font-bold">${t('currentLabel')}</span>` : ''}
             </div>
-            <p class="text-xs text-ink-light ml-6">${unlocked ? contents[lv] : `再抄${lv - level}次解锁`}</p>
+            <p class="text-xs text-ink-light ml-6">${unlocked ? contents[lv] : t('unlockAfterCopies').replace('{n}', lv - level)}</p>
           </div>
         `;
       }).join('')}
     </div>
-    <button class="read-chapters-btn w-full mt-4 px-4 py-2 bg-magic-gold text-white rounded-lg font-bold text-sm hover:shadow-lg transition-all">📖 阅读章节</button>
+    <button class="read-chapters-btn w-full mt-4 px-4 py-2 bg-magic-gold text-white rounded-lg font-bold text-sm hover:shadow-lg transition-all">${t('readChapters')}</button>
   `;
 
   modal.appendChild(content);

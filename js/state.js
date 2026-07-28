@@ -4,6 +4,9 @@ import { BOOKS } from '../data/books.js';
 import { VOLUME_GROUPS } from '../data/volume_groups.js';
 
 export const state = {
+  // 语言设置
+  locale: 'zh',
+
   // 用户统计
   focus: {
     totalMinutes: 0,
@@ -639,6 +642,10 @@ export function initState() {
       // 旧存档迁移：环境音系统
       if (!state.ambientSounds) {
         state.ambientSounds = { unlocked: [], current: null, volume: 0.5, enabled: true };
+      }
+      // 旧存档迁移：语言设置
+      if (!state.locale) {
+        state.locale = 'zh';
       }
 
       saveState(); // 迁移后立即持久化

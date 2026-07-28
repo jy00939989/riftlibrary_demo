@@ -7,13 +7,13 @@ if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
 }
 
 import { state, initState, saveState, ensureAllBooksInManuscriptBox } from './state.js';
+import { t, getLocale, setLocale } from './i18n/terms.js';
 import { addCoins, spendCoins, addHistory, updateStreak, addAtmosphere, updateBodyBackground, getAtmosphereLevel, onStageCross, addInspiration } from './storage.js';
 import { canDrawActionCards, drawActionCards, applyAction } from './actioncards.js';
-import {
-  renderFocusPage, renderBookshelfPage, renderLibraryPage,
+import { renderFocusPage, renderBookshelfPage, renderLibraryPage,
   renderVisitorsPage, renderArchivePage, renderShopPage,
   showUnlockAnimation, showBookCompleteAnimation, showBookShelvingAnimation, showCompletionCard, showActionCards, setActions,
-  updateStatusBar
+  updateStatusBar, getBookTitle, getChapterTitle
 } from './render/index.js';
 import { startTimer, togglePauseTimer, abandonTimer, setCompleteCallback } from './timer.js';
 import { BOOKS } from '../data/books.js';
@@ -491,7 +491,7 @@ function handlePostFocusEffects(effects) {
     const ch = unlockedChapter;
     const book = BOOKS[state.currentSession.bookId];
     next = () => {
-      showUnlockAnimation(book.title, ch.title, prevNext);
+      showUnlockAnimation(getBookTitle(book), getChapterTitle(ch), prevNext);
     };
   }
 
@@ -506,7 +506,7 @@ function handlePostFocusEffects(effects) {
       };
     } else if (copyCount === 1) {
       next = () => {
-        showBookCompleteAnimation(bookTitle, bookEmoji, copyCount, () => {
+        showBookCompleteAnimation(getBookTitle(completedBook), bookEmoji, copyCount, () => {
           showBookShelvingAnimation(completedBook, prevNext);
         }, completedBook, bookMastery);
       };
@@ -1119,6 +1119,44 @@ function hideLoadingScreen() {
   }, 300);
 }
 
+// ========== 静态元素本地化 ==========
+
+function localizeStaticElements() {
+  // 页面标题
+  document.title = t('gameTitle');
+
+  // 加载提示
+  const loadingText = document.getElementById('loading-text');
+  if (loadingText) loadingText.textContent = t('loadingText');
+
+  // 顶部馆名与副标题
+  const navName = document.getElementById('nav-library-name');
+  if (navName) navName.textContent = t('libraryName');
+  const navSubtitle = document.getElementById('nav-library-subtitle');
+  if (navSubtitle) navSubtitle.textContent = t('librarySubtitle');
+
+  // 状态栏资源标签
+  const atmoLabel = document.getElementById('atmosphere-label');
+  if (atmoLabel) atmoLabel.textContent = t('atmosphere') + ' ';
+
+  // 顶部标签按钮
+  const tabMap = {
+    'tab-focus': 'tabScriptorium',
+    'tab-bookshelf': 'tabGrandLibrary',
+    'tab-library': 'tabCuratorOffice',
+    'tab-visitors': 'tabReaderSalon',
+    'tab-archive': 'tabArchive',
+    'tab-shop': 'tabPlaneShop'
+  };
+  Object.entries(tabMap).forEach(([id, key]) => {
+    const btn = document.getElementById(id);
+    if (btn) {
+      const label = btn.querySelector('.tab-label');
+      if (label) label.textContent = t(key);
+    }
+  });
+}
+
 // ========== 启动 ==========
 
 function init() {
@@ -1243,9 +1281,25 @@ function init() {
     if (btn) btn.addEventListener('click', () => window.switchTab(tab));
   });
 
+  // 本地化静态元素
+  localizeStaticElements();
+
   // 音乐开关
   const musicBtn = document.getElementById('music-toggle');
   if (musicBtn) musicBtn.addEventListener('click', toggleMusic);
+
+  // 语言选择器
+  const langSelector = document.getElementById('lang-selector');
+  if (langSelector) {
+    const currentLocale = getLocale();
+    document.documentElement.lang = currentLocale === 'en' ? 'en' : 'zh-CN';
+    langSelector.value = currentLocale;
+    langSelector.addEventListener('change', (e) => {
+      setLocale(e.target.value);
+      window.location.reload();
+    });
+  }
+
   initAudio();
   initMusicSelector();
   initSfx();

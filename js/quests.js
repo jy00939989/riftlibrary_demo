@@ -6,6 +6,7 @@ import { PLANES } from '../data/planes.js';
 import { PASTORAL_TASKS } from '../data/quests/pastoral_tasks.js';
 import { BOOKS } from '../data/books.js';
 import { addCoins, addAtmosphere, addHistory } from './storage.js';
+import { t } from './i18n/terms.js';
 
 const ALL_TASKS = { pastoral: PASTORAL_TASKS };
 
@@ -47,12 +48,12 @@ export function tickPlaneVisitors(now) {
           // 首次见面
           if (!cd.met) {
             cd.met = true;
-            addHistory('plane', `🌾 ${char.name} 第一次到访`, '田园瘟疫纪事 · 第一位访客');
+            addHistory('plane', t('planeFirstVisit').replace('{name}', char.name), t('planeFirstVisitorDetail').replace('{plane}', t('planeName_pastoral')));
           }
           // 兜底：如果任务条件已满足（旧档中已解锁/完成），直接标记为可提交
           if (isTaskConditionMet(nextTask)) {
             cd.pendingComplete.push(nextTask.id);
-            addHistory('plane', `📝 任务已完成：${nextTask.summary}`, '条件已满足，可直接回信');
+            addHistory('plane', t('taskCompletedHistory').replace('{summary}', nextTask.summary), t('taskConditionMetDetail'));
           } else {
             cd.activeTasks.push(nextTask.id);
           }
@@ -149,7 +150,7 @@ export function checkTaskCompletion(trigger, payload) {
         if (matched) {
           cd.activeTasks = cd.activeTasks.filter(id => id !== taskId);
           cd.pendingComplete.push(taskId);
-          addHistory('plane', `📝 任务完成：${taskDef.summary}`, '准备回信提交');
+          addHistory('plane', t('taskCompletedHistory').replace('{summary}', taskDef.summary), t('taskReadyToSubmit'));
           changed = true;
         }
       });
@@ -200,7 +201,7 @@ export function submitTask(planeId, charId, taskId) {
     if (nextTask) {
       if (isTaskConditionMet(nextTask)) {
         cd.pendingComplete.push(nextTask.id);
-        addHistory('plane', `📝 任务已完成：${nextTask.summary}`, '条件已满足，可直接回信');
+        addHistory('plane', t('taskCompletedHistory').replace('{summary}', nextTask.summary), t('taskConditionMetDetail'));
       } else {
         cd.activeTasks.push(nextTask.id);
       }
@@ -255,17 +256,18 @@ function checkPlaneStageAdvance(planeId) {
     pq.stage += 1;
 
     // 生成故事日志
-    const stageLabels = ['', '第一章：求救之声', '第二章：草药与祈祷', '第三章：禁忌之书', '第四章：领主之责', '第五章：黎明的山谷'];
+    const stageLabels = ['', t('planeStageName1'), t('planeStageName2'), t('planeStageName3'), t('planeStageName4'), t('planeStageName5')];
     const label = stageLabels[currentPlaneStage] || `Stage ${currentPlaneStage}`;
+    const pastoralPlaneName = t('planeName_pastoral');
     pq.storyLog.push({
       id: `${planeId}_stage_${currentPlaneStage}`,
       stage: currentPlaneStage,
       ts: getNow(),
       title: label,
-      narrative: `田园位面的故事推进到了新的阶段。`
+      narrative: t('planeStageNarrative').replace('{plane}', pastoralPlaneName)
     });
 
-    addHistory('plane', `🌾 位面推进：${label}`, `田园瘟疫纪事 stage ${pq.stage}`);
+    addHistory('plane', t('planeAdvancedHistory').replace('{label}', label), t('planeStageDetail').replace('{plane}', pastoralPlaneName).replace('{stage}', pq.stage));
 
     // 位面完成？
     if (pq.stage > 5) {

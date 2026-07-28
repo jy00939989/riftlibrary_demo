@@ -28,9 +28,9 @@ export function markTaskDone(task, stateCtx) {
   }
   if (task === 'return' && !dt.returnDone) {
     dt.returnDone = true;
-    addAtmosphere(5);
+    addAtmosphere(1);
     saveState();
-    return { name: '收取一本还书', reward: '✨ +5氛围' };
+    return { name: '收取一本还书', reward: '✨ +1氛围' };
   }
   if (task === 'water' && !dt.waterDone) {
     dt.waterDone = true;

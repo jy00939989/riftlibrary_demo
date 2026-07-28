@@ -1,5 +1,5 @@
 // 动画弹窗 —— 解锁动画 + 书籍完成动画 + 馆长目标阶段完成弹窗
-import { el, actions } from './common.js';
+import { el, actions, getBookTitle, getBookAuthorBio, getBookAnecdotes, getBookReviews } from './common.js';
 import { UNLOCK_TEXTS } from '../../data/books.js';
 import { addCoins, addAtmosphere, addHistory } from '../storage.js';
 import { saveState } from '../state.js';
@@ -106,7 +106,7 @@ export function showBookShelvingAnimation(book, callback) {
   flyer.innerHTML = `
     <div class="text-center">
       <div class="text-5xl">${book.emoji}</div>
-      <div class="text-xs text-ink-light mt-1 whitespace-nowrap">《${book.title}》</div>
+      <div class="text-xs text-ink-light mt-1 whitespace-nowrap">《${getBookTitle(book)}》</div>
     </div>
   `;
 
@@ -159,12 +159,13 @@ export function showBookShelvingAnimation(book, callback) {
 
 export function showBookCompleteAnimation(bookTitle, bookEmoji, copyCount, callback, book, newLevel) {
   const overlay = el('div', 'fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4');
+  const card = el('div', 'parchment-bg rounded-2xl p-8 max-w-md w-full text-center magic-glow animate-scale-in relative');
 
   const masteryRewards = ['',
     '📖 书籍上架 · 可供访客借阅',
-    `📝 解锁作者小传：${book?.authorBio ? book.authorBio.slice(0, 40) + '…' : '待发现'}`,
-    `💬 解锁创作轶闻：${book?.anecdotes ? book.anecdotes.slice(0, 40) + '…' : '待发现'}`,
-    `🏅 解锁名家书评：${book?.reviews ? book.reviews.slice(0, 40) + '…' : '待发现'}`,
+    `📝 解锁作者小传：${book ? getBookAuthorBio(book).slice(0, 40) + '…' : '待发现'}`,
+    `💬 解锁创作轶闻：${book ? getBookAnecdotes(book).slice(0, 40) + '…' : '待发现'}`,
+    `🏅 解锁名家书评：${book ? getBookReviews(book).slice(0, 40) + '…' : '待发现'}`,
     `🌟 解锁典藏封面 · 金光特效${book?.collectorCover ? ' · ' + book.collectorCover : ''}`
   ];
 
@@ -185,7 +186,11 @@ export function showBookCompleteAnimation(bookTitle, bookEmoji, copyCount, callb
         ${Array(Math.min(copyCount, 5)).fill('<span class="text-magic-gold text-lg">⭐</span>').join('')}
       </div>
       <p class="text-xs text-ink-light mb-1">+50智慧之光 · +5氛围 · 成就解锁</p>
-      <button class="mt-2 px-6 py-3 bg-magic-gold text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all">太棒了 →</button>
+      <div class="flex flex-wrap gap-2 justify-center mt-4">
+        <button id="book-complete-save" class="px-4 py-2 bg-wood/20 text-ink rounded-lg font-bold text-sm hover:bg-wood/30 transition-all">📥 保存证书图</button>
+        <button id="book-complete-share" class="px-4 py-2 bg-magic-blue/20 text-ink rounded-lg font-bold text-sm hover:bg-magic-blue/30 transition-all">📋 复制分享文字</button>
+        <button id="book-complete-next" class="px-6 py-2 bg-magic-gold text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all">太棒了 →</button>
+      </div>
     `;
   } else {
     card.innerHTML = `
@@ -199,22 +204,72 @@ export function showBookCompleteAnimation(bookTitle, bookEmoji, copyCount, callb
         ${Array(Math.min(copyCount, 5)).fill('<span class="text-magic-gold text-lg">⭐</span>').join('')}
       </div>
       <p class="text-xs text-ink-light mb-1">+50智慧之光 · +5氛围</p>
-      <button class="mt-2 px-6 py-3 bg-magic-gold text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all">太棒了 →</button>
+      <div class="flex flex-wrap gap-2 justify-center mt-4">
+        <button id="book-complete-save" class="px-4 py-2 bg-wood/20 text-ink rounded-lg font-bold text-sm hover:bg-wood/30 transition-all">📥 保存证书图</button>
+        <button id="book-complete-share" class="px-4 py-2 bg-magic-blue/20 text-ink rounded-lg font-bold text-sm hover:bg-magic-blue/30 transition-all">📋 复制分享文字</button>
+        <button id="book-complete-next" class="px-6 py-2 bg-magic-gold text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all">太棒了 →</button>
+      </div>
     `;
   }
 
   overlay.appendChild(card);
   document.body.appendChild(overlay);
 
-  const btn = card.querySelector('button');
-  btn.addEventListener('click', () => {
+  const closeOverlay = () => {
     overlay.style.opacity = '0';
     overlay.style.transition = 'opacity 0.3s';
     setTimeout(() => {
       overlay.remove();
       if (callback) callback();
     }, 300);
+  };
+
+  card.querySelector('#book-complete-next').addEventListener('click', closeOverlay);
+
+  card.querySelector('#book-complete-save').addEventListener('click', () => {
+    if (typeof html2canvas !== 'undefined') {
+      html2canvas(card, { backgroundColor: '#f5e6c8', scale: 2 }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = `誊抄完成_${bookTitle}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        showToast('证书图已保存 📥');
+      }).catch(() => {
+        copyBookShareText(bookTitle, bookEmoji, newLevel);
+      });
+    } else {
+      copyBookShareText(bookTitle, bookEmoji, newLevel);
+    }
   });
+
+  card.querySelector('#book-complete-share').addEventListener('click', () => {
+    copyBookShareText(bookTitle, bookEmoji, newLevel);
+  });
+
+  // 完成弹窗必须点击按钮确认，禁止点击空白处关闭
+}
+
+function copyBookShareText(bookTitle, bookEmoji, newLevel) {
+  const masteryNames = ['', '初识', '熟悉', '精通', '大师', '传承'];
+  const masteryLine = newLevel && masteryNames[newLevel] ? ` · 典藏等级：${masteryNames[newLevel]}` : '';
+  const text = `${bookEmoji || '📚'} 我在「归墟图书馆」完成了《${bookTitle}》的誊抄${masteryLine}。每一页抄写，都是对世界的重建。`;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => showToast('分享文字已复制到剪贴板 📋')).catch(() => prompt('复制这段文字分享吧：', text));
+  } else {
+    prompt('复制这段文字分享吧：', text);
+  }
+}
+
+function showToast(message) {
+  const toast = document.createElement('div');
+  toast.className = 'fixed bottom-8 left-1/2 -translate-x-1/2 px-4 py-2 bg-ink/80 text-white rounded-full text-sm z-[200] animate-fade-in-up';
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 0.3s';
+    setTimeout(() => toast.remove(), 300);
+  }, 2000);
 }
 
 // ========== 日志装帧升级弹窗 ==========

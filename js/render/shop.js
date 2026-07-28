@@ -1,11 +1,11 @@
-// 位面商店页面渲染 —— 纯渲染，不持状态
+// Plane Shop page rendering — pure rendering, no state ownership
 import { state, saveState } from '../state.js';
 import { BOOKS } from '../../data/books.js';
 import { SHARED_POOL } from '../../data/book_pool.js';
-import { el, h, actions, updateStatusBar } from './common.js';
+import { el, h, actions, updateStatusBar, getBookTitle } from './common.js';
 import { playSfx } from '../audio.js';
 import { ensureShopState, getShopState, purchaseBook, getBorrowLevelPrice, upgradeBorrowLevel, getFocusLevelPrice, upgradeFocusLevel, purchaseSignboard, purchasePlanePortal, getPlanePortalPrice, getActivePeizhouRec } from '../shop.js';
-import { getManuscriptSlots, getManuscriptBoxCount, isRestorationUnlocked, unlockRestorationRoom, getRestorationUnlockPrice } from '../capacity.js';
+import { getManuscriptSlots, getManuscriptBoxCount, isRestorationUnlocked, unlockRestorationRoom, getRestorationUnlockPrice, getRestorationLevel, getRestorationUpgradePrice, upgradeRestorationLevel } from '../capacity.js';
 import { PLANES, canUnlockPlane } from '../../data/planes.js';
 import { showFocusRoomUpgrade } from './tutorial-ui.js';
 import { getBorrowLevelConfig } from '../visitors.js';
@@ -16,9 +16,18 @@ import { checkAndShowTutorial } from '../tutorial.js';
 import { dispatchTutorialUI } from './tutorial-ui.js';
 import { SIGNBOARDS } from '../../data/signboards.js';
 import { plantSeed, canFertilize, fertilizePlant, canWater, waterPlant, canHarvest, harvestPlant } from '../plants.js';
+import { showPlantMaturityToast, showPlantHarvestPopup } from './plants.js';
 import { getAmbientDefs, buyAmbient } from '../ambient.js';
+import { t, getLocale, getPageName, getBorrowLevelName, getRestorationLevelName, getFocusRoomLevelName, getVisitorName } from '../i18n/terms.js';
 
 let countdownInterval = null;
+
+function formatDiscount(discount) {
+  const value = getLocale() === 'en'
+    ? Math.round((1 - discount) * 100)
+    : Math.round(discount * 10);
+  return t('discountLabel').replace('{value}', value);
+}
 
 export function renderShopPage() {
   cleanupTimer();
@@ -31,50 +40,60 @@ export function renderShopPage() {
 
   const wrapper = el('div', 'space-y-6');
 
-  // ========== 图书馆升级区 ==========
+  // ========== Library Upgrades ==========
   wrapper.appendChild(renderLibraryUpgrades());
 
-  // ========== 新书区 ==========
-  wrapper.appendChild(renderBookSection('📚 新书上架', shopState.fixed, false));
-  wrapper.appendChild(renderBookSection('🔥 限时特惠', shopState.rotating, true));
+  // ========== New Books ==========
+  wrapper.appendChild(renderBookSection(`📚 ${t('newBooksInStock')}`, shopState.fixed, false));
+  wrapper.appendChild(renderBookSection(`🔥 ${t('limitedTimeOffer')}`, shopState.rotating, true));
 
-  // ========== 环境音商店 ==========
+  // ========== Ambient Sounds ==========
   wrapper.appendChild(renderAmbientShop());
 
-  // ========== 馆内装潢区 ==========
+  // ========== Decorations ==========
   wrapper.appendChild(renderDecorationShop());
 
   container.appendChild(wrapper);
 
-  // 启动倒计时定时器（仅更新倒计时文本，不重建DOM）
+  // Start countdown timer (updates text only, does not rebuild DOM)
   const hasCountdown = [...shopState.fixed, ...shopState.rotating].some(s => s.soldAt);
   if (hasCountdown) {
     countdownInterval = setInterval(updateCountdowns, 1000);
   }
 }
 
-// ========== 图书馆升级区 ==========
+// ========== Library Upgrades ==========
 
 function renderLibraryUpgrades() {
   const section = el('div', 'parchment-bg rounded-2xl p-6 magic-glow');
 
-  section.innerHTML = `<h2 class="font-display text-xl font-bold mb-4">🏛️ 图书馆升级</h2>`;
+  section.innerHTML = `<h2 class="font-display text-xl font-bold mb-4">🏛️ ${t('libraryUpgrade')}</h2>`;
 
   const grid = el('div', 'grid grid-cols-1 md:grid-cols-2 gap-3');
 
-  // === 借阅区升级（可运作） ===
+  // === Reading Area upgrade ===
   const lv = state.library.borrowLevel || 0;
-  const lvNames = ['未建造', '陋室', '整洁', '开放', '舒适', '精致', '优雅', '圣所'];
   const price = getBorrowLevelPrice();
   const maxed = lv >= 7;
 
   const readingCard = el('div', 'bg-white rounded-xl p-4 border-2 border-magic-gold/30 flex gap-4 items-center');
   const imgNum = String(lv === 0 ? 1 : lv).padStart(2, '0');
 
-  // 如果有美术素材则展示
+  // Show art asset if available
   const imgSrc = lv > 0
     ? `visual/library_readingarea/library_reading_${imgNum}_${['', 'shell','tidy','open','comfy','refined','elegant','sanctum'][lv]}.jpg`
     : '';
+
+  const borrowStats = lv === 0
+    ? t('borrowAreaStatsNotBuilt')
+    : (() => {
+        const c = getBorrowLevelConfig();
+        return t('borrowAreaStats')
+          .replace('{cap}', c.cap)
+          .replace('{returnCoins}', c.returnCoins)
+          .replace('{favorBonus}', c.favorBonus)
+          .replace('{returnAtmo}', c.returnAtmo);
+      })();
 
   readingCard.innerHTML = `
     <div class="w-24 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-wood/10 flex items-center justify-center">
@@ -84,16 +103,13 @@ function renderLibraryUpgrades() {
     </div>
     <div class="flex-1">
       <div class="flex items-center gap-2 mb-1">
-        <span class="font-bold">📚 借阅区</span>
-        <span class="text-xs bg-magic-gold/20 text-magic-gold px-2 py-0.5 rounded-full">Lv.${lv} · ${lvNames[lv]}</span>
+        <span class="font-bold">📚 ${t('readingArea')}</span>
+        <span class="text-xs bg-magic-gold/20 text-magic-gold px-2 py-0.5 rounded-full">Lv.${lv} · ${getBorrowLevelName(lv)}</span>
       </div>
-      <p class="text-xs text-ink-light mb-2">${
-        lv === 0 ? '在馆1人 · 购买升级以容纳更多访客'
-        : (() => { const c = getBorrowLevelConfig(); return `在馆${c.cap}人 · 还书+${c.returnCoins}💰 · 好感+${c.favorBonus}% · 氛围+${c.returnAtmo}`; })()
-      }</p>
+      <p class="text-xs text-ink-light mb-2">${borrowStats}</p>
       ${maxed
-        ? '<span class="text-sm text-magic-gold font-bold">已满级 ✨</span>'
-        : `<button class="upgrade-borrow-btn px-4 py-1.5 bg-magic-gold text-white rounded-lg text-sm font-bold hover:shadow-lg transition-all">升级 💰${price.toLocaleString()}</button>`
+        ? `<span class="text-sm text-magic-gold font-bold">${t('maxLevel')} ✨</span>`
+        : `<button class="upgrade-borrow-btn px-4 py-1.5 bg-magic-gold text-white rounded-lg text-sm font-bold hover:shadow-lg transition-all">${t('upgrade')} 💰${price.toLocaleString()}</button>`
       }
     </div>
   `;
@@ -106,22 +122,21 @@ function renderLibraryUpgrades() {
         playSfx('buy_success');
         renderShopPage();
       } else {
-        alert('智慧之光不足 💰');
+        alert(`${t('insufficientCoins')} 💰`);
       }
     });
   }
 
   grid.appendChild(readingCard);
 
-  // === 缮写室升级 ===
+  // === Scriptorium upgrade ===
   const flv = state.library.focusLevel || 0;
-  const flvNames = ['残破', '陋室', '整洁', '明亮', '静雅', '华美', '缮写圣堂'];
   const fprice = getFocusLevelPrice();
   const fmaxed = flv >= 6;
 
   const focusCard = el('div', 'bg-white rounded-xl p-4 border-2 border-magic-gold/30 flex gap-4 items-center');
 
-  // 缮写室素材文件名映射（lv0~lv6 各一张）
+  // Scriptorium art filename mapping (lv0~lv6, one each)
   const fimgNames = [
     'focusroom_lv0_final_0.jpg',
     'focusroom_lv1_no_text_0.jpg',
@@ -133,24 +148,25 @@ function renderLibraryUpgrades() {
   ];
   const fimgActualSrc = flv >= 0 ? `visual/focusroom/${fimgNames[flv]}` : '';
 
+  const focusStats = flv === 0
+    ? t('focusRoomStatsNotBuilt')
+    : t('focusRoomStats').replace('{value}', flv * 5);
+
   focusCard.innerHTML = `
     <div class="w-24 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-wood/10 flex items-center justify-center">
       ${fimgActualSrc
-        ? `<img src="${fimgActualSrc}" alt="缮写室Lv${flv}" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<span class=text-3xl>🖋️</span>'">`
+        ? `<img src="${fimgActualSrc}" alt="${t('tabScriptorium')} Lv${flv}" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<span class=text-3xl>🖋️</span>'">`
         : '<span class="text-3xl">🖋️</span>'}
     </div>
     <div class="flex-1">
       <div class="flex items-center gap-2 mb-1">
-        <span class="font-bold">🖋️ 缮写室</span>
-        <span class="text-xs bg-magic-gold/20 text-magic-gold px-2 py-0.5 rounded-full">Lv.${flv} · ${flvNames[flv]}</span>
+        <span class="font-bold">🖋️ ${t('tabScriptorium')}</span>
+        <span class="text-xs bg-magic-gold/20 text-magic-gold px-2 py-0.5 rounded-full">Lv.${flv} · ${getFocusRoomLevelName(flv)}</span>
       </div>
-      <p class="text-xs text-ink-light mb-2">${
-        flv === 0 ? '残破的缮写室，修缮可提升誊抄速度'
-        : `誊抄速度 +${flv * 5}%`
-      }</p>
+      <p class="text-xs text-ink-light mb-2">${focusStats}</p>
       ${fmaxed
-        ? '<span class="text-sm text-magic-gold font-bold">已满级 ✨</span>'
-        : `<button class="upgrade-focus-btn px-4 py-1.5 bg-magic-gold text-white rounded-lg text-sm font-bold hover:shadow-lg transition-all">升级 💰${fprice.toLocaleString()}</button>`
+        ? `<span class="text-sm text-magic-gold font-bold">${t('maxLevel')} ✨</span>`
+        : `<button class="upgrade-focus-btn px-4 py-1.5 bg-magic-gold text-white rounded-lg text-sm font-bold hover:shadow-lg transition-all">${t('upgrade')} 💰${fprice.toLocaleString()}</button>`
       }
     </div>
   `;
@@ -164,14 +180,14 @@ function renderLibraryUpgrades() {
         renderShopPage();
         showFocusRoomUpgrade(state.library.focusLevel);
       } else {
-        alert('智慧之光不足 💰');
+        alert(`${t('insufficientCoins')} 💰`);
       }
     });
   }
 
   grid.appendChild(focusCard);
 
-  // === 位面传送门 ===
+  // === Plane Portal ===
   const pastoral = PLANES.pastoral;
   if (pastoral && pastoral.unlock) {
     const portalKey = pastoral.unlock.shopUpgrade;
@@ -186,23 +202,26 @@ function renderLibraryUpgrades() {
       }`);
       const price = getPlanePortalPrice('pastoral');
 
+      const portalStatus = portalPurchased
+        ? `<span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">${t('unlocked')}</span>`
+        : meetsReqs
+          ? `<span class="text-xs bg-magic-gold/20 text-magic-gold px-2 py-0.5 rounded-full">${t('availableToBuild')}</span>`
+          : `<span class="text-xs bg-gray-200 text-gray-500 px-2 py-0.5 rounded-full">${t('conditionsNotMet')}</span>`;
+
       portalCard.innerHTML = `
         <span class="text-3xl">${pastoral.emoji}</span>
         <div class="flex-1">
           <div class="flex items-center gap-2 mb-1">
             <span class="font-bold">${pastoral.name}</span>
-            ${portalPurchased
-              ? '<span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">已解锁</span>'
-              : meetsReqs
-                ? '<span class="text-xs bg-magic-gold/20 text-magic-gold px-2 py-0.5 rounded-full">可建造</span>'
-                : '<span class="text-xs bg-gray-200 text-gray-500 px-2 py-0.5 rounded-full">条件不足</span>'
-            }
+            ${portalStatus}
           </div>
           <p class="text-xs text-ink-light mb-2">${pastoral.desc}</p>
           ${!meetsReqs
-            ? `<p class="text-xs text-ink-light/60">需要：氛围 ≥${pastoral.unlock.atmo} · 拥有 ≥${pastoral.unlock.books} 本书</p>`
+            ? `<p class="text-xs text-ink-light/60">${t('requirements')
+                .replace('{atmo}', pastoral.unlock.atmo)
+                .replace('{books}', pastoral.unlock.books)}</p>`
             : canPurchase
-              ? `<button class="portal-purchase-btn px-4 py-1.5 bg-magic-gold text-white rounded-lg text-sm font-bold hover:shadow-lg transition-all">开启传送门 💰${price.toLocaleString()}</button>`
+              ? `<button class="portal-purchase-btn px-4 py-1.5 bg-magic-gold text-white rounded-lg text-sm font-bold hover:shadow-lg transition-all">${t('openPortal')} 💰${price.toLocaleString()}</button>`
               : ''
           }
         </div>
@@ -216,7 +235,7 @@ function renderLibraryUpgrades() {
             updateStatusBar();
             renderShopPage();
           } else {
-            alert('智慧之光不足 💰');
+            alert(`${t('insufficientCoins')} 💰`);
           }
         });
       }
@@ -225,7 +244,7 @@ function renderLibraryUpgrades() {
     }
   }
 
-  // === 空白铭牌（氛围≥80 时可命名） ===
+  // === Blank Name Plaque (available when atmosphere ≥ 80) ===
   const atmo = state.library.atmosphere || 0;
   const showPlaque = atmo >= 80 && !state.library.nameLocked;
 
@@ -234,61 +253,100 @@ function renderLibraryUpgrades() {
     plaqueCard.innerHTML = `
       <span class="text-3xl">🏷️</span>
       <div class="flex-1">
-        <span class="font-bold text-sm">空白铭牌</span>
-        <p class="text-xs text-ink-light mt-1">为这座图书馆赋予真正的名字</p>
+        <span class="font-bold text-sm">${t('blankNamePlaque')}</span>
+        <p class="text-xs text-ink-light mt-1">${t('nameTheLibrary')}</p>
       </div>
-      <span class="text-magic-gold text-sm font-bold">免费</span>
+      <span class="text-magic-gold text-sm font-bold">${t('free')}</span>
     `;
     plaqueCard.addEventListener('click', showNamingModal);
     grid.appendChild(plaqueCard);
   }
 
-  // === 古籍修复室入口 ===
+  // === Restoration Room ===
   const restorationUnlocked = isRestorationUnlocked();
-  const restorationCard = el('div', `bg-amber-50 rounded-xl p-4 border-2 border-amber-200 flex items-center gap-3 ${restorationUnlocked ? 'cursor-pointer hover:shadow-lg hover:border-amber-400 transition-all' : ''}`);
-  restorationCard.innerHTML = `
-    <span class="text-2xl">📜</span>
-    <div class="flex-1">
-      <span class="font-bold text-sm">古籍修复室</span>
-      <span class="text-xs text-ink-light ml-2">${restorationUnlocked ? '修复损毁珍本 · 合成典藏版' : '残破的房间堆满灰尘，需先修缮'}</span>
-    </div>
-    ${restorationUnlocked
-      ? '<span class="text-xs text-amber-700 bg-amber-100 px-2 py-0.5 rounded font-bold">进入 →</span>'
-      : `<button class="buy-restoration-btn px-3 py-1.5 bg-magic-gold text-white text-xs font-bold rounded-lg hover:shadow-lg transition-all" data-stop-propagation>
-          解锁 💰${getRestorationUnlockPrice().toLocaleString()}
-         </button>`}
-  `;
-  if (restorationUnlocked) {
-    restorationCard.addEventListener('click', () => {
-      if (window.switchTab) window.switchTab('library');
-      if (window.switchLibrarySubTab) window.switchLibrarySubTab('restoration');
-    });
+  const restorationLevel = getRestorationLevel();
+  const restorationMaxed = restorationLevel >= 5;
+  const restorationUpgradePrice = getRestorationUpgradePrice();
+  const restorationUnlockPrice = getRestorationUnlockPrice();
+  const restorationImgNames = [
+    'restoration_lv0_ruins.jpg',
+    'restoration_lv1_shelter.jpg',
+    'restoration_lv2_tidy.jpg',
+    'restoration_lv3_bright.jpg',
+    'restoration_lv4_elegant.jpg',
+    'restoration_lv5_sanctum.jpg'
+  ];
+  const restorationImgSrc = `visual/restoration/${restorationImgNames[restorationLevel]}`;
+
+  let restorationStats;
+  if (!restorationUnlocked) {
+    restorationStats = t('restorationRoomStatsNotBuilt');
+  } else if (restorationLevel === 0) {
+    restorationStats = t('restorationRoomStatsUnlockedLevel0');
   } else {
-    const buyBtn = restorationCard.querySelector('.buy-restoration-btn');
-    if (buyBtn) {
-      buyBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (unlockRestorationRoom()) {
-          playSfx('buy_success');
-          updateStatusBar();
-          const trigger = checkAndShowTutorial('restoration_unlock');
-          if (trigger) dispatchTutorialUI(trigger);
-          renderShopPage();
-        } else {
-          alert('智慧之光不足 💰');
-        }
-      });
-    }
+    restorationStats = t('restorationRoomStats').replace('{value}', restorationLevel * 5);
+  }
+
+  const restorationCard = el('div', 'bg-white rounded-xl p-4 border-2 border-magic-gold/30 flex gap-4 items-center');
+  restorationCard.innerHTML = `
+    <div class="w-24 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-wood/10 flex items-center justify-center">
+      ${restorationUnlocked
+        ? `<img src="${restorationImgSrc}" alt="${t('restorationRoom')} Lv${restorationLevel}" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<span class=text-3xl>📜</span>'">`
+        : '<span class="text-3xl">🔒</span>'}
+    </div>
+    <div class="flex-1">
+      <div class="flex items-center gap-2 mb-1">
+        <span class="font-bold">📜 ${t('restorationRoom')}</span>
+        ${restorationUnlocked
+          ? `<span class="text-xs bg-magic-gold/20 text-magic-gold px-2 py-0.5 rounded-full">Lv.${restorationLevel} · ${getRestorationLevelName(restorationLevel)}</span>`
+          : `<span class="text-xs bg-gray-200 text-gray-500 px-2 py-0.5 rounded-full">${t('locked')}</span>`}
+      </div>
+      <p class="text-xs text-ink-light mb-2">${restorationStats}</p>
+      ${!restorationUnlocked
+        ? `<button class="buy-restoration-btn px-4 py-1.5 bg-magic-gold text-white rounded-lg text-sm font-bold hover:shadow-lg transition-all">${t('unlock')} 💰${restorationUnlockPrice.toLocaleString()}</button>`
+        : restorationMaxed
+          ? `<span class="text-sm text-magic-gold font-bold">${t('maxLevel')} ✨</span>`
+          : `<button class="upgrade-restoration-btn px-4 py-1.5 bg-magic-gold text-white rounded-lg text-sm font-bold hover:shadow-lg transition-all">${t('upgrade')} 💰${restorationUpgradePrice.toLocaleString()}</button>`
+      }
+    </div>
+  `;
+
+  const buyRestorationBtn = restorationCard.querySelector('.buy-restoration-btn');
+  if (buyRestorationBtn) {
+    buyRestorationBtn.addEventListener('click', () => {
+      if (unlockRestorationRoom()) {
+        playSfx('buy_success');
+        updateStatusBar();
+        const trigger = checkAndShowTutorial('restoration_unlock');
+        if (trigger) dispatchTutorialUI(trigger);
+        renderShopPage();
+      } else {
+        alert(`${t('insufficientCoins')} 💰`);
+      }
+    });
+  }
+
+  const upgradeRestorationBtn = restorationCard.querySelector('.upgrade-restoration-btn');
+  if (upgradeRestorationBtn) {
+    upgradeRestorationBtn.addEventListener('click', () => {
+      if (upgradeRestorationLevel()) {
+        playSfx('buy_success');
+        updateStatusBar();
+        renderShopPage();
+      } else {
+        alert(`${t('insufficientCoins')} 💰`);
+      }
+    });
   }
   grid.appendChild(restorationCard);
 
-  // === 其他占位项 ===
+  // === Other placeholders ===
   const placeholders = [
-    { icon: '☕', name: '咖啡角', desc: '延长访客停留时间' },
-    { icon: '🔬', name: '研究区', desc: '深度研究书籍获得加成' },
-    { icon: '🚪', name: '位面串门', desc: '参观其他馆长的图书馆' },
-    { icon: '📨', name: '书籍漂流', desc: '将誊抄的书复印赠予友人' },
-    { icon: '🌟', name: '联合修复', desc: '全服馆长协力解锁限定书籍' }
+    { icon: '☕', nameKey: 'coffeeCorner', descKey: 'coffeeCornerDesc' },
+    { icon: '🔬', nameKey: 'researchArea', descKey: 'researchAreaDesc' },
+    { icon: '🚪', nameKey: 'planeVisiting', descKey: 'planeVisitingDesc' },
+    { icon: '📨', nameKey: 'bookDrift', descKey: 'bookDriftDesc' },
+    { icon: '🌟', nameKey: 'jointRestoration', descKey: 'jointRestorationDesc' }
   ];
 
   placeholders.forEach(p => {
@@ -296,10 +354,10 @@ function renderLibraryUpgrades() {
     card.innerHTML = `
       <span class="text-2xl">${p.icon}</span>
       <div class="flex-1">
-        <span class="font-bold text-sm">${p.name}</span>
-        <span class="text-xs text-ink-light ml-2">${p.desc}</span>
+        <span class="font-bold text-sm">${t(p.nameKey)}</span>
+        <span class="text-xs text-ink-light ml-2">${t(p.descKey)}</span>
       </div>
-      <span class="text-xs text-ink-light bg-gray-200 px-2 py-0.5 rounded">🏗️ 规划中…</span>
+      <span class="text-xs text-ink-light bg-gray-200 px-2 py-0.5 rounded">🏗️ ${t('inPlanning')}</span>
     `;
     grid.appendChild(card);
   });
@@ -308,7 +366,7 @@ function renderLibraryUpgrades() {
   return section;
 }
 
-// ========== 新书区 ==========
+// ========== New Books ==========
 
 function renderBookSection(title, slots, isRotating) {
   const section = el('div', 'parchment-bg rounded-2xl p-6 magic-glow');
@@ -318,9 +376,9 @@ function renderBookSection(title, slots, isRotating) {
 
   slots.forEach(slot => {
     if (!slot || !slot.bookId) {
-      // 空位
+      // Empty slot
       const empty = el('div', 'bg-wood/5 rounded-xl p-4 border-2 border-dashed border-wood/20 flex items-center justify-center min-h-[180px]');
-      empty.innerHTML = '<span class="text-wood/30 text-sm text-center">新书上架中…</span>';
+      empty.innerHTML = `<span class="text-wood/30 text-sm text-center">${t('newBooksRestocking')}</span>`;
       grid.appendChild(empty);
       return;
     }
@@ -341,10 +399,10 @@ function renderBookSection(title, slots, isRotating) {
 function renderBookCard(slot, poolEntry, owned, isRotating, mBoxFull) {
   const disabled = owned || (mBoxFull && !owned);
   let disabledReason = '';
-  if (owned) disabledReason = '✅ 已拥有';
-  else if (mBoxFull) disabledReason = '📦 手稿箱已满';
+  if (owned) disabledReason = `✅ ${t('owned')}`;
+  else if (mBoxFull) disabledReason = `📦 ${t('manuscriptBoxFull')}`;
 
-  const displayTitle = poolEntry.volumeTitle || poolEntry.title;
+  const displayTitle = getBookTitle(poolEntry);
   const volumeBadge = poolEntry.type === 'volume'
     ? `<div class="absolute top-2 right-2 text-[10px] bg-magic-blue/10 text-magic-blue px-1.5 py-0.5 rounded font-bold">${poolEntry.subtitle || ''}</div>`
     : '';
@@ -366,9 +424,10 @@ function renderBookCard(slot, poolEntry, owned, isRotating, mBoxFull) {
     return card;
   }
 
+  const discountText = isRotating ? formatDiscount(slot.discount) : '';
   const priceDisplay = isRotating
     ? `<div class="text-sm"><span class="text-gray-400 line-through text-xs">💰${slot.originalPrice}</span> <span class="text-magic-gold font-bold">💰${slot.price}</span></div>
-       <div class="text-xs text-red-500 font-bold">${Math.round(slot.discount * 10)}折</div>`
+       <div class="text-xs text-red-500 font-bold">${discountText}</div>`
     : `<div class="text-sm text-magic-gold font-bold">💰${slot.price}</div>`;
 
   const soldText = slot.soldAt ? formatCountdown(slot.soldAt) : '';
@@ -388,18 +447,28 @@ function renderBookCard(slot, poolEntry, owned, isRotating, mBoxFull) {
 
   const peizhouRec = getActivePeizhouRec();
   const isPeizhouPick = peizhouRec && peizhouRec.bookId === slot.bookId;
+  const peizhouName = getVisitorName('peizhou');
+  const peizhouBadge = isPeizhouPick
+    ? `<div class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full inline-block mb-1 font-bold">${t('recommendedBy').replace('{name}', peizhouName).replace('{value}', formatDiscount(0.7).replace(/[^0-9]/g, ''))}</div>`
+    : '';
+  const peizhouPriceLine = isPeizhouPick
+    ? `<div class="text-xs text-amber-600 mt-1">${t('recommendedPrice')
+        .replace('{original}', slot.price.toLocaleString())
+        .replace('{name}', peizhouName)
+        .replace('{price}', Math.round(slot.price * 0.7).toLocaleString())}</div>`
+    : '';
 
   card.innerHTML = `
     ${volumeBadge}
     <div class="text-center">
-      ${poolEntry.starter ? '<div class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full inline-block mb-1 font-bold">🌱 新手推荐</div>' : ''}
-      ${isPeizhouPick ? '<div class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full inline-block mb-1 font-bold">📚 裴舟推荐 · 7折</div>' : ''}
+      ${poolEntry.starter ? `<div class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full inline-block mb-1 font-bold">${t('starterRecommended')}</div>` : ''}
+      ${peizhouBadge}
       <div class="text-3xl mb-2">${poolEntry.emoji}</div>
       <div class="font-bold text-sm mb-1">${displayTitle}</div>
       <div class="text-xs text-ink-light mb-1">${poolEntry.author}</div>
-      <div class="text-xs text-ink-light mb-2">${poolEntry.category} · ${poolEntry.totalWords.toLocaleString()}字</div>
+      <div class="text-xs text-ink-light mb-2">${poolEntry.category} · ${poolEntry.totalWords.toLocaleString()}${t('wordsUnit')}</div>
       ${priceDisplay}
-      ${isPeizhouPick ? `<div class="text-xs text-amber-600 mt-1">原价 💰${slot.price.toLocaleString()} → 裴舟价 💰${Math.round(slot.price * 0.7).toLocaleString()}</div>` : ''}
+      ${peizhouPriceLine}
     </div>
   `;
 
@@ -412,7 +481,7 @@ function renderBookCard(slot, poolEntry, owned, isRotating, mBoxFull) {
   return card;
 }
 
-// ========== 购买弹窗 ==========
+// ========== Purchase Modal ==========
 
 function showPurchaseModal(poolEntry, price, originalPrice, discount) {
   const overlay = el('div', 'fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4');
@@ -420,11 +489,12 @@ function showPurchaseModal(poolEntry, price, originalPrice, discount) {
   const desc = poolEntry.description || '';
   const shortDesc = desc.length > 60 ? desc.slice(0, 60) + '…' : desc;
 
+  const discountText = discount ? formatDiscount(discount) : '';
   const priceLine = discount
-    ? `<span class="text-gray-400 line-through mr-2">💰${originalPrice}</span><span class="text-magic-gold font-bold text-lg">💰${price}</span> <span class="text-xs text-red-500">${Math.round(discount * 10)}折</span>`
+    ? `<span class="text-gray-400 line-through mr-2">💰${originalPrice}</span><span class="text-magic-gold font-bold text-lg">💰${price}</span> <span class="text-xs text-red-500">${discountText}</span>`
     : `<span class="text-magic-gold font-bold text-lg">💰${price}</span>`;
 
-  const displayTitle = poolEntry.volumeTitle || poolEntry.title;
+  const displayTitle = getBookTitle(poolEntry);
   const volumeSubtitle = poolEntry.type === 'volume'
     ? `<p class="text-xs text-magic-blue font-bold mb-1">${poolEntry.subtitle || ''}</p>`
     : '';
@@ -438,17 +508,17 @@ function showPurchaseModal(poolEntry, price, originalPrice, discount) {
       ${volumeSubtitle}
       <h3 class="font-display text-xl font-bold mb-1">${displayTitle}</h3>
       <p class="text-sm text-ink-light">${poolEntry.author} · ${poolEntry.category}</p>
-      <p class="text-xs text-ink-light mt-1">${poolEntry.totalWords.toLocaleString()}字 · ${chapterCount}章</p>
+      <p class="text-xs text-ink-light mt-1">${poolEntry.totalWords.toLocaleString()}${t('wordsUnit')} · ${t('chapterCount').replace('{n}', chapterCount)}</p>
     </div>
     <div class="bg-white/60 rounded-lg p-3 mb-4">
       <p class="text-sm text-ink-light">${shortDesc}</p>
     </div>
     <div class="text-center mb-4">${priceLine}</div>
     <div class="flex justify-center gap-3">
-      <button class="cancel-btn px-6 py-2.5 bg-wood/20 text-ink-light rounded-lg font-bold hover:bg-wood/30 transition-all">取消</button>
-      <button class="confirm-btn px-6 py-2.5 bg-magic-gold text-white rounded-lg font-bold hover:shadow-lg transition-all ${state.coins < price ? 'opacity-50 cursor-not-allowed' : ''}">确认购买</button>
+      <button class="cancel-btn px-6 py-2.5 bg-wood/20 text-ink-light rounded-lg font-bold hover:bg-wood/30 transition-all">${t('cancel')}</button>
+      <button class="confirm-btn px-6 py-2.5 bg-magic-gold text-white rounded-lg font-bold hover:shadow-lg transition-all ${state.coins < price ? 'opacity-50 cursor-not-allowed' : ''}">${t('confirmPurchase')}</button>
     </div>
-    ${state.coins < price ? '<p class="text-xs text-red-500 text-center mt-2">智慧之光不足 💰</p>' : ''}
+    ${state.coins < price ? `<p class="text-xs text-red-500 text-center mt-2">${t('insufficientCoins')} 💰</p>` : ''}
   `;
 
   overlay.appendChild(content);
@@ -472,25 +542,25 @@ function showPurchaseModal(poolEntry, price, originalPrice, discount) {
     } else {
       switch (result.reason) {
         case 'insufficient_coins':
-          alert(`智慧之光不足！需要 ${result.actualPrice} 💡（原价 ${price}，折扣后）`);
+          alert(`${t('insufficientCoinsExclamation')} ${t('purchaseNeedsCoins').replace('{actual}', result.actualPrice).replace('{price}', price)}`);
           break;
         case 'already_owned':
-          alert('你已经拥有这本书了！');
+          alert(t('youAlreadyOwnThisBook'));
           break;
         case 'manuscript_box_full': {
           const mSlots = getManuscriptSlots();
           const mCount = getManuscriptBoxCount();
-          alert(`手稿箱已满（${mCount}/${mSlots}格）！请先扩容手稿箱再购买。`);
+          alert(`${t('manuscriptBoxFull')}（${mCount}/${mSlots}${t('slots')}）！${t('expandManuscriptBoxFirst')}`);
           break;
         }
         default:
-          alert('购买失败，请稍后再试。');
+          alert(t('purchaseFailed'));
       }
     }
   });
 }
 
-// ========== 命名弹窗 ==========
+// ========== Naming Modal ==========
 
 function showNamingModal() {
   const overlay = el('div', 'fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4');
@@ -499,21 +569,18 @@ function showNamingModal() {
   content.innerHTML = `
     <div class="text-center mb-6">
       <div class="text-5xl mb-3">🏷️</div>
-      <h3 class="font-display text-xl font-bold mb-2">为图书馆命名</h3>
-      <p class="text-sm text-ink-light">
-        这座归墟中的图书馆已初现生机。<br>
-        给它一个名字吧——一个只属于你的名字。
-      </p>
+      <h3 class="font-display text-xl font-bold mb-2">${t('libraryNaming')}</h3>
+      <p class="text-sm text-ink-light">${t('nameTheLibrary')}</p>
     </div>
     <div class="mb-4">
       <input id="naming-input" type="text" maxlength="12"
         class="w-full px-4 py-3 rounded-lg border-2 border-wood/30 bg-white text-center font-display text-lg focus:border-magic-gold focus:outline-none transition-all"
         placeholder="${state.library.name}" value="">
-      <p class="text-xs text-ink-light text-center mt-2" id="naming-hint">最多12个字</p>
+      <p class="text-xs text-ink-light text-center mt-2" id="naming-hint">${t('maxNCharacters').replace('{n}', 12)}</p>
     </div>
     <div class="flex justify-center gap-3">
-      <button class="cancel-name-btn px-6 py-2.5 bg-wood/20 text-ink-light rounded-lg font-bold hover:bg-wood/30 transition-all">再说吧</button>
-      <button class="confirm-name-btn px-6 py-2.5 bg-magic-gold text-white rounded-lg font-bold hover:shadow-lg transition-all">铭刻此名</button>
+      <button class="cancel-name-btn px-6 py-2.5 bg-wood/20 text-ink-light rounded-lg font-bold hover:bg-wood/30 transition-all">${t('maybeLater')}</button>
+      <button class="confirm-name-btn px-6 py-2.5 bg-magic-gold text-white rounded-lg font-bold hover:shadow-lg transition-all">${t('inscribeThisName')}</button>
     </div>
   `;
 
@@ -524,14 +591,16 @@ function showNamingModal() {
   const input = content.querySelector('#naming-input');
   const hint = content.querySelector('#naming-hint');
 
-  // 实时字数提示
+  // Live character hint
   input.addEventListener('input', () => {
     const len = input.value.length;
-    hint.textContent = len > 12 ? `已超出 ${len - 12} 字` : `最多${12 - len}字`;
+    hint.textContent = len > 12
+      ? t('charsOver').replace('{n}', len - 12)
+      : t('charsRemaining').replace('{n}', 12 - len);
     hint.className = `text-xs text-center mt-2 ${len > 12 ? 'text-red-500' : 'text-ink-light'}`;
   });
 
-  // 回车确认
+  // Enter to confirm
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') confirmName();
   });
@@ -541,10 +610,10 @@ function showNamingModal() {
 
   function confirmName() {
     const rawName = input.value.trim();
-    const finalName = rawName || state.library.name; // 没填则保留默认名
+    const finalName = rawName || state.library.name; // keep default if empty
 
     if (finalName.length > 12) {
-      hint.textContent = '名称过长，请精简到12字以内';
+      hint.textContent = t('nameTooLong');
       hint.className = 'text-xs text-center mt-2 text-red-500';
       return;
     }
@@ -552,12 +621,12 @@ function showNamingModal() {
     state.library.name = finalName;
     state.library.nameLocked = true;
     saveState();
-    // 刷新顶部导航栏名称
+    // Refresh top navigation name
     const nameEl = document.getElementById('nav-library-name');
     if (nameEl) nameEl.textContent = finalName;
     overlay.remove();
     renderShopPage();
-    // 刷新馆长办公室（如果正在显示）
+    // Refresh curator office if visible
     if (typeof window.renderLibraryPage === 'function') {
       window.renderLibraryPage();
     }
@@ -565,11 +634,11 @@ function showNamingModal() {
 
   content.querySelector('.confirm-name-btn').addEventListener('click', confirmName);
 
-  // 自动聚焦输入框
+  // Auto-focus input
   setTimeout(() => input.focus(), 100);
 }
 
-// ========== 工具 ==========
+// ========== Utilities ==========
 
 function formatCountdown(soldAt) {
   const now = Date.now();
@@ -578,15 +647,15 @@ function formatCountdown(soldAt) {
   const h = Math.floor(remaining / 3600000);
   const m = Math.floor((remaining % 3600000) / 60000);
   const s = Math.floor((remaining % 60000) / 1000);
-  return `补货中 ${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  return t('countdownRestocking').replace('{time}', `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`);
 }
 
-// ========== 环境音商店 ==========
+// ========== Ambient Sounds Shop ==========
 
 function renderAmbientShop() {
   const section = el('div', 'parchment-bg rounded-2xl p-6 magic-glow');
-  section.innerHTML = `<h2 class="font-display text-xl font-bold mb-4">🎧 环境音</h2>
-    <p class="text-xs text-ink-light mb-4">专注时播放的白噪音与氛围音，可与背景音乐同时开启。</p>`;
+  section.innerHTML = `<h2 class="font-display text-xl font-bold mb-4">🎧 ${t('ambientSounds')}</h2>
+    <p class="text-xs text-ink-light mb-4">${t('ambientDescription')}</p>`;
 
   const grid = el('div', 'grid grid-cols-1 md:grid-cols-2 gap-3');
   const ambients = getAmbientDefs();
@@ -597,10 +666,10 @@ function renderAmbientShop() {
       <span class="text-3xl flex-shrink-0">${a.emoji}</span>
       <div class="flex-1 min-w-0">
         <div class="font-bold text-sm text-ink">${a.name}</div>
-        <div class="text-xs text-ink-light truncate">${a.unlocked ? '已解锁 · 可在音乐选择器中切换' : `解锁后可在专注时播放`}</div>
+        <div class="text-xs text-ink-light truncate">${a.unlocked ? t('ambientOwnedHint') : t('ambientLockedHint')}</div>
       </div>
       ${a.unlocked
-        ? '<span class="text-xs text-magic-gold font-bold">已拥有 ✓</span>'
+        ? `<span class="text-xs text-magic-gold font-bold">${t('ambientOwnedLabel')}</span>`
         : `<button class="buy-ambient-btn px-3 py-1.5 bg-magic-gold text-white text-xs font-bold rounded-lg hover:shadow-lg transition-all" data-id="${a.id}">
             💰${a.price.toLocaleString()}
            </button>`}
@@ -615,7 +684,7 @@ function renderAmbientShop() {
           updateStatusBar();
           renderShopPage();
         } else if (result.reason === 'no_coins') {
-          alert('智慧之光不足 💰');
+          alert(`${t('insufficientCoins')} 💰`);
         }
       });
     }
@@ -627,18 +696,18 @@ function renderAmbientShop() {
   return section;
 }
 
-// ========== 馆内装潢 ==========
+// ========== Decorations ==========
 
 function renderDecorationShop() {
   const section = el('div', 'parchment-bg rounded-2xl p-6 magic-glow');
-  section.innerHTML = `<h2 class="font-display text-xl font-bold mb-4">🏺 馆内装潢</h2>`;
+  section.innerHTML = `<h2 class="font-display text-xl font-bold mb-4">🏺 ${t('decoration')}</h2>`;
 
   const grid = el('div', 'grid grid-cols-1 md:grid-cols-2 gap-3');
   const plant = state.plant;
 
-  // === 植物盆栽 ===
+  // === Plant Pot ===
   if (!plant.activeType || plant.level === 0) {
-    // 空盆状态 —— 展示可购买的植物种类
+    // Empty pot — show purchasable plant types
     Object.values(PLANT_TYPES).forEach(pt => {
       const card = el('div', 'bg-white rounded-xl p-4 border-2 border-green-200 flex gap-4 items-center hover:shadow-lg transition-all cursor-pointer');
       const cost = pt.fertilizeCosts[1];
@@ -649,8 +718,8 @@ function renderDecorationShop() {
           <div class="font-bold">${pt.name}</div>
           <p class="text-xs text-ink-light mt-1">${pt.description}</p>
           <div class="flex items-center gap-2 mt-2">
-            <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">🌱 Lv1~5 成长</span>
-            <span class="text-xs text-ink-light">浇水+施肥培育</span>
+            <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">${t('plantGrowLevels')}</span>
+            <span class="text-xs text-ink-light">${t('waterAndFertilize')}</span>
           </div>
         </div>
         <button class="plant-buy-btn px-4 py-1.5 ${canAfford ? 'bg-green-600 text-white hover:shadow-lg' : 'bg-gray-300 text-gray-500 cursor-not-allowed'} rounded-lg text-sm font-bold transition-all"
@@ -666,14 +735,14 @@ function renderDecorationShop() {
             updateStatusAndRefresh();
             if (typeof window.renderLibraryPage === 'function') window.renderLibraryPage();
           } else {
-            alert('购买失败');
+            alert(t('purchaseFailed'));
           }
         });
       }
       grid.appendChild(card);
     });
   } else {
-    // 已种植 —— 显示当前植物状态
+    // Planted — show current plant status
     const def = PLANT_TYPES[plant.activeType];
     if (def) {
       const plantCard = renderActivePlantCard(def, plant);
@@ -681,7 +750,7 @@ function renderDecorationShop() {
     }
   }
 
-  // === 标志牌 ===
+  // === Signboards ===
   Object.values(SIGNBOARDS).forEach(sb => {
     const owned = state.signboards.includes(sb.id);
     const card = el('div', `rounded-xl p-4 border-2 flex gap-3 items-center ${owned ? 'bg-green-50 border-green-200 opacity-80' : 'bg-white border-wood/20 hover:border-magic-gold/50 hover:shadow-lg transition-all'}`);
@@ -690,10 +759,10 @@ function renderDecorationShop() {
       <div class="flex-1">
         <div class="font-bold text-sm flex items-center gap-2">
           ${sb.name}
-          ${owned ? '<span class="text-xs bg-green-200 text-green-700 px-1.5 py-0.5 rounded">✅ 已拥有</span>' : ''}
+          ${owned ? `<span class="text-xs bg-green-200 text-green-700 px-1.5 py-0.5 rounded">✅ ${t('owned')}</span>` : ''}
         </div>
         <p class="text-xs text-ink-light">${sb.description}</p>
-        <p class="text-xs text-ink-light mt-0.5">📌 挂在${getPageName(sb.page)}页面</p>
+        <p class="text-xs text-ink-light mt-0.5">${t('hungOnPage').replace('{page}', getPageName(sb.page))}</p>
       </div>
       ${!owned
         ? `<button class="signboard-buy-btn px-3 py-1.5 ${state.coins >= sb.price ? 'bg-magic-gold text-white hover:shadow-lg' : 'bg-gray-300 text-gray-500 cursor-not-allowed'} rounded-lg text-sm font-bold transition-all"
@@ -709,7 +778,7 @@ function renderDecorationShop() {
           updateStatusAndRefresh();
           if (typeof window.renderLibraryPage === 'function') window.renderLibraryPage();
         } else {
-          alert('智慧之光不足 💰');
+          alert(`${t('insufficientCoins')} 💰`);
         }
       });
     }
@@ -728,6 +797,11 @@ function renderActivePlantCard(def, plant) {
   const canWaterNow = canWater();
   const canFertNow = canFertilize();
 
+  const nextFertCost = def.fertilizeCosts[plant.level + 1] || def.fertilizeCosts[5] || 0;
+  const footerText = plant.level < 5
+    ? t('nextLevelFertilizerCost').replace('{cost}', nextFertCost)
+    : t('maxLevelHarvestHint');
+
   card.innerHTML = `
     <span class="text-5xl flex-shrink-0">${def.emoji}</span>
     <div class="flex-1 min-w-0">
@@ -739,51 +813,56 @@ function renderActivePlantCard(def, plant) {
         <div class="h-full bg-gradient-to-r from-green-400 to-green-600 transition-all" style="width:${progressPercent}%"></div>
       </div>
       <div class="text-xs text-ink-light mb-2">
-        成长进度 ${progressPercent}% · 💧浇水 ${plant.waterAvailable}次可用
+        ${t('growthProgress').replace('{value}', progressPercent)} · ${t('waterAvailableCount').replace('{n}', plant.waterAvailable)}
       </div>
       <div class="flex gap-2 flex-wrap">
         ${canHarvestNow
-          ? `<button class="harvest-btn px-4 py-1.5 bg-yellow-500 text-white rounded-lg text-sm font-bold hover:shadow-lg transition-all">🌾 收获</button>`
+          ? `<button class="harvest-btn px-4 py-1.5 bg-yellow-500 text-white rounded-lg text-sm font-bold hover:shadow-lg transition-all">${t('harvest')}</button>`
           : `
             <button class="water-btn px-3 py-1.5 bg-blue-500 text-white rounded-lg text-sm font-bold hover:shadow-lg transition-all ${!canWaterNow ? 'opacity-50 cursor-not-allowed' : ''}"
-              ${!canWaterNow ? 'disabled' : ''}>💧 浇水 (+${def.waterGrowth}进度)</button>
+              ${!canWaterNow ? 'disabled' : ''}>${t('water')} ${t('waterGrowth').replace('{value}', def.waterGrowth)}</button>
             <button class="fertilize-btn px-3 py-1.5 bg-amber-600 text-white rounded-lg text-sm font-bold hover:shadow-lg transition-all ${!canFertNow ? 'opacity-50 cursor-not-allowed' : ''}"
               ${!canFertNow ? 'disabled' : ''}>
-              🧪 施肥 (+${def.fertilizeGrowth}进度 · 💰${def.fertilizeCosts[plant.level + 1] || 0})
+              ${t('fertilize')} ${t('fertilizeCost').replace('{value}', def.fertilizeGrowth).replace('{cost}', def.fertilizeCosts[plant.level + 1] || 0)}
             </button>
           `}
       </div>
-      ${canHarvestNow ? '<p class="text-xs text-yellow-600 mt-2">✨ 可以收获了！将获得氛围 + 智慧之光，概率掉落种子</p>' : ''}
-      <p class="text-xs text-ink-light mt-1">
-        ${plant.level < 5 ? `下一级施肥花费 💰${def.fertilizeCosts[plant.level + 1] || def.fertilizeCosts[5]}` : '已满级，成长满后可收获'}
-      </p>
+      ${canHarvestNow ? `<p class="text-xs text-yellow-600 mt-2">${t('canHarvestHint')}</p>` : ''}
+      <p class="text-xs text-ink-light mt-1">${footerText}</p>
     </div>
   `;
 
-  // 浇水按钮
+  // Water button
   const waterBtn = card.querySelector('.water-btn');
   if (waterBtn && canWaterNow) {
     waterBtn.addEventListener('click', () => {
-      waterPlant();
+      const result = waterPlant();
+      if (result.ok && result.justMatured) {
+        showPlantMaturityToast(def);
+      }
       renderShopPage();
     });
   }
 
-  // 施肥按钮
+  // Fertilize button
   const fertBtn = card.querySelector('.fertilize-btn');
   if (fertBtn && canFertNow) {
     fertBtn.addEventListener('click', () => {
-      fertilizePlant();
+      const result = fertilizePlant();
+      if (result.ok && result.justMatured) {
+        showPlantMaturityToast(def);
+      }
       renderShopPage();
     });
   }
 
-  // 收获按钮
+  // Harvest button
   const harvestBtn = card.querySelector('.harvest-btn');
   if (harvestBtn) {
     harvestBtn.addEventListener('click', () => {
       const result = harvestPlant();
       if (result) {
+        showPlantHarvestPopup(def, result);
         updateStatusAndRefresh();
         if (typeof window.renderLibraryPage === 'function') window.renderLibraryPage();
       }
@@ -793,17 +872,12 @@ function renderActivePlantCard(def, plant) {
   return card;
 }
 
-function getPageName(page) {
-  const names = { focus: '缮写室', visitors: '读者沙龙', bookshelf: '大书库', shop: '位面商店', library: '馆长办公室', archive: '馆史档案' };
-  return names[page] || page;
-}
-
 function updateStatusAndRefresh() {
   updateStatusBar();
   renderShopPage();
 }
 
-// 仅更新倒计时文本，避免每秒重建整个商店DOM
+// Update countdown text only; avoid rebuilding the whole shop DOM every second
 function updateCountdowns() {
   const els = document.querySelectorAll('.shop-countdown');
   if (els.length === 0) {
@@ -821,10 +895,10 @@ function updateCountdowns() {
       const h = Math.floor(remaining / 3600000);
       const m = Math.floor((remaining % 3600000) / 60000);
       const s = Math.floor((remaining % 60000) / 1000);
-      el.textContent = `⏰ 补货中 ${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+      el.textContent = `⏰ ${t('countdownRestocking').replace('{time}', `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`)}`;
     }
   });
-  // 有倒计时归零时触发一次完整刷新（补货逻辑在 ensureShopState 中）
+  // Trigger a full refresh when a countdown hits zero (restock logic lives in ensureShopState)
   if (anyExpired) {
     cleanupTimer();
     renderShopPage();

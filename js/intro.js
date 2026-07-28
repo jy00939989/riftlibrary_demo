@@ -1,26 +1,34 @@
 // 新手开场引导 —— 3 步卡片式引导 + PV 开场
 import { state, saveState } from './state.js';
+import { t } from './i18n/terms.js';
 
 export function showIntro(onComplete) {
   const steps = [
     {
       emoji: '🏚️',
-      title: '欢迎来到异世界图书馆',
-      text: '你推开沉重的橡木门，灰尘在从破洞屋顶洒下的光柱中飞舞。曾经辉煌的大厅如今只剩断壁残垣，书架倒塌如墓碑，破损的书籍散落一地。但空气中残留着某种古老魔法的气息——这里曾经有人守护，而那个人，现在是你。',
+      title: t('introWelcomeTitle'),
+      text: t('introWelcomeText'),
       isOpening: true,
       switchTab: null
     },
     {
       emoji: '🖋️',
-      title: '缮写室 · 誊抄修复',
-      text: '在缮写室中选择一本初始书籍，点击「开始专注」。每一次专注誊抄，都是对图书馆的修复——破损的书架会被修补，蒙尘的角落重见光明。你誊抄的每一个字，都在让这座废墟重新呼吸。',
+      title: t('introScriptoriumTitle'),
+      text: t('introScriptoriumText').replace('{startFocus}', t('startFocus')),
       isOpening: false,
       switchTab: 'focus'
     },
     {
       emoji: '⏱️',
-      title: '计时与收获',
-      text: '三种专注模式供你选择：🍅 番茄钟（25分钟）、⏲️ 倒计时（自定义时长）、⏱️ 正计时（不限时）。专注结束后会获得誊抄字数和智慧之光（顶部 💰），完成整本书籍、达成里程碑、访客还书等事件会提升氛围值——氛围积累到一定程度，图书馆会发生可见的变化。',
+      title: t('introTimerTitle'),
+      text: t('introTimerText')
+        .replace('{pomodoro}', t('focusModePomodoro'))
+        .replace('{pomodoroDuration}', t('durationMinutes').replace('{n}', '25'))
+        .replace('{countdown}', t('focusModeCountdown'))
+        .replace('{stopwatch}', t('focusModeStopwatch'))
+        .replace('{noLimit}', t('noLimit'))
+        .replaceAll('{coins}', t('coins'))
+        .replaceAll('{atmosphere}', t('atmosphere')),
       isOpening: false,
       switchTab: 'focus'
     }
@@ -39,7 +47,7 @@ export function showIntro(onComplete) {
   // 右下角跳过按钮
   let skipBtn = document.createElement('button');
   skipBtn.className = 'absolute bottom-8 right-8 text-white/50 hover:text-white/80 text-sm z-10 transition-all';
-  skipBtn.textContent = '跳过 →';
+  skipBtn.textContent = t('introSkip');
   skipBtn.addEventListener('click', dismissIntro);
   overlay.appendChild(skipBtn);
 
@@ -84,8 +92,8 @@ export function showIntro(onComplete) {
     playHint.id = 'video-play-hint';
     playHint.innerHTML = `
       <div class="text-6xl mb-4 animate-pulse">▶️</div>
-      <p class="text-white text-lg font-bold mb-2">点击观看开场动画</p>
-      <p class="text-white/60 text-sm">双击可跳过</p>
+      <p class="text-white text-lg font-bold mb-2">${t('introTapToPlayVideo')}</p>
+      <p class="text-white/60 text-sm">${t('introDoubleTapToSkip')}</p>
     `;
     playHint.addEventListener('click', () => {
       playHint.remove();
@@ -141,7 +149,7 @@ export function showIntro(onComplete) {
           <div class="flex gap-1">
             ${steps.map((_, i) => `<span class="w-2 h-2 rounded-full ${i === currentStep ? 'bg-magic-gold' : 'bg-wood/30'}"></span>`).join('')}
           </div>
-          <button class="intro-next-btn px-6 py-3 bg-magic-gold text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all">✨ 开始冒险</button>
+          <button class="intro-next-btn px-6 py-3 bg-magic-gold text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all">${t('introStartAdventure')}</button>
         </div>
       `;
     } else {
@@ -153,7 +161,7 @@ export function showIntro(onComplete) {
           <div class="flex gap-1">
             ${steps.map((_, i) => `<span class="w-2 h-2 rounded-full ${i === currentStep ? 'bg-magic-gold' : 'bg-wood/30'}"></span>`).join('')}
           </div>
-          <button class="intro-next-btn px-6 py-3 bg-magic-gold text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all">继续 →</button>
+          <button class="intro-next-btn px-6 py-3 bg-magic-gold text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all">${t('continueText')}</button>
         </div>
       `;
     }
@@ -194,7 +202,10 @@ export function showIntro(onComplete) {
     toast.className = 'fixed bottom-8 left-1/2 -translate-x-1/2 z-[90] animate-fade-in';
     toast.innerHTML = `
       <div class="parchment-bg rounded-xl px-5 py-3 shadow-2xl border border-wood/20 text-center text-sm text-ink-light">
-        大书库、读者沙龙、位面商店——其余的角落，等你慢慢发现。
+        ${t('introExploreHint')
+          .replace('{grandLibrary}', t('tabGrandLibrary'))
+          .replace('{readerSalon}', t('tabReaderSalon'))
+          .replace('{planeShop}', t('tabPlaneShop'))}
       </div>
     `;
     document.body.appendChild(toast);

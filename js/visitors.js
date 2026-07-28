@@ -522,7 +522,10 @@ export function spawnVisitor(targetCharId) {
 
   let charId = targetCharId;
   if (!charId || !VISITOR_DEFS[charId]) {
-    const charIds = Object.keys(VISITOR_DEFS);
+    // 避免同一角色已在馆时重复生成，导致多个光环叠加
+    const presentCharIds = new Set(state.visitors.map(v => v.charId));
+    const charIds = Object.keys(VISITOR_DEFS).filter(id => !presentCharIds.has(id));
+    if (charIds.length === 0) return null;
     charId = pick(charIds);
   }
   const def = VISITOR_DEFS[charId];

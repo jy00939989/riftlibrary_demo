@@ -2,19 +2,31 @@
 import { state } from './state.js';
 import { BOOKS } from '../data/books.js';
 import { PLANES, canUnlockPlane } from '../data/planes.js';
+import { t, getAtmosphereStageName } from './i18n/terms.js';
 
 const STORAGE_KEY = 'library_collection';
 
 // ========== 收集品分类定义 ==========
 
 export const COLLECTION_CATEGORIES = [
-  { id: 'books',       name: '书籍收集',       emoji: '📖', mvp: true,
+  { id: 'books',       nameKey: 'collectionCategoryBooks',       emoji: '📖', mvp: true,
     getProgress: () => getProgress() },
-  { id: 'milestones',  name: '图书馆里程碑',   emoji: '📊', mvp: true,
+  { id: 'milestones',  nameKey: 'collectionCategoryMilestones',   emoji: '📊', mvp: true,
     getProgress: () => getMilestoneProgress() },
-  { id: 'plane_archive', name: '位面档案', emoji: '🌍', mvp: true,
+  { id: 'plane_archive', nameKey: 'collectionCategoryPlaneArchive', emoji: '🌍', mvp: true,
     getProgress: () => getPlaneArchiveProgress() }
 ];
+
+const PLANE_NAME_KEYS = {
+  astral: 'planeName_astral',
+  pastoral: 'planeName_pastoral',
+  placeholder: 'planeName_placeholder'
+};
+
+function getPlaneName(id, fallback) {
+  const key = PLANE_NAME_KEYS[id];
+  return key ? t(key) : fallback;
+}
 
 // ========== 书籍收集进度 ==========
 
@@ -55,41 +67,44 @@ function getProgress() {
 
 // ========== 图书馆里程碑进度 ==========
 
+function getAtmosphereStageLevel(value) {
+  if (value <= 30) return 1;
+  if (value <= 80) return 2;
+  if (value <= 160) return 3;
+  if (value <= 300) return 4;
+  return 5;
+}
+
 function getMilestoneProgress() {
   const items = [];
 
   // 氛围阶段
-  const atmoStage = getAtmosphereStageName();
-  items.push({ name: '氛围阶段', value: atmoStage, icon: '✨' });
+  const atmo = state.library.atmosphere || 0;
+  const atmoStageLevel = getAtmosphereStageLevel(atmo);
+  const atmoStageName = getAtmosphereStageName(atmoStageLevel);
+  items.push({ name: t('collectionMilestoneAtmosphere'), value: atmoStageName, hasValue: atmo > 30, icon: '✨' });
 
   // 书架数量
-  items.push({ name: '书架数量', value: `${state.library.shelves.length} 个`, icon: '📚' });
+  const shelfCount = state.library.shelves.length;
+  items.push({ name: t('collectionMilestoneShelfCount'), value: t('collectionShelfCountValue').replace('{n}', shelfCount), hasValue: shelfCount > 0, icon: '📚' });
 
   // 借阅区等级
-  items.push({ name: '借阅区等级', value: `Lv.${state.library.borrowLevel}`, icon: '🏛️' });
+  const borrowLevel = state.library.borrowLevel || 0;
+  items.push({ name: t('collectionMilestoneBorrowLevel'), value: t('levelShort').replace('{n}', borrowLevel), hasValue: borrowLevel > 0, icon: '🏛️' });
 
   // 累计专注天数
   const days = countFocusDays();
-  items.push({ name: '累计专注天数', value: `${days} 天`, icon: '⏱️' });
+  items.push({ name: t('collectionMilestoneFocusDays'), value: t('daysCount').replace('{n}', days), hasValue: days > 0, icon: '⏱️' });
 
   // 访客接待数
   const visitorCount = state.borrowRecords.filter(r => r.status === 'returned').length;
-  items.push({ name: '访客接待数', value: `${visitorCount} 人`, icon: '👥' });
+  items.push({ name: t('collectionMilestoneVisitors'), value: t('peopleCount').replace('{n}', visitorCount), hasValue: visitorCount > 0, icon: '👥' });
 
-  const acquired = items.filter(i => i.value !== '0' && i.value !== '0 个' && i.value !== 'Lv.0' && i.value !== '废墟').length;
+  const acquired = items.filter(i => i.hasValue).length;
   return { items, acquired, total: items.length, percent: Math.round((acquired / items.length) * 100) };
 }
 
 // ========== 辅助 ==========
-
-function getAtmosphereStageName() {
-  const v = state.library.atmosphere;
-  if (v <= 30) return '废墟';
-  if (v <= 80) return '破败';
-  if (v <= 160) return '陈旧';
-  if (v <= 300) return '温暖';
-  return '星辰';
-}
 
 function countFocusDays() {
   const days = new Set();
@@ -114,7 +129,7 @@ function getPlaneArchiveProgress() {
     const charsMet = quest ? Object.values(quest.characters).filter(c => c && c.met).length : 0;
     const charsTotal = p.characters ? p.characters.length : 0;
     const mementoCount = quest ? quest.mementos.length : 0;
-    return { id: p.id, name: p.name, emoji: p.emoji, stage: quest ? quest.stage : 0, charsMet, charsTotal, mementoCount };
+    return { id: p.id, name: getPlaneName(p.id, p.name), emoji: p.emoji, stage: quest ? quest.stage : 0, charsMet, charsTotal, mementoCount };
   });
 
   return { acquired, total, percent: Math.round((acquired / total) * 100), planes };
@@ -125,6 +140,7 @@ function getPlaneArchiveProgress() {
 export function getCollectionState() {
   return COLLECTION_CATEGORIES.map(cat => ({
     ...cat,
+    name: t(cat.nameKey),
     progress: cat.getProgress()
   }));
 }

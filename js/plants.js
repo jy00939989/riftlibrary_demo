@@ -32,8 +32,9 @@ export function canWater() {
 // 浇水：消耗一次机会，增加成长值
 export function waterPlant() {
   const def = getActivePlantDef();
-  if (!def || !canWater()) return false;
+  if (!def || !canWater()) return { ok: false, justMatured: false };
 
+  const wasHarvestable = canHarvest();
   state.plant.waterAvailable -= 1;
 
   // 禁止烟火标志牌：浇水有几率暴击（×2 成长）
@@ -58,8 +59,9 @@ export function waterPlant() {
     addHistory('task', `📜 今日馆务：${taskResult.name}`, taskResult.reward);
   }
 
+  const justMatured = !wasHarvestable && canHarvest();
   saveState();
-  return true;
+  return { ok: true, justMatured };
 }
 
 // 是否可施肥
@@ -77,18 +79,21 @@ export function canFertilize() {
 // 施肥：花费智慧之光，增加成长值
 export function fertilizePlant() {
   const def = getActivePlantDef();
-  if (!def || !canFertilize()) return false;
+  if (!def || !canFertilize()) return { ok: false, justMatured: false };
 
+  const wasHarvestable = canHarvest();
   const targetLevel = state.plant.level + 1;
   const cost = def.fertilizeCosts[targetLevel] || 0;
-  if (!spendCoins(cost)) return false;
+  if (!spendCoins(cost)) return { ok: false, justMatured: false };
 
   state.plant.growthProgress += def.fertilizeGrowth;
   state.plant.lastCareTime = getNow();
 
   checkLevelUp(def);
+
+  const justMatured = !wasHarvestable && canHarvest();
   saveState();
-  return true;
+  return { ok: true, justMatured };
 }
 
 // 检查自动升级 / 可收获状态
