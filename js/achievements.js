@@ -2,6 +2,7 @@
 import { state, saveState } from './state.js';
 import { BOOKS, CATEGORIES } from '../data/books.js';
 import { isVolumeBookId, getVolumeGroupByVolumeId } from '../data/volume_groups.js';
+import { load, save, STORAGE_KEYS } from './persistence.js';
 
 // ========== 成就定义（30个） ==========
 
@@ -123,17 +124,15 @@ const ACHIEVEMENTS = [
 
 // ========== 存储 ==========
 
-const STORAGE_KEY = 'library_achievements';
-
 function loadUnlocked() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw).unlocked || {} : {};
+    const data = load(STORAGE_KEYS.ACHIEVEMENTS, {});
+    return data.unlocked || {};
   } catch { return {}; }
 }
 
 function saveUnlocked(unlocked) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ unlocked }));
+  save(STORAGE_KEYS.ACHIEVEMENTS, { unlocked });
 }
 
 function isUnlocked(id) {
@@ -218,12 +217,20 @@ export function countFocusDays(s) {
 
 // ========== 全局点击计数（书虫彩蛋） ==========
 
-let emojiClickCount = parseInt(localStorage.getItem('lib_emoji_clicks') || '0', 10);
+let emojiClickCount = null;
+
+function getEmojiClickCount() {
+  if (emojiClickCount === null) {
+    emojiClickCount = load(STORAGE_KEYS.META, 0);
+  }
+  return emojiClickCount;
+}
 
 export function registerEmojiClick() {
-  emojiClickCount++;
-  localStorage.setItem('lib_emoji_clicks', emojiClickCount.toString());
-  if (emojiClickCount >= 30) {
+  const count = getEmojiClickCount() + 1;
+  emojiClickCount = count;
+  save(STORAGE_KEYS.META, count);
+  if (count >= 30) {
     return checkAchievements('click_emoji');
   }
   return [];
@@ -233,13 +240,13 @@ export function registerEmojiClick() {
 
 /**
  * 返回已解锁成就的聚合加成对象，供 speed / coins / inspiration 消费。
- * 纯函数，从 localStorage 读取，不依赖 state。
+ * 从 persistence 读取，不依赖 state。
  */
 import { calcAchievementBonuses } from './core/achievement-stats.js';
 export { calcAchievementBonuses };
 
 export function getAchievementBonuses() {
-  const unlocked = loadUnlocked(); // ← 读 localStorage（副作用）
+  const unlocked = loadUnlocked(); // ← 读 persistence（副作用）
   return calcAchievementBonuses(new Set(Object.keys(unlocked)));
 }
 

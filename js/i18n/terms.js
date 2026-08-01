@@ -2,7 +2,7 @@
 // 兼容旧用法：import { T } from '../i18n/terms.js'; → T.library（中文）
 // 新用法：import { t, setLocale, getLocale } from '../i18n/terms.js'; → t('library')
 
-import { state, saveState } from '../state.js';
+import { getSettings, setSetting } from '../settings.js';
 
 // ========== 双语术语表 ==========
 const TERM_DATA = Object.freeze({
@@ -985,20 +985,16 @@ const TERM_DATA = Object.freeze({
 });
 
 // ========== 语言切换 ==========
-const STORAGE_KEY = 'rift_library_locale';
 
 export function getLocale() {
-  if (state && state.locale) return state.locale;
-  const saved = localStorage.getItem(STORAGE_KEY);
-  if (saved === 'en' || saved === 'zh') return saved;
+  const locale = getSettings().locale;
+  if (locale === 'en' || locale === 'zh') return locale;
   return 'zh';
 }
 
 export function setLocale(locale) {
   const normalized = locale === 'en' ? 'en' : 'zh';
-  if (state) state.locale = normalized;
-  localStorage.setItem(STORAGE_KEY, normalized);
-  if (state && typeof saveState === 'function') saveState();
+  setSetting('locale', normalized);
 }
 
 export function t(key) {

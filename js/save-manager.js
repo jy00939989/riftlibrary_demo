@@ -1,19 +1,19 @@
 // 存档管理器 —— 导出/导入/剪贴板
 import { state, saveState } from './state.js';
 import { t } from './i18n/terms.js';
+import { exportAll, importAll, STORAGE_KEYS, load, save, remove } from './persistence.js';
 
 const SAVE_VERSION = 1;
 
 function buildSavePayload() {
-  // 不含运行时字段
-  const { currentSession, ...clean } = state;
+  const bundle = exportAll();
   return {
     version: SAVE_VERSION,
     exportedAt: new Date().toISOString(),
     libraryName: state.library?.name || t('libraryName'),
     atmosphere: state.library?.atmosphere || 0,
     totalWords: state.focus?.totalWords || 0,
-    state: clean
+    keys: bundle.keys
   };
 }
 
@@ -61,41 +61,58 @@ function importFromJSON(jsonStr) {
     return { ok: false, error: t('saveJsonParseFailed') };
   }
 
+  // 新格式：使用 persistence.importAll 完整恢复
+  if (data.keys) {
+    const backup = exportAll();
+    if (importAll(data)) {
+      return {
+        ok: true,
+        details: {
+          libraryName: state.library?.name || '?',
+          atmosphere: state.library?.atmosphere || 0,
+          totalWords: state.focus?.totalWords || 0,
+          exportedAt: data.exportedAt || t('unknown'),
+          hasBackup: true
+        }
+      };
+    }
+    importAll(backup);
+    return { ok: false, error: t('saveImportFailed') };
+  }
+
+  // 旧格式兼容：仅恢复 state
   const validationError = validatePayload(data);
   if (validationError) return { ok: false, error: validationError };
 
-  // 备份当前存档
-  const backup = localStorage.getItem('library_state');
-  if (backup) {
-    try {
-      localStorage.setItem('library_state_backup', backup);
-    } catch { /* storage full, skip backup */ }
+  const backup = load(STORAGE_KEYS.STATE);
+  try {
+    const clean = { ...data.state };
+    clean.currentSession = {
+      active: false,
+      mode: 'pomodoro',
+      bookId: null,
+      targetMinutes: 25,
+      elapsedSeconds: 0,
+      paused: false,
+      intervalId: null,
+      quoteIndex: 0
+    };
+    save(STORAGE_KEYS.STATE, clean);
+
+    return {
+      ok: true,
+      details: {
+        libraryName: data.libraryName || '?',
+        atmosphere: data.atmosphere || 0,
+        totalWords: data.totalWords || 0,
+        exportedAt: data.exportedAt || t('unknown'),
+        hasBackup: backup !== null
+      }
+    };
+  } catch {
+    if (backup !== null) save(STORAGE_KEYS.STATE, backup);
+    return { ok: false, error: t('saveImportFailed') };
   }
-
-  // 写入新存档
-  const clean = { ...data.state };
-  clean.currentSession = {
-    active: false,
-    mode: 'pomodoro',
-    bookId: null,
-    targetMinutes: 25,
-    elapsedSeconds: 0,
-    paused: false,
-    intervalId: null,
-    quoteIndex: 0
-  };
-  localStorage.setItem('library_state', JSON.stringify(clean));
-
-  return {
-    ok: true,
-    details: {
-      libraryName: data.libraryName || '?',
-      atmosphere: data.atmosphere || 0,
-      totalWords: data.totalWords || 0,
-      exportedAt: data.exportedAt || t('unknown'),
-      hasBackup: !!backup
-    }
-  };
 }
 
 /** 从文件读取导入 */
@@ -156,7 +173,7 @@ function showSaveManager() {
           </details>
         </div>
 
-        ${localStorage.getItem('library_state_backup') ? `
+        ${load(STORAGE_KEYS.STATE_BACKUP) ? `
           <div class="border-t border-wood/15 pt-3">
             <button id="save-restore-backup" class="w-full px-4 py-3 bg-red-100 text-red-700 rounded-lg font-bold hover:bg-red-200 transition-all text-sm">
               ${t('restorePreviousBackup')}
@@ -235,11 +252,11 @@ function showSaveManager() {
   const restoreBtn = overlay.querySelector('#save-restore-backup');
   if (restoreBtn) {
     restoreBtn.addEventListener('click', () => {
-      const backup = localStorage.getItem('library_state_backup');
+      const backup = load(STORAGE_KEYS.STATE_BACKUP);
       if (!backup) { msg(t('noBackupToRestore'), true); return; }
       if (!confirm(t('confirmRestoreBackup'))) return;
-      localStorage.setItem('library_state', backup);
-      localStorage.removeItem('library_state_backup');
+      save(STORAGE_KEYS.STATE, backup);
+      remove(STORAGE_KEYS.STATE_BACKUP);
       msg(t('backupRestoredRefreshing'));
       setTimeout(() => location.reload(), 1000);
     });

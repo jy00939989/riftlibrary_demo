@@ -1,6 +1,7 @@
 // 音频管理模块 —— BGM 氛围联动 + 交叉淡入淡出 + SFX 音效 + 音乐选择器
 import { state, saveState } from './state.js';
-import { initAmbient, setAmbientEnabled, isAmbientEnabled } from './ambient.js';
+import { initAmbient, setAmbientEnabled, isAmbientEnabled, playAmbient, getCurrentAmbientId } from './ambient.js';
+import { getSettings, setSetting, initSettings } from './settings.js';
 
 // 曲目配置（所有 MP3 均已在 audio/ 目录下）
 const TRACK_DEFS = [
@@ -17,9 +18,8 @@ function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
 let currentAudio = null;
 let currentTrackId = null;
-let musicEnabled = true;
-let musicVolume = 0.7;
 let fadeTimer = null;
+let fadingAudio = null; // 正在淡出中的旧音频，切换/关闭时必须强制清理
 
 // ========== 工具 ==========
 
@@ -67,26 +67,39 @@ export function getCurrentTrackId() {
 
 function updateToggleIcon() {
   const btn = document.getElementById('music-toggle');
-  if (btn) btn.textContent = musicEnabled ? '🔈' : '🔇';
+  if (btn) btn.textContent = isMusicOn() ? '🔈' : '🔇';
 }
 
-export function isMusicOn() { return musicEnabled; }
+export function isMusicOn() { return getSettings().musicEnabled; }
 
-export function getMusicVolume() { return musicVolume; }
+export function getMusicVolume() { return getSettings().musicVolume; }
 
 export function setMusicVolume(value) {
-  musicVolume = Math.max(0, Math.min(1, value));
-  localStorage.setItem('library_music_volume', musicVolume.toString());
-  if (currentAudio) currentAudio.volume = musicVolume;
-  return musicVolume;
+  const v = Math.max(0, Math.min(1, value));
+  setSetting('musicVolume', v);
+  if (currentAudio) currentAudio.volume = v;
+  return v;
 }
 
 export function initAudio() {
-  musicEnabled = localStorage.getItem('library_music') !== 'off';
-  const savedVol = parseFloat(localStorage.getItem('library_music_volume'));
-  musicVolume = isNaN(savedVol) ? 0.7 : Math.max(0, Math.min(1, savedVol));
   updateToggleIcon();
   initAmbient();
+  // 若设置里音乐为关，确保没有残留播放（比如用户在加载完成前点击了页面）
+  if (!isMusicOn()) {
+    clearInterval(fadeTimer);
+    fadeTimer = null;
+    if (fadingAudio) {
+      try { fadingAudio.pause(); fadingAudio.src = ''; } catch (e) {}
+      fadingAudio = null;
+    }
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio.src = '';
+      currentAudio = null;
+      currentTrackId = null;
+    }
+  }
+  updateNowPlayingUI();
 }
 
 /**
@@ -94,8 +107,13 @@ export function initAudio() {
  * @param {string} trackId - TRACK_DEFS 中的 id，不传则自动根据氛围选择
  */
 export function playTrack(trackId) {
-  if (!musicEnabled) return;
+  if (!isMusicOn()) {
+    // eslint-disable-next-line no-console
+    if (typeof console !== 'undefined') console.warn('[audio] playTrack called while music is off');
+    return;
+  }
 
+  const musicVolume = getMusicVolume();
   const def = trackId ? TRACK_DEFS.find(t => t.id === trackId) : null;
   const actualDef = def || pick(getAvailableTracks());
 
@@ -115,6 +133,7 @@ export function playTrack(trackId) {
 
   if (currentAudio) {
     const old = currentAudio;
+    fadingAudio = old;
     let step = 0;
     clearInterval(fadeTimer);
     fadeTimer = setInterval(() => {
@@ -125,13 +144,20 @@ export function playTrack(trackId) {
         clearInterval(fadeTimer);
         old.pause();
         old.src = '';
+        if (fadingAudio === old) fadingAudio = null;
       }
     }, 120);
   } else {
     next.volume = musicVolume;
   }
 
-  next.play().catch(() => {});
+  next.play().catch(() => {
+    // 播放被浏览器策略阻止（如未交互）
+    if (currentAudio === next) {
+      currentAudio = null;
+      currentTrackId = null;
+    }
+  });
   currentAudio = next;
   updateNowPlayingUI();
 }
@@ -142,7 +168,7 @@ function pickDefaultTrack() {
 }
 
 export function refreshBGM() {
-  if (!musicEnabled) return;
+  if (!isMusicOn()) return;
   const manualId = state.musicManualTrack;
   if (manualId) {
     playTrack(manualId);
@@ -170,26 +196,34 @@ export function isManualMode() {
 }
 
 export function toggleMusic() {
-  musicEnabled = !musicEnabled;
-  localStorage.setItem('library_music', musicEnabled ? 'on' : 'off');
+  const wasOn = isMusicOn();
+  const nowOn = !wasOn;
+  setSetting('musicEnabled', nowOn);
   updateToggleIcon();
+  updateNowPlayingUI();
 
-  if (musicEnabled) {
+  if (nowOn) {
     const manualId = state.musicManualTrack;
     playTrack(manualId || null);
   } else {
-    if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+    clearInterval(fadeTimer);
+    fadeTimer = null;
+    if (fadingAudio) {
+      try { fadingAudio.pause(); fadingAudio.src = ''; } catch (e) {}
+      fadingAudio = null;
+    }
+    if (currentAudio) { currentAudio.pause(); currentAudio.src = ''; currentAudio = null; }
     currentTrackId = null;
   }
 }
 
 export function pauseMusic() {
-  if (!musicEnabled || !currentAudio) return;
+  if (!isMusicOn() || !currentAudio) return;
   currentAudio.pause();
 }
 
 export function resumeMusic() {
-  if (!musicEnabled) return;
+  if (!isMusicOn()) return;
   if (currentAudio) {
     currentAudio.play().catch(() => {});
   } else {
@@ -199,11 +233,19 @@ export function resumeMusic() {
 }
 
 // 用户首次交互后调用，解除浏览器自动播放限制
-export function onFirstInteraction() {
+// playBgm: 是否顺带恢复 BGM；开始专注等场景应由用户手动控制音乐，传 false
+export function onFirstInteraction(playBgm = true) {
+  // 防御：若 app.js 因异常未执行 initSettings，确保设置已加载，避免使用默认设置误播 BGM
+  initSettings();
   initSfx();
-  if (musicEnabled) {
+  if (playBgm && isMusicOn()) {
     const manualId = state.musicManualTrack;
     playTrack(manualId || null);
+  }
+  // 同步恢复环境音（init 时可能被浏览器自动播放策略阻止）
+  if (isAmbientEnabled()) {
+    const ambientId = getCurrentAmbientId();
+    if (ambientId) playAmbient(ambientId, true);
   }
 }
 
@@ -213,13 +255,13 @@ function updateNowPlayingUI() {
   const el = document.getElementById('now-playing');
   if (!el) return;
   const def = TRACK_DEFS.find(t => t.id === currentTrackId);
-  if (def && musicEnabled) {
+  if (def && isMusicOn()) {
     el.innerHTML = `${def.emoji} ${def.name}`;
     el.style.display = '';
     el.title = '点击切换音乐';
     el.style.cursor = 'pointer';
     el.onclick = () => { window._openMusicSelector?.(); };
-  } else if (!musicEnabled) {
+  } else if (!isMusicOn()) {
     el.innerHTML = '🔇 音乐已关闭';
     el.style.display = '';
     el.style.cursor = '';
@@ -241,9 +283,7 @@ const SFX_FILES = {
 };
 
 const sfxCache = {};
-let sfxEnabled = true;
 let sfxInitialized = false;
-let sfxVolume = 0.5; // 0-1 主音量，最终音量 = sfxVolume * 基础音量
 
 function getBaseSfxVolume(name) {
   return name === 'button_click' ? 0.3 : 0.5;
@@ -253,15 +293,11 @@ function getBaseSfxVolume(name) {
 export function initSfx() {
   if (sfxInitialized) return;
   sfxInitialized = true;
-  sfxEnabled = localStorage.getItem('library_sfx') !== 'off';
-  const savedVol = parseFloat(localStorage.getItem('library_sfx_volume'));
-  sfxVolume = isNaN(savedVol) ? 0.5 : Math.max(0, Math.min(1, savedVol));
 
   Object.entries(SFX_FILES).forEach(([name, src]) => {
     try {
       const audio = new Audio(encodeURI(src));
       audio.preload = 'auto';
-      audio.volume = getBaseSfxVolume(name) * sfxVolume;
       sfxCache[name] = audio;
     } catch (e) {
       // 音效加载失败不阻塞
@@ -271,29 +307,26 @@ export function initSfx() {
 
 /** 设置音效总音量 0-1 */
 export function setSfxVolume(value) {
-  sfxVolume = Math.max(0, Math.min(1, value));
-  localStorage.setItem('library_sfx_volume', sfxVolume.toString());
-  Object.entries(sfxCache).forEach(([name, audio]) => {
-    try {
-      audio.volume = getBaseSfxVolume(name) * sfxVolume;
-    } catch (e) {}
-  });
-  return sfxVolume;
+  const v = Math.max(0, Math.min(1, value));
+  setSetting('sfxVolume', v);
+  return v;
 }
 
 /** 获取音效总音量 0-1 */
 export function getSfxVolume() {
-  return sfxVolume;
+  return getSettings().sfxVolume ?? 0.5;
 }
 
 /** 播放指定音效 */
 export function playSfx(name) {
-  if (!sfxEnabled || !sfxInitialized) return;
+  if (!sfxInitialized) return;
+  const settings = getSettings();
+  if (!settings.sfxEnabled) return;
   const audio = sfxCache[name];
   if (!audio) return;
   try {
     audio.currentTime = 0;
-    audio.volume = getBaseSfxVolume(name) * sfxVolume;
+    audio.volume = getBaseSfxVolume(name) * (settings.sfxVolume ?? 0.5);
     audio.play().catch(() => {});
   } catch (e) {
     // 播放失败静默
@@ -302,9 +335,10 @@ export function playSfx(name) {
 
 /** 开关音效 */
 export function toggleSfx() {
-  sfxEnabled = !sfxEnabled;
-  localStorage.setItem('library_sfx', sfxEnabled ? 'on' : 'off');
-  return sfxEnabled;
+  const settings = getSettings();
+  const next = !settings.sfxEnabled;
+  setSetting('sfxEnabled', next);
+  return next;
 }
 
-export function isSfxOn() { return sfxEnabled; }
+export function isSfxOn() { return getSettings().sfxEnabled !== false; }

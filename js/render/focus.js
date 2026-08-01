@@ -323,7 +323,7 @@ function renderDailyTasks() {
 
   const tasks = [
     { icon: '🖋️', label: t('dailyFocus25Min'), done: dt.focusDone, reward: '💰 30' },
-    { icon: '📥', label: t('dailyReturnBook'), done: dt.returnDone, reward: '✨ 5' },
+    { icon: '📥', label: t('dailyReturnBook'), done: dt.returnDone, reward: '✨ +1氛围' },
     { icon: '🌱', label: t('dailyWaterPlant'), done: dt.waterDone, reward: '💰 10' }
   ];
 

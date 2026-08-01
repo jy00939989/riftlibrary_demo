@@ -2,11 +2,9 @@
 
 import { BOOKS } from '../data/books.js';
 import { VOLUME_GROUPS } from '../data/volume_groups.js';
+import { load, save, STORAGE_KEYS } from './persistence.js';
 
 export const state = {
-  // 语言设置
-  locale: 'zh',
-
   // 用户统计
   focus: {
     totalMinutes: 0,
@@ -214,12 +212,10 @@ export const state = {
   restorationLevel: 0,      // 修复室等级 0-5
   restorationUnlocked: false, // 需购买 Lv0 后才开放
 
-  // 环境音（白噪音）
+  // 环境音（白噪音）— enabled/volume 已迁移到 settings
   ambientSounds: {
     unlocked: [],   // 已解锁的环境音 ID
     current: null,  // 当前播放 ID
-    volume: 0.5,    // 音量 0-1
-    enabled: true   // 是否启用
   },
 
   // 卷组吐槽冷却（二阶段叙事用）
@@ -297,11 +293,10 @@ const DEFAULT_BOOKS = {
 
 // 初始化/重置状态
 export function initState() {
-  const saved = localStorage.getItem('library_state');
+  const saved = load(STORAGE_KEYS.STATE);
   if (saved) {
     try {
-      const parsed = JSON.parse(saved);
-      Object.assign(state, parsed);
+      Object.assign(state, saved);
       // 合并书籍状态：保留用户进度，但用默认值补充新增/变更的书籍
       Object.keys(DEFAULT_BOOKS).forEach(id => {
         if (!state.books[id]) {
@@ -641,12 +636,9 @@ export function initState() {
       }
       // 旧存档迁移：环境音系统
       if (!state.ambientSounds) {
-        state.ambientSounds = { unlocked: [], current: null, volume: 0.5, enabled: true };
+        state.ambientSounds = { unlocked: [], current: null };
       }
-      // 旧存档迁移：语言设置
-      if (!state.locale) {
-        state.locale = 'zh';
-      }
+      // 旧存档迁移：语言设置已迁移到 settings.js，此处不再处理
 
       saveState(); // 迁移后立即持久化
       return true;
@@ -685,5 +677,7 @@ export function saveState() {
     intervalId: null,
     quoteIndex: 0
   };
-  localStorage.setItem('library_state', JSON.stringify(toSave));
+  // locale 已迁移到 settings，不再写入主存档
+  delete toSave.locale;
+  return save(STORAGE_KEYS.STATE, toSave);
 }

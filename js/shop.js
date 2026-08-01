@@ -171,18 +171,21 @@ export function ensureShopState() {
   });
 }
 
-export function purchaseBook(bookId, price) {
-  // 裴舟光环：商店买书 9 折
+// 计算买书最终价格（含裴舟光环、馆长推荐标志牌、裴舟荐书折扣）
+export function getBookActualPrice(bookId, basePrice) {
   const auraDiscount = getAuraShopDiscount();
-  // 馆长推荐标志牌：额外 2% 折扣（叠乘）
   const signboardDiscount = hasSignboard('curator_pick') ? (SIGNBOARDS.curator_pick?.buff?.value || 0) : 0;
-  // 裴舟荐书：限时额外折扣
   let peizhouDiscount = 0;
   const rec = getActivePeizhouRec();
   if (rec && rec.bookId === bookId) {
     peizhouDiscount = rec.discount;
   }
-  const actualPrice = Math.round(price * (1 - auraDiscount) * (1 - signboardDiscount) * (1 - peizhouDiscount));
+  const actualPrice = Math.round(basePrice * (1 - auraDiscount) * (1 - signboardDiscount) * (1 - peizhouDiscount));
+  return { actualPrice, auraDiscount, signboardDiscount, peizhouDiscount };
+}
+
+export function purchaseBook(bookId, price) {
+  const { actualPrice, auraDiscount, signboardDiscount, peizhouDiscount } = getBookActualPrice(bookId, price);
 
   if (state.books[bookId] && state.books[bookId].status !== 'locked') {
     return { ok: false, reason: 'already_owned' };

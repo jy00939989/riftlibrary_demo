@@ -504,14 +504,50 @@ function getNow() {
 
 const ALL_VISITOR_IDS = Object.keys(VISITOR_DEFS);
 
+// 好感度上限与叙事阈值（ADR-FAVOR-001）
+const FAVOR_CAP = 600;
+export const FAVOR_THRESHOLDS = {
+  OCCASIONAL: 120,
+  RARE: 280,
+  POST_RARE: 560
+};
+
 function addVisitorFavor(charId, amount) {
   if (!state.visitorFavors) {
     state.visitorFavors = {};
     ALL_VISITOR_IDS.forEach(id => { state.visitorFavors[id] = 0; });
   }
   if (state.visitorFavors[charId] !== undefined) {
-    state.visitorFavors[charId] += amount;
+    state.visitorFavors[charId] = Math.min(FAVOR_CAP, state.visitorFavors[charId] + amount);
   }
+}
+
+// ========== 访客刷新加权（ADR-FAVOR-001） ==========
+
+const SPAWN_WEIGHT = {
+  NEVER_SEEN: 8,   // 从未见过的访客强推倍率
+  BASE: 1,
+  K: 120,          // 软衰减常数，对齐偶层阈值
+  FLOOR: 0.1       // 已建立访客的最低权重
+};
+
+function getSpawnWeight(charId) {
+  const favor = state.visitorFavors?.[charId] || 0;
+  if (favor <= 0) return SPAWN_WEIGHT.NEVER_SEEN;
+  return Math.max(SPAWN_WEIGHT.FLOOR,
+                  SPAWN_WEIGHT.BASE / (1 + favor / SPAWN_WEIGHT.K));
+}
+
+function weightedPick(ids, weightFn) {
+  let total = 0;
+  const weights = ids.map(id => { const w = weightFn(id); total += w; return w; });
+  if (total <= 0 || !Number.isFinite(total)) return pick(ids);
+  let r = Math.random() * total;
+  for (let i = 0; i < ids.length; i++) {
+    r -= weights[i];
+    if (r <= 0) return ids[i];
+  }
+  return ids[ids.length - 1];
 }
 
 // ========== 访客刷新 ==========
@@ -526,7 +562,7 @@ export function spawnVisitor(targetCharId) {
     const presentCharIds = new Set(state.visitors.map(v => v.charId));
     const charIds = Object.keys(VISITOR_DEFS).filter(id => !presentCharIds.has(id));
     if (charIds.length === 0) return null;
-    charId = pick(charIds);
+    charId = weightedPick(charIds, getSpawnWeight);
   }
   const def = VISITOR_DEFS[charId];
 
@@ -731,11 +767,11 @@ function triggerNarrative(charId) {
   // 1. 常层：每次还书必然触发
   result.common = pickCommonEvent(charId);
 
-  // 2. 偶层：好感≥30 且 有未完成的偶层事件 → 30% 概率
+  // 2. 偶层：好感≥FAVOR_THRESHOLDS.OCCASIONAL 且 有未完成的偶层事件 → 30% 概率
   const allOccDone = narrative.occasional
     ? ns.occasionalCompleted.length >= narrative.occasional.length
     : true;
-  if (favor >= 30 && !allOccDone && Math.random() < 0.30) {
+  if (favor >= FAVOR_THRESHOLDS.OCCASIONAL && !allOccDone && Math.random() < 0.30) {
     result.occasional = pickOccasionalEvent(charId);
     if (result.occasional) {
       // 发放偶层奖励
@@ -750,8 +786,8 @@ function triggerNarrative(charId) {
     }
   }
 
-  // 3. 稀层：偶层全完成 + 好感≥60 + 稀层未触发 → 10% 概率（保底：第5次必定触发）
-  if (allOccDone && !ns.rareTriggered && favor >= 60 && narrative.rare) {
+  // 3. 稀层：偶层全完成 + 好感≥FAVOR_THRESHOLDS.RARE + 稀层未触发 → 10% 概率（保底：第5次必定触发）
+  if (allOccDone && !ns.rareTriggered && favor >= FAVOR_THRESHOLDS.RARE && narrative.rare) {
     ns.rareEligibleCount = (ns.rareEligibleCount || 0) + 1;
     const rareChance = ns.rareEligibleCount >= 5 ? 1.0 : 0.10;
     if (Math.random() < rareChance) {
@@ -816,10 +852,10 @@ function triggerNarrative(charId) {
     result.postRareCommon = chosen;
   }
 
-  // 6. 终局后偶层：终局已触发 + 好感≥100 + 有未完成的终局后偶层 → 30%概率
+  // 6. 终局后偶层：终局已触发 + 好感≥FAVOR_THRESHOLDS.POST_RARE + 有未完成的终局后偶层 → 30%概率
   if (ns.postRareTriggered && narrative.postRareOccasional && narrative.postRareOccasional.length > 0) {
     const allPostRareOccDone = ns.postRareOccasionalCompleted.length >= narrative.postRareOccasional.length;
-    if (favor >= 100 && !allPostRareOccDone && Math.random() < 0.30) {
+    if (favor >= FAVOR_THRESHOLDS.POST_RARE && !allPostRareOccDone && Math.random() < 0.30) {
       const next = narrative.postRareOccasional.find(o => !ns.postRareOccasionalCompleted.includes(o.id));
       if (next) {
         ns.postRareOccasionalCompleted.push(next.id);

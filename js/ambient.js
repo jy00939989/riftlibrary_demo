@@ -2,6 +2,7 @@
 import { state, saveState } from './state.js';
 import { spendCoins } from './storage.js';
 import { t } from './i18n/terms.js';
+import { getSettings, setSetting } from './settings.js';
 
 export const AMBIENT_DEFS = [
   { id: 'victorian_study', name: t('ambientName_victorian_study'), emoji: '🕯️', price: 500, file: 'audio/ambient/victorian_study.mp3' }
@@ -9,17 +10,22 @@ export const AMBIENT_DEFS = [
 
 let currentAudio = null;
 let currentId = null;
-let enabled = true;
 
 /** 初始化环境音状态 */
 export function initAmbient() {
   if (!state.ambientSounds) {
-    state.ambientSounds = { unlocked: [], current: null, volume: 0.5, enabled: true };
+    state.ambientSounds = { unlocked: [], current: null };
   }
-  enabled = state.ambientSounds.enabled !== false;
-  if (state.ambientSounds.current) {
-    playAmbient(state.ambientSounds.current, true);
+  // 旧版 enabled/volume 已迁移到 settings
+  if ('enabled' in state.ambientSounds) {
+    setSetting('ambientEnabled', state.ambientSounds.enabled);
+    delete state.ambientSounds.enabled;
   }
+  if ('volume' in state.ambientSounds) {
+    setSetting('ambientVolume', state.ambientSounds.volume);
+    delete state.ambientSounds.volume;
+  }
+  // 不在这里自动播放：浏览器通常会阻止自动播放，首次交互由 onFirstInteraction 统一恢复
 }
 
 /** 获取所有环境音定义（含解锁状态） */
@@ -45,7 +51,7 @@ export function buyAmbient(id) {
   if (!spendCoins(def.price)) return { ok: false, reason: 'no_coins' };
 
   if (!state.ambientSounds) {
-    state.ambientSounds = { unlocked: [], current: null, volume: 0.5, enabled: true };
+    state.ambientSounds = { unlocked: [], current: null };
   }
   state.ambientSounds.unlocked.push(id);
   saveState();
@@ -55,7 +61,7 @@ export function buyAmbient(id) {
 /** 选择并播放指定环境音，传 null 则停止 */
 export function selectAmbient(id) {
   if (!state.ambientSounds) {
-    state.ambientSounds = { unlocked: [], current: null, volume: 0.5, enabled: true };
+    state.ambientSounds = { unlocked: [], current: null };
   }
   if (id && !getUnlockedAmbientIds().includes(id)) return false;
   state.ambientSounds.current = id || null;
@@ -66,7 +72,7 @@ export function selectAmbient(id) {
 
 /** 播放/停止环境音 */
 export function playAmbient(id, immediate = false) {
-  if (!enabled) return;
+  if (!isAmbientEnabled()) return;
   if (currentAudio) {
     currentAudio.pause();
     currentAudio = null;
@@ -86,24 +92,32 @@ export function playAmbient(id, immediate = false) {
     currentAudio = null;
     currentId = null;
   };
-  audio.play().catch(() => {});
+
   currentAudio = audio;
   currentId = id;
 
-  if (!immediate) {
-    // 淡入
-    let step = 0;
-    const target = getAmbientVolume();
-    const timer = setInterval(() => {
-      step++;
-      if (!currentAudio || currentAudio !== audio) {
-        clearInterval(timer);
-        return;
-      }
-      currentAudio.volume = Math.min(target, step * 0.05);
-      if (currentAudio.volume >= target) clearInterval(timer);
-    }, 100);
-  }
+  audio.play().then(() => {
+    if (!immediate) {
+      // 播放成功后淡入
+      let step = 0;
+      const target = getAmbientVolume();
+      const timer = setInterval(() => {
+        step++;
+        if (!currentAudio || currentAudio !== audio) {
+          clearInterval(timer);
+          return;
+        }
+        currentAudio.volume = Math.min(target, step * 0.05);
+        if (currentAudio.volume >= target) clearInterval(timer);
+      }, 100);
+    }
+  }).catch(() => {
+    // 自动播放被阻止或加载失败
+    if (currentAudio === audio) {
+      currentAudio = null;
+      currentId = null;
+    }
+  });
 }
 
 /** 停止环境音 */
@@ -117,36 +131,37 @@ export function stopAmbient() {
 
 /** 开关环境音 */
 export function setAmbientEnabled(value) {
-  enabled = !!value;
-  if (!state.ambientSounds) {
-    state.ambientSounds = { unlocked: [], current: null, volume: 0.5, enabled };
-  }
-  state.ambientSounds.enabled = enabled;
-  saveState();
+  const enabled = !!value;
+  setSetting('ambientEnabled', enabled);
   if (enabled) {
-    playAmbient(state.ambientSounds.current);
+    let id = state.ambientSounds?.current;
+    if (!id) {
+      const unlocked = getUnlockedAmbientIds();
+      if (unlocked.length > 0) {
+        id = unlocked[0];
+        state.ambientSounds.current = id;
+        saveState();
+      }
+    }
+    playAmbient(id);
   } else {
     stopAmbient();
   }
 }
 
 export function isAmbientEnabled() {
-  return enabled;
+  return getSettings().ambientEnabled !== false;
 }
 
 /** 设置音量 0-1 */
 export function setAmbientVolume(value) {
   const v = Math.max(0, Math.min(1, value));
-  if (!state.ambientSounds) {
-    state.ambientSounds = { unlocked: [], current: null, volume: v, enabled: true };
-  }
-  state.ambientSounds.volume = v;
-  saveState();
+  setSetting('ambientVolume', v);
   if (currentAudio) currentAudio.volume = v;
 }
 
 export function getAmbientVolume() {
-  return state.ambientSounds?.volume ?? 0.5;
+  return getSettings().ambientVolume ?? 0.5;
 }
 
 /** 获取当前播放的环境音 ID */

@@ -2,7 +2,7 @@
 import {
   getAllTrackDefs, getCurrentTrackId, selectTrack, setAutoMode, isManualMode,
   getMusicVolume, setMusicVolume, getSfxVolume, setSfxVolume,
-  toggleMusic, isMusicOn
+  toggleMusic, isMusicOn, toggleSfx, isSfxOn
 } from '../audio.js';
 import { getAmbientDefs, getCurrentAmbientId, selectAmbient, isAmbientEnabled, setAmbientEnabled, getAmbientVolume, setAmbientVolume } from '../ambient.js';
 import { t } from '../i18n/terms.js';
@@ -41,6 +41,7 @@ function open() {
   const currentAmbientId = getCurrentAmbientId();
   const ambientOn = isAmbientEnabled();
   const musicOn = isMusicOn();
+  const sfxOn = isSfxOn();
   const musicVol = Math.round(getMusicVolume() * 100);
   const ambientVol = Math.round(getAmbientVolume() * 100);
   const sfxVol = Math.round(getSfxVolume() * 100);
@@ -144,10 +145,15 @@ function open() {
         <div>
           <div class="flex items-center justify-between mb-2">
             <div class="text-xs font-bold text-ink-light tracking-wider">🔊 ${t('sfxVolume')}</div>
-            <div class="text-xs text-ink-light" id="ms-sfx-volume-value">${sfxVol}%</div>
+            <button id="ms-sfx-toggle" class="text-[10px] px-2 py-1 rounded-full border transition-all ${sfxOn ? 'border-magic-gold bg-magic-gold/10 text-magic-gold' : 'border-wood/30 bg-white/50 text-ink-light'}">
+              ${sfxOn ? t('enabled') : t('disabled')}
+            </button>
           </div>
           <input id="ms-sfx-volume" type="range" min="0" max="100" value="${sfxVol}"
             class="w-full h-2 bg-wood/20 rounded-lg appearance-none cursor-pointer accent-magic-gold">
+          <div class="text-right mt-1">
+            <div class="text-xs text-ink-light inline-block" id="ms-sfx-volume-value">${sfxVol}%</div>
+          </div>
         </div>
       </div>
     </div>
@@ -186,6 +192,19 @@ function open() {
         setAmbientEnabled(!isAmbientEnabled());
       } catch (err) {
         if (typeof console !== 'undefined') console.error('setAmbientEnabled failed:', err);
+      }
+      open();
+    });
+  }
+
+  const sfxToggle = panelEl.querySelector('#ms-sfx-toggle');
+  if (sfxToggle) {
+    sfxToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      try {
+        toggleSfx();
+      } catch (err) {
+        if (typeof console !== 'undefined') console.error('toggleSfx failed:', err);
       }
       open();
     });

@@ -4,7 +4,7 @@ import { BOOKS } from '../../data/books.js';
 import { SHARED_POOL } from '../../data/book_pool.js';
 import { el, h, actions, updateStatusBar, getBookTitle } from './common.js';
 import { playSfx } from '../audio.js';
-import { ensureShopState, getShopState, purchaseBook, getBorrowLevelPrice, upgradeBorrowLevel, getFocusLevelPrice, upgradeFocusLevel, purchaseSignboard, purchasePlanePortal, getPlanePortalPrice, getActivePeizhouRec } from '../shop.js';
+import { ensureShopState, getShopState, purchaseBook, getBookActualPrice, getBorrowLevelPrice, upgradeBorrowLevel, getFocusLevelPrice, upgradeFocusLevel, purchaseSignboard, purchasePlanePortal, getPlanePortalPrice, getActivePeizhouRec } from '../shop.js';
 import { getManuscriptSlots, getManuscriptBoxCount, isRestorationUnlocked, unlockRestorationRoom, getRestorationUnlockPrice, getRestorationLevel, getRestorationUpgradePrice, upgradeRestorationLevel } from '../capacity.js';
 import { PLANES, canUnlockPlane } from '../../data/planes.js';
 import { showFocusRoomUpgrade } from './tutorial-ui.js';
@@ -447,6 +447,7 @@ function renderBookCard(slot, poolEntry, owned, isRotating, mBoxFull) {
 
   const peizhouRec = getActivePeizhouRec();
   const isPeizhouPick = peizhouRec && peizhouRec.bookId === slot.bookId;
+  const { actualPrice } = getBookActualPrice(slot.bookId, slot.price);
   const peizhouName = getVisitorName('peizhou');
   const peizhouBadge = isPeizhouPick
     ? `<div class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full inline-block mb-1 font-bold">${t('recommendedBy').replace('{name}', peizhouName).replace('{value}', formatDiscount(0.7).replace(/[^0-9]/g, ''))}</div>`
@@ -455,7 +456,7 @@ function renderBookCard(slot, poolEntry, owned, isRotating, mBoxFull) {
     ? `<div class="text-xs text-amber-600 mt-1">${t('recommendedPrice')
         .replace('{original}', slot.price.toLocaleString())
         .replace('{name}', peizhouName)
-        .replace('{price}', Math.round(slot.price * 0.7).toLocaleString())}</div>`
+        .replace('{price}', actualPrice.toLocaleString())}</div>`
     : '';
 
   card.innerHTML = `
@@ -474,7 +475,7 @@ function renderBookCard(slot, poolEntry, owned, isRotating, mBoxFull) {
 
   if (!disabled) {
     card.addEventListener('click', () => {
-      showPurchaseModal(poolEntry, slot.price, isRotating ? slot.originalPrice : null, isRotating ? slot.discount : null);
+      showPurchaseModal(poolEntry, actualPrice, isRotating ? slot.originalPrice : null, isRotating ? slot.discount : null);
     });
   }
 

@@ -7,6 +7,8 @@ if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
 }
 
 import { state, initState, saveState, ensureAllBooksInManuscriptBox } from './state.js';
+import { runLegacyMigration, remove, STORAGE_KEYS, load, save } from './persistence.js';
+import { initSettings, getSettings } from './settings.js';
 import { t, getLocale, setLocale } from './i18n/terms.js';
 import { addCoins, spendCoins, addHistory, updateStreak, addAtmosphere, updateBodyBackground, getAtmosphereLevel, onStageCross, addInspiration } from './storage.js';
 import { canDrawActionCards, drawActionCards, applyAction } from './actioncards.js';
@@ -26,7 +28,7 @@ import { showAchievementToast } from './render/achievements.js';
 import { addWaterOpportunity, checkWither } from './plants.js';
 import { addDiaryEntry, tryGenerateDailySummary } from './diary.js';
 import { tickPlaneVisitors, checkTaskCompletion } from './quests.js';
-import { initAudio, toggleMusic, onFirstInteraction, initSfx, playSfx, pauseMusic, resumeMusic } from './audio.js';
+import { initAudio, toggleMusic, onFirstInteraction, initSfx, playSfx, pauseMusic } from './audio.js';
 import { showIntro } from './intro.js';
 import { checkAndShowTutorial } from './tutorial.js';
 import { TIER_GOALS, isTierComplete, countTierGoalsComplete } from '../data/tiergoals.js';
@@ -81,7 +83,8 @@ function triggerQuestCheck(event) {
 
 function handleStartFocus() {
   // 首次用户交互时初始化音频（修复：之前 initSfx 在专注完成后才调用，导致首次专注音效静默）
-  onFirstInteraction();
+  // 开始专注不自动播放 BGM，由用户通过音乐开关/选择器手动控制
+  onFirstInteraction(false);
 
   if (!state.currentSession.bookId) {
     alert('请先选择一本要誊抄的书 📖');
@@ -99,7 +102,6 @@ function handleStartFocus() {
 
   function doStart() {
     startTimer();
-    resumeMusic();
     if (isFirstCopy) {
       const achResults = checkAchievements('copy_start');
       showAchievementBatch(achResults);
@@ -1084,14 +1086,17 @@ function showCrashRecovery(message, file, line) {
   overlay.querySelector('#crash-reload').addEventListener('click', () => location.reload());
   overlay.querySelector('#crash-reset').addEventListener('click', () => {
     if (confirm('确定要清除所有存档数据重新开始吗？此操作不可恢复。')) {
-      localStorage.removeItem('library_state');
-      localStorage.removeItem('library_state_backup');
+      remove(STORAGE_KEYS.STATE);
+      remove(STORAGE_KEYS.STATE_BACKUP);
+      remove(STORAGE_KEYS.SETTINGS);
+      remove(STORAGE_KEYS.ACHIEVEMENTS);
+      remove(STORAGE_KEYS.META);
       location.reload();
     }
   });
   overlay.querySelector('#crash-export').addEventListener('click', () => {
-    const payload = JSON.parse(localStorage.getItem('library_state') || '{}');
-    if (!payload.library) {
+    const payload = load(STORAGE_KEYS.STATE);
+    if (!payload || !payload.library) {
       alert('存档数据不可用');
       return;
     }
@@ -1185,14 +1190,22 @@ function init() {
     }
   });
 
+  updateLoading(20, '正在整理书架...');
+
+  // 存储层迁移：必须在任何模块 load 之前执行
+  runLegacyMigration();
+  // 设置必须最先加载，否则首次用户交互的音频恢复会读到默认设置（音乐默认开），
+  // 导致“设置里音乐已关但 BGM 仍在播放”的竞态 bug。
+  initSettings();
+
+  updateLoading(30, '正在唤醒音频...');
+
   // 首次用户交互激活音频（兜底：任何按钮点击都激活）
   const activateAudio = () => {
     onFirstInteraction();
     document.removeEventListener('click', activateAudio);
   };
   document.addEventListener('click', activateAudio);
-
-  updateLoading(30, '正在整理书架...');
 
   initState();
   ensureAllBooksInManuscriptBox();
