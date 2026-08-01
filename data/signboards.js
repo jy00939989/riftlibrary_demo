@@ -51,5 +51,15 @@ export const SIGNBOARDS = {
     price: 500,
     page: 'focus',       // 挂在缮写室页面
     buff: { type: 'long_focus_inspiration', value: 0, desc: '专注≥60分钟后概率获得额外灵感' }
+  },
+  care_for_books: {
+    id: 'care_for_books',
+    name: '爱惜书籍',
+    emoji: '📖',
+    icon: '📖',
+    description: '墨墨亲手写的提示牌：请像对待羽毛笔一样对待每一本书。',
+    price: 600,
+    page: 'visitors',    // 挂在读者沙龙
+    buff: { type: 'damage_reduction', value: 0.01, desc: '访客还书时损坏概率 -1%' }
   }
 };

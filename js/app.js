@@ -318,10 +318,15 @@ function handleCompleteFocus(isAuto = false) {
       bookState.damaged = false;
       bookState.repairProgress = 0;
       bookState.repairWords = 0;
-      addCoins(80);
-      addInspiration(2);
-      addAtmosphere(2);
-      addHistory('repair', `🩹 《${repairBookTitle}》修复完成！`, `+80智慧之光 · +2✨灵感 · +2氛围`);
+      // 修复完成：若进度已回到整周期，恢复 completed 状态，避免书架进度条显示不满
+      const book = BOOKS[sess.bookId];
+      if (book && book.totalWords > 0 && bookState.copiedWords > 0 && (bookState.copiedWords % book.totalWords) === 0) {
+        bookState.status = 'completed';
+      }
+      addCoins(30);
+      addInspiration(1);
+      addAtmosphere(1);
+      addHistory('repair', `🩹 《${repairBookTitle}》修复完成！`, `+30智慧之光 · +1✨灵感 · +1氛围`);
       addDiaryEntry('special_event', { detail: `🩹 墨墨检查了《${repairBookTitle}》——损毁的页面已经补好了，墨迹新鲜，羊皮纸平整。你比上一任守护者用心。` });
     }
   }
@@ -487,8 +492,8 @@ function handlePostFocusEffects(effects) {
     next = () => showMilestoneReward(newMilestones, milestoneNext);
   }
 
-  // 章节解锁动画
-  if (unlockedChapter) {
+  // 章节解锁动画：修复书籍时不弹出
+  if (unlockedChapter && !repairCompleted) {
     const prevNext = next;
     const ch = unlockedChapter;
     const book = BOOKS[state.currentSession.bookId];
@@ -497,8 +502,8 @@ function handlePostFocusEffects(effects) {
     };
   }
 
-  // 书籍完成动画/证书 → 上架动画（最先弹出）
-  if (bookCompleted) {
+  // 书籍完成动画/证书 → 上架动画：修复书籍时不弹出
+  if (bookCompleted && !repairCompleted) {
     const prevNext = next;
     if (isFirstBookComplete && completedBook) {
       next = () => {
@@ -522,7 +527,7 @@ function handlePostFocusEffects(effects) {
     if (bv) triggerQuestCheck('visitor_arrive');
   }
 
-  // 修复完成弹窗（最外层，先弹）
+  // 修复完成弹窗（最外层，先弹），必须手动点击按钮关闭
   if (repairCompleted) {
     const repairNext = next;
     next = () => showRepairCompleteCard(repairBookTitle, repairNext);
@@ -608,24 +613,27 @@ function showRepairCompleteCard(bookTitle, callback) {
 
   card.innerHTML = `
     <div class="text-5xl mb-3">🩹</div>
-    <div class="text-xs text-magic-gold font-bold mb-2">书籍修复</div>
-    <h3 class="font-display text-xl font-bold mb-2">《${bookTitle}》修复完成</h3>
+    <div class="text-xs text-magic-gold font-bold mb-2">${t('repairCompleteTitle')}</div>
+    <h3 class="font-display text-xl font-bold mb-2">《${bookTitle}》</h3>
     <div class="grid grid-cols-3 gap-2 mb-3">
       <div class="bg-white/60 rounded-lg p-3">
-        <div class="text-lg font-bold text-magic-gold">+80</div>
-        <div class="text-xs text-ink-light">智慧之光</div>
+        <div class="text-lg font-bold text-magic-gold">+30</div>
+        <div class="text-xs text-ink-light">${t('repairCompleteRewardCoinsLabel')}</div>
       </div>
       <div class="bg-white/60 rounded-lg p-3">
-        <div class="text-lg font-bold text-purple-500">+2✨</div>
-        <div class="text-xs text-ink-light">灵感</div>
+        <div class="text-lg font-bold text-purple-500">+1✨</div>
+        <div class="text-xs text-ink-light">${t('repairCompleteRewardInspirationLabel')}</div>
       </div>
       <div class="bg-white/60 rounded-lg p-3">
-        <div class="text-lg font-bold text-green-600">+2</div>
-        <div class="text-xs text-ink-light">氛围</div>
+        <div class="text-lg font-bold text-green-600">+1</div>
+        <div class="text-xs text-ink-light">${t('repairCompleteRewardAtmosphereLabel')}</div>
       </div>
     </div>
-    <p class="text-sm text-ink-light mb-4 leading-relaxed">损毁的页面已经补好了，墨迹新鲜，羊皮纸平整——你比上一任守护者用心。</p>
-    <button class="px-6 py-3 bg-magic-gold text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all">继续 →</button>
+    <p class="text-sm text-ink-light mb-3 leading-relaxed">${t('repairCompleteFlavour')}</p>
+    <div class="bg-magic-gold/10 border border-magic-gold/20 rounded-lg p-3 mb-4 text-left">
+      <p class="text-xs text-ink-light leading-relaxed">${t('repairCompleteMomoTip')}</p>
+    </div>
+    <button class="px-6 py-3 bg-magic-gold text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all">${t('continueText')}</button>
   `;
 
   overlay.appendChild(card);

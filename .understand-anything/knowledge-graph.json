@@ -12,9 +12,7 @@
     "frameworks": [
       "tailwindcss"
     ],
-    "description": "纯前端Web游戏 — 番茄钟专注计时 + 经典书籍收集 + NPC访客模拟 + 位面探索系统",
-    "analyzedAt": "2026-06-09T03:22:14.275Z",
-    "gitCommitHash": "ec085caadbf2767601f1f028904f2f3716bc234a"
+    "description": "纯前端Web游戏 — 番茄钟专注计时 + 经典书籍收集 + NPC访客模拟 + 位面探索系统"
   },
   "nodes": [
     {
@@ -2410,7 +2408,7 @@
       "nodeIds": [
         "file:index.html",
         "file:js/app.js",
-        "config:package.json"
+        "file:package.json"
       ]
     },
     {
@@ -2517,14 +2515,7 @@
         "file:data/books/book_026_图书馆指南.js",
         "file:data/books/book_027_飞鸟集.js",
         "file:data/books/book_028_伊索寓言.js",
-        "file:data/books/book_029_菜根谭.js",
-        "file:data/visitor-events.js",
-        "file:data/curation_pairs.js",
-        "file:data/signboards.js",
-        "file:data/quests/pastoral_tasks.js",
-        "file:data/plants.js",
-        "file:data/tiergoals.js",
-        "file:data/atmosphere.js"
+        "file:data/books/book_029_菜根谭.js"
       ]
     },
     {
@@ -2538,8 +2529,7 @@
         "file:audio/effect/button_click.wav",
         "file:audio/effect/buy_success.wav",
         "file:audio/effect/focus_complete.wav",
-        "file:audio/effect/visitor_arrive.wav",
-        "file:visual/visitors/.gitkeep"
+        "file:audio/effect/visitor_arrive.wav"
       ]
     },
     {
@@ -2568,7 +2558,7 @@
       "description": "从 README 和入口文件了解项目整体架构",
       "nodeIds": [
         "file:index.html",
-        "config:package.json"
+        "file:package.json"
       ]
     },
     {
