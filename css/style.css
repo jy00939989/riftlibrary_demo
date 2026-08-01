@@ -491,10 +491,11 @@ body {
   /* --- 顶部导航栏 --- */
   #nav-library-name { font-size: 1rem !important; }
   .font-display.text-xl { font-size: 1rem !important; }
-  /* 隐藏副标题 */
+  /* 隐藏副标题（已由 Tailwind hidden sm:block 控制，此处兜底） */
   nav .text-xs.text-ink-light { display: none; }
   /* 状态栏文字精简 */
   #status-atmosphere { font-size: 0.7rem; }
+  #status-coins { font-size: 0.75rem; }
   nav .flex.items-center.gap-4 { gap: 0.5rem !important; }
 
   /* --- 标签导航：横向滚动 --- */
@@ -541,6 +542,9 @@ body {
   .p-8 { padding: 1.5rem; }
   .text-6xl { font-size: 2.5rem !important; }
   .text-7xl { font-size: 3rem !important; }
+
+  /* 顶部导航栏：超小屏隐藏氛围，避免右侧溢出 */
+  #nav-atmosphere-wrap { display: none !important; }
 
   /* 网格进一步降级 */
   .grid-cols-3 { grid-template-columns: repeat(2, 1fr) !important; }
