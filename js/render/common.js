@@ -17,6 +17,14 @@ export function updateStatusBar() {
   if (atmosEl) atmosEl.textContent = `${state.library.atmosphere}/500`;
   if (inspEl) inspEl.textContent = (state.inspiration || 0).toString();
   if (nameEl) nameEl.textContent = state.library.name;
+
+  // 同步小屏资源展开卡片（方案 B）
+  const coinsCardEl = document.getElementById('status-coins-card');
+  const atmosCardEl = document.getElementById('status-atmosphere-card');
+  const inspCardEl = document.getElementById('status-inspiration-card');
+  if (coinsCardEl) coinsCardEl.textContent = state.coins.toLocaleString();
+  if (atmosCardEl) atmosCardEl.textContent = `${state.library.atmosphere}/500`;
+  if (inspCardEl) inspCardEl.textContent = (state.inspiration || 0).toString();
 }
 
 export function el(tag, classes = '', attrs = {}, children = []) {

@@ -58,24 +58,52 @@
         </div>
       </div>
       <div class="flex items-center gap-2 sm:gap-4 flex-wrap justify-end w-full sm:w-auto mt-1 sm:mt-0">
-        <div class="bg-wood/20 px-2 sm:px-3 py-1 rounded-full flex items-center gap-1 sm:gap-2">
-          <span class="text-magic-gold">💰</span>
-          <span class="font-bold text-sm" id="status-coins">1,250</span>
+        <!-- 资源区：点击展开完整资源卡片（小屏默认只显示金币） -->
+        <div class="relative">
+          <button type="button" id="status-resource-btn" class="bg-wood/20 px-2 sm:px-3 py-1 rounded-full flex items-center gap-1 sm:gap-2 cursor-pointer hover:bg-wood/30 transition-colors" title="查看资源">
+            <span class="text-magic-gold">💰</span>
+            <span class="font-bold text-sm" id="status-coins">1,250</span>
+            <span class="hidden sm:inline text-ink-light/60 text-xs">▼</span>
+          </button>
+          <div id="status-resource-card" class="hidden absolute right-0 top-full mt-2 z-50 parchment-bg border border-wood/30 rounded-xl shadow-xl p-3 min-w-[150px]">
+            <div class="flex items-center justify-between gap-3 mb-2 pb-2 border-b border-wood/20">
+              <span class="text-sm text-ink-light">💰 智慧之光</span>
+              <span class="font-bold text-sm" id="status-coins-card">1,250</span>
+            </div>
+            <div class="flex items-center justify-between gap-3 mb-2 pb-2 border-b border-wood/20">
+              <span class="text-sm text-ink-light">💡 灵感</span>
+              <span class="font-bold text-sm text-purple-400" id="status-inspiration-card">0</span>
+            </div>
+            <div class="flex items-center justify-between gap-3">
+              <span class="text-sm text-ink-light">✨ 氛围</span>
+              <span class="font-bold text-sm text-magic-blue" id="status-atmosphere-card">0/500</span>
+            </div>
+          </div>
         </div>
-        <div class="text-sm text-ink-light hidden sm:inline">
-          💡 <span class="text-purple-400 font-bold" id="status-inspiration">0</span>
-        </div>
-        <div class="text-sm text-ink-light" id="nav-atmosphere-wrap">
-          ✨ <span class="hidden sm:inline" id="atmosphere-label">氛围 </span><span class="text-magic-blue font-bold text-sm" id="status-atmosphere">0/500</span>
-        </div>
+
         <span id="now-playing" class="text-xs text-ink-light/60 mx-1 hidden"></span>
-        <select id="lang-selector" class="hidden sm:block bg-wood/20 text-ink text-sm rounded-lg px-2 py-1 border border-wood/30 focus:outline-none focus:ring-1 focus:ring-magic-gold cursor-pointer">
-          <option value="zh">中文</option>
-          <option value="en">English</option>
-        </select>
-        <button type="button" id="music-selector-btn" class="hidden sm:inline-block text-lg cursor-pointer hover:scale-110 transition-transform" title="选择音乐">🎼</button>
+
+        <!-- 音频控制：小屏也保留入口，避免买了环境音没地方调 -->
+        <button type="button" id="music-selector-btn" class="text-lg cursor-pointer hover:scale-110 transition-transform" title="选择音乐">🎼</button>
         <button type="button" id="music-toggle" class="text-lg cursor-pointer hover:scale-110 transition-transform" title="开关音乐">🔈</button>
-        <button type="button" id="save-mgr-btn" class="text-lg cursor-pointer hover:scale-110 transition-transform" title="存档管理">💾</button>
+
+        <!-- 更多菜单：收纳语言切换 + 存档管理 -->
+        <div class="relative">
+          <button type="button" id="nav-more-btn" class="text-lg cursor-pointer hover:scale-110 transition-transform" title="更多">⚙️</button>
+          <div id="nav-more-menu" class="hidden absolute right-0 top-full mt-2 z-50 parchment-bg border border-wood/30 rounded-xl shadow-xl p-2 min-w-[160px]">
+            <div class="px-3 py-1.5 text-[10px] font-bold text-ink-light/60 uppercase tracking-wider">语言 / Language</div>
+            <button type="button" data-locale="zh" class="nav-more-lang-btn w-full text-left px-3 py-2 rounded-lg hover:bg-wood/20 text-sm text-ink flex items-center gap-2">
+              <span>🌐</span><span>中文</span>
+            </button>
+            <button type="button" data-locale="en" class="nav-more-lang-btn w-full text-left px-3 py-2 rounded-lg hover:bg-wood/20 text-sm text-ink flex items-center gap-2">
+              <span>🌐</span><span>English</span>
+            </button>
+            <div class="my-1.5 border-t border-wood/20"></div>
+            <button type="button" id="nav-more-save" class="w-full text-left px-3 py-2 rounded-lg hover:bg-wood/20 text-sm text-ink flex items-center gap-2">
+              <span>💾</span><span>存档管理</span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </nav>

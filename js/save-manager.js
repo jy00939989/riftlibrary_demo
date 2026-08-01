@@ -270,6 +270,11 @@ function init() {
   if (btn) {
     btn.addEventListener('click', showSaveManager);
   }
+  // 更多菜单里的存档入口（小屏方案 B）
+  const moreSaveBtn = document.getElementById('nav-more-save');
+  if (moreSaveBtn) {
+    moreSaveBtn.addEventListener('click', showSaveManager);
+  }
 }
 
 // DOM ready 后绑定按钮

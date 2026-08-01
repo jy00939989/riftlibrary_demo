@@ -1309,15 +1309,58 @@ function init() {
   const musicBtn = document.getElementById('music-toggle');
   if (musicBtn) musicBtn.addEventListener('click', toggleMusic);
 
-  // 语言选择器
+  // 语言切换：兼容旧版 select 与新版的 ⚙️ 更多菜单按钮
+  const applyLocale = (locale) => {
+    setLocale(locale);
+    window.location.reload();
+  };
+  const syncLocaleUI = (locale) => {
+    document.documentElement.lang = locale === 'en' ? 'en' : 'zh-CN';
+    const langSelector = document.getElementById('lang-selector');
+    if (langSelector) langSelector.value = locale;
+    document.querySelectorAll('.nav-more-lang-btn').forEach(btn => {
+      const active = btn.dataset.locale === locale;
+      btn.classList.toggle('bg-wood/20', active);
+      btn.classList.toggle('font-bold', active);
+    });
+  };
+  syncLocaleUI(getLocale());
+
   const langSelector = document.getElementById('lang-selector');
   if (langSelector) {
-    const currentLocale = getLocale();
-    document.documentElement.lang = currentLocale === 'en' ? 'en' : 'zh-CN';
-    langSelector.value = currentLocale;
-    langSelector.addEventListener('change', (e) => {
-      setLocale(e.target.value);
-      window.location.reload();
+    langSelector.addEventListener('change', (e) => applyLocale(e.target.value));
+  }
+  document.querySelectorAll('.nav-more-lang-btn').forEach(btn => {
+    btn.addEventListener('click', () => applyLocale(btn.dataset.locale));
+  });
+
+  // 资源卡片：点击金币区展开/收起完整资源（小屏方案 B）
+  const resourceBtn = document.getElementById('status-resource-btn');
+  const resourceCard = document.getElementById('status-resource-card');
+  if (resourceBtn && resourceCard) {
+    resourceBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      resourceCard.classList.toggle('hidden');
+    });
+    document.addEventListener('click', (e) => {
+      if (!resourceCard.contains(e.target) && !resourceBtn.contains(e.target)) {
+        resourceCard.classList.add('hidden');
+      }
+    });
+  }
+
+  // ⚙️ 更多菜单：收纳语言切换与存档管理
+  const moreBtn = document.getElementById('nav-more-btn');
+  const moreMenu = document.getElementById('nav-more-menu');
+  if (moreBtn && moreMenu) {
+    moreBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      moreMenu.classList.toggle('hidden');
+    });
+    document.addEventListener('click', (e) => {
+      if (!moreMenu.contains(e.target) && !moreBtn.contains(e.target)) {
+        moreMenu.classList.add('hidden');
+      }
     });
   }
 

@@ -543,8 +543,8 @@ body {
   .text-6xl { font-size: 2.5rem !important; }
   .text-7xl { font-size: 3rem !important; }
 
-  /* 顶部导航栏：超小屏隐藏氛围，避免右侧溢出 */
-  #nav-atmosphere-wrap { display: none !important; }
+  /* 顶部导航栏：超小屏进一步收紧按钮间距 */
+  nav .flex.items-center.gap-2 { gap: 0.375rem !important; }
 
   /* 网格进一步降级 */
   .grid-cols-3 { grid-template-columns: repeat(2, 1fr) !important; }
