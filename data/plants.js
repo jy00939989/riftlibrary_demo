@@ -22,7 +22,7 @@ export const PLANT_TYPES = {
     // 施肥收益（每次施肥给成长值）
     fertilizeGrowth: 50,
     // Lv5 收获奖励
-    harvestAtmosphere: 25,
+    harvestAtmosphere: 2,
     harvestCoins: 30,
     // 种子掉落
     seedType: 'bird_of_paradise',
