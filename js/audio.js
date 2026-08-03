@@ -1,7 +1,7 @@
 // 音频管理模块 —— BGM 氛围联动 + 交叉淡入淡出 + SFX 音效 + 音乐选择器
 import { state, saveState } from './state.js';
-import { initAmbient, setAmbientEnabled, isAmbientEnabled, playAmbient } from './ambient.js';
-import { getSettings, setSetting, initSettings } from './settings.js';
+import { initAmbient, setAmbientEnabled, isAmbientEnabled, playAmbient, stopAmbient } from './ambient.js';
+import { getSettings, setSettings, setSetting, initSettings } from './settings.js';
 
 // 曲目配置（所有 MP3 均已在 audio/ 目录下）
 const TRACK_DEFS = [
@@ -65,9 +65,11 @@ export function getCurrentTrackId() {
 
 // ========== BGM 播放 ==========
 
-function updateToggleIcon() {
+export function updateToggleIcon() {
+  const settings = getSettings();
+  const anyOn = settings.musicEnabled || settings.sfxEnabled || settings.ambientEnabled;
   const btn = document.getElementById('music-toggle');
-  if (btn) btn.textContent = isMusicOn() ? '🔈' : '🔇';
+  if (btn) btn.textContent = anyOn ? '🔈' : '🔇';
 }
 
 export function isMusicOn() { return getSettings().musicEnabled; }
@@ -214,18 +216,29 @@ export function isManualMode() {
 }
 
 export function toggleMusic() {
-  // P1-1：以"实际播放态"判定 wasOn，避免 ghost-on（设置开但无音频）被误判为已开，
-  // 否则回头客首次点击音乐按钮会先关掉、还得再点一次。
-  const wasOn = isMusicOn() && currentAudio && !currentAudio.paused;
-  const nowOn = !wasOn;
-  setSetting('musicEnabled', nowOn);
+  // 小喇叭 = 一键静音 / 一键开启所有音频（BGM + 音效 + 环境音）
+  const settings = getSettings();
+  const currentlyAnyOn = settings.musicEnabled || settings.sfxEnabled || settings.ambientEnabled;
+  const nowOn = !currentlyAnyOn;
+
+  setSettings({
+    musicEnabled: nowOn,
+    sfxEnabled: nowOn,
+    ambientEnabled: nowOn
+  });
+
   updateToggleIcon();
   updateNowPlayingUI();
 
   if (nowOn) {
+    // 恢复 BGM
     if (currentAudio && currentAudio.paused) resumeMusic();
     else startBgm(state.musicManualTrack || null);
+    // 恢复环境音
+    const ambientId = state.ambientSounds?.current;
+    if (ambientId) playAmbient(ambientId);
   } else {
+    // 停止 BGM
     clearInterval(fadeTimer);
     fadeTimer = null;
     if (fadingAudio) {
@@ -234,6 +247,8 @@ export function toggleMusic() {
     }
     if (currentAudio) { currentAudio.pause(); currentAudio.src = ''; currentAudio = null; }
     currentTrackId = null;
+    // 停止环境音
+    stopAmbient();
   }
 }
 

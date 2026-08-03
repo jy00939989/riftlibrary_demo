@@ -2,7 +2,7 @@
 import {
   getAllTrackDefs, getCurrentTrackId, selectTrack, setAutoMode, isManualMode,
   getMusicVolume, setMusicVolume, getSfxVolume, setSfxVolume,
-  toggleMusic, isMusicOn, toggleSfx, isSfxOn
+  toggleMusic, isMusicOn, toggleSfx, isSfxOn, updateToggleIcon
 } from '../audio.js';
 import { getAmbientDefs, getCurrentAmbientId, selectAmbient, isAmbientEnabled, setAmbientEnabled, getAmbientVolume, setAmbientVolume } from '../ambient.js';
 import { t } from '../i18n/terms.js';
@@ -190,6 +190,7 @@ function open() {
       e.stopPropagation();
       try {
         setAmbientEnabled(!isAmbientEnabled());
+        updateToggleIcon();
       } catch (err) {
         if (typeof console !== 'undefined') console.error('setAmbientEnabled failed:', err);
       }
@@ -203,6 +204,7 @@ function open() {
       e.stopPropagation();
       try {
         toggleSfx();
+        updateToggleIcon();
       } catch (err) {
         if (typeof console !== 'undefined') console.error('toggleSfx failed:', err);
       }
