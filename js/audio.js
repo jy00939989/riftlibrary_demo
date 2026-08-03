@@ -1,6 +1,6 @@
 // 音频管理模块 —— BGM 氛围联动 + 交叉淡入淡出 + SFX 音效 + 音乐选择器
 import { state, saveState } from './state.js';
-import { initAmbient, setAmbientEnabled, isAmbientEnabled, playAmbient, getCurrentAmbientId } from './ambient.js';
+import { initAmbient, setAmbientEnabled, isAmbientEnabled, playAmbient } from './ambient.js';
 import { getSettings, setSetting, initSettings } from './settings.js';
 
 // 曲目配置（所有 MP3 均已在 audio/ 目录下）
@@ -102,29 +102,43 @@ export function initAudio() {
   updateNowPlayingUI();
 }
 
+// 强制清理一个正在淡出但已被新切换取代的旧音频对象，避免 AudioContext 泄漏（P2-1）
+function forceCleanFading() {
+  if (fadingAudio && fadingAudio !== currentAudio) {
+    try { fadingAudio.pause(); fadingAudio.src = ''; } catch (e) {}
+    fadingAudio = null;
+  }
+}
+
 /**
- * 播放指定曲目
- * @param {string} trackId - TRACK_DEFS 中的 id，不传则自动根据氛围选择
+ * 统一 BGM 入口（P2-4 收口）。
+ * @param {string|null} trackId - 指定曲目 id；null/undefined 表示自动按氛围选曲。
+ * 行为约定：
+ *  - 音乐关闭时直接返回；
+ *  - 已在同一曲目且正在播放/暂停时，不打断（暂停恢复交给 resumeMusic；解决 P0-1 无谓重播）；
+ *  - 切歌时执行交叉淡入，淡入期间每步读取实时音量（解决 P1-2 拖动被覆盖）；
+ *  - 进入时强制清理上一轮残留的淡出音频（解决 P2-1 泄漏）。
  */
-export function playTrack(trackId) {
-  if (!isMusicOn()) {
-    // eslint-disable-next-line no-console
-    if (typeof console !== 'undefined') console.warn('[audio] playTrack called while music is off');
+export function startBgm(trackId) {
+  if (!isMusicOn()) return;
+  forceCleanFading();
+
+  const available = getAvailableTracks();
+  const def = trackId ? TRACK_DEFS.find(t => t.id === trackId) : null;
+  const actualDef = def || pick(available);
+  if (!actualDef) return;
+
+  // 同一曲目且已有音频句柄：正在播则不打断；已暂停则恢复播放
+  if (actualDef.id === currentTrackId && currentAudio) {
+    if (currentAudio.paused) currentAudio.play().catch(() => {});
     return;
   }
-
-  const musicVolume = getMusicVolume();
-  const def = trackId ? TRACK_DEFS.find(t => t.id === trackId) : null;
-  const actualDef = def || pick(getAvailableTracks());
-
-  if (!actualDef) return;
-  if (actualDef.id === currentTrackId && currentAudio && !currentAudio.paused) return;
 
   currentTrackId = actualDef.id;
   const src = encodeURI(actualDef.file);
   const next = new Audio(src);
   next.loop = true;
-  next.volume = 0;
+  next.volume = currentAudio ? 0 : getMusicVolume();
   next.onerror = () => {
     // BGM 加载失败：重置状态，避免卡在当前曲目
     currentAudio = null;
@@ -138,17 +152,15 @@ export function playTrack(trackId) {
     clearInterval(fadeTimer);
     fadeTimer = setInterval(() => {
       step++;
-      old.volume = Math.max(0, musicVolume - step * (musicVolume / 10));
-      next.volume = Math.min(musicVolume, step * (musicVolume / 10));
+      const v = getMusicVolume();   // P1-2：实时音量，不被拖动覆盖
+      old.volume = Math.max(0, v - step * (v / 10));
+      next.volume = Math.min(v, step * (v / 10));
       if (step >= 10) {
         clearInterval(fadeTimer);
-        old.pause();
-        old.src = '';
+        try { old.pause(); old.src = ''; } catch (e) {}
         if (fadingAudio === old) fadingAudio = null;
       }
     }, 120);
-  } else {
-    next.volume = musicVolume;
   }
 
   next.play().catch(() => {
@@ -162,33 +174,39 @@ export function playTrack(trackId) {
   updateNowPlayingUI();
 }
 
-function pickDefaultTrack() {
-  const available = getAvailableTracks();
-  return available.length > 0 ? pick(available).id : null;
-}
-
+/**
+ * 氛围/模式变动后调用：仅在必要时重新选曲，不打断正在播放的曲子（P0-1 + P2-2）。
+ * - 手动模式：当前已是该曲则不打断；
+ * - 自动模式：当前曲仍有效则不打断（暂停则恢复），仅当当前曲掉出可选集时才重选。
+ */
 export function refreshBGM() {
   if (!isMusicOn()) return;
   const manualId = state.musicManualTrack;
   if (manualId) {
-    playTrack(manualId);
-  } else {
-    playTrack(null);
+    if (currentTrackId !== manualId || !currentAudio) startBgm(manualId);
+    return;
   }
+  const cur = currentTrackId;
+  const stillValid = cur && getAvailableTracks().some(t => t.id === cur);
+  if (stillValid) {
+    if (currentAudio && currentAudio.paused) resumeMusic();
+    return;
+  }
+  startBgm(null);
 }
 
 /** 用户手动选择曲目，此后不再随氛围自动切换 */
 export function selectTrack(trackId) {
   state.musicManualTrack = trackId;
   saveState();
-  playTrack(trackId);
+  startBgm(trackId);
 }
 
 /** 切换回自动模式（随氛围自动选曲） */
 export function setAutoMode() {
   state.musicManualTrack = null;
   saveState();
-  playTrack(null);
+  startBgm(null);
 }
 
 export function isManualMode() {
@@ -196,15 +214,17 @@ export function isManualMode() {
 }
 
 export function toggleMusic() {
-  const wasOn = isMusicOn();
+  // P1-1：以"实际播放态"判定 wasOn，避免 ghost-on（设置开但无音频）被误判为已开，
+  // 否则回头客首次点击音乐按钮会先关掉、还得再点一次。
+  const wasOn = isMusicOn() && currentAudio && !currentAudio.paused;
   const nowOn = !wasOn;
   setSetting('musicEnabled', nowOn);
   updateToggleIcon();
   updateNowPlayingUI();
 
   if (nowOn) {
-    const manualId = state.musicManualTrack;
-    playTrack(manualId || null);
+    if (currentAudio && currentAudio.paused) resumeMusic();
+    else startBgm(state.musicManualTrack || null);
   } else {
     clearInterval(fadeTimer);
     fadeTimer = null;
@@ -227,8 +247,7 @@ export function resumeMusic() {
   if (currentAudio) {
     currentAudio.play().catch(() => {});
   } else {
-    const manualId = state.musicManualTrack;
-    playTrack(manualId || null);
+    startBgm(state.musicManualTrack || null);
   }
 }
 
@@ -239,14 +258,9 @@ export function onFirstInteraction(playBgm = true) {
   initSettings();
   initSfx();
   if (playBgm && isMusicOn()) {
-    const manualId = state.musicManualTrack;
-    playTrack(manualId || null);
+    startBgm(state.musicManualTrack || null);
   }
-  // 同步恢复环境音（init 时可能被浏览器自动播放策略阻止）
-  if (isAmbientEnabled()) {
-    const ambientId = getCurrentAmbientId();
-    if (ambientId) playAmbient(ambientId, true);
-  }
+  // 注：环境音为"付费购买 + 点击播放"，此处不再自动恢复，避免与"需点击才播放"的设计冲突。
 }
 
 // ========== "正在播放" 小指示器 ==========

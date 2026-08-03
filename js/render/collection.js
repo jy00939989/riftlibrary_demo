@@ -61,6 +61,8 @@ export function renderCollection(container) {
       html += renderBooksCategory(cat, p);
     } else if (cat.id === 'milestones') {
       html += renderMilestonesCategory(cat, p);
+    } else if (cat.id === 'visitor_memory') {
+      html += renderVisitorMemoryCategory(cat, p);
     } else if (cat.id === 'plane_archive') {
       html += renderPlaneArchive(cat, p);
     }
@@ -68,6 +70,16 @@ export function renderCollection(container) {
 
   html += '</div>';
   container.innerHTML = html;
+
+  // 访客纪念卡片点击跳转
+  const vmCard = container.querySelector('#vm-collection-card');
+  if (vmCard && window.switchTab) {
+    vmCard.addEventListener('click', () => {
+      window.switchTab('archive');
+      // archive.js 的 renderArchivePage 会重新渲染，需要在全局记录选中的子标签
+      if (window.__setArchiveTab) window.__setArchiveTab('visitor-memory');
+    });
+  }
 }
 
 function renderBooksCategory(cat, p) {
@@ -137,6 +149,23 @@ function renderMilestonesCategory(cat, p) {
 
   html += '</div></div>';
   return html;
+}
+
+function renderVisitorMemoryCategory(cat, p) {
+  return `
+    <div class="bg-white border-2 border-wood/20 rounded-xl p-5 cursor-pointer hover:shadow-md transition-all" id="vm-collection-card">
+      <div class="flex items-center justify-between mb-3">
+        <h4 class="font-bold flex items-center gap-2">
+          <span class="text-2xl">${cat.emoji}</span> ${cat.name}
+        </h4>
+        <span class="text-sm font-bold text-magic-blue">${p.collected}/${p.total} · ${p.percent}%</span>
+      </div>
+      <div class="h-2 bg-gray-200 rounded-full overflow-hidden mb-3">
+        <div class="h-full bg-gradient-to-r from-magic-blue to-magic-gold" style="width:${p.percent}%"></div>
+      </div>
+      <div class="text-xs text-ink-light">${t('vmCollected').replace('{collected}', p.collected).replace('{total}', p.total)}</div>
+    </div>
+  `;
 }
 
 function renderPlaneArchive(cat, p) {

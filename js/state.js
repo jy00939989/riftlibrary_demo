@@ -133,6 +133,9 @@ export const state = {
     visitorReturn: false
   },
 
+  // 访客纪念收集（便签 + 事件）—— 随主存档自动持久化，兼容老存档用防御式初始化
+  visitorMemory: { items: [] },
+
   // 新手引导情境触发标记
   tutorialFlags: {
     maxAtmoStageSeen: 1,       // 已见过的最高氛围阶段 1-5

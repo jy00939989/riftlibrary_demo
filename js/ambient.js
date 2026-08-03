@@ -74,11 +74,11 @@ export function selectAmbient(id) {
 export function playAmbient(id, immediate = false) {
   if (!isAmbientEnabled()) return;
   if (currentAudio) {
-    currentAudio.pause();
+    try { currentAudio.pause(); currentAudio.src = ''; } catch (e) {}
     currentAudio = null;
   }
   if (!id) {
-    currentId = null;
+    stopAmbient();
     return;
   }
   const def = AMBIENT_DEFS.find(d => d.id === id);

@@ -6,8 +6,9 @@ import { PLANES, canUnlockPlane } from '../../data/planes.js';
 import { getPlaneQuestState } from '../quests.js';
 import { renderPlaneDetail } from './plane.js';
 import { VISITOR_DEFS } from '../visitors.js';
+import { getVisitorMemory, getVisitorMemoryNewCount, markSeen, clearAllNew, getVisitorStats, getVisitorItemTitle, getVisitorItemText, retroCollectVisitorMemories } from '../visitorMemory.js';
 
-let archiveTab = 'history'; // 'history' | 'diary' | 'planes'
+let archiveTab = 'history'; // 'history' | 'diary' | 'planes' | 'visitor-memory'
 
 export function renderArchivePage() {
   const container = document.getElementById('page-archive');
@@ -15,11 +16,13 @@ export function renderArchivePage() {
   container.innerHTML = '';
 
   // 子标签导航
+  const newCount = getVisitorMemoryNewCount();
   const nav = document.createElement('div');
-  nav.className = 'flex gap-2 mb-6';
+  nav.className = 'flex gap-2 mb-6 flex-wrap';
   nav.innerHTML = `
     <button class="archive-sub-tab px-4 py-2 rounded-lg font-bold text-sm transition-all ${archiveTab === 'history' ? 'bg-magic-gold text-white shadow-lg' : 'bg-parchment-dark text-ink'}">📊 ${t('subtabHistory')}</button>
     <button class="archive-sub-tab px-4 py-2 rounded-lg font-bold text-sm transition-all ${archiveTab === 'diary' ? 'bg-magic-gold text-white shadow-lg' : 'bg-parchment-dark text-ink'}">📜 ${t('subtabDiary')}</button>
+    <button class="archive-sub-tab px-4 py-2 rounded-lg font-bold text-sm transition-all ${archiveTab === 'visitor-memory' ? 'bg-magic-gold text-white shadow-lg' : 'bg-parchment-dark text-ink'}">🎐 ${t('diaryTabVisitorMemory')}${newCount > 0 ? ` <span class="ml-1 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">${newCount}</span>` : ''}</button>
     <button class="archive-sub-tab px-4 py-2 rounded-lg font-bold text-sm transition-all ${archiveTab === 'planes' ? 'bg-magic-gold text-white shadow-lg' : 'bg-parchment-dark text-ink'}">🌍 ${t('subtabPlanes')}</button>
   `;
   container.appendChild(nav);
@@ -27,12 +30,15 @@ export function renderArchivePage() {
   const tabs = nav.querySelectorAll('.archive-sub-tab');
   tabs[0].addEventListener('click', () => { archiveTab = 'history'; renderArchivePage(); });
   tabs[1].addEventListener('click', () => { archiveTab = 'diary'; renderArchivePage(); });
-  tabs[2].addEventListener('click', () => { archiveTab = 'planes'; renderArchivePage(); });
+  tabs[2].addEventListener('click', () => { archiveTab = 'visitor-memory'; renderArchivePage(); });
+  tabs[3].addEventListener('click', () => { archiveTab = 'planes'; renderArchivePage(); });
 
   if (archiveTab === 'history') {
     container.appendChild(renderHistoryTab());
   } else if (archiveTab === 'diary') {
     container.appendChild(renderDiaryTab());
+  } else if (archiveTab === 'visitor-memory') {
+    container.appendChild(renderVisitorMemoryTab());
   } else {
     container.appendChild(renderPlanesTab());
   }
@@ -40,6 +46,7 @@ export function renderArchivePage() {
 
 // 注册全局引用供 plane.js 的返回按钮使用
 window.__renderArchivePage = renderArchivePage;
+window.__setArchiveTab = (tab) => { archiveTab = tab; };
 
 // ========== 馆史档案 ==========
 
@@ -234,6 +241,138 @@ function renderDiaryTab() {
       reviewBtn.addEventListener('click', showDiaryReviewModal);
     }
   }, 0);
+
+  return div;
+}
+
+// ========== 访客纪念 ==========
+
+function renderVisitorMemoryTab() {
+  const div = document.createElement('div');
+
+  // 老存档回溯：把已触发过的叙事事件补录进来（只执行一次，有变化会自动 save）
+  retroCollectVisitorMemories();
+
+  const stats = getVisitorStats();
+  const groups = getVisitorMemory();
+
+  // 进入标签页时：若全部未读则自动清角标（可选），这里保留手动标记
+  let filter = 'all';
+
+  // 总进度
+  let html = `
+    <div class="parchment-bg rounded-2xl p-4 mb-4 magic-glow">
+      <div class="flex items-center justify-between mb-2">
+        <div class="font-display font-bold text-lg">🎐 ${t('diaryTabVisitorMemory')}</div>
+        <div class="text-sm font-bold text-magic-blue">${t('vmCollected').replace('{collected}', stats.collected).replace('{total}', stats.total)} · ${stats.percent}%</div>
+      </div>
+      <div class="h-2 bg-wood/20 rounded-full overflow-hidden">
+        <div class="h-full bg-gradient-to-r from-magic-blue to-magic-gold rounded-full" style="width:${stats.percent}%"></div>
+      </div>
+    </div>
+  `;
+
+  // 筛选 + 全部已读
+  html += `
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex gap-2" id="vm-filter-bar">
+        <button data-filter="all" class="vm-filter-btn px-3 py-1.5 rounded-lg text-sm font-bold bg-magic-gold text-white">${t('vmFilterAll')}</button>
+        <button data-filter="note" class="vm-filter-btn px-3 py-1.5 rounded-lg text-sm font-bold bg-parchment-dark text-ink">${t('vmFilterNote')}</button>
+        <button data-filter="event" class="vm-filter-btn px-3 py-1.5 rounded-lg text-sm font-bold bg-parchment-dark text-ink">${t('vmFilterEvent')}</button>
+      </div>
+      ${getVisitorMemoryNewCount() > 0 ? `<button id="vm-mark-all" class="px-3 py-1.5 rounded-lg text-sm font-bold bg-wood/20 text-ink hover:bg-wood/30 transition-colors">${t('vmMarkAllRead')}</button>` : ''}
+    </div>
+  `;
+
+  // 分组列表
+  if (groups.length === 0) {
+    html += `
+      <div class="parchment-bg rounded-2xl p-8 text-center magic-glow">
+        <div class="text-4xl mb-3">🎐</div>
+        <p class="text-ink-light">${t('vmEmpty')}</p>
+      </div>
+    `;
+  } else {
+    groups.forEach(g => {
+      const def = VISITOR_DEFS[g.charId] || {};
+      const charTotal = (stats.perChar.find(p => p.charId === g.charId) || {}).total || 0;
+      const items = [...g.notes, ...g.events].sort((a, b) => b.lastSeen - a.lastSeen);
+
+      html += `
+        <div class="parchment-bg rounded-2xl p-4 mb-4 magic-glow visitor-memory-group" data-char="${g.charId}">
+          <div class="flex items-center justify-between mb-3 pb-2 border-b border-wood/20">
+            <div class="flex items-center gap-2">
+              <span class="text-2xl">${g.charEmoji || def.emoji || '👤'}</span>
+              <div>
+                <div class="font-bold text-ink">${g.charName || def.name || g.charId}</div>
+                <div class="text-xs text-ink-light">${def.title || ''}</div>
+              </div>
+            </div>
+            <div class="text-sm font-bold text-magic-blue">${g.count}/${charTotal}</div>
+          </div>
+          <div class="space-y-2">
+      `;
+
+      items.forEach(item => {
+        const title = getVisitorItemTitle(item);
+        const text = getVisitorItemText(item);
+        const rarityLabel = item.rarity ? t(`vmRarity${item.rarity.charAt(0).toUpperCase() + item.rarity.slice(1).replace(/-([a-z])/g, (_, c) => c.toUpperCase())}`) : '';
+        html += `
+          <div class="vm-item relative bg-white/60 rounded-lg p-3 cursor-pointer hover:bg-white transition-colors ${item.isNew ? 'ring-1 ring-magic-gold/40' : ''}" data-uid="${item.uid}" data-kind="${item.kind}">
+            ${item.isNew ? `<span class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">${t('vmNew')}</span>` : ''}
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-xs font-bold px-1.5 py-0.5 rounded ${item.kind === 'note' ? 'bg-wood/20 text-ink' : 'bg-magic-gold/20 text-magic-gold'}">${item.kind === 'note' ? t('vmKindNote') : t('vmKindEvent')}</span>
+              ${rarityLabel ? `<span class="text-xs px-1.5 py-0.5 rounded bg-purple-100 text-purple-700">${rarityLabel}</span>` : ''}
+            </div>
+            ${title ? `<div class="font-bold text-sm text-ink mb-1">${title}</div>` : ''}
+            <div class="text-sm text-ink-light whitespace-pre-line">${text}</div>
+          </div>
+        `;
+      });
+
+      html += `
+          </div>
+        </div>
+      `;
+    });
+  }
+
+  div.innerHTML = html;
+
+  // 筛选按钮事件
+  const filterBtns = div.querySelectorAll('.vm-filter-btn');
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      filter = btn.dataset.filter;
+      filterBtns.forEach(b => {
+        const active = b.dataset.filter === filter;
+        b.className = `vm-filter-btn px-3 py-1.5 rounded-lg text-sm font-bold ${active ? 'bg-magic-gold text-white' : 'bg-parchment-dark text-ink'}`;
+      });
+      div.querySelectorAll('.vm-item').forEach(el => {
+        el.style.display = (filter === 'all' || el.dataset.kind === filter) ? '' : 'none';
+      });
+    });
+  });
+
+  // 点击条目标记已读
+  div.querySelectorAll('.vm-item').forEach(el => {
+    el.addEventListener('click', () => {
+      const uid = el.dataset.uid;
+      markSeen(uid);
+      const badge = el.querySelector('.absolute');
+      if (badge) badge.remove();
+      el.classList.remove('ring-1', 'ring-magic-gold/40');
+    });
+  });
+
+  // 全部已读
+  const markAllBtn = div.querySelector('#vm-mark-all');
+  if (markAllBtn) {
+    markAllBtn.addEventListener('click', () => {
+      clearAllNew();
+      renderArchivePage();
+    });
+  }
 
   return div;
 }

@@ -3,6 +3,7 @@ import { state } from './state.js';
 import { BOOKS } from '../data/books.js';
 import { PLANES, canUnlockPlane } from '../data/planes.js';
 import { t, getAtmosphereStageName } from './i18n/terms.js';
+import { getVisitorStats } from './visitorMemory.js';
 
 const STORAGE_KEY = 'library_collection';
 
@@ -13,6 +14,8 @@ export const COLLECTION_CATEGORIES = [
     getProgress: () => getProgress() },
   { id: 'milestones',  nameKey: 'collectionCategoryMilestones',   emoji: '📊', mvp: true,
     getProgress: () => getMilestoneProgress() },
+  { id: 'visitor_memory', nameKey: 'collectionCategoryVisitorMemory', emoji: '🎐', mvp: true,
+    getProgress: () => getVisitorMemoryProgress() },
   { id: 'plane_archive', nameKey: 'collectionCategoryPlaneArchive', emoji: '🌍', mvp: true,
     getProgress: () => getPlaneArchiveProgress() }
 ];
@@ -102,6 +105,17 @@ function getMilestoneProgress() {
 
   const acquired = items.filter(i => i.hasValue).length;
   return { items, acquired, total: items.length, percent: Math.round((acquired / items.length) * 100) };
+}
+
+// ========== 访客纪念进度 ==========
+
+function getVisitorMemoryProgress() {
+  const stats = getVisitorStats();
+  return {
+    collected: stats.collected,
+    total: stats.total,
+    percent: stats.percent
+  };
 }
 
 // ========== 辅助 ==========

@@ -1,8 +1,8 @@
 # 评审：音乐 / 音效 / 环境音 播放链路（开关与音量调整异常）
 
-> 状态：**待开发二审（v1.1 修订版）**
-> 版本：v1.1（2026-08-01，采纳克克复核 + 架构师补充修正）
-> 评审人：架构师（初评） / 克克（复核）
+> 状态：**已实施（v1.2 修订版）**
+> 版本：v1.2（2026-08-01，落地全部 P0/P1/P2 + 三项决策拍板）
+> 评审人：架构师（初评） / 克克（复核） / 架构师（实施）
 > 适用范围：异世界图书馆 / 归墟图书馆
 > 评审依据：用户反馈"音乐的开关和调整总是有问题"
 > 涉及文件：`js/audio.js`、`js/ambient.js`、`js/render/music-selector.js`、`js/settings.js`、`js/storage.js`、`js/app.js`
@@ -283,12 +283,25 @@ Object.entries(LEGACY_SETTINGS).forEach(([oldKey, cfg]) => {
 
 ---
 
-## 六、待确认项
+## 六、三项决策拍板（v1.2 已落地）
 
-1. ~~**暂停后氛围变动的行为**~~：v1.1 已采纳"恢复刚才那首"语义，并入 `refreshBGM` 修法（见上方 P0-1 / 原 P2-2）。
-2. **是否纳入 `startBgm` 收口重构**（P2-4）：本次只修 bug，还是顺带做入口整理？（推荐做，可一并收敛 P0-1/P2-1/P2-2 修复）
-3. **资产核对**：`TRACK_DEFS` 引用的 `audio/*.mp3` 等文件是否真实存在（属资产问题，非代码问题，本次未核查；若缺失会造成"开关开了却没声音"的误判）。
-4. **环境音自动播放一致性**（P2-5）：`setAmbientEnabled(true)` 自动播环境音是否与 BGM"需用户手势才播"的设计方向一致？若需一致，改为记录状态、首个手势后再播。
+1. ~~**暂停后氛围变动的行为**~~：v1.1 已采纳"恢复刚才那首"语义，并入 `refreshBGM` 修法。
+2. **`startBgm` 收口（P2-4）：已采纳并实施**。新增 `startBgm(trackId?)` 作为 BGM 唯一入口，`refreshBGM / selectTrack / setAutoMode / toggleMusic(开) / resumeMusic / onFirstInteraction` 全部改走它，`playTrack` 已删除。
+3. **资产核对**：用户确认 `audio/*.mp3`、`audio/effect/*.wav`、`audio/ambient/*.mp3` 等文件**全部真实存在**，排除"开关开了却没声音"的资产缺失误判。
+4. **环境音自动播放（P2-5）**：用户明确"环境音为付费购买 + 点击播放，不会自动播放"。据此**移除** `onFirstInteraction` 中"首次手势自动恢复环境音"的代码，使其严格符合 click-to-play；P2-5 仅保留 `playAmbient` 切源/停止时的 `src` 泄漏修复。
+
+---
+
+## 七、实施记录（v1.2）
+
+| 文件 | 改动 | 对应问题 |
+|---|---|---|
+| `js/audio.js` | 新增 `startBgm(trackId?)` 收口；`refreshBGM` 仅在当前曲失效/未播时重选、暂停则 `resumeMusic`；`toggleMusic` 的 `wasOn` 改用实际播放态；淡入期每步读实时音量；`playTrack` 删除；`forceCleanFading` 防泄漏；移除环境音自动恢复 | P0-1, P1-1(二步), P1-2, P2-1, P2-2, P2-4 |
+| `js/app.js` | 删除初始化期对回头客的 `onFirstInteraction()` 调用（`app.js` 原 1370-1373） | P1-1(一步) |
+| `js/settings.js` | `LEGACY_SETTINGS` 两个 volume 映射加 `Number.isFinite` 兜底，防迁移写出 `NaN` | P2-3 |
+| `js/ambient.js` | `playAmbient` 切源/停止时清理旧 `src`；`playAmbient(null)` 真正停止当前环境音 | P2-5 |
+
+校验：`node --check` 四个文件均通过；全局已无 `playTrack` 残留引用。
 
 ---
 

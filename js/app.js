@@ -1367,10 +1367,6 @@ function init() {
   initAudio();
   initMusicSelector();
   initSfx();
-  // 回头客自动播放BGM+SFX，新用户等首次专注完成后触发
-  if (state.focus.totalMinutes > 0) {
-    onFirstInteraction();
-  }
 
   renderCurrentTab();
   renderMomoSuggestion();

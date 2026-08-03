@@ -4,6 +4,7 @@ import { addCoins, addAtmosphere, addHistory } from './storage.js';
 import { BOOKS } from '../data/books.js';
 import { addDiaryEntry } from './diary.js';
 import { isBookCapacityFull, addToManuscriptBox, createBookRecord, unlockBook } from './capacity.js';
+import { collectVisitorItem } from './visitorMemory.js';
 import { getCurationBorrowBonus } from './curation.js';
 import { VISITOR_NARRATIVES } from '../data/visitor-events.js';
 import { SIGNBOARDS } from '../data/signboards.js';
@@ -766,6 +767,14 @@ function triggerNarrative(charId) {
 
   // 1. 常层：每次还书必然触发
   result.common = pickCommonEvent(charId);
+  if (result.common) {
+    collectVisitorItem({
+      charId,
+      kind: 'note',
+      eventId: result.common.id,
+      text: result.common.text
+    });
+  }
 
   // 2. 偶层：好感≥FAVOR_THRESHOLDS.OCCASIONAL 且 有未完成的偶层事件 → 30% 概率
   const allOccDone = narrative.occasional
@@ -783,6 +792,14 @@ function triggerNarrative(charId) {
       addHistory('event', `🌸 ${result.occasional.title}`,
         `${VISITOR_DEFS[charId]?.emoji || ''} ${VISITOR_DEFS[charId]?.name || charId}在还书中留下了一份特别的礼物`);
       addDiaryEntry('special_event', { detail: `${result.occasional.title} —— ${result.occasional.text}` });
+      collectVisitorItem({
+        charId,
+        kind: 'event',
+        eventId: result.occasional.id,
+        title: result.occasional.title,
+        text: result.occasional.text,
+        rarity: 'occasional'
+      });
     }
   }
 
@@ -820,6 +837,14 @@ function triggerNarrative(charId) {
     addDiaryEntry('special_event', {
       detail: `${narrative.rare.title} —— ${narrative.rare.text}\n\n附信：${narrative.rare.letter?.title || ''}`
     });
+    collectVisitorItem({
+      charId,
+      kind: 'event',
+      eventId: 'rare',
+      title: narrative.rare.title,
+      text: `${narrative.rare.text}\n\n${narrative.rare.letter?.title || ''}\n${narrative.rare.letter?.text || ''}`,
+      rarity: 'rare'
+    });
     }
   }
 
@@ -835,6 +860,14 @@ function triggerNarrative(charId) {
     addHistory('event', `🎉 终局事件：${narrative.postRare.title}`,
       `${VISITOR_DEFS[charId]?.emoji || ''} ${VISITOR_DEFS[charId]?.name || charId} 的故事迎来了圆满的篇章`);
     addDiaryEntry('special_event', { detail: `${narrative.postRare.title} —— ${narrative.postRare.text}` });
+    collectVisitorItem({
+      charId,
+      kind: 'event',
+      eventId: 'postRare',
+      title: narrative.postRare.title,
+      text: narrative.postRare.text,
+      rarity: 'postRare'
+    });
   }
 
   // 5. 终局后常层：终局已触发后，每次还书可能触发终局后常层事件（可重复）
@@ -850,6 +883,13 @@ function triggerNarrative(charId) {
       ns.postRareCommonTriggered = ns.postRareCommonTriggered.slice(-10);
     }
     result.postRareCommon = chosen;
+    collectVisitorItem({
+      charId,
+      kind: 'note',
+      eventId: chosen.id,
+      text: chosen.text,
+      rarity: 'postRare'
+    });
   }
 
   // 6. 终局后偶层：终局已触发 + 好感≥FAVOR_THRESHOLDS.POST_RARE + 有未完成的终局后偶层 → 30%概率
@@ -867,6 +907,14 @@ function triggerNarrative(charId) {
         addHistory('event', `🌟 ${next.title}`,
           `${VISITOR_DEFS[charId]?.emoji || ''} ${VISITOR_DEFS[charId]?.name || charId} 的故事仍在继续`);
         addDiaryEntry('special_event', { detail: `${next.title} —— ${next.text}` });
+        collectVisitorItem({
+          charId,
+          kind: 'event',
+          eventId: next.id,
+          title: next.title,
+          text: next.text,
+          rarity: 'postRareOccasional'
+        });
       }
     }
   }
@@ -1036,6 +1084,15 @@ function eventGiftBook(visitor) {
   }
   addHistory('event', `📦 沈明远赠送了一本《${book.title}》`, `${(book.totalWords || 0).toLocaleString()}字 · ${book.author}`);
   addDiaryEntry('special_event', { detail: `沈明远赠送了一本《${book.title}》，说是自己珍藏多年的版本。` });
+  collectVisitorItem({
+    charId: 'shenmingyuan',
+    kind: 'event',
+    eventId: 'shen_gift_book',
+    titleKey: 'vmEventShenGiftBookTitle',
+    textKey: 'vmEventShenGiftBookText',
+    vars: { bookTitle: book.title },
+    rarity: 'special'
+  });
   saveState();
   return { type: 'gift_book', bookId, mysteryTitle: book.title, emoji: book.emoji };
 }
@@ -1074,6 +1131,15 @@ function eventPeizhouRecommend(pool) {
 
   addHistory('event', `📚 裴舟推荐《${book.title}》`, `24h内在商店购买享额外7折`);
   addDiaryEntry('special_event', { detail: `裴舟推荐了《${book.title}》，说"这本在我书店里摆了好久，一直没人带走。"24小时内购买享额外折扣。` });
+  collectVisitorItem({
+    charId: 'peizhou',
+    kind: 'event',
+    eventId: 'peizhou_recommend',
+    titleKey: 'vmEventPeizhouRecommendTitle',
+    textKey: 'vmEventPeizhouRecommendText',
+    vars: { bookTitle: book.title },
+    rarity: 'special'
+  });
   saveState();
   return { type: 'peizhou_recommend', bookId: entry.bookId, title: book.title, emoji: book.emoji, discount };
 }
@@ -1106,6 +1172,14 @@ function eventPeizhouPreview(pool) {
   }
 
   addDiaryEntry('special_event', { detail: `裴舟翻了翻你的手稿箱，挑出一本没抄完的。"这段我熟——以前书店里有这本书，我帮人补过好几页。给你添几笔。"` });
+  collectVisitorItem({
+    charId: 'peizhou',
+    kind: 'event',
+    eventId: 'peizhou_preview',
+    titleKey: 'vmEventPeizhouPreviewTitle',
+    textKey: 'vmEventPeizhouPreviewText',
+    rarity: 'special'
+  });
   saveState();
   return { type: 'peizhou_preview', boosted };
 }
@@ -1120,6 +1194,15 @@ function eventWavePoem(visitor) {
   state.collection.wavePoems.push({ text: poem, date: getNow() });
   addHistory('event', '📝 王小磊留下了一张波浪诗笺', `"${poem}"`);
   addDiaryEntry('special_event', { detail: `王小磊在还书时夹了一张诗笺："${poem}"` });
+  collectVisitorItem({
+    charId: 'wangxiaolei',
+    kind: 'event',
+    eventId: 'wang_poem',
+    titleKey: 'vmEventWavePoemTitle',
+    textKey: 'vmEventWavePoemText',
+    vars: { poem },
+    rarity: 'special'
+  });
   saveState();
   return { type: 'wave_poem', poem, count: state.collection.wavePoems.length };
 }
@@ -1127,24 +1210,34 @@ function eventWavePoem(visitor) {
 // --- 通用事件（其他 6 位访客） ---
 
 const GENERIC_EVENTS = {
-  chengyuan:    { emoji: '💻', text: '程远分享了他的调试笔记', msg: '把代码调试和文本校对做了类比，附赠智慧之光。' },
-  jianan:       { emoji: '📋', text: '简安留下了一页公文背面手稿', msg: '正面是汇报材料，背面是一段小说开头。' },
-  jiangyoushu:  { emoji: '🎓', text: '江有树分享了一份修改后的简历', msg: '在图书馆里改的版本，措辞自信了很多。' },
-  guyu:         { emoji: '🌾', text: '谷雨夹了一朵野花在书里', msg: '村口采的野花，被她仔细压成了标本。' },
-  qiaoyiyi:     { emoji: '🎨', text: '乔一一画了一张手绘藏书票', msg: '原书封底已经破损，她用自己画的藏书票修补了上去。' },
-  xierugui:     { emoji: '🏭', text: '谢如归留了一份SWOT笔记', msg: '对《史记》做了商业分析，视角清奇但颇有见地。' },
-  xiachan:      { emoji: '💃', text: '夏蝉写了一小段歌词', msg: '第四遍的时候哼出来的。前三遍镜子都说不对。' }
+  chengyuan:    { emoji: '💻', titleKey: 'vmEventGenericChengyuanTitle', msgKey: 'vmEventGenericChengyuanMsg' },
+  jianan:       { emoji: '📋', titleKey: 'vmEventGenericJiananTitle', msgKey: 'vmEventGenericJiananMsg' },
+  jiangyoushu:  { emoji: '🎓', titleKey: 'vmEventGenericJiangyoushuTitle', msgKey: 'vmEventGenericJiangyoushuMsg' },
+  guyu:         { emoji: '🌾', titleKey: 'vmEventGenericGuyuTitle', msgKey: 'vmEventGenericGuyuMsg' },
+  qiaoyiyi:     { emoji: '🎨', titleKey: 'vmEventGenericQiaoyiyiTitle', msgKey: 'vmEventGenericQiaoyiyiMsg' },
+  xierugui:     { emoji: '🏭', titleKey: 'vmEventGenericXieruguiTitle', msgKey: 'vmEventGenericXieruguiMsg' },
+  xiachan:      { emoji: '💃', titleKey: 'vmEventGenericXiachanTitle', msgKey: 'vmEventGenericXiachanMsg' }
 };
 
 function eventGeneric(charId, visitor) {
   const evt = GENERIC_EVENTS[charId];
   if (!evt) return null;
   const reward = rand(10, 30);
+  const titleText = t(evt.titleKey);
+  const msgText = t(evt.msgKey);
   addCoins(reward);
-  addHistory('event', `${evt.emoji} ${evt.text}`, `${evt.msg} +${reward}智慧之光`);
-  addDiaryEntry('special_event', { detail: `${evt.text}——${evt.msg}` });
+  addHistory('event', `${evt.emoji} ${titleText}`, `${msgText} +${reward}${t('coins')}`);
+  addDiaryEntry('special_event', { detail: `${titleText}——${msgText}` });
+  collectVisitorItem({
+    charId,
+    kind: 'event',
+    eventId: `generic_${charId}`,
+    titleKey: evt.titleKey,
+    textKey: evt.msgKey,
+    rarity: 'special'
+  });
   saveState();
-  return { type: 'generic', charId, coins: reward, text: evt.text };
+  return { type: 'generic', charId, coins: reward, text: titleText };
 }
 
 // ========== Dev 面板对接 ==========

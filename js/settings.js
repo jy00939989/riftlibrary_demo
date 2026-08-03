@@ -14,11 +14,18 @@ export const DEFAULT_SETTINGS = {
 };
 
 // 旧版设置类 key → 新 settings 字段映射
+// 注意：map 必须对脏值兜底，否则 parseFloat('off'/'') 会写出 NaN，污染音量（P2-3）
 const LEGACY_SETTINGS = {
   'library_music': { target: 'musicEnabled', map: v => v !== 'off' },
-  'library_music_volume': { target: 'musicVolume', map: v => parseFloat(v) },
+  'library_music_volume': {
+    target: 'musicVolume',
+    map: v => { const n = parseFloat(v); return Number.isFinite(n) ? n : DEFAULT_SETTINGS.musicVolume; }
+  },
   'library_sfx': { target: 'sfxEnabled', map: v => v !== 'off' },
-  'library_sfx_volume': { target: 'sfxVolume', map: v => parseFloat(v) },
+  'library_sfx_volume': {
+    target: 'sfxVolume',
+    map: v => { const n = parseFloat(v); return Number.isFinite(n) ? n : DEFAULT_SETTINGS.sfxVolume; }
+  },
   'rift_library_locale': { target: 'locale', map: v => v },
 };
 
