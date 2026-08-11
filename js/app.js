@@ -1226,63 +1226,6 @@ function init() {
   initState();
   ensureAllBooksInManuscriptBox();
 
-  // 旧存档迁移：从 copiedWords 修正 copyCount 和 masteryLevel
-  // 以及扩充字数后，旧"completed"需要回退为 copying
-  updateLoading(40, '正在校对古籍...');
-  let migratedBooks = 0;
-  Object.keys(state.books).forEach(bookId => {
-    const book = BOOKS[bookId];
-    const bs = state.books[bookId];
-    if (!book || !bs || !book.totalWords || bs.copiedWords <= 0) return;
-    const actualCopies = Math.floor(bs.copiedWords / book.totalWords);
-    if (actualCopies > (bs.copyCount || 0)) {
-      bs.copyCount = actualCopies;
-      if (!book.noMastery) {
-        bs.masteryLevel = Math.min(5, actualCopies);
-      }
-      if (bs.masteryLevel >= 5) {
-        bs.status = 'completed';
-      }
-      migratedBooks++;
-    }
-    // 扩充字数迁移：旧存档标记为 completed 但字数不足新版总字数 → 回退
-    if (bs.status === 'completed' && bs.copiedWords < book.totalWords) {
-      bs.status = bs.copiedWords > 0 ? 'copying' : 'unlocked';
-      migratedBooks++;
-    }
-    // 修正：copying 但一字未抄 → unlocked
-    if (bs.status === 'copying' && bs.copiedWords <= 0) {
-      bs.status = 'unlocked';
-      migratedBooks++;
-    }
-    // 修正：copying 但字数已达总字数 → completed
-    if (bs.status === 'copying' && bs.copiedWords >= book.totalWords) {
-      bs.status = 'completed';
-      bs.copyCount = Math.max(bs.copyCount || 1, Math.floor(bs.copiedWords / book.totalWords));
-      if (!book.noMastery) {
-        bs.masteryLevel = Math.min(5, bs.copyCount);
-      }
-      migratedBooks++;
-    }
-    // 确保章节解锁与 copiedWords 同步
-    if (book.chapters && bs.unlockedChapters) {
-      book.chapters.forEach((ch, idx) => {
-        if (bs.copiedWords >= ch.unlockAt && !bs.unlockedChapters.includes(idx + 1)) {
-          bs.unlockedChapters.push(idx + 1);
-        }
-      });
-    }
-
-    // 修正旧版 masteryLevel：旧公式为 copyCount + 1，新公式直接等于 copyCount
-    if (!book.noMastery && bs.copyCount > 0 && bs.masteryLevel > bs.copyCount) {
-      bs.masteryLevel = Math.min(5, bs.copyCount);
-      migratedBooks++;
-    }
-  });
-  if (migratedBooks > 0) {
-    saveState();
-  }
-
   // 注入回调
   setCompleteCallback(handleCompleteFocus);
 
