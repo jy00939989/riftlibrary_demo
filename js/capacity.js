@@ -2,32 +2,7 @@
 // 从 shop.js 拆分，解决 shop.js ↔ visitors.js 循环依赖
 import { state, saveState } from './state.js';
 import { spendCoins, addHistory } from './storage.js';
-
-// ========== 统一书籍记录工厂 ==========
-// 所有模块必须通过此函数创建书籍初始状态，禁止直接写入 state.books
-
-const CANONICAL_BOOK_FIELDS = {
-  unlockedChapters: [1],
-  copyCount: 0,
-  masteryLevel: 0,
-  copiedWords: 0,
-  status: 'unlocked',
-  starred: false,
-  damaged: false,
-  repairWords: 0,
-  repairProgress: 0,
-  readChapters: [],
-  reCopyUnlocked: false
-};
-
-/**
- * 创建一本新书的初始状态（不写入 state，纯工厂函数）
- * @param {object} [overrides] - 覆盖字段，如 { masteryLevel: 1, status: 'completed' }
- * @returns {object} 规范格式的书籍状态对象
- */
-export function createBookRecord(overrides = {}) {
-  return { ...CANONICAL_BOOK_FIELDS, ...overrides };
-}
+import { createBookRecord } from './core/book-utils.js';
 
 /**
  * 解锁一本书并放入手稿箱（一步完成：创建记录 + 写入 state + 入箱）
