@@ -28,7 +28,8 @@ import { showAchievementToast } from './render/achievements.js';
 import { addWaterOpportunity, checkWither } from './plants.js';
 import { addDiaryEntry, tryGenerateDailySummary } from './diary.js';
 import { tickPlaneVisitors, checkTaskCompletion } from './quests.js';
-import { initAudio, toggleMusic, onFirstInteraction, initSfx, playSfx, pauseMusic } from './audio.js';
+import { initAudio, toggleMusic, ensureAudioContext, initSfx, playSfx, pauseMusic, startBgm, isMusicOn } from './audio.js';
+import { playAmbient, isAmbientEnabled } from './ambient.js';
 import { showIntro } from './intro.js';
 import { checkAndShowTutorial } from './tutorial.js';
 import { TIER_GOALS, isTierComplete, countTierGoalsComplete } from '../data/tiergoals.js';
@@ -82,9 +83,16 @@ function triggerQuestCheck(event) {
 // ========== 全局操作 ==========
 
 function handleStartFocus() {
-  // 首次用户交互时初始化音频（修复：之前 initSfx 在专注完成后才调用，导致首次专注音效静默）
-  // 开始专注不自动播放 BGM，由用户通过音乐开关/选择器手动控制
-  onFirstInteraction(false);
+  // 首次用户交互时初始化音频上下文（只初始化音效，不播 BGM）
+  ensureAudioContext();
+
+  // 开始专注时，若音乐/环境音开关开启，自动播放当前选中的
+  if (isMusicOn()) {
+    startBgm(state.musicManualTrack || null);
+  }
+  if (isAmbientEnabled()) {
+    playAmbient(state.ambientSounds?.current);
+  }
 
   if (!state.currentSession.bookId) {
     alert('请先选择一本要誊抄的书 📖');
@@ -1208,9 +1216,9 @@ function init() {
 
   updateLoading(30, '正在唤醒音频...');
 
-  // 首次用户交互激活音频（兜底：任何按钮点击都激活）
+  // 首次用户交互激活音频上下文（只初始化音效，不自动播 BGM/环境音）
   const activateAudio = () => {
-    onFirstInteraction();
+    ensureAudioContext();
     document.removeEventListener('click', activateAudio);
   };
   document.addEventListener('click', activateAudio);

@@ -2,7 +2,7 @@
 import {
   getAllTrackDefs, getCurrentTrackId, selectTrack, setAutoMode, isManualMode,
   getMusicVolume, setMusicVolume, getSfxVolume, setSfxVolume,
-  toggleMusic, isMusicOn, toggleSfx, isSfxOn, updateToggleIcon
+  toggleMusic, isMusicOn, toggleSfx, isSfxOn, updateToggleIcon, isBgmPlaying
 } from '../audio.js';
 import { getAmbientDefs, getCurrentAmbientId, selectAmbient, isAmbientEnabled, setAmbientEnabled, getAmbientVolume, setAmbientVolume } from '../ambient.js';
 import { t } from '../i18n/terms.js';
@@ -73,19 +73,28 @@ function open() {
       <div class="space-y-2 mb-5">
         ${tracks.map(track => {
           const isCurrent = track.id === currentId;
+          const isPlaying = isCurrent && isBgmPlaying();
           const lockedClass = track.unlocked
             ? (isCurrent ? 'border-magic-gold bg-magic-gold/10 ring-1 ring-magic-gold' : 'border-wood/20 bg-white/50 hover:border-magic-gold/40')
             : 'border-wood/10 bg-stone-100/50 opacity-40';
-          const statusIcon = isCurrent ? '🎧' : track.unlocked ? '' : '🔒';
+          const statusIcon = isPlaying ? '🎧' : isCurrent ? '⏸' : track.unlocked ? '' : '🔒';
+          const subText = track.unlocked
+            ? (isPlaying ? t('nowPlaying') : isCurrent ? t('paused') : t('clickToPlay'))
+            : t('unlockAtNextStage');
           const onClick = track.unlocked ? `onclick="window._msPick('${track.id}')"` : '';
+          const badge = isPlaying
+            ? `<span class="text-magic-gold text-xs font-bold flex-shrink-0">▶ ${t('playing')}</span>`
+            : isCurrent
+              ? `<span class="text-ink-light text-xs font-bold flex-shrink-0">⏸ ${t('paused')}</span>`
+              : '';
           return `
             <button class="ms-track-btn w-full flex items-center gap-3 p-3 rounded-lg border-2 text-left transition-all ${lockedClass}" ${onClick}>
               <span class="text-2xl flex-shrink-0">${track.emoji}</span>
               <div class="flex-1 min-w-0">
                 <div class="text-sm font-bold text-ink">${getTrackDisplayName(track)} ${statusIcon}</div>
-                <div class="text-[10px] text-ink-light">${track.unlocked ? (isCurrent ? t('nowPlaying') : t('clickToPlay')) : t('unlockAtNextStage')}</div>
+                <div class="text-[10px] text-ink-light">${subText}</div>
               </div>
-              ${isCurrent ? `<span class="text-magic-gold text-xs font-bold flex-shrink-0">▶ ${t('playing')}</span>` : ''}
+              ${badge}
             </button>
           `;
         }).join('')}

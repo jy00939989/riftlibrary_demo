@@ -63,6 +63,11 @@ export function getCurrentTrackId() {
   return currentTrackId;
 }
 
+/** BGM 当前是否真正在播（非暂停、非关闭） */
+export function isBgmPlaying() {
+  return !!currentAudio && !currentAudio.paused;
+}
+
 // ========== BGM 播放 ==========
 
 export function updateToggleIcon() {
@@ -255,6 +260,7 @@ export function toggleMusic() {
 export function pauseMusic() {
   if (!isMusicOn() || !currentAudio) return;
   currentAudio.pause();
+  updateNowPlayingUI();
 }
 
 export function resumeMusic() {
@@ -264,28 +270,26 @@ export function resumeMusic() {
   } else {
     startBgm(state.musicManualTrack || null);
   }
+  updateNowPlayingUI();
 }
 
-// 用户首次交互后调用，解除浏览器自动播放限制
-// playBgm: 是否顺带恢复 BGM；开始专注等场景应由用户手动控制音乐，传 false
-export function onFirstInteraction(playBgm = true) {
-  // 防御：若 app.js 因异常未执行 initSettings，确保设置已加载，避免使用默认设置误播 BGM
+// 用户首次交互后调用，解除浏览器自动播放限制并初始化音效。
+// 注意：本函数不再自动播放 BGM/环境音，必须由专注开始、音符面板、小喇叭等显式触发器启动。
+export function ensureAudioContext() {
+  // 防御：若 app.js 因异常未执行 initSettings，确保设置已加载
   initSettings();
   initSfx();
-  if (playBgm && isMusicOn()) {
-    startBgm(state.musicManualTrack || null);
-  }
-  // 注：环境音为"付费购买 + 点击播放"，此处不再自动恢复，避免与"需点击才播放"的设计冲突。
 }
 
 // ========== "正在播放" 小指示器 ==========
 
-function updateNowPlayingUI() {
+export function updateNowPlayingUI() {
   const el = document.getElementById('now-playing');
   if (!el) return;
   const def = TRACK_DEFS.find(t => t.id === currentTrackId);
   if (def && isMusicOn()) {
-    el.innerHTML = `${def.emoji} ${def.name}`;
+    const playing = currentAudio && !currentAudio.paused;
+    el.innerHTML = playing ? `${def.emoji} ${def.name}` : `⏸ ${def.name}`;
     el.style.display = '';
     el.title = '点击切换音乐';
     el.style.cursor = 'pointer';

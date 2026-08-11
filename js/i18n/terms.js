@@ -828,6 +828,7 @@ const TERM_DATA = Object.freeze({
   nowPlaying: { zh: '正在播放', en: 'Now Playing' },
   clickToPlay: { zh: '点击播放', en: 'Click to Play' },
   playing: { zh: '播放中', en: 'Playing' },
+  paused: { zh: '已暂停', en: 'Paused' },
   enabled: { zh: '已开启', en: 'On' },
   disabled: { zh: '已关闭', en: 'Off' },
   unlockForCoins: { zh: '💰{price} 解锁', en: '💰{price} Unlock' },

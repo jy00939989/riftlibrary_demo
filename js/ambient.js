@@ -25,7 +25,7 @@ export function initAmbient() {
     setSetting('ambientVolume', state.ambientSounds.volume);
     delete state.ambientSounds.volume;
   }
-  // 不在这里自动播放：浏览器通常会阻止自动播放，首次交互由 onFirstInteraction 统一恢复
+  // 不在这里自动播放：浏览器通常会阻止自动播放，首次交互由 ensureAudioContext 统一初始化音效
 }
 
 /** 获取所有环境音定义（含解锁状态） */
@@ -73,6 +73,9 @@ export function selectAmbient(id) {
 /** 播放/停止环境音 */
 export function playAmbient(id, immediate = false) {
   if (!isAmbientEnabled()) return;
+  // 同曲已在播：不重建 Audio 对象，避免重复/中断
+  if (id && id === currentId && currentAudio && !currentAudio.paused) return;
+
   if (currentAudio) {
     try { currentAudio.pause(); currentAudio.src = ''; } catch (e) {}
     currentAudio = null;
