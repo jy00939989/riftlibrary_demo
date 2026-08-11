@@ -8,10 +8,10 @@ import { unlockPlane } from './quests.js';
 import { getAuraShopDiscount, getAuraFocusUpgradeDiscount } from './visitors.js';
 import { isManuscriptBoxFull, addToManuscriptBox, createBookRecord } from './capacity.js';
 import { getAchievementBonuses } from './achievements.js';
-import { getRefreshWeight, getGuaranteedVolumeEntries, weightedPick } from './core/economy.js';
+import { getRefreshWeight, getGuaranteedVolumeEntries, weightedPick, getBorrowLevelPrice as _getBorrowLevelPrice, getFocusLevelPrice as _getFocusLevelPrice, getFocusSpeedMultiplier as _getFocusSpeedMultiplier, getPlanePortalPrice as _getPlanePortalPrice, hasSignboard as _hasSignboard } from './core/economy.js';
 
 export function hasSignboard(id) {
-  return state.signboards.includes(id);
+  return _hasSignboard(state.signboards, id);
 }
 
 function getSignboardSpeedBonus() {
@@ -242,10 +242,9 @@ export function getActivePeizhouRec() {
   return rec;
 }
 
-// 借阅区价格：500 × 1.5^(n-1)，封顶 5700
+// 借阅区价格：转发到 core/economy.js
 export function getBorrowLevelPrice() {
-  const n = state.library.borrowLevel || 0; // n = 当前等级，升级到 n+1
-  return Math.min(5700, Math.round(500 * Math.pow(1.5, n)));
+  return _getBorrowLevelPrice(state.library.borrowLevel || 0);
 }
 
 export function upgradeBorrowLevel() {
@@ -260,18 +259,16 @@ export function upgradeBorrowLevel() {
   return true;
 }
 
-// 缮写室速率倍率：毎级 +5% + 标志牌 + 连击 + 成就加成
+// 缮写室速率倍率：转发到 core/economy.js
 export function getFocusSpeedMultiplier() {
   const b = getAchievementBonuses();
   const streakBonus = (state.focus.streak || 0) * b.streakMultiplier;
-  return Math.min(1.80, 1 + (state.library.focusLevel || 0) * b.focusLevelBonus + getSignboardSpeedBonus() + b.speedFlat + streakBonus);
+  return _getFocusSpeedMultiplier(state.library.focusLevel || 0, getSignboardSpeedBonus(), b.speedFlat, streakBonus);
 }
 
-// 缮写室价格：400 × 1.45^(n-1)，封顶 5000
+// 缮写室价格：转发到 core/economy.js
 export function getFocusLevelPrice() {
-  const n = state.library.focusLevel || 0;
-  const base = Math.min(5000, Math.round(400 * Math.pow(1.45, n)));
-  return Math.round(base * (1 - getAuraFocusUpgradeDiscount()));
+  return _getFocusLevelPrice(state.library.focusLevel || 0, getAuraFocusUpgradeDiscount());
 }
 
 export function upgradeFocusLevel() {
@@ -286,13 +283,9 @@ export function upgradeFocusLevel() {
   return true;
 }
 
-// 位面传送门价格
+// 位面传送门价格：转发到 core/economy.js
 export function getPlanePortalPrice(planeId) {
-  const plane = PLANES[planeId];
-  if (!plane || !plane.unlock) return 0;
-  if (state.library.planePortals && state.library.planePortals[plane.unlock.shopUpgrade]) return 0;
-  const bookPrice = 800;
-  return bookPrice * 2 + 400;
+  return _getPlanePortalPrice(planeId, state.library.planePortals || {});
 }
 
 // 位面传送门购买

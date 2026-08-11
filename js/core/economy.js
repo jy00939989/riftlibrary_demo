@@ -102,10 +102,11 @@ export function isManuscriptBoxFull(manuscriptBox, library) {
 }
 
 // ── 位面 ──
-export function getPlanePortalPrice(planeId) {
+export function getPlanePortalPrice(planeId, planePortals = {}) {
   const PLANES = { pastoral: { unlock: { shopUpgrade: 'plane_portal_pastoral' } } };
   const plane = PLANES[planeId];
   if (!plane || !plane.unlock) return 0;
+  if (planePortals[plane.unlock.shopUpgrade]) return 0;
   return 800 * 2 + 400;
 }
 
