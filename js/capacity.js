@@ -4,6 +4,9 @@ import { state, saveState } from './state.js';
 import { spendCoins, addHistory } from './storage.js';
 import { createBookRecord } from './core/book-utils.js';
 
+// 为了向后兼容，继续导出 createBookRecord
+export { createBookRecord } from './core/book-utils.js';
+
 /**
  * 解锁一本书并放入手稿箱（一步完成：创建记录 + 写入 state + 入箱）
  * @param {string} bookId
