@@ -157,8 +157,8 @@ function handleCompleteFocus(isAuto = false) {
   const sess = state.currentSession;
   if (!sess.active) return;
 
-  const minutes = Math.round(sess.elapsedSeconds / 60);
-  if (minutes < 1 && !isAuto) {
+  const earlyMinutes = Math.round(sess.elapsedSeconds / 60);
+  if (earlyMinutes < 1 && !isAuto) {
     alert('专注时间太短，至少需要1分钟 ⌛');
     return;
   }
