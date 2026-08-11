@@ -3,8 +3,8 @@
 import { state, DEFAULT_BOOKS } from './state.js';
 import { saveState } from './save.js';
 import { load, STORAGE_KEYS } from '../persistence.js';
-import { BOOKS } from '../data/books.js';
-import { VOLUME_GROUPS } from '../data/volume_groups.js';
+import { BOOKS } from '../../data/books.js';
+import { VOLUME_GROUPS } from '../../data/volume_groups.js';
 
 // ========== 迁移版本门控 ==========
 
