@@ -2,6 +2,7 @@
 
 import { state } from './state.js';
 import { save, STORAGE_KEYS } from '../persistence.js';
+import { debouncedUploadSave } from '../backend/sync.js';
 
 export function saveState() {
   // 不保存正在进行的会话
@@ -18,5 +19,9 @@ export function saveState() {
   };
   // locale 已迁移到 settings，不再写入主存档
   delete toSave.locale;
-  return save(STORAGE_KEYS.STATE, toSave);
+  const ok = save(STORAGE_KEYS.STATE, toSave);
+  if (ok) {
+    debouncedUploadSave(toSave);
+  }
+  return ok;
 }

@@ -5,6 +5,7 @@ import { readFile, writeFile } from 'fs/promises';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { VOLUME_GROUPS, VOLUME_CHAPTER_RANGES } from '../data/volume_groups.js';
+import { BOOK_ID_TO_DLC_PACK } from '../data/dlc_packs.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const poolFile = join(__dirname, '..', 'data', 'book_pool.js');
@@ -24,8 +25,11 @@ async function main() {
   // 动态 import 当前 SHARED_POOL
   const { SHARED_POOL } = await import('../data/book_pool.js');
 
-  // 过滤掉长书条目
-  const filtered = SHARED_POOL.filter(entry => !LONG_BOOK_IDS.has(entry.bookId));
+  // 过滤掉所有卷组长书条目及其单卷条目（避免重复生成）
+  const allVolumeIds = new Set(
+    Object.values(VOLUME_GROUPS).flatMap(g => [g.collectedBookId, ...g.volumeIds])
+  );
+  const filtered = SHARED_POOL.filter(entry => !allVolumeIds.has(entry.bookId));
 
   // 生成单卷条目
   const volumeEntries = [];
@@ -41,6 +45,7 @@ async function main() {
         plane: originalEntry.plane || 'astral',
         volumeGroupId: group.collectedBookId,
         bookId: volId,
+        dlcPackId: BOOK_ID_TO_DLC_PACK[volId] || undefined,
         volumeIndex: idx + 1,
         title: group.title,
         volumeTitle: `${group.title} · 卷${['一', '二', '三', '四', '五', '六'][idx]}`,
@@ -56,11 +61,15 @@ async function main() {
     });
   });
 
-  // 读取 BOOKS 填充 totalWords
+  // 读取 BOOKS 填充 totalWords 和单卷描述
   const { BOOKS } = await import('../data/books.js');
   volumeEntries.forEach(entry => {
     const book = BOOKS[entry.bookId];
-    if (book) entry.totalWords = book.totalWords;
+    if (book) {
+      entry.totalWords = book.totalWords;
+      // 优先使用单卷 source 文件的 description，回退到原长书条目或默认
+      entry.description = book.description || entry.description;
+    }
   });
 
   const newPool = [...filtered, ...volumeEntries];

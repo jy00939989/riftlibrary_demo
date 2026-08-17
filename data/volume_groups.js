@@ -82,6 +82,36 @@ export const VOLUME_GROUPS = {
     volumeIds: ['book_013_vol1', 'book_013_vol2'],
     volumePrice: 400,
     volumeCount: 2
+  },
+  book_030: {
+    collectedBookId: 'book_030',
+    title: '英吉利教会史',
+    emoji: '⛪',
+    category: '历史',
+    author: '比德',
+    volumeIds: ['book_030_vol1', 'book_030_vol2', 'book_030_vol3'],
+    volumePrice: 325,
+    volumeCount: 3
+  },
+  book_031: {
+    collectedBookId: 'book_031',
+    title: '亚瑟王之死',
+    emoji: '⚔️',
+    category: '小说',
+    author: '托马斯·马洛礼',
+    volumeIds: ['book_031_vol1', 'book_031_vol2', 'book_031_vol3', 'book_031_vol4'],
+    volumePrice: 350,
+    volumeCount: 4
+  },
+  book_032: {
+    collectedBookId: 'book_032',
+    title: '坎特伯雷故事集',
+    emoji: '📖',
+    category: '诗歌',
+    author: '杰弗里·乔叟',
+    volumeIds: ['book_032_vol1', 'book_032_vol2', 'book_032_vol3'],
+    volumePrice: 325,
+    volumeCount: 3
   }
 };
 
@@ -156,7 +186,10 @@ export const VOLUME_CHAPTER_RANGES = {
   book_014: [[0, 1, 2], [3, 4, 5], [6, 7], [8, 9]],
   book_016: [[0, 1, 2], [3, 4], [5, 6], [7, 8, 9], [10, 11, 12], [13, 14]],
   book_018: [[0, 1, 2], [3, 4, 5], [6, 7, 8], [9, 10, 11, 12]],
-  book_019: [[0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11]]
+  book_019: [[0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11]],
+  book_030: [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9], [10, 11, 12, 13, 14, 15, 16, 17, 18, 19], [20, 21, 22, 23, 24, 25, 26, 27, 28, 29]],
+  book_031: [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9], [10, 11, 12, 13, 14, 15, 16, 17, 18, 19], [20, 21, 22, 23, 24, 25, 26, 27, 28, 29], [30, 31, 32, 33, 34, 35, 36, 37, 38, 39]],
+  book_032: [[0, 1, 2, 3, 4, 5, 6, 7], [8, 9, 10, 11, 12, 13, 14, 15], [16, 17, 18, 19, 20, 21, 22, 23]]
 };
 
 /** 单卷标题后缀（中文数字） */

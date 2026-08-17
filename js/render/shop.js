@@ -19,6 +19,7 @@ import { plantSeed, canFertilize, fertilizePlant, canWater, waterPlant, canHarve
 import { showPlantMaturityToast, showPlantHarvestPopup } from './plants.js';
 import { getAmbientDefs, buyAmbient } from '../ambient.js';
 import { t, getLocale, getPageName, getBorrowLevelName, getRestorationLevelName, getFocusRoomLevelName, getVisitorName } from '../i18n/terms.js';
+import { renderDlcPacksSection } from './dlc-packs.js';
 
 let countdownInterval = null;
 
@@ -39,6 +40,9 @@ export function renderShopPage() {
   container.innerHTML = '';
 
   const wrapper = el('div', 'space-y-6');
+
+  // ========== DLC Packs ==========
+  renderDlcPacksSection(wrapper);
 
   // ========== Library Upgrades ==========
   wrapper.appendChild(renderLibraryUpgrades());

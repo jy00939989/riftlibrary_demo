@@ -7,54 +7,68 @@ import { meta as b3, chapters as c3, quotes as q3 } from './books/book_003.js';
 import { meta as b4, chapters as c4, quotes as q4 } from './books/book_004.js';
 import { meta as b5, chapters as c5, quotes as q5 } from './books/book_005.js';
 import { meta as b6, chapters as c6, quotes as q6 } from './books/book_006.js';
-import { meta as b7, chapters as c7, quotes as q7 } from './books/book_007_vol1_本草纲目_草部.js';
-import { meta as b8, chapters as c8, quotes as q8 } from './books/book_007_vol2_本草纲目_草部.js';
+import { meta as b7, chapters as c7, quotes as q7 } from './books/book_007_vol1.js';
+import { meta as b8, chapters as c8, quotes as q8 } from './books/book_007_vol2.js';
 import { meta as b9, chapters as c9, quotes as q9 } from './books/book_007.js';
-import { meta as b10, chapters as c10, quotes as q10 } from './books/book_008_vol1_物种起源.js';
-import { meta as b11, chapters as c11, quotes as q11 } from './books/book_008_vol2_物种起源.js';
+import { meta as b10, chapters as c10, quotes as q10 } from './books/book_008_vol1.js';
+import { meta as b11, chapters as c11, quotes as q11 } from './books/book_008_vol2.js';
 import { meta as b12, chapters as c12, quotes as q12 } from './books/book_008.js';
-import { meta as b13, chapters as c13, quotes as q13 } from './books/book_009_vol1_红楼梦.js';
-import { meta as b14, chapters as c14, quotes as q14 } from './books/book_009_vol2_红楼梦.js';
-import { meta as b15, chapters as c15, quotes as q15 } from './books/book_009_vol3_红楼梦.js';
+import { meta as b13, chapters as c13, quotes as q13 } from './books/book_009_vol1.js';
+import { meta as b14, chapters as c14, quotes as q14 } from './books/book_009_vol2.js';
+import { meta as b15, chapters as c15, quotes as q15 } from './books/book_009_vol3.js';
 import { meta as b16, chapters as c16, quotes as q16 } from './books/book_009.js';
 import { meta as b17, chapters as c17, quotes as q17 } from './books/book_010.js';
-import { meta as b18, chapters as c18, quotes as q18 } from './books/book_011_道德经.js';
-import { meta as b19, chapters as c19, quotes as q19 } from './books/book_012_沉思录.js';
-import { meta as b20, chapters as c20, quotes as q20 } from './books/book_013_理想国.js';
-import { meta as b21, chapters as c21, quotes as q21 } from './books/book_013_vol1_理想国.js';
-import { meta as b22, chapters as c22, quotes as q22 } from './books/book_013_vol2_理想国.js';
-import { meta as b23, chapters as c23, quotes as q23 } from './books/book_014_史记.js';
-import { meta as b24, chapters as c24, quotes as q24 } from './books/book_014_vol1_史记.js';
-import { meta as b25, chapters as c25, quotes as q25 } from './books/book_014_vol2_史记.js';
-import { meta as b26, chapters as c26, quotes as q26 } from './books/book_014_vol3_史记.js';
-import { meta as b27, chapters as c27, quotes as q27 } from './books/book_014_vol4_史记.js';
-import { meta as b28, chapters as c28, quotes as q28 } from './books/book_015_诗经.js';
-import { meta as b29, chapters as c29, quotes as q29 } from './books/book_016_西游记.js';
-import { meta as b30, chapters as c30, quotes as q30 } from './books/book_016_vol1_西游记.js';
-import { meta as b31, chapters as c31, quotes as q31 } from './books/book_016_vol2_西游记.js';
-import { meta as b32, chapters as c32, quotes as q32 } from './books/book_016_vol3_西游记.js';
-import { meta as b33, chapters as c33, quotes as q33 } from './books/book_016_vol4_西游记.js';
-import { meta as b34, chapters as c34, quotes as q34 } from './books/book_016_vol5_西游记.js';
-import { meta as b35, chapters as c35, quotes as q35 } from './books/book_016_vol6_西游记.js';
-import { meta as b36, chapters as c36, quotes as q36 } from './books/book_017_鲁滨逊漂流记.js';
-import { meta as b37, chapters as c37, quotes as q37 } from './books/book_018_几何原本.js';
-import { meta as b38, chapters as c38, quotes as q38 } from './books/book_018_vol1_几何原本.js';
-import { meta as b39, chapters as c39, quotes as q39 } from './books/book_018_vol2_几何原本.js';
-import { meta as b40, chapters as c40, quotes as q40 } from './books/book_018_vol3_几何原本.js';
-import { meta as b41, chapters as c41, quotes as q41 } from './books/book_018_vol4_几何原本.js';
-import { meta as b42, chapters as c42, quotes as q42 } from './books/book_019_卡拉马佐夫兄弟.js';
-import { meta as b43, chapters as c43, quotes as q43 } from './books/book_019_vol1_卡拉马佐夫兄弟.js';
-import { meta as b44, chapters as c44, quotes as q44 } from './books/book_019_vol2_卡拉马佐夫兄弟.js';
-import { meta as b45, chapters as c45, quotes as q45 } from './books/book_019_vol3_卡拉马佐夫兄弟.js';
-import { meta as b46, chapters as c46, quotes as q46 } from './books/book_020_社会契约论.js';
-import { meta as b47, chapters as c47, quotes as q47 } from './books/book_021_第一哲学沉思集.js';
-import { meta as b48, chapters as c48, quotes as q48 } from './books/book_022_传习录.js';
-import { meta as b49, chapters as c49, quotes as q49 } from './books/book_023_绿野仙踪.js';
-import { meta as b50, chapters as c50, quotes as q50 } from './books/book_024_爱丽丝梦游奇境.js';
-import { meta as b51, chapters as c51, quotes as q51, quotesEn as q51en } from './books/book_026_图书馆指南.js';
-import { meta as b52, chapters as c52, quotes as q52 } from './books/book_027_飞鸟集.js';
-import { meta as b53, chapters as c53, quotes as q53 } from './books/book_028_伊索寓言.js';
-import { meta as b54, chapters as c54, quotes as q54 } from './books/book_029_菜根谭.js';
+import { meta as b18, chapters as c18, quotes as q18 } from './books/book_011.js';
+import { meta as b19, chapters as c19, quotes as q19 } from './books/book_012.js';
+import { meta as b20, chapters as c20, quotes as q20 } from './books/book_013_vol1.js';
+import { meta as b21, chapters as c21, quotes as q21 } from './books/book_013_vol2.js';
+import { meta as b22, chapters as c22, quotes as q22 } from './books/book_013.js';
+import { meta as b23, chapters as c23, quotes as q23 } from './books/book_014_vol1.js';
+import { meta as b24, chapters as c24, quotes as q24 } from './books/book_014_vol2.js';
+import { meta as b25, chapters as c25, quotes as q25 } from './books/book_014_vol3.js';
+import { meta as b26, chapters as c26, quotes as q26 } from './books/book_014_vol4.js';
+import { meta as b27, chapters as c27, quotes as q27 } from './books/book_014.js';
+import { meta as b28, chapters as c28, quotes as q28 } from './books/book_015.js';
+import { meta as b29, chapters as c29, quotes as q29 } from './books/book_016_vol1.js';
+import { meta as b30, chapters as c30, quotes as q30 } from './books/book_016_vol2.js';
+import { meta as b31, chapters as c31, quotes as q31 } from './books/book_016_vol3.js';
+import { meta as b32, chapters as c32, quotes as q32 } from './books/book_016_vol4.js';
+import { meta as b33, chapters as c33, quotes as q33 } from './books/book_016_vol5.js';
+import { meta as b34, chapters as c34, quotes as q34 } from './books/book_016_vol6.js';
+import { meta as b35, chapters as c35, quotes as q35 } from './books/book_016.js';
+import { meta as b36, chapters as c36, quotes as q36 } from './books/book_017.js';
+import { meta as b37, chapters as c37, quotes as q37 } from './books/book_018_vol1.js';
+import { meta as b38, chapters as c38, quotes as q38 } from './books/book_018_vol2.js';
+import { meta as b39, chapters as c39, quotes as q39 } from './books/book_018_vol3.js';
+import { meta as b40, chapters as c40, quotes as q40 } from './books/book_018_vol4.js';
+import { meta as b41, chapters as c41, quotes as q41 } from './books/book_018.js';
+import { meta as b42, chapters as c42, quotes as q42 } from './books/book_019_vol1.js';
+import { meta as b43, chapters as c43, quotes as q43 } from './books/book_019_vol2.js';
+import { meta as b44, chapters as c44, quotes as q44 } from './books/book_019_vol3.js';
+import { meta as b45, chapters as c45, quotes as q45 } from './books/book_019.js';
+import { meta as b46, chapters as c46, quotes as q46 } from './books/book_020.js';
+import { meta as b47, chapters as c47, quotes as q47 } from './books/book_021.js';
+import { meta as b48, chapters as c48, quotes as q48 } from './books/book_022.js';
+import { meta as b49, chapters as c49, quotes as q49 } from './books/book_023.js';
+import { meta as b50, chapters as c50, quotes as q50 } from './books/book_024.js';
+import { meta as b51, chapters as c51, quotes as q51 } from './books/book_026.js';
+import { meta as b52, chapters as c52, quotes as q52 } from './books/book_027.js';
+import { meta as b53, chapters as c53, quotes as q53 } from './books/book_028.js';
+import { meta as b54, chapters as c54, quotes as q54 } from './books/book_029.js';
+import { meta as b55, chapters as c55, quotes as q55 } from './books/book_030_vol1.js';
+import { meta as b56, chapters as c56, quotes as q56 } from './books/book_030_vol2.js';
+import { meta as b57, chapters as c57, quotes as q57 } from './books/book_030_vol3.js';
+import { meta as b58, chapters as c58, quotes as q58 } from './books/book_030.js';
+import { meta as b59, chapters as c59, quotes as q59 } from './books/book_031_vol1.js';
+import { meta as b60, chapters as c60, quotes as q60 } from './books/book_031_vol2.js';
+import { meta as b61, chapters as c61, quotes as q61 } from './books/book_031_vol3.js';
+import { meta as b62, chapters as c62, quotes as q62 } from './books/book_031_vol4.js';
+import { meta as b63, chapters as c63, quotes as q63 } from './books/book_031.js';
+import { meta as b64, chapters as c64, quotes as q64 } from './books/book_032_vol1.js';
+import { meta as b65, chapters as c65, quotes as q65 } from './books/book_032_vol2.js';
+import { meta as b66, chapters as c66, quotes as q66 } from './books/book_032_vol3.js';
+import { meta as b67, chapters as c67, quotes as q67 } from './books/book_032.js';
+import { meta as b68, chapters as c68, quotes as q68 } from './books/book_033.js';
 
 const ALL_BOOKS = [
   { meta: b1, chapters: c1, quotes: q1 },
@@ -107,18 +121,30 @@ const ALL_BOOKS = [
   { meta: b48, chapters: c48, quotes: q48 },
   { meta: b49, chapters: c49, quotes: q49 },
   { meta: b50, chapters: c50, quotes: q50 },
-  { meta: b51, chapters: c51, quotes: q51, quotesEn: q51en },
+  { meta: b51, chapters: c51, quotes: q51 },
   { meta: b52, chapters: c52, quotes: q52 },
   { meta: b53, chapters: c53, quotes: q53 },
   { meta: b54, chapters: c54, quotes: q54 },
+  { meta: b55, chapters: c55, quotes: q55 },
+  { meta: b56, chapters: c56, quotes: q56 },
+  { meta: b57, chapters: c57, quotes: q57 },
+  { meta: b58, chapters: c58, quotes: q58 },
+  { meta: b59, chapters: c59, quotes: q59 },
+  { meta: b60, chapters: c60, quotes: q60 },
+  { meta: b61, chapters: c61, quotes: q61 },
+  { meta: b62, chapters: c62, quotes: q62 },
+  { meta: b63, chapters: c63, quotes: q63 },
+  { meta: b64, chapters: c64, quotes: q64 },
+  { meta: b65, chapters: c65, quotes: q65 },
+  { meta: b66, chapters: c66, quotes: q66 },
+  { meta: b67, chapters: c67, quotes: q67 },
+  { meta: b68, chapters: c68, quotes: q68 },
 ];
 
 // 组装 BOOKS 对象（保持原有访问模式：BOOKS[id]）
 export const BOOKS = {};
-ALL_BOOKS.forEach(({ meta, chapters, quotes, quotesEn }) => {
-  const entry = { ...meta, chapters, quotes };
-  if (quotesEn) entry.quotesEn = quotesEn;
-  BOOKS[meta.id] = entry;
+ALL_BOOKS.forEach(({ meta, chapters, quotes }) => {
+  BOOKS[meta.id] = { ...meta, chapters, quotes };
 });
 
 // 分类枚举

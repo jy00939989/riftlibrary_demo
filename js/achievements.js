@@ -3,6 +3,7 @@ import { state, saveState } from './state.js';
 import { BOOKS, CATEGORIES } from '../data/books.js';
 import { isVolumeBookId, getVolumeGroupByVolumeId } from '../data/volume_groups.js';
 import { load, save, STORAGE_KEYS } from './persistence.js';
+import { track } from './backend/analytics.js';
 
 // ========== 成就定义（30个） ==========
 
@@ -145,6 +146,7 @@ function unlock(id) {
   if (u[id]) return false;
   u[id] = { unlockedAt: Date.now() };
   saveUnlocked(u);
+  track('achievement_unlock', { achievement_id: id });
   return true;
 }
 

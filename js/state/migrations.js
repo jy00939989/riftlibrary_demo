@@ -5,6 +5,7 @@ import { saveState } from './save.js';
 import { load, STORAGE_KEYS } from '../persistence.js';
 import { BOOKS } from '../../data/books.js';
 import { VOLUME_GROUPS } from '../../data/volume_groups.js';
+import { DLC_PACKS } from '../../data/dlc_packs.js';
 
 // ========== 迁移版本门控 ==========
 
@@ -286,6 +287,19 @@ function migrateV1() {
 
   // 旧存档迁移：环境音系统
   if (!state.ambientSounds) state.ambientSounds = { unlocked: [], current: null };
+
+  // 新版迁移：DLC 补充包
+  if (!state.dlcPacks) state.dlcPacks = { unlocked: [], redeemedCodes: [] };
+  DLC_PACKS.forEach(pack => {
+    if (state.dlcPacks.unlocked.includes(pack.id)) return;
+    const allOwned = pack.bookIds.every(bookId => {
+      const bs = state.books[bookId];
+      return bs && bs.status !== 'locked';
+    });
+    if (allOwned) {
+      state.dlcPacks.unlocked.push(pack.id);
+    }
+  });
 }
 
 // ========== 书籍状态修正迁移 ==========

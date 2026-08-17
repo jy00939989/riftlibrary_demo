@@ -8,6 +8,6 @@ export { renderLibraryPage } from './library.js';
 export { renderArchivePage } from './archive.js';
 export { renderShopPage } from './shop.js';
 export { showUnlockAnimation, showBookCompleteAnimation, showBookShelvingAnimation, showDiaryLevelUpPopup } from './animations.js';
-export { renderAchievements, showAchievementToast } from './achievements.js';
+export { renderAchievements, showAchievementToast, showAchievementBatch } from './achievements.js';
 export { renderGuideQuestWidget, showQuestCompleteToast } from './guidequests.js';
 export { renderMomoSuggestion, resetMomoSuggestion } from './momo-suggestion.js';

@@ -1,6 +1,7 @@
 // 存储工具
 import { state, saveState } from './state.js';
 import { refreshBGM } from './audio.js';
+import { track } from './backend/analytics.js';
 
 export function addHistory(type, title, detail = '') {
   state.history.unshift({
@@ -50,6 +51,8 @@ export function addAtmosphere(points) {
   updateBodyBackground();
   refreshBGM();
   saveState();
+
+  track('atmosphere_upgrade', { points, prev_level: prevLevel, new_level: newLevel });
 
   if (newLevel > prevLevel) {
     const crossed = [];

@@ -2,6 +2,7 @@
 import { getAchievementState } from '../achievements.js';
 import { state, saveState } from '../state.js';
 import { t, getLocale } from '../i18n/terms.js';
+import { playSfx } from '../audio.js';
 
 const RARITY_STYLES = {
   bronze: { border: 'border-amber-700/40', bg: 'bg-amber-50', badge: 'bg-amber-700', glow: '' },
@@ -205,4 +206,21 @@ export function showAchievementToast(achievement) {
     toast.style.transform = 'translateX(20px)';
     setTimeout(() => toast.remove(), 300);
   }, 3000);
+}
+
+export function showAchievementBatch(results) {
+  // 去重
+  const seen = new Set();
+  const unique = results.filter(a => {
+    if (seen.has(a.id)) return false;
+    seen.add(a.id);
+    return true;
+  });
+  if (unique.length > 0) {
+    playSfx('achievement_unlock');
+  }
+  // 逐个弹 toast，每个间隔 0.5s
+  unique.forEach((ach, i) => {
+    setTimeout(() => showAchievementToast(ach), i * 500);
+  });
 }

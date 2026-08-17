@@ -11,34 +11,34 @@ import { runLegacyMigration, remove, STORAGE_KEYS, load, save } from './persiste
 import { initSettings, getSettings } from './settings.js';
 import { t, getLocale, setLocale } from './i18n/terms.js';
 import { addCoins, spendCoins, addHistory, updateStreak, addAtmosphere, updateBodyBackground, getAtmosphereLevel, onStageCross, addInspiration } from './storage.js';
-import { canDrawActionCards, drawActionCards, applyAction } from './actioncards.js';
 import { renderFocusPage, renderBookshelfPage, renderLibraryPage,
-  renderVisitorsPage, renderArchivePage, renderShopPage,
-  showUnlockAnimation, showBookCompleteAnimation, showBookShelvingAnimation, showCompletionCard, showActionCards, setActions,
-  updateStatusBar, getBookTitle, getChapterTitle
+  renderVisitorsPage, renderArchivePage, renderShopPage, setActions,
+  updateStatusBar
 } from './render/index.js';
 import { startTimer, togglePauseTimer, abandonTimer, setCompleteCallback } from './timer.js';
+import { runFocusOrchestration } from './core/focus-orchestrator.js';
+import { triggerQuestCheck } from './core/quest-trigger.js';
 import { BOOKS } from '../data/books.js';
-import { spawnVisitor, tickVisitorBrowsing, checkDueVisitors, collectReturn, removeVisitor, getVisitorDef, getAuraCoinsMultiplier, getAuraSpawnBonus, getBorrowSpawnBonus, getStageWitnesses } from './visitors.js';
-import { removeFromManuscriptBox, isBookCapacityFull, placeOnShelf } from './capacity.js';
-import { upgradeBorrowLevel, getFocusSpeedMultiplier, hasSignboard } from './shop.js';
-import { getCurationCoinsBonus } from './curation.js';
+import { spawnVisitor, tickVisitorBrowsing, checkDueVisitors, collectReturn, getAuraCoinsMultiplier, getAuraSpawnBonus, getBorrowSpawnBonus, getStageWitnesses } from './visitors.js';
+import { upgradeBorrowLevel, checkAutoUnlockPacks } from './shop.js';
 import { checkAchievements, checkAllOnInit, getAchievementBonuses } from './achievements.js';
-import { showAchievementToast } from './render/achievements.js';
 import { addWaterOpportunity, checkWither } from './plants.js';
 import { addDiaryEntry, tryGenerateDailySummary } from './diary.js';
 import { tickPlaneVisitors, checkTaskCompletion } from './quests.js';
 import { initAudio, toggleMusic, ensureAudioContext, initSfx, playSfx, pauseMusic, startBgm, isMusicOn } from './audio.js';
 import { playAmbient, isAmbientEnabled } from './ambient.js';
 import { showIntro } from './intro.js';
+import { initAuth, initAccountEntry, track } from './backend/index.js';
 import { checkAndShowTutorial } from './tutorial.js';
 import { TIER_GOALS, isTierComplete, countTierGoalsComplete } from '../data/tiergoals.js';
 import { showTierCompletePopup } from './render/animations.js';
 import { dispatchTutorialUI, showBorrowAreaUpgrade } from './render/tutorial-ui.js';
 import { showCertificate } from './render/certificate.js';
 import { ensureDailyTasks, markTaskDone, claimAllDoneBonus } from './dailytasks.js';
-import { ensureGuideQuests, checkGuideQuest, tryCompleteAllDone, getQuestProgress } from './guidequests.js';
-import { renderGuideQuestWidget, showQuestCompleteToast } from './render/index.js';
+import { ensureGuideQuests, getQuestProgress } from './guidequests.js';
+import { renderGuideQuestWidget } from './render/index.js';
+import { showMomoBorrowReadyCard, showWitnessToast } from './render/shared/visitor-cards.js';
+import { showAchievementBatch } from './render/achievements.js';
 import { initMusicSelector } from './render/music-selector.js';
 import { renderMomoSuggestion, resetMomoSuggestion } from './render/momo-suggestion.js';
 
@@ -46,32 +46,12 @@ function getNow() {
   return window.__dev && window.__dev.getNow ? window.__dev.getNow() : Date.now();
 }
 
-import { getChapterInfo, getNextChapterPreview } from './core/book-utils.js';
 import { startFocus, togglePauseFocus, completeFocus as coreCompleteFocus, abandonFocus } from './core/focus-session.js';
-import { calculateMilestoneTriggers, getNextMilestone } from './core/focus-rewards.js';
-export { getChapterInfo, getNextChapterPreview };
 
 // ========== 里程碑配置 ==========
 
 // MILESTONES 与 getNextMilestone/checkMilestones 已迁移到 js/core/focus-rewards.js
 
-// ========== 引导任务检测辅助 ==========
-
-function triggerQuestCheck(event) {
-  const result = checkGuideQuest(event);
-  if (result && result.completed) {
-    showQuestCompleteToast(result.completed);
-  }
-  renderGuideQuestWidget();
-  // 如果刚完成了第9个任务，检查第10个
-  if (result && result.completed && result.completed.id === 'q09') {
-    const finalResult = tryCompleteAllDone();
-    if (finalResult && finalResult.completed) {
-      showQuestCompleteToast(finalResult.completed);
-      renderGuideQuestWidget();
-    }
-  }
-}
 
 // ========== 全局操作 ==========
 
@@ -171,424 +151,21 @@ function handleCompleteFocus(isAuto = false) {
     clearInterval(sess.intervalId);
     sess.intervalId = null;
   }
-  // 调用核心专注完成逻辑（字数、书籍进度、修复进度、session 状态）
+
   const result = coreCompleteFocus(isAuto);
-  if (!result || !result.ok) return;
-
-  const { minutes, wordsGained, prevTotalWords, bookProgressResult, repairResult } = result;
-
-  // 章节解锁信息（用于弹窗链）
-  let unlockedChapter = null;
-  if (bookProgressResult && bookProgressResult.newlyUnlockedChapters && bookProgressResult.newlyUnlockedChapters.length > 0) {
-    unlockedChapter = bookProgressResult.newlyUnlockedChapters[0].chapter;
-  }
-
-  // 书籍完成信息（用于弹窗链）
-  let bookCompleted = false;
-  let bookTitle = '';
-  let bookEmoji = '';
-  let copyCount = 0;
-  let completedBook = null;
-  let bookMastery = 0;
-  if (bookProgressResult && bookProgressResult.completion) {
-    const completion = bookProgressResult.completion;
-    bookCompleted = true;
-    bookTitle = completion.completedBook.title;
-    bookEmoji = completion.completedBook.emoji;
-    copyCount = completion.copyCount;
-    completedBook = completion.completedBook;
-    bookMastery = completion.masteryLevel;
-  }
-
-  // 金币加成计算（aura + curation + achievement）
-  const auraCoinsMult = getAuraCoinsMultiplier();
-  const curationCoins = getCurationCoinsBonus();
-  const achieveBonuses = getAchievementBonuses();
-  const coinsEarned = Math.round(minutes * 0.8 * (1 + auraCoinsMult + curationCoins) * (1 + achieveBonuses.coinsBoost));
-  addCoins(coinsEarned);
-
-  // 修复弹窗信息
-  const repairCompleted = repairResult && repairResult.repairCompleted;
-  const repairBookTitle = repairResult ? repairResult.repairBookTitle : '';
-
-  // 灵感：不再随每次专注 +1，仅通过烛台/沙漏/成就获得
-  if (sess.candleInspiration) {
-    addInspiration(1);
-    addHistory('action', '🕯️ 烛台微微闪动', '+1 灵感（烛台加成）');
-  }
-  // 时光沙漏标志牌：专注≥60分钟后概率额外灵感
-  if (hasSignboard('hourglass') && minutes >= 60) {
-    const roll = Math.random();
-    if (roll < 0.05) {
-      addInspiration(2);
-      addHistory('action', '⏳ 时光沙漏闪耀！', '额外 +2 灵感（5%）');
-    } else if (roll < 0.30) {
-      addInspiration(1);
-      addHistory('action', '⏳ 时光沙漏微微发光', '额外 +1 灵感（25%）');
-    }
-  }
-  // 连续专注灵感：坚持三天以上，专注中偶有灵光闪现
-  if (!repairCompleted && (state.focus.streak || 0) >= 3) {
-    const inspChance = (state.focus.streak || 0) >= 7 ? 0.25 : 0.15;
-    if (Math.random() < inspChance) {
-      addInspiration(1);
-      addHistory('action', '✨ 灵感闪现', '+1 灵感（连续专注的馈赠）');
-    }
-  }
-  addHistory('focus', `专注 ${minutes} 分钟`, `誊抄 ${wordsGained.toLocaleString()} 字 · +${coinsEarned}智慧之光`);
-
-  saveState();
-
-  // 今日馆务：专注 ≥25 分钟
-  if (minutes >= 25) {
-    const taskResult = markTaskDone('focus', state);
-    if (taskResult) {
-      addHistory('task', `📜 今日馆务：${taskResult.name}`, taskResult.reward);
-    }
-  }
-
-  // 成就检测
-  const achResults = [];
-  achResults.push(...checkAchievements('focus_complete'));
-  achResults.push(...checkAchievements('focus'));
-  if (bookCompleted) achResults.push(...checkAchievements('book_complete'));
-  achResults.push(...checkAchievements('book'));
-  achResults.push(...checkAchievements('library'));
-  showAchievementBatch(achResults);
-
-  // 检查里程碑
-  if (!state.focus.claimedMilestones) state.focus.claimedMilestones = [];
-  const newMilestones = calculateMilestoneTriggers(prevTotalWords, state.focus.totalWords, state.focus.claimedMilestones);
-  newMilestones.forEach(m => state.focus.claimedMilestones.push(m.idx));
-  if (newMilestones.length > 0) saveState();
-
-  // 弹窗链：书籍完成 > 章节解锁 > 里程碑 > 结算卡片
-  const isFirstBookComplete = bookCompleted && !state.tutorialFlags.firstBookComplete;
-
-  // P1-03 四层反馈：章节进度 + 句子回显 + 引文预告 + 墨墨书评
-  const currentBook = result.bookId ? BOOKS[result.bookId] : null;
-  const currentBookState = result.bookId ? state.books[result.bookId] : null;
-  const chapterInfo = getChapterInfo(currentBook, currentBookState);
-  const nextPreview = getNextChapterPreview(currentBook, currentBookState);
-
-  // 结算卡弹窗链 + 访客 + 引导任务，包在 try-catch 防止弹窗异常导致静默失败
-  try {
-    handlePostFocusEffects({
-      minutes, wordsGained, coinsEarned,
-      unlockedChapter,
-      bookCompleted, bookTitle, bookEmoji, copyCount, completedBook, bookMastery,
-      isFirstBookComplete,
-      newMilestones,
-      chapterInfo, nextPreview,
-      repairCompleted, repairBookTitle
-    });
-
-    // 专注完成后访客到来
-    if (!bookCompleted) {
-      const firstVisitorDue = !state.tutorialFlags.firstVisitorEventDone
-        && state.focus.totalMinutes >= 20;
-      if (firstVisitorDue) {
-        const visitor = spawnVisitor();
-        if (visitor) {
-          playSfx('visitor_arrive');
-          showFirstVisitorEvent(visitor);
-        }
-      } else if (state.tutorialFlags.firstVisitorEventDone) {
-        // 访客到来：基础20% + 氛围(最高15%) + 夏蝉光环(15%) + 借阅区等级(Lv1+5%~Lv7+30%)
-        const welcomeBonus = hasSignboard('welcome') ? 0.03 : 0;
-        const perRollChance = 0.20 + (state.library.atmosphere / 1000) * 0.15 + getAuraSpawnBonus() + getBorrowSpawnBonus() + welcomeBonus;
-        // 长专注多轮抽卡：每12分钟多一次机会
-        const rolls = Math.max(1, Math.ceil(minutes / 12));
-        for (let r = 0; r < rolls; r++) {
-          if (Math.random() < perRollChance) {
-            const visitor = spawnVisitor();
-            if (visitor) {
-              playSfx('visitor_arrive');
-              const vAchResults = checkAchievements('visitor_arrive');
-              showAchievementBatch(vAchResults);
-              showVisitorArrivalCard(visitor);
-              triggerQuestCheck('visitor_arrive');
-              break; // 本轮已触达，不再连抽
-            }
-          }
-        }
-      }
-    }
-
-    // 引导任务检测
-    triggerQuestCheck('focus_complete');
-    if (bookCompleted) {
-      triggerQuestCheck('book_complete');
-    }
-  } catch (e) {
-    // 弹窗链失败时至少重建页面，避免界面卡死
-    renderFocusPage();
-    updateStatusBar();
-  }
-
-  sess.elapsedSeconds = 0;
-  sess.paused = false;
-  sess.teaBoost = false;
-  sess.candleInspiration = false;
-  saveState();
-}
-
-// ========== 专注完成后弹窗链 ==========
-
-function handlePostFocusEffects(effects) {
-  const {
-    minutes, wordsGained, coinsEarned,
-    unlockedChapter,
-    bookCompleted, bookTitle, bookEmoji, copyCount, completedBook, bookMastery,
-    isFirstBookComplete,
-    newMilestones,
-    chapterInfo, nextPreview,
-    repairCompleted, repairBookTitle
-  } = effects;
-
-  // 构建回调链（从后往前串联）
-  let next = () => {
-    // 最后一步：结算卡片（含留存钩子数据）
-    const book = state.currentSession.bookId ? BOOKS[state.currentSession.bookId] : null;
-    const nextMs = getNextMilestone(state.focus.totalWords);
-    showCompletionCard({
-      minutes, words: wordsGained, coins: coinsEarned, book,
-      streak: state.focus.streak,
-      totalWords: state.focus.totalWords,
-      nextMilestone: nextMs,
-      chapterInfo,
-      nextPreview
-    }, () => {
-      renderFocusPage();
-      updateStatusBar();
-      // 结算后检查教程触发
-      checkAndShowPostFocusTutorials();
-      // 休息行动卡：≥15分钟专注 + 每日限3次
-      setTimeout(() => tryShowActionCards(minutes), 600);
-    });
-  };
-
-  // 里程碑弹窗（倒序插入，让它们在结算卡片之前弹出）
-  if (newMilestones && newMilestones.length > 0) {
-    const milestoneNext = next;
-    next = () => showMilestoneReward(newMilestones, milestoneNext);
-  }
-
-  // 章节解锁动画：修复书籍时不弹出
-  if (unlockedChapter && !repairCompleted) {
-    const prevNext = next;
-    const ch = unlockedChapter;
-    const book = BOOKS[state.currentSession.bookId];
-    next = () => {
-      showUnlockAnimation(getBookTitle(book), getChapterTitle(ch), prevNext);
-    };
-  }
-
-  // 书籍完成动画/证书 → 上架动画：修复书籍时不弹出
-  if (bookCompleted && !repairCompleted) {
-    const prevNext = next;
-    if (isFirstBookComplete && completedBook) {
-      next = () => {
-        showCertificate(completedBook, () => {
-          showBookShelvingAnimation(completedBook, prevNext);
-        });
-      };
-    } else if (copyCount === 1) {
-      next = () => {
-        showBookCompleteAnimation(getBookTitle(completedBook), bookEmoji, copyCount, () => {
-          showBookShelvingAnimation(completedBook, prevNext);
-        }, completedBook, bookMastery);
-      };
-    } else {
-      next = () => {
-        showBookCompleteAnimation(bookTitle, bookEmoji, copyCount, prevNext, completedBook, bookMastery);
-      };
-    }
-    // 完成时吸引访客
-    const bv = spawnVisitor();
-    if (bv) triggerQuestCheck('visitor_arrive');
-  }
-
-  // 修复完成弹窗（最外层，先弹），必须手动点击按钮关闭
-  if (repairCompleted) {
-    const repairNext = next;
-    next = () => showRepairCompleteCard(repairBookTitle, repairNext);
-  }
-
-  next();
-}
-
-// ========== 休息行动卡触发 ==========
-
-function tryShowActionCards(minutes) {
-  if (minutes < 15) return;
-  if (!canDrawActionCards()) return;
-  const cards = drawActionCards();
-  if (cards.length === 0) return;
-
-  showActionCards(cards, (picked) => {
-    if (picked) {
-      applyAction(picked.id);
-    }
-    renderFocusPage();
-    updateStatusBar();
-  });
-}
-
-// 结算后检查教程触发（氛围阶段跨越 + 首次专注完成）
-function checkAndShowPostFocusTutorials() {
-  const currStage = getAtmosphereLevel().level;
-  const maxSeen = state.tutorialFlags.maxAtmoStageSeen || 1;
-
-  if (currStage > maxSeen) {
-    // 一次可能跨多个阶段，逐个弹出
-    let stageQueue = [];
-    for (let s = maxSeen + 1; s <= currStage; s++) {
-      stageQueue.push(s);
-    }
-    showAtmoStageChain(stageQueue, () => {
-      checkAndShowFocusCompleteTutorial();
-    });
-  } else {
-    checkAndShowFocusCompleteTutorial();
-  }
-}
-
-function showAtmoStageChain(queue, callback) {
-  if (queue.length === 0) { callback(); return; }
-  const stage = queue.shift();
-  const stageNames = ['', '废墟', '破败', '陈旧', '温暖', '星辰'];
-  const stageName = stageNames[stage] || `阶段${stage}`;
-
-  addHistory('atmosphere', `✨ 图书馆氛围升至「${stageName}」`, `阶段 ${stage}/5`);
-  const stageDescs = {
-    2: '天花板的破洞不再漏风了——至少最大的那几个已经被魔法封住。歪倒的书架自己站直了几排，虽然还是空的，但木头里重新有了温度。墨墨说这是百年来第一次有人在乎这个地方。',
-    3: '墙壁上的裂纹在变浅，像愈合的伤口。长窗的彩色玻璃不知何时恢复了半透明的光泽，阳光穿过时在地板上投下淡淡的色斑。空气里羊皮纸和旧木头的气味越来越浓。',
-    4: '壁炉里的火自己燃起来了——不是普通的火焰，带着星星点点的金色碎屑。扶手椅上的绒布恢复了柔软的触感，坐下去会发出一声舒服的叹息。墨墨开始在横梁上挂小灯。',
-    5: '穹顶裂开了——不是坏事，裂缝里透进来的是星光。不是窗外的星光，是图书馆自己生成的。书架之间飘着极淡的金色雾气，书脊上的烫金会在黑暗中微微发光。墨墨蹲在你的肩头，很久没有说话。'
-  };
-  const detail = stageDescs[stage] || `图书馆的氛围进入了「${stageName}」阶段。`;
-  addDiaryEntry('special_event', { detail });
-
-  const trigger = checkAndShowTutorial(`atmosphere_stage_${stage}`);
-  if (trigger) {
-    dispatchTutorialUI(trigger, () => showAtmoStageChain(queue, callback));
-  } else {
-    showAtmoStageChain(queue, callback);
-  }
-}
-
-function checkAndShowFocusCompleteTutorial() {
-  const trigger = checkAndShowTutorial('focus_complete');
-  if (trigger) {
-    dispatchTutorialUI(trigger);
-  }
-}
-
-// ========== 里程碑 ==========
-
-function showRepairCompleteCard(bookTitle, callback) {
-  const overlay = document.createElement('div');
-  overlay.className = 'fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4';
-  const card = document.createElement('div');
-  card.className = 'parchment-bg rounded-2xl p-6 max-w-sm w-full text-center magic-glow animate-scale-in';
-
-  card.innerHTML = `
-    <div class="text-5xl mb-3">🩹</div>
-    <div class="text-xs text-magic-gold font-bold mb-2">${t('repairCompleteTitle')}</div>
-    <h3 class="font-display text-xl font-bold mb-2">《${bookTitle}》</h3>
-    <div class="grid grid-cols-3 gap-2 mb-3">
-      <div class="bg-white/60 rounded-lg p-3">
-        <div class="text-lg font-bold text-magic-gold">+30</div>
-        <div class="text-xs text-ink-light">${t('repairCompleteRewardCoinsLabel')}</div>
-      </div>
-      <div class="bg-white/60 rounded-lg p-3">
-        <div class="text-lg font-bold text-purple-500">+1✨</div>
-        <div class="text-xs text-ink-light">${t('repairCompleteRewardInspirationLabel')}</div>
-      </div>
-      <div class="bg-white/60 rounded-lg p-3">
-        <div class="text-lg font-bold text-green-600">+1</div>
-        <div class="text-xs text-ink-light">${t('repairCompleteRewardAtmosphereLabel')}</div>
-      </div>
-    </div>
-    <p class="text-sm text-ink-light mb-3 leading-relaxed">${t('repairCompleteFlavour')}</p>
-    <div class="bg-magic-gold/10 border border-magic-gold/20 rounded-lg p-3 mb-4 text-left">
-      <p class="text-xs text-ink-light leading-relaxed">${t('repairCompleteMomoTip')}</p>
-    </div>
-    <button class="px-6 py-3 bg-magic-gold text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all">${t('continueText')}</button>
-  `;
-
-  overlay.appendChild(card);
-  document.body.appendChild(overlay);
-
-  const btn = card.querySelector('button');
-  btn.addEventListener('click', () => {
-    overlay.style.opacity = '0';
-    overlay.style.transition = 'opacity 0.3s';
-    setTimeout(() => {
-      overlay.remove();
-      if (callback) callback();
-    }, 300);
-  });
-}
-
-// ========== 里程碑 ==========
-
-function showMilestoneReward(milestones, callback) {
-  // 逐个弹出，一次专注可能触发多个里程碑
-  const queue = [...milestones];
-
-  function showNext() {
-    if (queue.length === 0) {
-      callback();
-      return;
-    }
-    const ms = queue.shift();
-
-    // 从共享池随机抽一本书作为奖励（当前用已有书 + 阿九推销池的简单实现）
-    // TODO: 后续连接到 data/book_pool.js 共享池
-    addCoins(100);
-    addAtmosphere(3);
-    addHistory('milestone', `🎯 累计誊抄突破 ${ms.words.toLocaleString()} 字！`, '获得100智慧之光 +3氛围');
-    addDiaryEntry('milestone', { words: ms.words.toLocaleString() });
-
-    const overlay = document.createElement('div');
-    overlay.className = 'fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4';
-    overlay.innerHTML = `
-      <div class="parchment-bg rounded-2xl p-6 max-w-sm w-full text-center magic-glow animate-scale-in">
-        <div class="text-4xl mb-3">🎯</div>
-        <div class="text-magic-gold text-sm mb-2">里程碑达成</div>
-        <h3 class="font-display text-xl font-bold mb-2">累计誊抄 ${ms.words.toLocaleString()} 字</h3>
-        <p class="text-ink-light mb-4">获得 <span class="text-magic-blue font-bold">100智慧之光 +3氛围</span></p>
-        <button class="px-6 py-3 bg-magic-gold text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all">太棒了 →</button>
-      </div>
-    `;
-    document.body.appendChild(overlay);
-
-    const btn = overlay.querySelector('button');
-    btn.addEventListener('click', () => {
-      overlay.style.opacity = '0';
-      overlay.style.transition = 'opacity 0.3s';
-      setTimeout(() => {
-        overlay.remove();
-        saveState();
-        showNext();
-      }, 300);
-    });
-
-    overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) {
-        overlay.remove();
-        showNext();
-      }
-    });
-  }
-
-  showNext();
+  runFocusOrchestration(result, isAuto);
 }
 
 function handleAbandonFocus() {
+  const sess = state.currentSession;
+  const minutes = sess.active ? Math.round(sess.elapsedSeconds / 60) : 0;
   if (confirm('确定要放弃本次专注吗？已完成时间将计入50%。')) {
+    track('focus_abandon', {
+      book_id: sess.bookId || null,
+      mode: sess.mode,
+      minutes,
+      target_minutes: sess.targetMinutes
+    });
     abandonFocus();
   }
 }
@@ -602,6 +179,7 @@ function handleBuyShelf() {
     addHistory('purchase', '购买新书架', `花费${price}智慧之光 · +5氛围`);
     playSfx('buy_success');
     saveState();
+    track('purchase_shelf', { shelf_count: state.library.shelves.length, price });
     const achResults = checkAchievements('purchase_shelf');
     showAchievementBatch(achResults);
     renderBookshelfPage();
@@ -616,6 +194,7 @@ function handleCollectReturn(visitorId) {
   if (result) {
     playSfx('book_return');
     const hour = new Date(getNow()).getHours();
+    track('visitor_return', { visitor_id: visitorId, hour });
     const achResults = [];
     achResults.push(...checkAchievements('visitor_return', { hour }));
     achResults.push(...checkAchievements('visitor'));
@@ -631,207 +210,6 @@ function handleCollectReturn(visitorId) {
   }
   return result;
 }
-
-// ========== 成就通知 ==========
-
-function showAchievementBatch(results) {
-  // 去重
-  const seen = new Set();
-  const unique = results.filter(a => {
-    if (seen.has(a.id)) return false;
-    seen.add(a.id);
-    return true;
-  });
-  if (unique.length > 0) {
-    playSfx('achievement_unlock');
-  }
-  // 逐个弹 toast，每个间隔 0.5s
-  unique.forEach((ach, i) => {
-    setTimeout(() => showAchievementToast(ach), i * 500);
-  });
-}
-
-// ========== 首个访客破败叙事事件 ==========
-
-function showFirstVisitorEvent(visitor) {
-  const def = getVisitorDef(visitor.charId);
-  const line = def ? def.firstImpression : '这地方……好破旧啊。';
-
-  // 步骤1：访客入场动画 + 破败台词
-  const overlay = document.createElement('div');
-  overlay.className = 'fixed inset-0 z-[200] flex items-center justify-center bg-ink/60';
-  overlay.innerHTML = `
-    <div class="parchment-bg rounded-2xl p-8 shadow-2xl border-2 border-magic-gold/30 max-w-md mx-4 text-center animate-fade-in-up">
-      <div class="text-5xl mb-3 animate-bounce-in">${visitor.emoji}</div>
-      <p class="text-xs text-magic-gold font-bold mb-2">第一位访客</p>
-      <p class="text-ink font-bold text-lg mb-4">${visitor.name}</p>
-      <p class="text-ink-light text-sm leading-relaxed mb-6">「${line}」</p>
-      <p class="text-xs text-ink-light/50">${visitor.name} 环顾了一圈，轻轻叹了口气<br>然后转身离开了</p>
-    </div>
-  `;
-  document.body.appendChild(overlay);
-
-  // 访客离开
-  removeVisitor(visitor.id);
-  state.tutorialFlags.firstVisitorEventDone = true;
-  saveState();
-
-  // 5秒后切换到墨墨的反馈
-  setTimeout(() => {
-    overlay.style.opacity = '0';
-    overlay.style.transition = 'opacity 0.5s';
-    setTimeout(() => overlay.remove(), 500);
-
-    // 步骤2：墨墨转述 + 建议升级借阅区
-    setTimeout(() => showMomoShabbyLibraryCard(), 300);
-  }, 5000);
-}
-
-function showMomoShabbyLibraryCard() {
-  const overlay = document.createElement('div');
-  overlay.className = 'fixed bottom-6 right-6 z-[200] animate-slide-in-right';
-  overlay.innerHTML = `
-    <div class="parchment-bg rounded-xl p-5 shadow-2xl border-2 border-magic-gold/30 max-w-xs">
-      <div class="flex items-start gap-3">
-        <div class="text-3xl">🦉</div>
-        <div>
-          <p class="text-xs text-magic-gold font-bold mb-1">墨墨</p>
-          <p class="text-ink text-sm leading-relaxed mb-3">刚才那位读者走的时候摇了摇头……说图书馆太破了，连像样的桌椅都没有。馆长，要不要去<b class="text-magic-gold">位面商店</b>升级一下借阅区？</p>
-          <button class="momo-upgrade-btn px-4 py-1.5 bg-magic-gold text-white rounded-lg text-xs font-bold hover:shadow-lg transition-all">去看看 →</button>
-        </div>
-        <button class="momo-close-btn text-ink-light/50 hover:text-ink ml-1 text-sm leading-none">&times;</button>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(overlay);
-
-  const close = () => {
-    overlay.style.opacity = '0';
-    overlay.style.transition = 'opacity 0.3s';
-    setTimeout(() => overlay.remove(), 300);
-  };
-  overlay.querySelector('.momo-close-btn').addEventListener('click', close);
-  overlay.querySelector('.momo-upgrade-btn').addEventListener('click', () => {
-    close();
-    window.switchTab('shop');
-  });
-  // 15秒后自动消失
-  setTimeout(close, 15000);
-}
-
-// ========== 借阅区首次升级后的墨墨提示 ==========
-
-function showMomoBorrowReadyCard() {
-  const overlay = document.createElement('div');
-  overlay.className = 'fixed bottom-6 right-6 z-[200] animate-slide-in-right';
-  overlay.innerHTML = `
-    <div class="parchment-bg rounded-xl p-5 shadow-2xl border-2 border-magic-gold/30 max-w-xs">
-      <div class="flex items-start gap-3">
-        <div class="text-3xl">🦉</div>
-        <div>
-          <p class="text-xs text-magic-gold font-bold mb-1">墨墨</p>
-          <p class="text-ink text-sm leading-relaxed mb-2">借阅区升级完成！现在访客可以<b class="text-magic-gold">正式办理借书手续</b>了。多抄几本书上架，大家就有书可借啦。</p>
-          <p class="text-xs text-ink-light/50">去缮写室誊抄你的第一本书吧</p>
-        </div>
-        <button class="momo-borrow-close-btn text-ink-light/50 hover:text-ink ml-1 text-sm leading-none">&times;</button>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(overlay);
-
-  const close = () => {
-    overlay.style.opacity = '0';
-    overlay.style.transition = 'opacity 0.3s';
-    setTimeout(() => overlay.remove(), 300);
-  };
-  overlay.querySelector('.momo-borrow-close-btn').addEventListener('click', close);
-  setTimeout(close, 12000);
-}
-
-// ========== 访客到来卡片 ==========
-
-function showVisitorArrivalCard(visitor) {
-  const def = getVisitorDef(visitor.charId);
-  const auraHtml = def?.aura
-    ? `<div class="mt-2 pt-2 border-t border-magic-gold/20"><p class="text-xs text-magic-gold font-bold">✨ ${def.aura.name}</p><p class="text-xs text-ink-light">${def.aura.desc}</p></div>`
-    : '';
-
-  const overlay = document.createElement('div');
-  overlay.className = 'fixed bottom-6 right-6 z-[120] animate-slide-in-right';
-  overlay.innerHTML = `
-    <div class="parchment-bg rounded-xl p-5 shadow-2xl border-2 border-magic-gold/30 max-w-xs">
-      <div class="flex items-start gap-3">
-        <div class="text-4xl">${visitor.emoji}</div>
-        <div>
-          <p class="text-xs text-magic-gold font-bold mb-1">访客到来</p>
-          <p class="text-ink font-bold">${visitor.name}</p>
-          <p class="text-ink-light text-xs">${visitor.title}</p>
-          ${auraHtml}
-        </div>
-        <button class="text-ink-light/50 hover:text-ink ml-2 text-sm leading-none">&times;</button>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(overlay);
-
-  const close = () => {
-    overlay.style.opacity = '0';
-    overlay.style.transition = 'opacity 0.3s';
-    setTimeout(() => overlay.remove(), 300);
-  };
-  overlay.querySelector('button').addEventListener('click', close);
-  // 8秒后自动消失
-  setTimeout(close, 8000);
-
-  // 首次访客到来时触发教学（卡片消失后弹出）
-  const trigger = checkAndShowTutorial('visitor_arrive');
-  if (trigger) {
-    setTimeout(() => {
-      dispatchTutorialUI(trigger);
-    }, 9000); // 等访客卡片自动消失后
-  }
-}
-
-// ========== 氛围阶段突破 · 访客见证 ==========
-
-function showWitnessToast(witnesses, stage) {
-  const stageNames = ['', '废墟', '破败', '陈旧', '温暖', '星辰'];
-  const stageName = stageNames[stage] || `阶段${stage}`;
-
-  const itemsHtml = witnesses.map(w => `
-    <div class="flex items-start gap-2 mb-2 last:mb-0">
-      <div class="text-2xl flex-shrink-0">${w.visitor.emoji}</div>
-      <div>
-        <p class="text-xs text-magic-gold font-bold">${w.visitor.name}</p>
-        <p class="text-xs text-ink-light leading-relaxed">「${w.text}」</p>
-      </div>
-    </div>
-  `).join('');
-
-  const overlay = document.createElement('div');
-  overlay.className = 'fixed bottom-6 right-6 z-[130] animate-slide-in-right';
-  overlay.innerHTML = `
-    <div class="parchment-bg rounded-xl p-5 shadow-2xl border-2 border-magic-gold/30 max-w-xs">
-      <div class="flex items-center gap-2 mb-3 pb-2 border-b border-magic-gold/20">
-        <span class="text-lg">✨</span>
-        <span class="text-xs text-magic-gold font-bold">氛围突破 · ${stageName}</span>
-      </div>
-      ${itemsHtml}
-      <p class="text-xs text-ink-light/40 mt-3 text-center">点击关闭 · 8秒后自动消失</p>
-    </div>
-  `;
-  document.body.appendChild(overlay);
-
-  const close = () => {
-    overlay.style.opacity = '0';
-    overlay.style.transition = 'opacity 0.3s';
-    setTimeout(() => overlay.remove(), 300);
-  };
-  overlay.addEventListener('click', close);
-  setTimeout(close, 8000);
-}
-
-// ========== 注入到 render ==========
 
 function handleUpgradeBorrowLevel() {
   if (!upgradeBorrowLevel()) {
@@ -860,7 +238,8 @@ setActions({
   abandonFocus: handleAbandonFocus,
   buyShelf: handleBuyShelf,
   collectReturn: handleCollectReturn,
-  upgradeBorrowLevel: handleUpgradeBorrowLevel
+  upgradeBorrowLevel: handleUpgradeBorrowLevel,
+  renderShopPage
 });
 
 // ========== 页面切换 ==========
@@ -1076,6 +455,10 @@ function init() {
 
   initState();
   ensureAllBooksInManuscriptBox();
+  checkAutoUnlockPacks();
+
+  // 后端认证初始化：失败也不阻塞本地游戏
+  initAuth().catch(err => console.warn('[app] backend auth init failed', err));
 
   // 注入回调
   setCompleteCallback(handleCompleteFocus);
@@ -1166,6 +549,8 @@ function init() {
     });
   }
 
+  initAccountEntry();
+
   initAudio();
   initMusicSelector();
   initSfx();
@@ -1246,6 +631,7 @@ function init() {
       renderVisitorsPage();
     }
     updateVisitorBadge();
+    saveState();
   }
   setInterval(tickVisitors, 60000);
 

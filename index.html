@@ -8,6 +8,16 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <title id="page-title">异世界图书馆</title>
   <link rel="icon" href="data:,">
+
+  <!-- Supabase SDK importmap：无构建工具时通过 esm.sh 加载 -->
+  <script type="importmap">
+  {
+    "imports": {
+      "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
+    }
+  }
+  </script>
+
   <link rel="stylesheet" href="css/style.css?v=20260605">
   <!-- 字体：楷体本地优先，无外部依赖 -->
   <script src="js/lib/tailwindcss.min.js"></script>

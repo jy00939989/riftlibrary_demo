@@ -13,6 +13,7 @@ import { getChapterInfo } from './book-utils.js';
 import { calculateWordsGained, calculateCoinsEarned } from './focus-rewards.js';
 import { applyWords, completeBook, applyRepairProgress } from './book-progress.js';
 import { BOOKS } from '../../data/books.js';
+import { track } from '../backend/analytics.js';
 
 export function startFocus(bookId, mode, targetMinutes) {
   const bs = state.books[bookId];
@@ -23,7 +24,6 @@ export function startFocus(bookId, mode, targetMinutes) {
   }
 
   state.currentSession = {
-    active: true,
     mode,
     bookId,
     targetMinutes,
@@ -40,6 +40,7 @@ export function startFocus(bookId, mode, targetMinutes) {
 
   startTimer();
   saveState();
+  track('focus_start', { book_id: bookId, mode, target_minutes: targetMinutes });
   return { ok: true };
 }
 

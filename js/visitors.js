@@ -1,6 +1,7 @@
 // 访客系统 —— 纯逻辑模块，不碰 DOM
 import { state, saveState } from './state.js';
 import { addCoins, addAtmosphere, addHistory } from './storage.js';
+import { t } from './i18n/terms.js';
 import { BOOKS } from '../data/books.js';
 import { addDiaryEntry } from './diary.js';
 import { isBookCapacityFull, addToManuscriptBox, createBookRecord, unlockBook } from './capacity.js';
@@ -10,6 +11,7 @@ import { VISITOR_NARRATIVES } from '../data/visitor-events.js';
 import { SIGNBOARDS } from '../data/signboards.js';
 import { SHARED_POOL } from '../data/book_pool.js';
 import { VOLUME_GROUPS, getIncompleteVolumeGroups, isVolumeBookId } from '../data/volume_groups.js';
+import { track } from './backend/analytics.js';
 
 // ========== 访客角色定义（10位，2026-05-27 重构） ==========
 
@@ -586,6 +588,7 @@ export function spawnVisitor(targetCharId) {
   state.visitors.push(visitor);
   saveState();
   addHistory('visitor', `${def.emoji} ${def.name} 来到图书馆`, def.title);
+  track('visitor_arrive', { char_id: charId, name: def.name });
   if (!state.diaryFirsts.visitorArrive) {
     state.diaryFirsts.visitorArrive = true;
     addDiaryEntry('visitor_arrive', { emoji: def.emoji, name: def.name, title: def.title });
