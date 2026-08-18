@@ -3,7 +3,8 @@
 import { state } from '../state.js';
 import { BOOKS } from '../../data/books.js';
 import { SHARED_POOL } from '../../data/book_pool.js';
-import { el, t, updateStatusBar, getBookTitle, actions } from './common.js';
+import { el, updateStatusBar, getBookTitle, actions } from './common.js';
+import { t } from '../i18n/terms.js';
 import { playSfx } from '../audio.js';
 import {
   getDlcPacks, isDlcPackUnlocked, purchaseDlcPack, redeemDlcCode
