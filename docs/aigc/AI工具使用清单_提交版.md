@@ -9,7 +9,7 @@ AIGC:
 > 第四届上海国际 AIGC 创新大赛 · AI 游戏赛道 · 独立组别
 > 项目名称：归墟图书馆 / Rift Library: The Gui Xu Collection
 > 开发者：图南之翼（独立开发者）
-> 整理日期：2026-07-20
+> 整理日期：2026-08-19
 
 ---
 
@@ -43,7 +43,7 @@ AIGC:
 | 🎨 美术素材 | Coze Agent AI 生图 | 字节跳动 | 100% AI 生成 | 5 阶段图书馆背景（15+ 张）、7 级缮写室插画、7 级借阅区插画、访客立绘 Prompt、UI/概念图（约 90 张） |
 | 🎵 音乐音效 | Suno AI | Suno | 100% AI 生成 | 主旋律 BGM、5 种场景氛围音乐、多版本迭代 |
 | ✍️ 叙事文案 | DeepSeek<br>Claude Fable 5 | DeepSeek<br>Anthropic | 100% AI 生成 | 10 位访客完整叙事树（常层/偶层/稀层/终局/终局后）、还书语录、氛围见证文案、位面任务文案 |
-| 💻 程序开发 | Claude Code（克克）<br>DeepSeek | Anthropic<br>DeepSeek | 核心代码由 AI 编写 | 网页版完整可运行 Demo（约 2.6 万行源码）、架构重构、Bug 修复、状态系统、渲染层 |
+| 💻 程序开发 | Claude Code（克克）<br>DeepSeek | Anthropic<br>DeepSeek | 核心代码由 AI 编写 | 网页版完整可运行 Demo（JS 核心约 2.1 万行、89 个 JS 模块）、架构重构、Bug 修复、状态系统、渲染层、Supabase 后端接入 |
 | 📣 宣发素材 | Coze Agent（coco）<br>可灵 AI<br>Seedance | 字节跳动<br>快手<br>字节跳动 | 策划+文案+视觉+视频全流程 | 宣发方案、亮相帖、封面图、宣传视频分镜、开场 PV、氛围升级动画、知识卡片 |
 | 🎬 动画与视频 | 可灵 AI<br>Seedance | 快手<br>字节跳动 | 100% AI 生成 | 开场 PV、氛围升级演出动画、宣传视频 |
 | 📚 内容研究 | 豆包 | 字节跳动 | 辅助研究 | 9 期文学史划分、书籍 era 字段设计参考 |
@@ -139,10 +139,10 @@ AIGC:
   - 对夏蝉全部 41 条原文进行逐条四档诊断（保留 / 调整语气 / 重写 / 删掉）并完整重写。
 
 **产出物**：
-- `data/visitor-events.js`：10 位访客叙事树，共 1087 行
+- `data/visitor-events.js`：10 位访客叙事树，共 1100+ 行
   - 每位访客：常层 14 条 + 偶层 5 条 + 稀层 1 条 + 终局 1 条 + 终局后常层 4 条 + 终局后偶层 3 条
 - `js/visitors.js`：还书语录、氛围见证文案
-- `docs/visitor-voice-guide.md`：10 人文字风格手册
+- `docs/guides/visitor-voice-guide.md`：10 人文字风格手册
 
 ---
 
@@ -153,11 +153,12 @@ AIGC:
 **参与方式**：
 - 项目创作者无编程基础，采用 Vibe Coding 方式——用自然语言描述需求，AI 编写全部代码。
 - **Claude Code（克克）**作为主要编程助手，完成：
-  - 网页版完整可运行 Demo（约 2.6 万行源码，78 个源文件）
-  - 专注/誊抄系统、书籍系统、访客系统、成就系统、商店系统、植物系统、位面系统、墨墨日志、新手引导、音效系统等
-  - 重大架构重构：抽离 `js/core/` 纯函数层、消除循环依赖、统一工厂函数
+  - 网页版完整可运行 Demo（JS 核心约 2.1 万行、89 个 JS 模块）
+  - 专注/誊抄系统、书籍系统（含长书分卷）、访客系统、成就系统、商店系统、植物系统、位面系统、墨墨日志、新手引导、音效系统等
+  - 重大架构重构：抽离 `js/core/` 纯函数层、消除循环依赖、统一工厂函数、神模块拆分
   - 关键 Bug 修复：Smart Quote 语法错误、重抄机制、首次专注无音效、图南寄语死循环、加载进度条卡死等
-  - 手机版全站响应式适配
+  - 手机版全站响应式适配、UI 英文化框架
+  - 后端接入：Supabase 渐进登录、云存档同步、行为统计
   - 部署流程：Netlify / Gitee / 腾讯云 EdgeOne Pages
 - **DeepSeek**辅助部分功能实现与文案生成。
 - **WorkBuddy 架构师 Agent + 软件制作团队专家群**：
@@ -166,11 +167,12 @@ AIGC:
   - 对循环依赖、状态迁移风险、渲染与逻辑耦合等长期技术债给出评估意见。
 
 **关键技术指标**：
-- 源码规模：约 25,810 行
-- 源文件：78 个
-- 技术栈：HTML5 + Vanilla JS ES Modules + Tailwind CSS CDN
-- 存档：localStorage 本地存档（后续计划 IndexedDB）
-- 部署：Netlify（deploy 分支）+ Gitee + 腾讯云 EdgeOne Pages
+- 源码规模：JS 核心约 21,080 行；含 CSS/HTML/数据约 36,730 行
+- JS 模块：89 个（`js/` 目录）
+- 数据文件：`data/books/` 下 33 本主书 + 38 个分卷单元
+- 技术栈：HTML5 + Vanilla JS ES Modules + Tailwind CSS CDN + Supabase（后端）
+- 存档：localStorage 本地存档 + Supabase 云存档同步
+- 部署：Netlify（deploy 分支）+ Gitee 镜像 + 腾讯云 EdgeOne Pages
 
 ---
 
@@ -287,14 +289,14 @@ AIGC:
 | 附件 | 位置 | 说明 |
 |------|------|------|
 | 游戏设计文档 v0.1 | `H:\02-学习成长\04-编程开发\归墟图书馆\归墟图书馆_设计文档.md` | 完整核心玩法与系统设计 |
-| 访客文字风格手册 | `E:\360MoveData\Users\Administrator\Desktop\library_demo-feature-docs-organized\docs\visitor-voice-guide.md` | 10 位角色声音锚点 |
-| Fable 5 项目诊断 | `E:\360MoveData\Users\Administrator\Desktop\library_demo-feature-docs-organized\docs\FABLE5_ROUND1_DIAGNOSIS.md` | 9 维度优化诊断 |
-| 夏蝉叙事重写案例 | `E:\360MoveData\Users\Administrator\Desktop\library_demo-feature-docs-organized\docs\FABLE5_ROUND2_XIACHAN.md` | AI 叙事优化前后对比 |
+| 访客文字风格手册 | `E:\360MoveData\Users\Administrator\Desktop\library_demo-feature-docs-organized\docs\guides\visitor-voice-guide.md` | 10 位角色声音锚点 |
+| Fable 5 项目诊断 | `E:\360MoveData\Users\Administrator\Desktop\library_demo-feature-docs-organized\docs\aigc\FABLE5_ROUND1_DIAGNOSIS.md` | 9 维度优化诊断 |
+| 夏蝉叙事重写案例 | `E:\360MoveData\Users\Administrator\Desktop\library_demo-feature-docs-organized\docs\aigc\FABLE5_ROUND2_XIACHAN.md` | AI 叙事优化前后对比 |
 | 开发日志 | `E:\360MoveData\Users\Administrator\Desktop\library_demo-feature-docs-organized\docs\changelogs\` | 完整开发迭代记录 |
 
 ---
 
-*清单整理：克克（Claude Code）| 2026-07-20*
+*清单整理：克克（Claude Code）| 2026-08-19*
 
 ---
 
