@@ -76,7 +76,8 @@ export function completeBook(bookId) {
   const isVolume = book.isVolume === true;
   const atmoReward = (book.totalWords < 30000 ? 3 : book.totalWords < 100000 ? 6 : 10) * (isVolume ? 0.5 : 1);
   const coinReward = 50 * (isVolume ? 0.5 : 1);
-  addAtmosphere(Math.floor(atmoReward));
+  const mult = isFirstCompletion ? 1 : 0.5;
+  addAtmosphere(Math.floor(atmoReward * mult));
   addCoins(Math.floor(coinReward));
 
   addHistory('achievement',

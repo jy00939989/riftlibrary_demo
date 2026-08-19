@@ -372,7 +372,7 @@ export const BORROW_LEVEL_TABLE = [
   { cap:7, returnCoins:45, favorBonus:30, returnAtmo:3, spawnBonus:0.16 },  // Lv4 舒适
   { cap:8, returnCoins:50, favorBonus:40, returnAtmo:5, spawnBonus:0.20 },  // Lv5 精致
   { cap:9, returnCoins:55, favorBonus:50, returnAtmo:5, spawnBonus:0.25 },  // Lv6 优雅
-  { cap:10,returnCoins:60, favorBonus:60, returnAtmo:8, spawnBonus:0.30 }   // Lv7 圣所
+  { cap:10,returnCoins:60, favorBonus:60, returnAtmo:5, spawnBonus:0.30 }   // Lv7 圣所
 ];
 
 export function getBorrowLevelConfig() {
