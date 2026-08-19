@@ -69,6 +69,9 @@ import { meta as b65, chapters as c65, quotes as q65 } from './books/book_032_vo
 import { meta as b66, chapters as c66, quotes as q66 } from './books/book_032_vol3.js';
 import { meta as b67, chapters as c67, quotes as q67 } from './books/book_032.js';
 import { meta as b68, chapters as c68, quotes as q68 } from './books/book_033.js';
+import { meta as b69, chapters as c69, quotes as q69 } from './books/book_034_vol1.js';
+import { meta as b70, chapters as c70, quotes as q70 } from './books/book_034_vol2.js';
+import { meta as b71, chapters as c71, quotes as q71 } from './books/book_034.js';
 
 const ALL_BOOKS = [
   { meta: b1, chapters: c1, quotes: q1 },
@@ -139,6 +142,9 @@ const ALL_BOOKS = [
   { meta: b66, chapters: c66, quotes: q66 },
   { meta: b67, chapters: c67, quotes: q67 },
   { meta: b68, chapters: c68, quotes: q68 },
+  { meta: b69, chapters: c69, quotes: q69 },
+  { meta: b70, chapters: c70, quotes: q70 },
+  { meta: b71, chapters: c71, quotes: q71 },
 ];
 
 // 组装 BOOKS 对象（保持原有访问模式：BOOKS[id]）

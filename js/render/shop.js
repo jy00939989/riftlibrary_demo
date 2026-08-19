@@ -15,9 +15,10 @@ import { showAchievementToast } from './achievements.js';
 import { checkAndShowTutorial } from '../tutorial.js';
 import { dispatchTutorialUI } from './tutorial-ui.js';
 import { SIGNBOARDS } from '../../data/signboards.js';
-import { plantSeed, canFertilize, fertilizePlant, canWater, waterPlant, canHarvest, harvestPlant } from '../plants.js';
-import { showPlantMaturityToast, showPlantHarvestPopup } from './plants.js';
+import { plantSeed, canFertilize, fertilizePlant, canWater, waterPlant, canHarvest, harvestPlant, abandonPlant } from '../plants.js';
+import { showPlantMaturityToast, showPlantHarvestPopup, renderPlantArt } from './plants.js';
 import { getAmbientDefs, buyAmbient } from '../ambient.js';
+import { getDlcPack, isDlcPackUnlocked } from '../shop.js';
 import { t, getLocale, getPageName, getBorrowLevelName, getRestorationLevelName, getFocusRoomLevelName, getVisitorName } from '../i18n/terms.js';
 import { renderDlcPacksSection } from './dlc-packs.js';
 
@@ -666,18 +667,22 @@ function renderAmbientShop() {
   const ambients = getAmbientDefs();
 
   ambients.forEach(a => {
+    const packLocked = a.dlcPackId && !isDlcPackUnlocked(a.dlcPackId);
+    const pack = packLocked ? getDlcPack(a.dlcPackId) : null;
     const card = el('div', `bg-white rounded-xl p-4 border-2 ${a.unlocked ? 'border-wood/20' : 'border-wood/10 opacity-80'} flex items-center gap-3`);
     card.innerHTML = `
       <span class="text-3xl flex-shrink-0">${a.emoji}</span>
       <div class="flex-1 min-w-0">
         <div class="font-bold text-sm text-ink">${a.name}</div>
-        <div class="text-xs text-ink-light truncate">${a.unlocked ? t('ambientOwnedHint') : t('ambientLockedHint')}</div>
+        <div class="text-xs text-ink-light truncate">${a.unlocked ? t('ambientOwnedHint') : (packLocked ? t('ambientLockedByPackHint').replace('{pack}', pack?.title || '') : t('ambientLockedHint'))}</div>
       </div>
       ${a.unlocked
         ? `<span class="text-xs text-magic-gold font-bold">${t('ambientOwnedLabel')}</span>`
-        : `<button class="buy-ambient-btn px-3 py-1.5 bg-magic-gold text-white text-xs font-bold rounded-lg hover:shadow-lg transition-all" data-id="${a.id}">
-            💰${a.price.toLocaleString()}
-           </button>`}
+        : packLocked
+          ? `<span class="text-xs text-ink-light/60 font-bold">🔒 ${t('locked')}</span>`
+          : `<button class="buy-ambient-btn px-3 py-1.5 bg-magic-gold text-white text-xs font-bold rounded-lg hover:shadow-lg transition-all" data-id="${a.id}">
+              💰${a.price.toLocaleString()}
+             </button>`}
     `;
 
     const buyBtn = card.querySelector('.buy-ambient-btn');
@@ -690,6 +695,8 @@ function renderAmbientShop() {
           renderShopPage();
         } else if (result.reason === 'no_coins') {
           alert(`${t('insufficientCoins')} 💰`);
+        } else if (result.reason === 'dlc_locked') {
+          alert(t('ambientLockedByPackHint').replace('{pack}', pack?.title || ''));
         }
       });
     }
@@ -717,23 +724,35 @@ function renderDecorationShop() {
       const card = el('div', 'bg-white rounded-xl p-4 border-2 border-green-200 flex gap-4 items-center hover:shadow-lg transition-all cursor-pointer');
       const cost = pt.fertilizeCosts[1];
       const canAfford = state.coins >= cost;
-      card.innerHTML = `
-        <span class="text-4xl">${pt.emoji}</span>
-        <div class="flex-1">
-          <div class="font-bold">${pt.name}</div>
-          <p class="text-xs text-ink-light mt-1">${pt.description}</p>
-          <div class="flex items-center gap-2 mt-2">
-            <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">${t('plantGrowLevels')}</span>
-            <span class="text-xs text-ink-light">${t('waterAndFertilize')}</span>
-          </div>
+
+      const artWrap = document.createElement('div');
+      artWrap.className = 'flex-shrink-0';
+      artWrap.appendChild(renderPlantArt(pt, 1, 64));
+
+      const info = el('div', 'flex-1');
+      info.innerHTML = `
+        <div class="font-bold">${t(pt.nameKey)}</div>
+        <p class="text-xs text-ink-light mt-1">${t(pt.descKey)}</p>
+        <div class="flex items-center gap-2 mt-2">
+          <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">${t('plantGrowLevels')}</span>
+          <span class="text-xs text-ink-light">${t('waterAndFertilize')}</span>
         </div>
-        <button class="plant-buy-btn px-4 py-1.5 ${canAfford ? 'bg-green-600 text-white hover:shadow-lg' : 'bg-gray-300 text-gray-500 cursor-not-allowed'} rounded-lg text-sm font-bold transition-all"
-          ${!canAfford ? 'disabled' : ''}>
-          💰${cost.toLocaleString()}
-        </button>
       `;
+
+      const btnWrap = document.createElement('div');
+      btnWrap.className = 'flex-shrink-0';
+      const btn = document.createElement('button');
+      btn.className = `plant-buy-btn px-4 py-1.5 ${canAfford ? 'bg-green-600 text-white hover:shadow-lg' : 'bg-gray-300 text-gray-500 cursor-not-allowed'} rounded-lg text-sm font-bold transition-all`;
+      btn.disabled = !canAfford;
+      btn.innerHTML = `💰${cost.toLocaleString()}`;
+      btnWrap.appendChild(btn);
+
+      card.appendChild(artWrap);
+      card.appendChild(info);
+      card.appendChild(btnWrap);
+
       if (canAfford) {
-        card.querySelector('.plant-buy-btn').addEventListener('click', (e) => {
+        btn.addEventListener('click', (e) => {
           e.stopPropagation();
           if (plantSeed(pt.id)) {
             playSfx('buy_success');
@@ -807,35 +826,55 @@ function renderActivePlantCard(def, plant) {
     ? t('nextLevelFertilizerCost').replace('{cost}', nextFertCost)
     : t('maxLevelHarvestHint');
 
-  card.innerHTML = `
-    <span class="text-5xl flex-shrink-0">${def.emoji}</span>
-    <div class="flex-1 min-w-0">
-      <div class="flex items-center gap-2 mb-1">
-        <span class="font-bold">${def.name}</span>
-        <span class="text-xs bg-green-200 text-green-800 px-2 py-0.5 rounded-full">Lv.${plant.level} · ${levelName}</span>
-      </div>
-      <div class="h-2.5 bg-gray-200 rounded-full overflow-hidden mb-2">
-        <div class="h-full bg-gradient-to-r from-green-400 to-green-600 transition-all" style="width:${progressPercent}%"></div>
-      </div>
-      <div class="text-xs text-ink-light mb-2">
-        ${t('growthProgress').replace('{value}', progressPercent)} · ${t('waterAvailableCount').replace('{n}', plant.waterAvailable)}
-      </div>
-      <div class="flex gap-2 flex-wrap">
-        ${canHarvestNow
-          ? `<button class="harvest-btn px-4 py-1.5 bg-yellow-500 text-white rounded-lg text-sm font-bold hover:shadow-lg transition-all">${t('harvest')}</button>`
-          : `
-            <button class="water-btn px-3 py-1.5 bg-blue-500 text-white rounded-lg text-sm font-bold hover:shadow-lg transition-all ${!canWaterNow ? 'opacity-50 cursor-not-allowed' : ''}"
-              ${!canWaterNow ? 'disabled' : ''}>${t('water')} ${t('waterGrowth').replace('{value}', def.waterGrowth)}</button>
-            <button class="fertilize-btn px-3 py-1.5 bg-amber-600 text-white rounded-lg text-sm font-bold hover:shadow-lg transition-all ${!canFertNow ? 'opacity-50 cursor-not-allowed' : ''}"
-              ${!canFertNow ? 'disabled' : ''}>
-              ${t('fertilize')} ${t('fertilizeCost').replace('{value}', def.fertilizeGrowth).replace('{cost}', def.fertilizeCosts[plant.level + 1] || 0)}
-            </button>
-          `}
-      </div>
-      ${canHarvestNow ? `<p class="text-xs text-yellow-600 mt-2">${t('canHarvestHint')}</p>` : ''}
-      <p class="text-xs text-ink-light mt-1">${footerText}</p>
+  const artWrap = document.createElement('div');
+  artWrap.className = 'flex-shrink-0';
+  artWrap.appendChild(renderPlantArt(def, plant.level, 80));
+
+  const info = el('div', 'flex-1 min-w-0');
+  info.innerHTML = `
+    <div class="flex items-center gap-2 mb-1">
+      <span class="font-bold">${t(def.nameKey)}</span>
+      <span class="text-xs bg-green-200 text-green-800 px-2 py-0.5 rounded-full">Lv.${plant.level} · ${levelName}</span>
     </div>
+    <div class="h-2.5 bg-gray-200 rounded-full overflow-hidden mb-2">
+      <div class="h-full bg-gradient-to-r from-green-400 to-green-600 transition-all" style="width:${progressPercent}%"></div>
+    </div>
+    <div class="text-xs text-ink-light mb-2">
+      ${t('growthProgress').replace('{value}', progressPercent)} · ${t('waterAvailableCount').replace('{n}', plant.waterAvailable)}
+    </div>
+    <div class="flex gap-2 flex-wrap" id="shop-plant-actions">
+      ${canHarvestNow
+        ? `<button class="harvest-btn px-4 py-1.5 bg-yellow-500 text-white rounded-lg text-sm font-bold hover:shadow-lg transition-all">${t('harvest')}</button>`
+        : `
+          <button class="water-btn px-3 py-1.5 bg-blue-500 text-white rounded-lg text-sm font-bold hover:shadow-lg transition-all ${!canWaterNow ? 'opacity-50 cursor-not-allowed' : ''}"
+            ${!canWaterNow ? 'disabled' : ''}>${t('water')} ${t('waterGrowth').replace('{value}', def.waterGrowth)}</button>
+          <button class="fertilize-btn px-3 py-1.5 bg-amber-600 text-white rounded-lg text-sm font-bold hover:shadow-lg transition-all ${!canFertNow ? 'opacity-50 cursor-not-allowed' : ''}"
+            ${!canFertNow ? 'disabled' : ''}>
+            ${t('fertilize')} ${t('fertilizeCost').replace('{value}', def.fertilizeGrowth).replace('{cost}', def.fertilizeCosts[plant.level + 1] || 0)}
+          </button>
+        `}
+    </div>
+    ${canHarvestNow ? `<p class="text-xs text-yellow-600 mt-2">${t('canHarvestHint')}</p>` : ''}
+    <p class="text-xs text-ink-light mt-1">${footerText}</p>
   `;
+
+  card.appendChild(artWrap);
+  card.appendChild(info);
+
+  const actions = info.querySelector('#shop-plant-actions');
+
+  // 铲除按钮
+  const abandonBtn = document.createElement('button');
+  abandonBtn.className = 'px-3 py-1.5 bg-red-100 text-red-700 rounded-lg text-sm font-bold hover:shadow-lg transition-all';
+  abandonBtn.innerHTML = `🗑️ ${t('plantAbandon')}`;
+  abandonBtn.addEventListener('click', () => {
+    if (confirm(t('plantAbandonConfirm').replace('{name}', t(def.nameKey)))) {
+      abandonPlant();
+      updateStatusAndRefresh();
+      if (typeof window.renderLibraryPage === 'function') window.renderLibraryPage();
+    }
+  });
+  actions.appendChild(abandonBtn);
 
   // Water button
   const waterBtn = card.querySelector('.water-btn');

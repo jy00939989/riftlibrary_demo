@@ -476,5 +476,44 @@ export const DEFAULT_BOOKS = {
     repairProgress: 0,
     readChapters: [],
     reCopyUnlocked: false
+  },
+  'book_034': {
+    unlockedChapters: [1],
+    copyCount: 0,
+    masteryLevel: 0,
+    copiedWords: 0,
+    status: 'locked',
+    starred: false,
+    damaged: false,
+    repairWords: 0,
+    repairProgress: 0,
+    readChapters: [],
+    reCopyUnlocked: false
+  },
+  'book_034_vol1': {
+    unlockedChapters: [1],
+    copyCount: 0,
+    masteryLevel: 0,
+    copiedWords: 0,
+    status: 'locked',
+    starred: false,
+    damaged: false,
+    repairWords: 0,
+    repairProgress: 0,
+    readChapters: [],
+    reCopyUnlocked: false
+  },
+  'book_034_vol2': {
+    unlockedChapters: [1],
+    copyCount: 0,
+    masteryLevel: 0,
+    copiedWords: 0,
+    status: 'locked',
+    starred: false,
+    damaged: false,
+    repairWords: 0,
+    repairProgress: 0,
+    readChapters: [],
+    reCopyUnlocked: false
   }
 };

@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>归墟图书馆 · AIGC 大赛 Pitch Deck</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #2c2419;
+      --ink-light: #5c4d3c;
+      --parchment: #f5e6c8;
+      --parchment-dark: #e8d5a8;
+      --wood: #8b6914;
+      --magic-gold: #c9a227;
+      --magic-blue: #5a7a96;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: 'Noto Sans SC', sans-serif;
+      color: var(--ink);
+      background: #1a1612;
+      overflow: hidden;
+    }
+    .slide {
+      width: 100vw;
+      height: 100vh;
+      min-height: 600px;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 4rem 5vw;
+      position: relative;
+      page-break-after: always;
+    }
+    .slide.active { display: flex; }
+    .slide-bg {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      background: linear-gradient(135deg, #f5e6c8 0%, #e8d5a8 50%, #d4c094 100%);
+    }
+    .slide-bg::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        radial-gradient(circle at 20% 30%, rgba(201, 162, 39, 0.12) 0%, transparent 40%),
+        radial-gradient(circle at 80% 70%, rgba(90, 122, 150, 0.1) 0%, transparent 40%);
+      pointer-events: none;
+    }
+    .paper-texture {
+      position: absolute;
+      inset: 0;
+      opacity: 0.4;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+      pointer-events: none;
+    }
+    .content {
+      position: relative;
+      z-index: 1;
+      max-width: 1100px;
+      width: 100%;
+    }
+    .font-serif { font-family: 'Noto Serif SC', serif; }
+    .text-ink { color: var(--ink); }
+    .text-ink-light { color: var(--ink-light); }
+    .text-gold { color: var(--magic-gold); }
+    .text-blue { color: var(--magic-blue); }
+    .bg-parchment { background-color: var(--parchment); }
+    .bg-parchment-dark { background-color: var(--parchment-dark); }
+    .border-gold { border-color: var(--magic-gold); }
+    .bg-gold { background-color: var(--magic-gold); }
+
+    .slide-number {
+      position: absolute;
+      bottom: 2rem;
+      right: 3rem;
+      font-size: 0.875rem;
+      color: var(--ink-light);
+      opacity: 0.6;
+      z-index: 2;
+    }
+    .nav-hint {
+      position: absolute;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.75rem;
+      color: var(--ink-light);
+      opacity: 0.5;
+      z-index: 2;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.55);
+      border: 1px solid rgba(139, 105, 20, 0.2);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      backdrop-filter: blur(4px);
+    }
+
+    .ornament {
+      width: 80px;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, var(--magic-gold), transparent);
+      margin: 1.5rem auto;
+    }
+    .ornament-left {
+      width: 60px;
+      height: 3px;
+      background: var(--magic-gold);
+      margin: 1rem 0;
+    }
+
+    .loop-arrow {
+      width: 0;
+      height: 0;
+      border-left: 10px solid transparent;
+      border-right: 10px solid transparent;
+      border-top: 14px solid var(--magic-gold);
+      margin: 0.5rem auto;
+    }
+
+    @media print {
+      html, body { overflow: visible; background: #fff; }
+      .slide {
+        display: flex !important;
+        page-break-after: always;
+        page-break-inside: avoid;
+      }
+      .slide-number, .nav-hint { display: none; }
+      .slide-bg { background: linear-gradient(135deg, #f5e6c8 0%, #e8d5a8 100%); }
+    }
+
+    @media (max-width: 768px) {
+      .slide { padding: 2rem 1.5rem; }
+      .content { max-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Slide 1: Cover -->
+  <section class="slide active">
+    <div class="slide-bg"></div>
+    <div class="paper-texture"></div>
+    <div class="content text-center">
+      <div class="text-6xl mb-6">📚</div>
+      <h1 class="font-serif text-5xl md:text-7xl font-black text-ink mb-4 leading-tight">
+        归墟图书馆
+      </h1>
+      <p class="font-serif text-2xl md:text-3xl text-blue mb-2">Rift Library: The Gui Xu Collection</p>
+      <div class="ornament"></div>
+      <p class="text-xl md:text-2xl text-ink-light font-medium max-w-2xl mx-auto leading-relaxed">
+        一款用 AIGC 全链路共创的<br>治愈系番茄钟 + 叙事收集游戏
+      </p>
+      <p class="mt-12 text-base text-ink-light">
+        <span class="font-bold text-gold">Slogan</span> · Every book has power. Every focus rebuilds a world.
+      </p>
+      <p class="mt-8 text-sm text-ink-light opacity-70">第四届上海国际 AIGC 创新大赛 · AI 游戏赛道 · 独立组别</p>
+    </div>
+    <div class="slide-number">1 / 7</div>
+    <div class="nav-hint">按 → 键或点击翻页 · 打印可导出 PDF</div>
+  </section>
+
+  <!-- Slide 2: Problem -->
+  <section class="slide">
+    <div class="slide-bg"></div>
+    <div class="paper-texture"></div>
+    <div class="content">
+      <p class="text-sm font-bold tracking-widest text-gold uppercase mb-3">PROBLEM</p>
+      <h2 class="font-serif text-4xl md:text-5xl font-bold text-ink mb-8">番茄钟太冷，独立游戏门槛太高</h2>
+
+      <div class="grid md:grid-cols-3 gap-6">
+        <div class="card">
+          <div class="text-4xl mb-3">⏱️</div>
+          <h3 class="font-bold text-xl mb-2">工具冰冷</h3>
+          <p class="text-ink-light leading-relaxed">市面上的番茄钟只告诉你"时间到了"，却从不关心你这 25 分钟里经历了什么。</p>
+        </div>
+        <div class="card">
+          <div class="text-4xl mb-3">🎮</div>
+          <h3 class="font-bold text-xl mb-2">游戏太重</h3>
+          <p class="text-ink-light leading-relaxed">传统独立游戏需要团队、引擎、美术、程序，一个人几乎不可能完成。</p>
+        </div>
+        <div class="card">
+          <div class="text-4xl mb-3">✨</div>
+          <h3 class="font-bold text-xl mb-2">AIGC 的机会</h3>
+          <p class="text-ink-light leading-relaxed">当 AI 能写代码、画场景、谱音乐、写故事，零基础的创作者也能做出有温度的作品。</p>
+        </div>
+      </div>
+
+      <div class="mt-10 p-6 rounded-xl border-l-4 border-gold bg-white/50">
+        <p class="text-lg font-serif text-ink leading-relaxed">
+          <span class="font-bold text-gold">核心洞察：</span>
+          玩家需要的不是又一个计时器，而是一个<span class="font-bold">会记得你、会回应你</span>的空间。
+        </p>
+      </div>
+    </div>
+    <div class="slide-number">2 / 7</div>
+  </section>
+
+  <!-- Slide 3: Product -->
+  <section class="slide">
+    <div class="slide-bg"></div>
+    <div class="paper-texture"></div>
+    <div class="content">
+      <p class="text-sm font-bold tracking-widest text-gold uppercase mb-3">PRODUCT</p>
+      <h2 class="font-serif text-4xl md:text-5xl font-bold text-ink mb-6">在废墟图书馆里，用专注重建世界</h2>
+
+      <div class="grid md:grid-cols-2 gap-8 items-center">
+        <div class="space-y-4">
+          <div class="flex items-start gap-4">
+            <span class="text-3xl">🖋️</span>
+            <div>
+              <h3 class="font-bold text-lg">专注誊抄</h3>
+              <p class="text-ink-light text-sm">番茄钟、倒计时、正计时三种模式，边专注边解锁书籍章节。</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-4">
+            <span class="text-3xl">📖</span>
+            <div>
+              <h3 class="font-bold text-lg">收集真实书籍</h3>
+              <p class="text-ink-light text-sm">28 本公版经典，从《小王子》到《红楼梦》，每本含真实章节与名言。</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-4">
+            <span class="text-3xl">🏛️</span>
+            <div>
+              <h3 class="font-bold text-lg">重建图书馆</h3>
+              <p class="text-ink-light text-sm">用智慧之光买书、升级缮写室与借阅区，看着废墟一点点变成星辰圣殿。</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-4">
+            <span class="text-3xl">👥</span>
+            <div>
+              <h3 class="font-bold text-lg">迎接位面访客</h3>
+              <p class="text-ink-light text-sm">来自不同世界的访客会来借书、还书、留下故事。</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="text-center mb-4">
+            <span class="text-5xl">✨</span>
+          </div>
+          <h3 class="font-serif text-2xl font-bold text-center mb-4">一句话定位</h3>
+          <p class="text-center text-lg leading-relaxed text-ink-light">
+            它不是工具，也不是传统游戏，而是一个<br>
+            <span class="font-bold text-gold">"陪你专注的叙事空间"</span>
+          </p>
+          <div class="mt-6 pt-6 border-t border-wood/20">
+            <div class="grid grid-cols-3 gap-4 text-center">
+              <div>
+                <div class="text-2xl font-bold text-gold">28</div>
+                <div class="text-xs text-ink-light">本书籍</div>
+              </div>
+              <div>
+                <div class="text-2xl font-bold text-gold">10</div>
+                <div class="text-xs text-ink-light">位访客</div>
+              </div>
+              <div>
+                <div class="text-2xl font-bold text-gold">5</div>
+                <div class="text-xs text-ink-light">个氛围阶段</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-number">3 / 7</div>
+  </section>
+
+  <!-- Slide 4: Core Loop -->
+  <section class="slide">
+    <div class="slide-bg"></div>
+    <div class="paper-texture"></div>
+    <div class="content">
+      <p class="text-sm font-bold tracking-widest text-gold uppercase mb-3">CORE LOOP</p>
+      <h2 class="font-serif text-4xl md:text-5xl font-bold text-ink mb-12 text-center">每一次专注，都在推动世界</h2>
+
+      <div class="flex flex-col md:flex-row items-center justify-center gap-4">
+        <div class="card text-center w-48">
+          <div class="text-3xl mb-2">🍅</div>
+          <h3 class="font-bold">专注誊抄</h3>
+          <p class="text-xs text-ink-light mt-1">获得智慧之光 + 氛围</p>
+        </div>
+        <div class="text-2xl text-gold">→</div>
+        <div class="card text-center w-48">
+          <div class="text-3xl mb-2">📚</div>
+          <h3 class="font-bold">买书 / 升级</h3>
+          <p class="text-xs text-ink-light mt-1">扩充馆藏与设施</p>
+        </div>
+        <div class="text-2xl text-gold">→</div>
+        <div class="card text-center w-48">
+          <div class="text-3xl mb-2">👤</div>
+          <h3 class="font-bold">访客到来</h3>
+          <p class="text-xs text-ink-light mt-1">借书、还书、触发叙事</p>
+        </div>
+        <div class="text-2xl text-gold">→</div>
+        <div class="card text-center w-48">
+          <div class="text-3xl mb-2">🌟</div>
+          <h3 class="font-bold">氛围升级</h3>
+          <p class="text-xs text-ink-light mt-1">图书馆视觉进化</p>
+        </div>
+      </div>
+
+      <div class="mt-12 text-center">
+        <p class="text-lg font-serif text-ink-light">
+          从 <span class="font-bold text-ink">废墟残响</span> → <span class="font-bold text-ink">破败</span> → <span class="font-bold text-ink">陈旧</span> → <span class="font-bold text-ink">温暖</span> → <span class="font-bold text-gold">星辰之境</span>
+        </p>
+        <p class="mt-2 text-sm text-ink-light">五阶段视觉进化，让玩家的每一点专注都看得见</p>
+      </div>
+    </div>
+    <div class="slide-number">4 / 7</div>
+  </section>
+
+  <!-- Slide 5: Differentiation -->
+  <section class="slide">
+    <div class="slide-bg"></div>
+    <div class="paper-texture"></div>
+    <div class="content">
+      <p class="text-sm font-bold tracking-widest text-gold uppercase mb-3">DIFFERENTIATION</p>
+      <h2 class="font-serif text-4xl md:text-5xl font-bold text-ink mb-6">10 位会记得你的访客</h2>
+
+      <div class="grid md:grid-cols-2 gap-8">
+        <div>
+          <h3 class="font-bold text-2xl mb-4">三层递进叙事</h3>
+          <div class="space-y-3">
+            <div class="flex gap-3">
+              <span class="font-bold text-gold">常层</span>
+              <span class="text-ink-light">对书说话，克制，几乎不暴露自己</span>
+            </div>
+            <div class="flex gap-3">
+              <span class="font-bold text-gold">偶层</span>
+              <span class="text-ink-light">对你说话，第一次出现私人名词</span>
+            </div>
+            <div class="flex gap-3">
+              <span class="font-bold text-gold">稀层</span>
+              <span class="text-ink-light">对自己说话，把从没说过的说出来</span>
+            </div>
+            <div class="flex gap-3">
+              <span class="font-bold text-gold">终局</span>
+              <span class="text-ink-light">为你做一件事，语言退场行动登场</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 class="font-bold text-xl mb-4">角色声音锚点</h3>
+          <div class="space-y-3 text-sm">
+            <p class="italic text-ink-light">"这句话我年轻时读不懂，现在懂了，倒希望自己没懂。" — 沈明远</p>
+            <p class="italic text-ink-light">"代码能回滚，三十九岁不能。" — 程远</p>
+            <p class="italic text-ink-light">"这本书卖出去过三次，退回来两次，第三次没人还。" — 裴舟</p>
+            <p class="italic text-ink-light">"兹证明——算了，这句话我留给小说。" — 简安</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-8 p-6 rounded-xl bg-white/50 border border-wood/20">
+        <p class="text-lg font-serif text-center">
+          番茄钟工具遍地都是，但
+          <span class="font-bold text-gold">"有 10 个活生生的角色陪你在图书馆"是独一无二的</span>
+          。
+        </p>
+      </div>
+    </div>
+    <div class="slide-number">5 / 7</div>
+  </section>
+
+  <!-- Slide 6: AIGC + Data -->
+  <section class="slide">
+    <div class="slide-bg"></div>
+    <div class="paper-texture"></div>
+    <div class="content">
+      <p class="text-sm font-bold tracking-widest text-gold uppercase mb-3">AIGC × PROGRESS</p>
+      <h2 class="font-serif text-4xl md:text-5xl font-bold text-ink mb-8">全链路 AIGC，零编程基础到可运行 Demo</h2>
+
+      <div class="grid md:grid-cols-2 gap-8">
+        <div class="card">
+          <h3 class="font-bold text-xl mb-4">AI 协作矩阵</h3>
+          <div class="space-y-2 text-sm">
+            <div class="flex justify-between border-b border-wood/10 pb-1">
+              <span>克克（Claude Code）</span>
+              <span class="text-ink-light">程序 / 架构 / 诊断</span>
+            </div>
+            <div class="flex justify-between border-b border-wood/10 pb-1">
+              <span>coco（Coze Agent）</span>
+              <span class="text-ink-light">策划 / 生图 / 宣发</span>
+            </div>
+            <div class="flex justify-between border-b border-wood/10 pb-1">
+              <span>DeepSeek / Fable 5</span>
+              <span class="text-ink-light">叙事文案 / 深度诊断</span>
+            </div>
+            <div class="flex justify-between border-b border-wood/10 pb-1">
+              <span>Suno AI</span>
+              <span class="text-ink-light">BGM / 氛围音乐</span>
+            </div>
+            <div class="flex justify-between">
+              <span>可灵 / Seedance</span>
+              <span class="text-ink-light">开场 PV / 宣传视频</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 class="font-bold text-xl mb-4">当前完成度</h3>
+          <div class="grid grid-cols-2 gap-4">
+            <div class="text-center p-3 bg-white/60 rounded-lg">
+              <div class="text-3xl font-bold text-gold">~26K</div>
+              <div class="text-xs text-ink-light">行源码</div>
+            </div>
+            <div class="text-center p-3 bg-white/60 rounded-lg">
+              <div class="text-3xl font-bold text-gold">78+</div>
+              <div class="text-xs text-ink-light">源文件</div>
+            </div>
+            <div class="text-center p-3 bg-white/60 rounded-lg">
+              <div class="text-3xl font-bold text-gold">28</div>
+              <div class="text-xs text-ink-light">本书籍</div>
+            </div>
+            <div class="text-center p-3 bg-white/60 rounded-lg">
+              <div class="text-3xl font-bold text-gold">10</div>
+              <div class="text-xs text-ink-light">位访客</div>
+            </div>
+          </div>
+          <p class="mt-4 text-sm text-ink-light">已实现：专注系统、书籍系统、访客系统、成就系统、商店、植物、位面任务、音效、环境音、中英双语 UI 框架。</p>
+        </div>
+      </div>
+
+      <div class="mt-8 p-6 rounded-xl bg-white/50 border border-wood/20">
+        <p class="text-lg font-serif text-center">
+          <span class="font-bold text-gold">创新点：</span>
+          开发者本人无编程基础，通过与 AI 深度协作完成从 0 到可运行产品的全过程，体现 AIGC 创作民主化。
+        </p>
+      </div>
+    </div>
+    <div class="slide-number">6 / 7</div>
+  </section>
+
+  <!-- Slide 7: Vision -->
+  <section class="slide">
+    <div class="slide-bg"></div>
+    <div class="paper-texture"></div>
+    <div class="content text-center">
+      <p class="text-sm font-bold tracking-widest text-gold uppercase mb-3">VISION</p>
+      <h2 class="font-serif text-4xl md:text-6xl font-bold text-ink mb-8">让每一次专注，都被温柔地记住</h2>
+
+      <div class="max-w-3xl mx-auto">
+        <p class="text-xl md:text-2xl text-ink-light leading-relaxed mb-10">
+          归墟图书馆不只是一个游戏，它是一个<span class="font-bold text-gold">关于专注、重建与相遇</span>的数字空间。
+        </p>
+
+        <div class="grid md:grid-cols-3 gap-6 text-left">
+          <div class="card">
+            <div class="text-3xl mb-2">🌱</div>
+            <h3 class="font-bold mb-1">对人的关注</h3>
+            <p class="text-sm text-ink-light">对抗手机成瘾与注意力碎片化，用叙事让专注变得有温度。</p>
+          </div>
+          <div class="card">
+            <div class="text-3xl mb-2">🌍</div>
+            <h3 class="font-bold mb-1">文化连接</h3>
+            <p class="text-sm text-ink-light">以真实世界公版经典为纽带，连接东西方文学与文化。</p>
+          </div>
+          <div class="card">
+            <div class="text-3xl mb-2">🤖</div>
+            <h3 class="font-bold mb-1">AI 共创</h3>
+            <p class="text-sm text-ink-light">证明 AIGC 可以服务于有意义的产品理念，而非只是技术炫技。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-16">
+        <p class="font-serif text-2xl text-gold font-bold">Every book has power. Every focus rebuilds a world.</p>
+      </div>
+    </div>
+    <div class="slide-number">7 / 7</div>
+  </section>
+
+  <script>
+    const slides = document.querySelectorAll('.slide');
+    let current = 0;
+
+    function showSlide(index) {
+      slides.forEach((s, i) => s.classList.toggle('active', i === index));
+    }
+
+    function next() {
+      current = (current + 1) % slides.length;
+      showSlide(current);
+    }
+
+    function prev() {
+      current = (current - 1 + slides.length) % slides.length;
+      showSlide(current);
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+        e.preventDefault();
+        next();
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        prev();
+      }
+    });
+
+    document.addEventListener('click', () => next());
+  </script>
+</body>
+</html>

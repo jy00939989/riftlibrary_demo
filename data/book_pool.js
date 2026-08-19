@@ -816,5 +816,41 @@ export const SHARED_POOL = [
   "emoji": "📖",
   "price": 325,
   "baseWeight": 1
+},
+
+  {
+  "type": "volume",
+  "plane": "astral",
+  "volumeGroupId": "book_034",
+  "bookId": "book_034_vol1",
+  "volumeIndex": 1,
+  "title": "秘密花园",
+  "volumeTitle": "秘密花园 · 卷一",
+  "subtitle": "卷 1 / 2",
+  "author": "弗朗西丝·霍奇森·伯内特",
+  "category": "小说",
+  "totalWords": 100000,
+  "description": "秘密花园卷一。玛丽小姐倔乖乖，荒原上古怪的庄园，走廊里的哭声与引路的知更鸟，一扇尘封的园门正等待被打开。",
+  "emoji": "🌳",
+  "price": 300,
+  "baseWeight": 1
+},
+
+  {
+  "type": "volume",
+  "plane": "astral",
+  "volumeGroupId": "book_034",
+  "bookId": "book_034_vol2",
+  "volumeIndex": 2,
+  "title": "秘密花园",
+  "volumeTitle": "秘密花园 · 卷二",
+  "subtitle": "卷 2 / 2",
+  "author": "弗朗西丝·霍奇森·伯内特",
+  "category": "小说",
+  "totalWords": 100000,
+  "description": "秘密花园卷二。春天来到花园，科林学会奔跑与大笑，本·韦瑟斯塔夫发现秘密，克雷文先生回到庄园，一家人终在花园团聚。",
+  "emoji": "🌳",
+  "price": 300,
+  "baseWeight": 1
 }
 ];

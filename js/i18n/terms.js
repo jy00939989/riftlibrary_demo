@@ -834,6 +834,8 @@ const TERM_DATA = Object.freeze({
   unlockForCoins: { zh: '💰{price} 解锁', en: '💰{price} Unlock' },
   unlockAtNextStage: { zh: '氛围达到下一阶段解锁', en: 'Unlock at next atmosphere stage' },
   ambientName_victorian_study: { zh: '维多利亚书房', en: 'Victorian Study' },
+  ambientName_medieval_monastery: { zh: '中世纪修道院', en: 'Medieval Monastery' },
+  ambientLockedByPackHint: { zh: '解锁「{pack}」补充包后开放购买', en: 'Available after unlocking the "{pack}" DLC pack' },
   musicVolume: { zh: '音乐音量', en: 'Music Volume' },
   ambientVolume: { zh: '环境音音量', en: 'Ambient Volume' },
   sfxVolume: { zh: '音效音量', en: 'SFX Volume' },
@@ -862,6 +864,37 @@ const TERM_DATA = Object.freeze({
   plantHarvested: { zh: '收获成功', en: 'Harvested' },
   seedObtained: { zh: '额外获得 {name} 种子 ×1', en: 'Extra {name} seed ×1 obtained' },
   plantHarvestEmptyPot: { zh: '花盆已空，可以种植新的植物了。', en: 'The pot is empty and ready for a new plant.' },
+
+  // 植物系统扩展
+  plantAbandon: { zh: '铲除', en: 'Remove' },
+  plantAbandonConfirm: { zh: '确定要铲除 {name} 吗？铲除后不会返还金币，盆栽将变回空盆。', en: 'Remove {name}? This will not refund coins and the pot will be empty.' },
+  plantAbandoned: { zh: '已铲除', en: 'Removed' },
+  seed: { zh: '种子', en: 'Seed' },
+  exchanged: { zh: '已兑换', en: 'Exchanged' },
+  exchange: { zh: '兑换', en: 'Exchange' },
+  needMoreSeeds: { zh: '还需 {n} 颗', en: 'Need {n} more' },
+  guyuPlantCareWater: { zh: '谷雨帮植物浇了水', en: 'Guyu watered the plant' },
+  guyuPlantCareFertilize: { zh: '谷雨给植物施了肥', en: 'Guyu fertilized the plant' },
+  guyuPlantCareTalk: { zh: '谷雨对着植物说话', en: 'Guyu talked to the plant' },
+  disasterTyphoonTitle: { zh: '台风过境', en: 'Typhoon' },
+  disasterTyphoonText: { zh: '一场突如其来的台风席卷了图书馆外的窗台……你的 {name} 没能幸免。', en: 'A sudden typhoon swept across the library windowsill… your {name} did not survive.' },
+  disasterTyphoonSaved: { zh: '谷雨眼疾手快，把盆栽抱进了室内。虽然摔掉了一层土，但它还活着。', en: 'Guyu quickly carried the pot inside. Some soil was lost, but it survived.' },
+
+  // 植物名称与描述
+  'plant.birdOfParadise.name': { zh: '鹤望兰', en: 'Bird of Paradise' },
+  'plant.birdOfParadise.description': { zh: '一盆高挑的花叶植物，叶片如鹤翅般优雅伸展，花苞中蕴藏着异世界的生机。', en: 'A tall, elegant plant whose leaves stretch like crane wings, with flower buds brimming with otherworldly vitality.' },
+  'plant.magicRose.name': { zh: '魔法玫瑰', en: 'Magic Rose' },
+  'plant.magicRose.description': { zh: '花瓣在月光下会微微发光的奇异玫瑰，据说是某位旅法师从异位面带回的种子。', en: 'A strange rose whose petals glow faintly in moonlight, said to have been brought from another plane by a traveling mage.' },
+  'plant.starlightFern.name': { zh: '星光蕨', en: 'Starlight Fern' },
+  'plant.starlightFern.description': { zh: '叶片在暗处会泛起银色微光的蕨类植物，孢子成熟时会像坠落星河一样流淌。', en: 'A fern whose fronds shimmer with silver light in the dark; when its spores mature, they flow like falling starlight.' },
+
+  // 种子兑换项标题
+  'seedExchange.birdOfParadise.book': { zh: '《绿野仙踪》', en: 'The Wizard of Oz' },
+  'seedExchange.birdOfParadise.seed': { zh: '魔法玫瑰种子', en: 'Magic Rose Seed' },
+  'seedExchange.magicRose.book': { zh: '《爱丽丝梦游奇境》', en: "Alice's Adventures in Wonderland" },
+  'seedExchange.magicRose.seed': { zh: '星光蕨孢子', en: 'Starlight Fern Spore' },
+  'seedExchange.starlightFern.book': { zh: '《秘密花园》', en: 'The Secret Garden' },
+
   continueBtn: { zh: '继续 →', en: 'Continue →' },
   hungOnPage: { zh: '📌 挂在{page}页面', en: '📌 Hung on {page}' },
   chapterCount: { zh: '{n}章', en: '{n} chapters' },

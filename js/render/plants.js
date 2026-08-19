@@ -3,7 +3,7 @@ import { state, saveState } from '../state.js';
 import { updateStatusBar } from './common.js';
 import { PLANT_TYPES, SEED_EXCHANGE } from '../../data/plants.js';
 import { SIGNBOARDS } from '../../data/signboards.js';
-import { canHarvest, harvestPlant, canExchangeSeed, exchangeSeed, getActivePlantDef, canWater, canFertilize } from '../plants.js';
+import { canHarvest, harvestPlant, canExchangeSeed, exchangeSeed, getActivePlantDef, canWater, canFertilize, abandonPlant, getSeedExchanges } from '../plants.js';
 import { t } from '../i18n/terms.js';
 
 export function renderDecorationPage() {
@@ -13,20 +13,59 @@ export function renderDecorationPage() {
   const wrapper = document.createElement('div');
   wrapper.className = 'space-y-6';
 
-  // ========== 植物区 ==========
   wrapper.appendChild(renderPlantArea());
-
-  // ========== 种子库存 ==========
   wrapper.appendChild(renderSeedInventory());
-
-  // ========== 标志牌收集 ==========
   wrapper.appendChild(renderSignboardCollection());
-
-  // ========== 将来造景贴纸区占位 ==========
   wrapper.appendChild(renderStickerPlaceholder());
 
   container.innerHTML = '';
   container.appendChild(wrapper);
+}
+
+// 植物立绘渲染：预加载探测，失败回退 emoji
+export function renderPlantArt(def, level, size = null) {
+  if (!def) return document.createTextNode('');
+
+  const src = def.art?.[level] || def.art?.[1];
+  const fallbackEmoji = def.emoji || '🪴';
+  const wrap = document.createElement('span');
+  wrap.className = 'plant-art inline-block';
+
+  const finalSize = size || (48 + level * 12); // Lv1 60 → Lv5 96
+  wrap.style.width = `${finalSize}px`;
+  wrap.style.height = `${finalSize}px`;
+  wrap.style.display = 'inline-flex';
+  wrap.style.alignItems = 'center';
+  wrap.style.justifyContent = 'center';
+
+  if (!src) {
+    wrap.textContent = fallbackEmoji;
+    wrap.style.fontSize = `${Math.round(finalSize * 0.7)}px`;
+    return wrap;
+  }
+
+  const img = new Image();
+  img.onload = () => {
+    wrap.innerHTML = '';
+    const el = document.createElement('img');
+    el.src = src;
+    el.alt = t(def.nameKey);
+    el.style.width = '100%';
+    el.style.height = '100%';
+    el.style.objectFit = 'contain';
+    wrap.appendChild(el);
+  };
+  img.onerror = () => {
+    wrap.innerHTML = '';
+    wrap.textContent = fallbackEmoji;
+    wrap.style.fontSize = `${Math.round(finalSize * 0.7)}px`;
+  };
+  img.src = src;
+
+  // 占位 emoji，加载成功/失败后会替换
+  wrap.textContent = fallbackEmoji;
+  wrap.style.fontSize = `${Math.round(finalSize * 0.7)}px`;
+  return wrap;
 }
 
 function renderPlantArea() {
@@ -58,56 +97,81 @@ function renderPlantArea() {
   const progressPercent = Math.min(100, Math.round((plant.growthProgress / def.growthPerLevel) * 100));
   const levelName = def.levelNames[plant.level] || '';
   const canHarvestNow = canHarvest();
-  const canWaterNow = canWater();
-  const canFertNow = canFertilize();
 
   const card = document.createElement('div');
   card.className = 'flex gap-5 items-center flex-wrap';
-  card.innerHTML = `
-    <div class="text-6xl flex-shrink-0">${def.emoji}</div>
-    <div class="flex-1 min-w-[200px]">
-      <div class="flex items-center gap-2 mb-2">
-        <span class="font-bold text-lg">${def.name}</span>
-        <span class="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full">Lv.${plant.level} · ${levelName}</span>
-      </div>
-      <div class="h-3 bg-gray-200 rounded-full overflow-hidden mb-2">
-        <div class="h-full bg-gradient-to-r from-green-400 to-green-600 transition-all" style="width:${progressPercent}%"></div>
-      </div>
-      <p class="text-xs text-ink-light mb-3">成长进度 ${progressPercent}% · 可浇水 ${plant.waterAvailable} 次</p>
-      <div class="flex gap-2 flex-wrap">
-        ${canHarvestNow
-          ? `<button id="dec-harvest-btn" class="px-4 py-2 bg-yellow-500 text-white rounded-lg text-sm font-bold hover:shadow-lg transition-all">🌾 收获 (氛围+${def.harvestAtmosphere} 💰+${def.harvestCoins})</button>`
-          : `<p class="text-xs text-ink-light">💧 前往 <span class="text-magic-gold font-bold cursor-pointer underline" onclick="window.switchTab('shop')">位面商店 → 馆内装潢</span> 进行浇水和施肥</p>`
-        }
-      </div>
-      ${canHarvestNow
-        ? `<p class="text-xs text-yellow-600 mt-3">✨ 可以收获了！将以${Math.round(def.seedDropRate * 100)}%概率获得种子</p>`
-        : `<p class="text-xs text-ink-light mt-2">${plant.level < 5 ? `下一级施肥所需 💰${def.fertilizeCosts[plant.level + 1] || 0}` : '进度满即可收获'}</p>`
-      }
+
+  const artWrap = document.createElement('div');
+  artWrap.className = 'flex-shrink-0';
+  artWrap.appendChild(renderPlantArt(def, plant.level));
+  card.appendChild(artWrap);
+
+  const info = document.createElement('div');
+  info.className = 'flex-1 min-w-[200px]';
+  info.innerHTML = `
+    <div class="flex items-center gap-2 mb-2">
+      <span class="font-bold text-lg">${t(def.nameKey)}</span>
+      <span class="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full">Lv.${plant.level} · ${levelName}</span>
     </div>
+    <div class="h-3 bg-gray-200 rounded-full overflow-hidden mb-2">
+      <div class="h-full bg-gradient-to-r from-green-400 to-green-600 transition-all" style="width:${progressPercent}%"></div>
+    </div>
+    <p class="text-xs text-ink-light mb-3">成长进度 ${progressPercent}% · 可浇水 ${plant.waterAvailable} 次</p>
+    <div class="flex gap-2 flex-wrap" id="dec-plant-actions"></div>
+    ${canHarvestNow
+      ? `<p class="text-xs text-yellow-600 mt-3">✨ 可以收获了！将以${Math.round(def.seedDropRate * 100)}%概率获得种子</p>`
+      : `<p class="text-xs text-ink-light mt-2">${plant.level < 5 ? `下一级施肥所需 💰${def.fertilizeCosts[plant.level + 1] || 0}` : '进度满即可收获'}</p>`
+    }
   `;
+  card.appendChild(info);
 
-  // 绑定按钮事件（布置页仅保留收获操作）
-  const refresh = () => renderDecorationPage();
+  const actions = info.querySelector('#dec-plant-actions');
 
-  const harvestBtn = card.querySelector('#dec-harvest-btn');
-  if (harvestBtn) {
+  // 收获按钮
+  if (canHarvestNow) {
+    const harvestBtn = document.createElement('button');
+    harvestBtn.className = 'px-4 py-2 bg-yellow-500 text-white rounded-lg text-sm font-bold hover:shadow-lg transition-all';
+    harvestBtn.innerHTML = `🌾 收获 (氛围+${def.harvestAtmosphere} 💰+${def.harvestCoins})`;
     harvestBtn.addEventListener('click', () => {
       const result = harvestPlant();
-      if (result) {
-        showPlantHarvestPopup(def, result);
-      }
+      if (result) showPlantHarvestPopup(def, result);
       updateStatusBar();
       if (typeof window.renderShopPage === 'function') window.renderShopPage();
-      refresh();
+      renderDecorationPage();
     });
+    actions.appendChild(harvestBtn);
   }
+
+  // 铲除按钮
+  const abandonBtn = document.createElement('button');
+  abandonBtn.className = 'px-3 py-2 bg-red-100 text-red-700 rounded-lg text-sm font-bold hover:shadow-lg transition-all';
+  abandonBtn.innerHTML = `🗑️ ${t('plantAbandon')}`;
+  abandonBtn.addEventListener('click', () => {
+    if (confirm(t('plantAbandonConfirm').replace('{name}', t(def.nameKey)))) {
+      abandonPlant();
+      renderDecorationPage();
+      if (typeof window.renderShopPage === 'function') window.renderShopPage();
+      updateStatusBar();
+    }
+  });
+  actions.appendChild(abandonBtn);
 
   section.appendChild(card);
   return section;
 }
 
 // ========== 种子库存 ==========
+
+function getRewardDisplay(item) {
+  switch (item.type) {
+    case 'book': return `📖《${t(item.rewardTitleKey)}》`;
+    case 'coins': return `💰${item.value}`;
+    case 'atmosphere': return `✨${item.value}`;
+    case 'inspiration': return `💡${item.value}`;
+    case 'seed': return `🌰 ${t(item.rewardTitleKey)} ×${item.count}`;
+    default: return '';
+  }
+}
 
 function renderSeedInventory() {
   const section = document.createElement('div');
@@ -116,58 +180,72 @@ function renderSeedInventory() {
   section.innerHTML = '<h3 class="font-bold text-lg mb-3 flex items-center gap-2">🌰 种子库存</h3>';
 
   const grid = document.createElement('div');
-  grid.className = 'grid grid-cols-1 md:grid-cols-2 gap-3';
+  grid.className = 'grid grid-cols-1 gap-3';
 
   let hasAny = false;
 
-  Object.entries(SEED_EXCHANGE).forEach(([seedType, config]) => {
-    hasAny = true;
-    const count = state.seeds[seedType] || 0;
-    const canExchange = canExchangeSeed(seedType);
-    const bookOwned = state.books[config.rewardBookId] && state.books[config.rewardBookId].status !== 'locked';
-    // 找到对应植物的 emoji
+  Object.keys(SEED_EXCHANGE).forEach(seedType => {
     const plantDef = Object.values(PLANT_TYPES).find(p => p.seedType === seedType);
-    const emoji = plantDef ? plantDef.emoji : '🌰';
+    if (!plantDef) return;
+    hasAny = true;
+
+    const count = state.seeds[seedType] || 0;
+    const exchanges = getSeedExchanges(seedType);
 
     const card = document.createElement('div');
-    card.className = 'bg-white rounded-xl p-4 border-2 border-wood/20 flex items-center gap-3';
+    card.className = 'bg-white rounded-xl p-4 border-2 border-wood/20';
 
-    const ownedText = bookOwned ? '✅ 已拥有' : '';
-    const canExchangeText = canExchange ? '可兑换' : '';
-
-    card.innerHTML = `
-      <span class="text-3xl">${emoji}</span>
+    const header = document.createElement('div');
+    header.className = 'flex items-center gap-3 mb-3';
+    header.innerHTML = `
+      <span class="text-3xl">${plantDef.emoji}</span>
       <div class="flex-1">
-        <div class="font-bold text-sm">${plantDef ? plantDef.name : seedType} 种子</div>
-        <p class="text-xs text-ink-light">收集进度 ${count}/${config.required} · 可换《${config.rewardTitle}》</p>
-      </div>
-      <div class="text-right">
-        <div class="font-bold text-lg text-amber-700">🌰 ×${count}</div>
-        ${bookOwned
-          ? '<span class="text-xs text-green-600 font-bold">✅ 已拥有</span>'
-          : canExchange
-            ? `<button class="exchange-btn px-3 py-1 bg-amber-500 text-white rounded-lg text-xs font-bold hover:shadow transition-all">兑换 🎁</button>`
-            : `<span class="text-xs text-ink-light">还需 ${config.required - count} 颗</span>`
-        }
+        <div class="font-bold text-sm">${t(plantDef.nameKey)} ${t('seed')}</div>
+        <div class="text-xs text-ink-light">🌰 ×${count}</div>
       </div>
     `;
+    card.appendChild(header);
 
-    const exchangeBtn = card.querySelector('.exchange-btn');
-    if (exchangeBtn) {
-      exchangeBtn.addEventListener('click', () => {
-        if (exchangeSeed(seedType)) {
-          // 刷新
-          if (typeof window.renderBookshelfPage === 'function') window.renderBookshelfPage();
-          renderDecorationPage();
-        }
-      });
-    }
+    const list = document.createElement('div');
+    list.className = 'space-y-2';
 
+    exchanges.forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'flex items-center justify-between text-sm';
+
+      const left = document.createElement('div');
+      left.className = 'text-ink-light';
+      left.innerHTML = `🌰 ×${item.required} → ${getRewardDisplay(item)}`;
+
+      const right = document.createElement('div');
+      if (item.exchanged) {
+        right.innerHTML = `<span class="text-xs text-green-600 font-bold">✅ ${t('exchanged')}</span>`;
+      } else if (item.canExchange) {
+        const btn = document.createElement('button');
+        btn.className = 'px-3 py-1 bg-amber-500 text-white rounded-lg text-xs font-bold hover:shadow transition-all';
+        btn.textContent = t('exchange');
+        btn.addEventListener('click', () => {
+          if (exchangeSeed(seedType, item.index)) {
+            if (typeof window.renderBookshelfPage === 'function') window.renderBookshelfPage();
+            renderDecorationPage();
+          }
+        });
+        right.appendChild(btn);
+      } else {
+        right.innerHTML = `<span class="text-xs text-ink-light">${t('needMoreSeeds').replace('{n}', item.required - count)}</span>`;
+      }
+
+      row.appendChild(left);
+      row.appendChild(right);
+      list.appendChild(row);
+    });
+
+    card.appendChild(list);
     grid.appendChild(card);
   });
 
   if (!hasAny) {
-    grid.innerHTML = '<p class="text-sm text-ink-light col-span-2 text-center py-4">还没有种子。种植并收获植物来获取种子吧！</p>';
+    grid.innerHTML = '<p class="text-sm text-ink-light text-center py-4">还没有种子。种植并收获植物来获取种子吧！</p>';
   }
 
   section.appendChild(grid);
@@ -234,7 +312,6 @@ function renderStickerPlaceholder() {
 
 // ========== 植物弹窗 ==========
 
-/** 植物成熟提示（右下角自动消失卡片） */
 export function showPlantMaturityToast(def) {
   const overlay = document.createElement('div');
   overlay.className = 'fixed bottom-6 right-6 z-[120] animate-slide-in-right';
@@ -244,8 +321,8 @@ export function showPlantMaturityToast(def) {
         <div class="text-4xl">${def.emoji}</div>
         <div class="flex-1 min-w-0">
           <p class="text-xs text-yellow-600 font-bold mb-1">${t('plantMatured')}</p>
-          <p class="text-ink font-bold">${def.name}</p>
-          <p class="text-ink-light text-xs">${t('plantMaturedHint').replace('{name}', def.name)}</p>
+          <p class="text-ink font-bold">${t(def.nameKey)}</p>
+          <p class="text-ink-light text-xs">${t('plantMaturedHint').replace('{name}', t(def.nameKey))}</p>
         </div>
         <button class="plant-toast-close text-ink-light/50 hover:text-ink ml-2 text-sm leading-none">&times;</button>
       </div>
@@ -263,18 +340,17 @@ export function showPlantMaturityToast(def) {
   setTimeout(close, 8000);
 }
 
-/** 植物收获奖励弹窗 */
 export function showPlantHarvestPopup(def, result) {
   const overlay = document.createElement('div');
   overlay.className = 'fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4';
   const seedText = result.seedDropped
-    ? `<p class="text-sm text-magic-gold font-bold mb-2">🌰 ${t('seedObtained').replace('{name}', def.name)}</p>`
+    ? `<p class="text-sm text-magic-gold font-bold mb-2">🌰 ${t('seedObtained').replace('{name}', t(def.nameKey))}</p>`
     : '';
   overlay.innerHTML = `
     <div class="parchment-bg rounded-2xl p-6 max-w-sm w-full text-center magic-glow animate-scale-in">
       <div class="text-5xl mb-3">${def.emoji}</div>
       <div class="text-yellow-600 text-sm mb-2 font-bold">${t('plantHarvested')}</div>
-      <h3 class="font-display text-xl font-bold mb-2">${def.name}</h3>
+      <h3 class="font-display text-xl font-bold mb-2">${t(def.nameKey)}</h3>
       <div class="grid grid-cols-2 gap-3 mb-4">
         <div class="bg-white/60 rounded-lg p-3">
           <div class="text-lg font-bold text-magic-blue">+${def.harvestAtmosphere}</div>
@@ -298,7 +374,10 @@ export function showPlantHarvestPopup(def, result) {
     setTimeout(() => overlay.remove(), 300);
   };
   overlay.querySelector('button').addEventListener('click', close);
-  overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) close();
-  });
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+}
+
+// 兼容旧版：直接传入 config 对象时也支持
+export function showPlantSeedExchangePopup(seedType, config) {
+  // 种子兑换成功提示已内联在 renderSeedInventory 中，此方法保留供外部调用
 }

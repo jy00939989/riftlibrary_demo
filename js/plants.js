@@ -1,11 +1,14 @@
-// 植物逻辑模块 —— 浇水/施肥/成长/收获/凋谢/种子兑换（纯逻辑，不碰DOM）
+// 植物逻辑模块 —— 浇水/施肥/成长/收获/凋谢/铲除/种子兑换（纯逻辑，不碰DOM）
 import { state, saveState } from './state.js';
-import { spendCoins, addCoins, addAtmosphere, addHistory } from './storage.js';
+import { spendCoins, addCoins, addAtmosphere, addHistory, addInspiration } from './storage.js';
 import { markTaskDone } from './dailytasks.js';
 import { PLANT_TYPES, SEED_EXCHANGE } from '../data/plants.js';
 import { isBookCapacityFull, isManuscriptBoxFull, addToManuscriptBox, createBookRecord } from './capacity.js';
 import { hasSignboard } from './shop.js';
 import { SIGNBOARDS } from '../data/signboards.js';
+import { EMPTY_PLANT } from './state/migrations.js';
+import { getAuraPlantGrowth } from './visitors.js';
+import { t } from './i18n/terms.js';
 
 function getNow() {
   return window.__dev?.getNow?.() || Date.now();
@@ -19,12 +22,40 @@ export function getActivePlantDef() {
   return state.plant.activeType ? PLANT_TYPES[state.plant.activeType] : null;
 }
 
+// ========== 种子计数 helper ==========
+
+export function addSeed(seedType, n = 1) {
+  if (!seedType || n <= 0) return;
+  state.seeds[seedType] = (state.seeds[seedType] || 0) + n;
+  saveState();
+}
+
+export function spendSeed(seedType, n = 1) {
+  if (!seedType || n <= 0) return false;
+  if ((state.seeds[seedType] || 0) < n) return false;
+  state.seeds[seedType] -= n;
+  saveState();
+  return true;
+}
+
+// ========== 成长计算（含谷雨光环） ==========
+
+function getPlantGrowthMultiplier() {
+  const aura = getAuraPlantGrowth();
+  return 1 + aura;
+}
+
+function applyGrowth(baseGrowth) {
+  const mult = getPlantGrowthMultiplier();
+  return Math.round(baseGrowth * mult);
+}
+
 // 是否有可用浇水次数
 export function canWater() {
   const def = getActivePlantDef();
   if (!def) return false;
   if (state.plant.level === 0) return false;
-  if (state.plant.level >= 5 && state.plant.growthProgress >= def.growthPerLevel) return false; // 可收获
+  if (state.plant.level >= 5 && state.plant.growthProgress >= def.growthPerLevel) return false;
   if (state.plant.harvested) return false;
   return state.plant.waterAvailable > 0;
 }
@@ -39,15 +70,17 @@ export function waterPlant() {
 
   // 禁止烟火标志牌：浇水有几率暴击（×2 成长）
   let waterGrowth = def.waterGrowth;
+  let crit = false;
   if (hasSignboard('no_smoking')) {
     const critRate = SIGNBOARDS.no_smoking?.buff?.value || 0;
     if (Math.random() < critRate) {
       waterGrowth *= 2;
-      addHistory('plant', '💥 浇水暴击！', `禁止烟火庇佑，成长 +${waterGrowth}`);
+      crit = true;
     }
   }
 
-  state.plant.growthProgress += waterGrowth;
+  const actualGrowth = applyGrowth(waterGrowth);
+  state.plant.growthProgress += actualGrowth;
   state.plant.lastCareTime = getNow();
 
   // 检查是否升到下一级（或可收获）
@@ -60,8 +93,11 @@ export function waterPlant() {
   }
 
   const justMatured = !wasHarvestable && canHarvest();
+  if (crit) {
+    addHistory('plant', '💥 浇水暴击！', `禁止烟火庇佑，成长 +${actualGrowth}`);
+  }
   saveState();
-  return { ok: true, justMatured };
+  return { ok: true, justMatured, actualGrowth };
 }
 
 // 是否可施肥
@@ -69,7 +105,7 @@ export function canFertilize() {
   const def = getActivePlantDef();
   if (!def) return false;
   if (state.plant.level === 0) return false;
-  if (state.plant.level >= 5 && state.plant.growthProgress >= def.growthPerLevel) return false; // 可收获
+  if (state.plant.level >= 5 && state.plant.growthProgress >= def.growthPerLevel) return false;
   if (state.plant.harvested) return false;
   const targetLevel = state.plant.level + 1;
   const cost = def.fertilizeCosts[targetLevel] || 0;
@@ -86,32 +122,31 @@ export function fertilizePlant() {
   const cost = def.fertilizeCosts[targetLevel] || 0;
   if (!spendCoins(cost)) return { ok: false, justMatured: false };
 
-  state.plant.growthProgress += def.fertilizeGrowth;
+  const actualGrowth = applyGrowth(def.fertilizeGrowth);
+  state.plant.growthProgress += actualGrowth;
   state.plant.lastCareTime = getNow();
 
   checkLevelUp(def);
 
   const justMatured = !wasHarvestable && canHarvest();
   saveState();
-  return { ok: true, justMatured };
+  return { ok: true, justMatured, actualGrowth };
 }
 
 // 检查自动升级 / 可收获状态
 function checkLevelUp(def) {
   const plant = state.plant;
   if (plant.level >= 5 && plant.growthProgress >= def.growthPerLevel) {
-    // 满级满进度，等待主动收获
     return;
   }
   while (plant.growthProgress >= def.growthPerLevel && plant.level < 5) {
     plant.growthProgress -= def.growthPerLevel;
     plant.level += 1;
     const levelName = def.levelNames[plant.level] || '';
-    addHistory('plant', `植物成长至 Lv.${plant.level} · ${levelName}`, `${def.emoji} ${def.name}`);
+    addHistory('plant', `植物成长至 Lv.${plant.level} · ${levelName}`, `${def.emoji} ${t(def.nameKey)}`);
   }
-  // 如果升到5级且进度满
   if (plant.level >= 5 && plant.growthProgress >= def.growthPerLevel) {
-    plant.growthProgress = def.growthPerLevel; // 卡在满进度，等待收获
+    plant.growthProgress = def.growthPerLevel;
   }
 }
 
@@ -130,30 +165,40 @@ export function harvestPlant() {
   const def = getActivePlantDef();
   if (!def || !canHarvest()) return false;
 
-  // 奖励
   addAtmosphere(def.harvestAtmosphere);
   addCoins(def.harvestCoins);
 
-  // 种子掉落判定
   let seedDropped = false;
   if (Math.random() < def.seedDropRate) {
-    state.seeds[def.seedType] = (state.seeds[def.seedType] || 0) + 1;
+    addSeed(def.seedType, 1);
     seedDropped = true;
   }
 
-  const seedName = seedDropped ? ` + 获得 ${def.name}种子 ×1` : '';
-  addHistory('plant', `收获 ${def.emoji} ${def.name}`, `+${def.harvestAtmosphere}氛围 +${def.harvestCoins}智慧之光${seedName}`);
+  const seedName = seedDropped ? ` + 获得 ${t(def.nameKey)}种子 ×1` : '';
+  addHistory('plant', `收获 ${def.emoji} ${t(def.nameKey)}`, `+${def.harvestAtmosphere}氛围 +${def.harvestCoins}智慧之光${seedName}`);
 
   // 凋谢 → 空盆
-  state.plant.activeType = null;
-  state.plant.level = 0;
-  state.plant.growthProgress = 0;
-  state.plant.waterAvailable = 0;
-  state.plant.harvested = false;
-  state.plant.plantedAt = 0;
+  resetPlantToEmpty();
 
   saveState();
   return { seedDropped, seedType: def.seedType, def };
+}
+
+// 铲除当前植物
+export function abandonPlant() {
+  const def = getActivePlantDef();
+  if (!def) return { ok: false, reason: 'no_plant' };
+
+  resetPlantToEmpty();
+  addHistory('plant', `铲除 ${def.emoji} ${t(def.nameKey)}`, '盆栽已清空，可以重新种植');
+  saveState();
+  return { ok: true, def };
+}
+
+function resetPlantToEmpty() {
+  Object.keys(EMPTY_PLANT).forEach(key => {
+    state.plant[key] = EMPTY_PLANT[key];
+  });
 }
 
 // 检测72小时自然凋谢
@@ -167,13 +212,8 @@ export function checkWither() {
 
   if (hoursSinceCare >= 72) {
     const def = getActivePlantDef();
-    addHistory('plant', `${def ? def.emoji + ' ' + def.name : '植物'}凋谢了`, '72小时未照料，植物枯萎');
-    state.plant.activeType = null;
-    state.plant.level = 0;
-    state.plant.growthProgress = 0;
-    state.plant.waterAvailable = 0;
-    state.plant.harvested = false;
-    state.plant.plantedAt = 0;
+    addHistory('plant', `${def ? def.emoji + ' ' + t(def.nameKey) : '植物'}凋谢了`, '72小时未照料，植物枯萎');
+    resetPlantToEmpty();
     saveState();
     return true;
   }
@@ -184,7 +224,7 @@ export function checkWither() {
 export function plantSeed(plantType) {
   const def = PLANT_TYPES[plantType];
   if (!def) return false;
-  if (state.plant.activeType) return false; // 已有一盆
+  if (state.plant.activeType) return false;
   const cost = def.fertilizeCosts[1] || 50;
   if (!spendCoins(cost)) return false;
 
@@ -196,33 +236,7 @@ export function plantSeed(plantType) {
   state.plant.plantedAt = getNow();
   state.plant.harvested = false;
 
-  addHistory('plant', `种下 ${def.emoji} ${def.name}`, `花费${cost}智慧之光`);
-  saveState();
-  return true;
-}
-
-// 种子兑换检查
-export function canExchangeSeed(seedType) {
-  const config = SEED_EXCHANGE[seedType];
-  if (!config) return false;
-  if (state.seeds[seedType] < config.required) return false;
-  if (state.books[config.rewardBookId] && state.books[config.rewardBookId].status !== 'locked') return false;
-  return true;
-}
-
-// 种子兑换书籍
-export function exchangeSeed(seedType) {
-  if (!canExchangeSeed(seedType)) return false;
-  if (isManuscriptBoxFull()) return false;
-
-  const config = SEED_EXCHANGE[seedType];
-  state.seeds[seedType] -= config.required;
-
-  state.books[config.rewardBookId] = createBookRecord();
-
-  addToManuscriptBox(config.rewardBookId);
-
-  addHistory('plant', `种子兑换《${config.rewardTitle}》`, `消耗${config.required}颗种子`);
+  addHistory('plant', `种下 ${def.emoji} ${t(def.nameKey)}`, `花费${cost}智慧之光`);
   saveState();
   return true;
 }
@@ -234,3 +248,105 @@ export function addWaterOpportunity() {
     saveState();
   }
 }
+
+// ========== 种子兑换（数组版） ==========
+
+export function getSeedExchangeItem(seedType, index) {
+  const list = SEED_EXCHANGE[seedType];
+  if (!list || index < 0 || index >= list.length) return null;
+  return list[index];
+}
+
+function isOneTimeExchanged(item) {
+  if (item.repeatable !== false) return false;
+  if (item.type === 'book') {
+    const bs = state.books[item.rewardBookId];
+    return bs && bs.status !== 'locked';
+  }
+  if (item.type === 'seed') {
+    // 一次性 seed 兑换：只要目标种子已解锁/有库存即视为已换过
+    return (state.seeds[item.seedType] || 0) > 0;
+  }
+  return false;
+}
+
+export function canExchangeSeed(seedType, index) {
+  const item = getSeedExchangeItem(seedType, index);
+  if (!item) return false;
+  if ((state.seeds[seedType] || 0) < item.required) return false;
+  if (isOneTimeExchanged(item)) return false;
+  if (item.type === 'book') {
+    if (isManuscriptBoxFull()) return false;
+  }
+  return true;
+}
+
+export function exchangeSeed(seedType, index) {
+  const item = getSeedExchangeItem(seedType, index);
+  if (!item || !canExchangeSeed(seedType, index)) return false;
+
+  if (!spendSeed(seedType, item.required)) return false;
+
+  switch (item.type) {
+    case 'book': {
+      state.books[item.rewardBookId] = createBookRecord();
+      addToManuscriptBox(item.rewardBookId);
+      addHistory('plant', `种子兑换《${t(item.rewardTitleKey)}》`, `消耗${item.required}颗种子`);
+      break;
+    }
+    case 'coins': {
+      addCoins(item.value);
+      addHistory('plant', '种子兑换智慧之光', `消耗${item.required}颗种子 · +${item.value}智慧之光`);
+      break;
+    }
+    case 'atmosphere': {
+      addAtmosphere(item.value);
+      addHistory('plant', '种子兑换氛围', `消耗${item.required}颗种子 · +${item.value}氛围`);
+      break;
+    }
+    case 'inspiration': {
+      addInspiration(item.value);
+      addHistory('plant', '种子兑换灵感', `消耗${item.required}颗种子 · +${item.value}灵感`);
+      break;
+    }
+    case 'seed': {
+      addSeed(item.seedType, item.count);
+      addHistory('plant', '种子兑换种子', `消耗${item.required}颗种子 · 获得 ${t(item.rewardTitleKey)} ×${item.count}`);
+      break;
+    }
+    default: {
+      console.warn('未实现的种子兑换奖励类型', item.type);
+      return false;
+    }
+  }
+
+  saveState();
+  return true;
+}
+
+// 返回该种子的所有可兑换项及当前进度（UI 用）
+export function getSeedExchanges(seedType) {
+  const list = SEED_EXCHANGE[seedType];
+  if (!list) return [];
+  const count = state.seeds[seedType] || 0;
+  return list.map((item, index) => ({
+    ...item,
+    index,
+    current: count,
+    canExchange: canExchangeSeed(seedType, index),
+    exchanged: isOneTimeExchanged(item)
+  }));
+}
+
+// 兼容旧版：无 index 时返回第一个可兑换项
+export function getFirstExchangeableSeedIndex(seedType) {
+  const list = SEED_EXCHANGE[seedType];
+  if (!list) return -1;
+  for (let i = 0; i < list.length; i++) {
+    if (canExchangeSeed(seedType, i)) return i;
+  }
+  return -1;
+}
+
+//  disaster / care 等由 visitors.js 调用，保持 plants.js 作为状态 owner
+export { EMPTY_PLANT };

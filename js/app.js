@@ -19,7 +19,7 @@ import { startTimer, togglePauseTimer, abandonTimer, setCompleteCallback } from 
 import { runFocusOrchestration } from './core/focus-orchestrator.js';
 import { triggerQuestCheck } from './core/quest-trigger.js';
 import { BOOKS } from '../data/books.js';
-import { spawnVisitor, tickVisitorBrowsing, checkDueVisitors, collectReturn, getAuraCoinsMultiplier, getAuraSpawnBonus, getBorrowSpawnBonus, getStageWitnesses } from './visitors.js';
+import { spawnVisitor, tickVisitorBrowsing, checkDueVisitors, collectReturn, getAuraCoinsMultiplier, getAuraSpawnBonus, getBorrowSpawnBonus, getStageWitnesses, tryTriggerGuyuPlantCare, tryTriggerTyphoonDisaster } from './visitors.js';
 import { upgradeBorrowLevel, checkAutoUnlockPacks } from './shop.js';
 import { checkAchievements, checkAllOnInit, getAchievementBonuses } from './achievements.js';
 import { addWaterOpportunity, checkWither } from './plants.js';
@@ -627,6 +627,19 @@ function init() {
     tickVisitorBrowsing(now);
     tickPlaneVisitors(now);
     const due = checkDueVisitors(now);
+
+    // 植物相关 tick：谷雨照料 + 台风灾难
+    tryTriggerGuyuPlantCare();
+    const disaster = tryTriggerTyphoonDisaster();
+    if (disaster) {
+      // 灾难触发后刷新相关页面
+      if (currentTab === 'library') {
+        renderLibraryPage();
+      }
+      if (typeof window.renderShopPage === 'function') window.renderShopPage();
+      if (typeof window.renderDecorationPage === 'function') window.renderDecorationPage();
+    }
+
     if (currentTab === 'visitors') {
       renderVisitorsPage();
     }

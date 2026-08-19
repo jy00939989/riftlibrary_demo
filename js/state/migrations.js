@@ -6,6 +6,18 @@ import { load, STORAGE_KEYS } from '../persistence.js';
 import { BOOKS } from '../../data/books.js';
 import { VOLUME_GROUPS } from '../../data/volume_groups.js';
 import { DLC_PACKS } from '../../data/dlc_packs.js';
+import { PLANT_TYPES } from '../../data/plants.js';
+
+// 规范空盆常量（铲除/凋谢/灾难后复用）
+export const EMPTY_PLANT = {
+  activeType: null,
+  level: 0,
+  growthProgress: 0,
+  waterAvailable: 0,
+  lastCareTime: 0,
+  plantedAt: 0,
+  harvested: false
+};
 
 // ========== 迁移版本门控 ==========
 
@@ -107,17 +119,17 @@ function migrateV1() {
 
   // 新版迁移：植物/种子/标志牌
   if (!state.plant) {
-    state.plant = {
-      activeType: null,
-      level: 0,
-      growthProgress: 0,
-      waterAvailable: 0,
-      lastCareTime: 0,
-      plantedAt: 0,
-      harvested: false
-    };
+    state.plant = { ...EMPTY_PLANT };
+  } else {
+    // 补全缺失字段
+    Object.keys(EMPTY_PLANT).forEach(key => {
+      if (state.plant[key] === undefined) state.plant[key] = EMPTY_PLANT[key];
+    });
   }
-  if (!state.seeds) state.seeds = { bird_of_paradise: 0, magic_rose: 0 };
+  if (!state.seeds) state.seeds = {};
+  Object.values(PLANT_TYPES).forEach(def => {
+    if (state.seeds[def.seedType] === undefined) state.seeds[def.seedType] = 0;
+  });
   if (!state.signboards) state.signboards = [];
   if (!state.diaryLastSummaryDate) state.diaryLastSummaryDate = '';
   if (!state.diaryFirsts) state.diaryFirsts = { visitorArrive: false, visitorBorrow: false, visitorReturn: false };
@@ -145,6 +157,8 @@ function migrateV1() {
   if (state.pendingCandleInspiration === undefined) state.pendingCandleInspiration = false;
 
   if (!state.dailyTasks) state.dailyTasks = { date: '', focusDone: false, returnDone: false, waterDone: false, allClaimed: false };
+
+  if (state.lastTyphoonTime === undefined) state.lastTyphoonTime = 0;
 
   if (!state.quests) {
     state.quests = { pastoral: { unlocked: false, stage: 0, stagesCompleted: [], portalPurchasedAt: null, characters: {

@@ -3,9 +3,18 @@ import { state, saveState } from './state.js';
 import { spendCoins } from './storage.js';
 import { t } from './i18n/terms.js';
 import { getSettings, setSetting } from './settings.js';
+import { isDlcPackUnlocked } from './shop.js';
 
 export const AMBIENT_DEFS = [
-  { id: 'victorian_study', name: t('ambientName_victorian_study'), emoji: '🕯️', price: 500, file: 'audio/ambient/victorian_study.mp3' }
+  { id: 'victorian_study', name: t('ambientName_victorian_study'), emoji: '🕯️', price: 500, file: 'audio/ambient/victorian_study.mp3' },
+  {
+    id: 'medieval_monastery',
+    name: t('ambientName_medieval_monastery'),
+    emoji: '⛪',
+    price: 800,
+    file: 'audio/ambient/中世纪修道院氛围音_25分钟循环.mp3',
+    dlcPackId: 'pack_british_legends'
+  }
 ];
 
 let currentAudio = null;
@@ -48,6 +57,9 @@ export function buyAmbient(id) {
   if (!def) return { ok: false, reason: 'not_found' };
   const unlocked = getUnlockedAmbientIds();
   if (unlocked.includes(id)) return { ok: false, reason: 'already_owned' };
+  if (def.dlcPackId && !isDlcPackUnlocked(def.dlcPackId)) {
+    return { ok: false, reason: 'dlc_locked', dlcPackId: def.dlcPackId };
+  }
   if (!spendCoins(def.price)) return { ok: false, reason: 'no_coins' };
 
   if (!state.ambientSounds) {

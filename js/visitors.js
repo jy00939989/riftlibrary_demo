@@ -11,6 +11,7 @@ import { VISITOR_NARRATIVES } from '../data/visitor-events.js';
 import { SIGNBOARDS } from '../data/signboards.js';
 import { SHARED_POOL } from '../data/book_pool.js';
 import { VOLUME_GROUPS, getIncompleteVolumeGroups, isVolumeBookId } from '../data/volume_groups.js';
+import { PLANT_TYPES } from '../data/plants.js';
 import { track } from './backend/analytics.js';
 
 // ========== 访客角色定义（10位，2026-05-27 重构） ==========
@@ -491,7 +492,114 @@ export function getAuraReturnFavorBonus() {
   return 0;
 }
 
-// ========== 裴舟推销书籍池 ==========
+// ========== 植物相关：谷雨照料 + 台风灾难 ==========
+
+export function isVisitorPresent(charId) {
+  return state.visitors.some(v => v.charId === charId);
+}
+
+/**
+ * 谷雨照料植物事件
+ * @returns {object|null} { type: 'water'|'fertilize'|'talk', plantId, value? }
+ */
+export function tryTriggerGuyuPlantCare() {
+  if (!isVisitorPresent('guyu')) return null;
+  if (!state.plant.activeType || state.plant.level === 0) return null;
+
+  const def = PLANT_TYPES[state.plant.activeType];
+  if (!def) return null;
+
+  // 已可收获则不照料
+  if (state.plant.level >= 5 && state.plant.growthProgress >= def.growthPerLevel) return null;
+
+  const roll = Math.random();
+  if (roll >= 0.15) return null;
+
+  const actions = ['water', 'fertilize', 'talk'];
+  const action = actions[Math.floor(Math.random() * actions.length)];
+
+  switch (action) {
+    case 'water': {
+      const growth = def.waterGrowth; // 不叠加光环
+      state.plant.growthProgress += growth;
+      state.plant.lastCareTime = getNow();
+      // 注意：不调用 waterPlant()，避免消耗玩家浇水次数
+      addHistory('plant', '🌾 谷雨帮植物浇了水', `${def.emoji} ${t(def.nameKey)} 成长 +${growth}`);
+      saveState();
+      return { type: 'water', plantId: def.id, value: growth };
+    }
+    case 'fertilize': {
+      const growth = def.fertilizeGrowth; // 不叠加光环
+      state.plant.growthProgress += growth;
+      state.plant.lastCareTime = getNow();
+      addHistory('plant', '🌾 谷雨给植物施了肥', `${def.emoji} ${t(def.nameKey)} 成长 +${growth}`);
+      saveState();
+      return { type: 'fertilize', plantId: def.id, value: growth };
+    }
+    case 'talk': {
+      addAtmosphere(2);
+      addHistory('plant', '🌾 谷雨对着植物说话', '氛围 +2');
+      saveState();
+      return { type: 'talk', plantId: def.id };
+    }
+  }
+  return null;
+}
+
+/**
+ * 台风灾难事件
+ * @returns {object|null} { lost: boolean, downgraded: boolean, plantId, savedByGuyu: boolean }
+ */
+export function tryTriggerTyphoonDisaster() {
+  if (!state.plant.activeType || state.plant.level === 0) return null;
+
+  const now = getNow();
+  const lastDisaster = state.lastTyphoonTime || 0;
+  const daysSinceLast = (now - lastDisaster) / (1000 * 60 * 60 * 24);
+  if (daysSinceLast < 7) return null;
+
+  if (Math.random() >= 0.003) return null;
+
+  const def = PLANT_TYPES[state.plant.activeType];
+  if (!def) return null;
+
+  state.lastTyphoonTime = now;
+
+  // 谷雨抢救
+  const savedByGuyu = isVisitorPresent('guyu') && Math.random() < 0.5;
+
+  if (savedByGuyu) {
+    if (state.plant.level > 1) {
+      state.plant.level -= 1;
+      state.plant.growthProgress = 0;
+      addHistory('disaster', `🌪️ 台风过境，谷雨抢回了${t(def.nameKey)}`, '植物降了 1 级，但还活着');
+    } else {
+      resetPlantToEmptyState();
+      addHistory('disaster', `🌪️ 台风过境，谷雨没能拉住${t(def.nameKey)}`, '植物被刮走了');
+    }
+  } else {
+    resetPlantToEmptyState();
+    addHistory('disaster', `🌪️ 台风过境，${t(def.nameKey)}被刮走了`, '盆栽已清空');
+  }
+
+  saveState();
+  return {
+    lost: !savedByGuyu || state.plant.level === 0,
+    downgraded: savedByGuyu && state.plant.level > 0,
+    plantId: def.id,
+    savedByGuyu
+  };
+}
+
+function resetPlantToEmptyState() {
+  state.plant.activeType = null;
+  state.plant.level = 0;
+  state.plant.growthProgress = 0;
+  state.plant.waterAvailable = 0;
+  state.plant.lastCareTime = 0;
+  state.plant.plantedAt = 0;
+  state.plant.harvested = false;
+}
 
 // ========== 内部工具 ==========
 

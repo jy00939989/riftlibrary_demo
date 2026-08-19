@@ -1,7 +1,7 @@
 # 归墟图书馆 · 文档目录说明
 
-> 整理日期：2026-08-10  
-> 原则：活跃文档留在当前位置，已实施 / 已修复 / 过时的文档移入 `archive/`
+> 整理日期：2026-08-19
+> 原则：活跃文档按性质分目录；已实施 / 已修复 / 过时的文档移入 `archive/`
 
 ---
 
@@ -10,14 +10,21 @@
 ```
 docs/
 ├── README.md                          # 本说明
-├── glossary.md                        # 项目术语表
-├── visitor-voice-guide.md             # 10 位访客声音锚点与写作规范
-├── FABLE5_PROJECT_BRIEF.md            # Fable 5 项目诊断输入文档
-├── FABLE5_ROUND1_DIAGNOSIS.md         # Fable 5 第一轮诊断结果
-├── FABLE5_ROUND2_XIACHAN.md           # 夏蝉叙事重写案例
-├── AI工具使用清单_提交版.md            # AIGC 大赛 AI 工具使用声明
-├── aigc-pitch-deck.html               # AIGC 大赛 pitch deck
-├── aigc-demo-video-script.md          # AIGC 大赛演示视频脚本
+│
+├── aigc/                              # AIGC 大赛与外部评审材料
+│   ├── FABLE5_PROJECT_BRIEF.md
+│   ├── FABLE5_ROUND1_DIAGNOSIS.md
+│   ├── FABLE5_ROUND2_XIACHAN.md
+│   ├── AI工具使用清单_提交版.md
+│   ├── aigc-pitch-deck.html
+│   └── aigc-demo-video-script.md
+│
+├── guides/                            # 项目规范与写作指南
+│   ├── glossary.md                    # 项目术语表
+│   └── visitor-voice-guide.md         # 10 位访客声音锚点与写作规范
+│
+├── reference/                         # 数据整理与参考文档
+│   └── economy-balance-reference.md   # 经济系统整理（平衡用）
 │
 ├── archive/                           # 归档区：已实施、已修复、过时
 │   ├── bugs/                          # 已修复 bug 的评审与记录
@@ -29,10 +36,27 @@ docs/
 ├── changelogs/                        # 当前版本变更日志
 ├── diary/                             # 克克日记（跨项目）
 ├── plans/                             # 当前待实施 / 进行中的方案
-├── prompts/                           # AI 生图 / 生视频提示词
+├── prompts/                           # AI 生图 / 生视频 / 生音乐提示词
 ├── tech-debt/                         # 技术债记录
 └── writing/                           # 访客叙事文案重写案例
 ```
+
+---
+
+## 各目录用途
+
+| 目录 | 内容 | 维护频率 |
+|---|---|---|
+| `aigc/` | AIGC 大赛材料、Fable 5 诊断、pitch deck、视频脚本、AI 工具声明 | 赛前/评审前 |
+| `guides/` | 项目术语、叙事写作规范等长期参考 | 按需 |
+| `reference/` | 经济系统、数据盘点等整理型文档 | 版本迭代时 |
+| `plans/` | 当前进行中的设计方案 | 持续 |
+| `bugs/` | 当前待修复 / 待评审的 bug | 持续 |
+| `changelogs/` | 当前版本变更日志 | 每次发布 |
+| `tech-debt/` | 已知技术债 | 持续 |
+| `writing/` | 访客叙事文案改写案例 | 持续 |
+| `prompts/` | AI 生成提示词资产 | 随美术/音乐/视频需求 |
+| `archive/` | 已落地、已修复、已过时文档 | 定期整理 |
 
 ---
 
@@ -47,28 +71,13 @@ docs/
 
 ---
 
-## 活跃文档使用说明
-
-| 文档 | 用途 | 维护频率 |
-|---|---|---|
-| `glossary.md` | 统一项目术语 | 按需 |
-| `visitor-voice-guide.md` | 访客叙事写作参考 | 叙事重写时 |
-| `FABLE5_PROJECT_BRIEF.md` | 给外部评审/AI 的项目说明书 | 大版本更新时 |
-| `aigc-pitch-deck.html` | AIGC 大赛 pitch deck | 赛前 |
-| `aigc-demo-video-script.md` | AIGC 大赛视频脚本 | 赛前 |
-| `plans/*` | 当前进行中的设计 | 持续 |
-| `tech-debt/*` | 已知技术债 | 持续 |
-| `writing/*` | 叙事文案改写案例 | 持续 |
-
----
-
 ## 新增文档时
 
-1. 先判断文档性质（bug / plan / tech-debt / writing / submission）
+1. 先判断文档性质（aigc / guide / plan / bug / tech-debt / writing / prompts / reference）
 2. 放入对应活跃目录
 3. 如果是临时草案且很快会过时，可直接放入 `archive/drafts/`（如需要可建）
 4. 文档落地或过期后，及时移入 `archive/`
 
 ---
 
-*整理：克克 | 2026-08-10*
+*整理：克克 | 2026-08-19*

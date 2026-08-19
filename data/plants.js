@@ -4,39 +4,18 @@
 export const PLANT_TYPES = {
   bird_of_paradise: {
     id: 'bird_of_paradise',
-    name: '鹤望兰',
+    nameKey: 'plant.birdOfParadise.name',
+    descKey: 'plant.birdOfParadise.description',
     emoji: '🌿',
-    description: '一盆高挑的花叶植物，叶片如鹤翅般优雅伸展，花苞中蕴藏着异世界的生机。',
-    // 每级需要的成长点数（0→100，满了自动升级或可收获）
-    growthPerLevel: 100,
-    // 施肥花费（按目标等级）
-    fertilizeCosts: {
-      1: 50,   // Lv0→Lv1 买盆栽
-      2: 50,   // Lv1→Lv2
-      3: 80,   // Lv2→Lv3
-      4: 120,  // Lv3→Lv4
-      5: 180   // Lv4→Lv5
+    art: {
+      1: 'visual/plants/bird_of_paradise_lv1.png',
+      2: 'visual/plants/bird_of_paradise_lv2.png',
+      3: 'visual/plants/bird_of_paradise_lv3.png',
+      4: 'visual/plants/bird_of_paradise_lv4.png',
+      5: 'visual/plants/bird_of_paradise_lv5.png'
     },
-    // 浇水收益（每次专注完成给一次浇水机会）
-    waterGrowth: 25,
-    // 施肥收益（每次施肥给成长值）
-    fertilizeGrowth: 50,
-    // Lv5 收获奖励
-    harvestAtmosphere: 2,
-    harvestCoins: 30,
-    // 种子掉落
-    seedType: 'bird_of_paradise',
-    seedDropRate: 0.6,  // 60% 概率掉落
-    // 各等级名称
-    levelNames: ['', '幼苗', '小株', '茂叶', '含苞', '绽放']
-  },
-
-  magic_rose: {
-    id: 'magic_rose',
-    name: '魔法玫瑰',
-    emoji: '🌹',
-    description: '花瓣在月光下会微微发光的奇异玫瑰，据说是某位旅法师从异位面带回的种子。',
-    growthPerLevel: 100,
+    description: '一盆高挑的花叶植物，叶片如鹤翅般优雅伸展，花苞中蕴藏着异世界的生机。',
+    growthPerLevel: 80,
     fertilizeCosts: {
       1: 50,
       2: 50,
@@ -46,24 +25,95 @@ export const PLANT_TYPES = {
     },
     waterGrowth: 25,
     fertilizeGrowth: 50,
+    harvestAtmosphere: 2,
+    harvestCoins: 35,
+    seedType: 'bird_of_paradise',
+    seedDropRate: 0.6,
+    levelNames: ['', '幼苗', '小株', '茂叶', '含苞', '绽放']
+  },
+
+  magic_rose: {
+    id: 'magic_rose',
+    nameKey: 'plant.magicRose.name',
+    descKey: 'plant.magicRose.description',
+    emoji: '🌹',
+    art: {
+      1: 'visual/plants/magic_rose_lv1.png',
+      2: 'visual/plants/magic_rose_lv2.png',
+      3: 'visual/plants/magic_rose_lv3.png',
+      4: 'visual/plants/magic_rose_lv4.png',
+      5: 'visual/plants/magic_rose_lv5.png'
+    },
+    description: '花瓣在月光下会微微发光的奇异玫瑰，据说是某位旅法师从异位面带回的种子。',
+    growthPerLevel: 100,
+    fertilizeCosts: {
+      1: 50,
+      2: 50,
+      3: 80,
+      4: 120,
+      5: 180
+    },
+    waterGrowth: 20,
+    fertilizeGrowth: 40,
     harvestAtmosphere: 25,
     harvestCoins: 30,
     seedType: 'magic_rose',
     seedDropRate: 0.6,
     levelNames: ['', '幼苗', '小株', '茂叶', '含苞', '绽放']
+  },
+
+  starlight_fern: {
+    id: 'starlight_fern',
+    nameKey: 'plant.starlightFern.name',
+    descKey: 'plant.starlightFern.description',
+    emoji: '🌿',
+    art: {
+      1: 'visual/plants/starlight_fern_lv1.png',
+      2: 'visual/plants/starlight_fern_lv2.png',
+      3: 'visual/plants/starlight_fern_lv3.png',
+      4: 'visual/plants/starlight_fern_lv4.png',
+      5: 'visual/plants/starlight_fern_lv5.png'
+    },
+    description: '叶片在暗处会泛起银色微光的蕨类植物，孢子成熟时会像坠落星河一样流淌。',
+    growthPerLevel: 120,
+    fertilizeCosts: {
+      1: 80,
+      2: 80,
+      3: 120,
+      4: 180,
+      5: 260
+    },
+    waterGrowth: 15,
+    fertilizeGrowth: 30,
+    harvestAtmosphere: 45,
+    harvestCoins: 15,
+    seedType: 'starlight_fern',
+    seedDropRate: 0.5,
+    levelNames: ['', '孢子', '嫩芽', '舒展', '流光', '星瀑']
   }
 };
 
-// 种子兑换表 —— 集齐 N 颗种子换书
+// 种子兑换表 —— 每种子的可兑换奖励列表
+// type: book | coins | atmosphere | inspiration | seed
+// repeatable: 是否可重复兑换（book/seed 默认 false，其他默认 true）
 export const SEED_EXCHANGE = {
-  bird_of_paradise: {
-    required: 5,
-    rewardBookId: 'book_023',
-    rewardTitle: '绿野仙踪'
-  },
-  magic_rose: {
-    required: 5,
-    rewardBookId: 'book_024',
-    rewardTitle: '爱丽丝梦游奇境'
-  }
+  bird_of_paradise: [
+    { type: 'book', required: 5, rewardBookId: 'book_023', rewardTitleKey: 'seedExchange.birdOfParadise.book', repeatable: false },
+    { type: 'coins', required: 3, value: 80, repeatable: true },
+    { type: 'atmosphere', required: 2, value: 5, repeatable: true },
+    { type: 'inspiration', required: 4, value: 1, repeatable: true },
+    { type: 'seed', required: 3, seedType: 'magic_rose', count: 1, rewardTitleKey: 'seedExchange.birdOfParadise.seed', repeatable: false }
+  ],
+  magic_rose: [
+    { type: 'book', required: 5, rewardBookId: 'book_024', rewardTitleKey: 'seedExchange.magicRose.book', repeatable: false },
+    { type: 'coins', required: 3, value: 100, repeatable: true },
+    { type: 'atmosphere', required: 2, value: 8, repeatable: true },
+    { type: 'seed', required: 4, seedType: 'starlight_fern', count: 1, rewardTitleKey: 'seedExchange.magicRose.seed', repeatable: false }
+  ],
+  starlight_fern: [
+    { type: 'book', required: 5, rewardBookId: 'book_034', rewardTitleKey: 'seedExchange.starlightFern.book', repeatable: false },
+    { type: 'coins', required: 3, value: 120, repeatable: true },
+    { type: 'atmosphere', required: 2, value: 12, repeatable: true },
+    { type: 'inspiration', required: 5, value: 2, repeatable: true }
+  ]
 };
