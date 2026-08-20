@@ -1,3 +1,9 @@
+---
+status: backlog
+importance: 4
+scheduledDate:
+---
+
 # 收藏系统优化计划（collection-system-optimization）
 
 > 现状：`js/collection.js` 已实现书籍、里程碑、访客记忆、位面归档四类收集进度，但展示层较单薄，收集反馈弱，缺少“完成感”和“炫耀感”。

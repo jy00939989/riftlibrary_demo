@@ -1,3 +1,9 @@
+---
+status: backlog
+importance: 4
+scheduledDate:
+---
+
 # 墨墨日志优化计划（momo-diary-optimization）
 
 > 现状：`js/diary.js` 已有一套基于模板键池（opening/middle/ending）的日志拼接系统，但长期游玩后日志同质化严重、情感峰值不足、与收藏/访客系统联动较弱。
