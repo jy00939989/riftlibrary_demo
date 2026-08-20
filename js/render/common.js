@@ -54,6 +54,48 @@ export function formatTime(totalSeconds) {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
+/**
+ * 数字平滑递增/递减动画
+ * @param {HTMLElement} el - 目标元素
+ * @param {number} from - 起始值
+ * @param {number} to - 目标值
+ * @param {number} duration - 动画时长（ms），默认 400
+ * @param {(n: number) => string} formatter - 格式化函数，默认 toLocaleString
+ */
+export function animateNumber(el, from, to, duration = 400, formatter = (n) => Math.round(n).toLocaleString()) {
+  if (!el) return;
+  if (from === to) {
+    el.textContent = formatter(to);
+    return;
+  }
+
+  // 取消同元素上的上一次动画
+  if (el._numAnimFrame) {
+    cancelAnimationFrame(el._numAnimFrame);
+  }
+
+  const startTime = performance.now();
+  const delta = to - from;
+
+  function step(now) {
+    const elapsed = now - startTime;
+    const t = Math.min(1, elapsed / duration);
+    // easeOutQuad
+    const eased = 1 - (1 - t) * (1 - t);
+    const current = from + delta * eased;
+    el.textContent = formatter(current);
+
+    if (t < 1) {
+      el._numAnimFrame = requestAnimationFrame(step);
+    } else {
+      el._numAnimFrame = null;
+      el.textContent = formatter(to);
+    }
+  }
+
+  el._numAnimFrame = requestAnimationFrame(step);
+}
+
 export function updateTimerDisplay(timeStr, totalWords, bookWords) {
   const display = document.querySelector('#page-focus .text-6xl');
   if (display) display.textContent = timeStr;

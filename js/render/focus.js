@@ -1,7 +1,7 @@
 // 缮写室（专注页面）渲染
 import { state } from '../state.js';
 import { BOOKS, COPY_TEMPLATES } from '../../data/books.js';
-import { el, h, formatTime, actions, updateStatusBar, getBookTitle, getBookQuotes, getChapterTitle, getChapterPreview } from './common.js';
+import { el, h, formatTime, actions, updateStatusBar, getBookTitle, getBookQuotes, getChapterTitle, getChapterPreview, animateNumber } from './common.js';
 import { t, getAtmosphereStageName, getFocusRoomLevelName } from '../i18n/terms.js';
 import { startWriting, pauseWriting, resumeWriting, stopWriting, isWriting } from './writing.js';
 import { isMomoAccelerating } from '../timer.js';
@@ -120,38 +120,59 @@ function updateBookProgressDOM(sess) {
   const pct = Math.min(100, Math.round((effectiveWords / totalWords) * 100));
   const repair = getRepairProgress(bookState);
 
-  // 进度条
-  const bar = document.getElementById('book-progress-bar');
-  if (bar) {
-    let repairHtml = '';
-    if (repair) {
-      repairHtml = `
-        <div class="flex items-center justify-between mb-1 mt-3">
-          <span class="text-xs font-bold text-amber-700">${t('repairProgress')}</span>
-          <span class="text-xs text-amber-600">${(repair.done || 0).toLocaleString()} / ${repair.total.toLocaleString()} ${t('wordsUnit')}</span>
-        </div>
-        <div class="h-2 bg-wood/20 rounded-full overflow-hidden mb-3">
-          <div class="h-full bg-gradient-to-r from-amber-500 to-amber-400 rounded-full transition-all duration-500" style="width:${repair.pct}%"></div>
-        </div>
-        <div class="text-right text-xs text-amber-600 mb-1">${t('repairSpeedBoost').replace('{pct}', repair.pct).replace('{n}', 5)}</div>
-      `;
+  // 进度条宽度（CSS transition 负责平滑）
+  const fill = document.getElementById('book-progress-fill');
+  if (fill) fill.style.width = `${pct}%`;
+
+  // 百分比数字动画
+  const pctEl = document.getElementById('book-progress-pct');
+  if (pctEl) {
+    const prevPct = parseInt(pctEl.dataset.value || '0', 10);
+    if (prevPct !== pct) {
+      animateNumber(pctEl, prevPct, pct, 400, (n) => `${Math.round(n)}%`);
+      pctEl.dataset.value = String(pct);
     }
-    bar.innerHTML = `
-      <div class="flex items-center justify-between mb-1.5">
-        <span class="text-xs font-bold text-ink">📖 ${t('copyProgressLabel').replace('{title}', '《' + getBookTitle(book) + '》')}</span>
-        <span class="text-xs text-ink-light">${effectiveWords.toLocaleString()} / ${totalWords.toLocaleString()} ${t('wordsUnit')}</span>
-      </div>
-      <div class="h-2.5 bg-wood/20 rounded-full overflow-hidden">
-        <div class="h-full bg-gradient-to-r from-amber-600 to-magic-gold rounded-full transition-all duration-500" style="width:${pct}%"></div>
-      </div>
-      <div class="text-right text-xs text-ink-light mt-0.5">${pct}%</div>
-      ${repairHtml}
-    `;
+  }
+
+  // 已抄字数 / 总字数 动画
+  const wordsCurrentEl = document.getElementById('book-progress-words-current');
+  const wordsTotalEl = document.getElementById('book-progress-words-total');
+  if (wordsCurrentEl) {
+    const prevWords = parseInt(wordsCurrentEl.dataset.value || '0', 10);
+    if (prevWords !== effectiveWords) {
+      animateNumber(wordsCurrentEl, prevWords, effectiveWords, 400);
+      wordsCurrentEl.dataset.value = String(effectiveWords);
+    }
+  }
+  if (wordsTotalEl) wordsTotalEl.textContent = totalWords.toLocaleString();
+
+  // 修复进度（若有）
+  const repairSection = document.getElementById('book-progress-repair');
+  if (repair) {
+    if (repairSection) {
+      const repairDoneEl = document.getElementById('book-progress-repair-done');
+      const repairFill = document.getElementById('book-progress-repair-fill');
+      const repairBoost = document.getElementById('book-progress-repair-boost');
+      if (repairDoneEl) repairDoneEl.textContent = (repair.done || 0).toLocaleString();
+      if (repairFill) repairFill.style.width = `${repair.pct}%`;
+      if (repairBoost) repairBoost.textContent = t('repairSpeedBoost').replace('{pct}', repair.pct).replace('{n}', 5);
+      repairSection.style.display = '';
+    }
+  } else if (repairSection) {
+    repairSection.style.display = 'none';
   }
 
   // 字数显示（timer 区底下的 span）
   const wordsEl = document.getElementById('focus-book-words');
-  if (wordsEl) wordsEl.textContent = effectiveWords.toLocaleString();
+  if (wordsEl) {
+    const prevWords = parseInt(wordsEl.dataset.value || '0', 10);
+    const current = parseInt(wordsEl.textContent.replace(/,/g, '') || '0', 10);
+    const from = Number.isFinite(prevWords) ? prevWords : current;
+    if (from !== effectiveWords) {
+      animateNumber(wordsEl, from, effectiveWords, 400);
+      wordsEl.dataset.value = String(effectiveWords);
+    }
+  }
 
   const miniTimer = document.getElementById('focus-mini-timer');
   if (miniTimer && sess.active) {
@@ -531,30 +552,30 @@ function renderBookProgress(sess, book) {
   const div = el('div', 'mt-4 pt-4 border-t border-wood/20');
   div.id = 'book-progress-bar';
 
-  let repairBarHtml = '';
-  if (repair) {
-    repairBarHtml = `
-      <div class="flex items-center justify-between mb-1 mt-3">
-        <span class="text-xs font-bold text-amber-700">${t('repairProgress')}</span>
-        <span class="text-xs text-amber-600">${(repair.done || 0).toLocaleString()} / ${repair.total.toLocaleString()} ${t('wordsUnit')}</span>
-      </div>
-      <div class="h-2 bg-wood/20 rounded-full overflow-hidden mb-3">
-        <div class="h-full bg-gradient-to-r from-amber-500 to-amber-400 rounded-full transition-all duration-500" style="width:${repair.pct}%"></div>
-      </div>
-      <div class="text-right text-xs text-amber-600 mb-1">${t('repairSpeedBoost').replace('{pct}', repair.pct).replace('{n}', 5)}</div>
-    `;
-  }
-
   div.innerHTML = `
     <div class="flex items-center justify-between mb-1.5">
       <span class="text-xs font-bold text-ink">📖 ${t('copyProgressLabel').replace('{title}', '《' + getBookTitle(book) + '》')}</span>
-      <span class="text-xs text-ink-light">${effectiveWords.toLocaleString()} / ${totalWords.toLocaleString()} ${t('wordsUnit')}</span>
+      <span class="text-xs text-ink-light">
+        <span id="book-progress-words-current" data-value="${effectiveWords}">${effectiveWords.toLocaleString()}</span>
+        /
+        <span id="book-progress-words-total">${totalWords.toLocaleString()}</span>
+        ${t('wordsUnit')}
+      </span>
     </div>
     <div class="h-2.5 bg-wood/20 rounded-full overflow-hidden">
-      <div class="h-full bg-gradient-to-r from-amber-600 to-magic-gold rounded-full transition-all duration-500" style="width:${pct}%"></div>
+      <div id="book-progress-fill" class="h-full bg-gradient-to-r from-amber-600 to-magic-gold rounded-full transition-all duration-500" style="width:${pct}%"></div>
     </div>
-    <div class="text-right text-xs text-ink-light mt-0.5">${pct}%</div>
-    ${repairBarHtml}
+    <div id="book-progress-pct" class="text-right text-xs text-ink-light mt-0.5" data-value="${pct}">${pct}%</div>
+    <div id="book-progress-repair" style="${repair ? '' : 'display:none'}">
+      <div class="flex items-center justify-between mb-1 mt-3">
+        <span class="text-xs font-bold text-amber-700">${t('repairProgress')}</span>
+        <span class="text-xs text-amber-600"><span id="book-progress-repair-done">${repair ? (repair.done || 0).toLocaleString() : '0'}</span> / ${repair ? repair.total.toLocaleString() : '0'} ${t('wordsUnit')}</span>
+      </div>
+      <div class="h-2 bg-wood/20 rounded-full overflow-hidden mb-3">
+        <div id="book-progress-repair-fill" class="h-full bg-gradient-to-r from-amber-500 to-amber-400 rounded-full transition-all duration-500" style="width:${repair ? repair.pct : 0}%"></div>
+      </div>
+      <div id="book-progress-repair-boost" class="text-right text-xs text-amber-600 mb-1">${repair ? t('repairSpeedBoost').replace('{pct}', repair.pct).replace('{n}', 5) : ''}</div>
+    </div>
   `;
 
   return div;
