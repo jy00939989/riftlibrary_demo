@@ -8,7 +8,7 @@ export const meta = {
   "era": "ERA_007",
   "totalWords": 450000,
   "description": "卡拉马佐夫兄弟典藏版。集齐全部单卷并在古籍修复室合成后可得。",
-  "emoji": "⚖️",
+  "emoji": "⚖️","cover": "visual/book_covers/book_019.png",
   "certMessage": "在信仰与怀疑的深渊之间，你选择了亲手抄下每一个字。",
   "isCollectedEdition": true,
   "cannotBePurchased": true,

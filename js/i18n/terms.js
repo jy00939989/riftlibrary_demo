@@ -1095,7 +1095,9 @@ const TERM_DATA = Object.freeze({
   dlcPackRedeemSubmit: { zh: '兑换', en: 'Redeem' },
   dlcPackRedeemSuccess: { zh: '兑换成功，已解锁 {n} 个补充包。', en: 'Redemption successful. {n} pack(s) unlocked.' },
   dlcPackInvalidCode: { zh: '无效的兑换码或已过期。', en: 'Invalid or expired code.' },
-  dlcPackAlreadyRedeemed: { zh: '该兑换码已经使用过了。', en: 'This code has already been redeemed.' },
+  dlcPackInsufficientInspiration: { zh: '灵感不足，无法解锁此补充包。', en: 'Insufficient inspiration to unlock this pack.' },
+  dlcPackFirstPackDiscount: { zh: '首包特惠', en: 'First Pack Offer' },
+  dlcPackInspirationPrice: { zh: '灵感解锁', en: 'Inspiration unlock' },
 
   // ========== 占位功能 ==========
   coffeeCorner: { zh: '咖啡角', en: 'Coffee Corner' },

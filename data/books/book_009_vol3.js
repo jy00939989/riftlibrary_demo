@@ -11,6 +11,7 @@ export const meta = {
   "totalWords": 133328,
   "description": "红楼梦第三卷。",
   "emoji": "🏮",
+  "cover": 'visual/book_covers/book_009.png',
   "certMessage": "第三卷已成。满纸荒唐言，一把辛酸泪——你已亲手抄下这场大梦。",
   "isVolume": true,
   "collectedBookId": "book_009",
@@ -84,4 +85,11 @@ export const chapters = [
   }
 ];
 
-export const quotes = {};
+export const quotes = {
+  "10": "\"满纸荒唐言，一把辛酸泪。都云作者痴，谁解其中味？\"",
+  "25": "\"假作真时真亦假，无为有处有还无。\"",
+  "40": "\"一个是阆苑仙葩，一个是美玉无瑕。若说没奇缘，今生偏又遇着他；若说有奇缘，如何心事终虚化？\"",
+  "55": "\"花谢花飞花满天，红消香断有谁怜？\"",
+  "70": "\"一朝春尽红颜老，花落人亡两不知！\"",
+  "85": "\"机关算尽太聪明，反算了卿卿性命。\""
+};

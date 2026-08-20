@@ -9,6 +9,7 @@ export const meta = {
   "totalWords": 190000,
   "description": "本草纲目·草部典藏版。集齐全部单卷并在古籍修复室合成后可得。",
   "emoji": "🌿",
+  "cover": "visual/book_covers/book_007.png",
   "certMessage": "一草一木皆有其名，你亲手为它们正名。",
   "isCollectedEdition": true,
   "cannotBePurchased": true,

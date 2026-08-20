@@ -11,7 +11,7 @@ export const meta = {
   "totalWords": 100000,
   "description": "秘密花园卷一。玛丽小姐倔乖乖，荒原上古怪的庄园，走廊里的哭声与引路的知更鸟，一扇尘封的园门正等待被打开。",
   "emoji": "🌳",
-  "cover": "visual/books/book_034_vol1.png",
+  "cover": "visual/books/book_034.png",
   "certMessage": "卷一已成。荒原的风里，藏着一座等待苏醒的花园。",
   "isVolume": true,
   "collectedBookId": "book_034",
@@ -77,4 +77,11 @@ export const chapters = [
   }
 ];
 
-export const quotes = {};
+export const quotes = {
+  "10": "「如果你看它看得足够久，几乎每样东西都会为你开花。」",
+  "25": "「当玛丽走进那扇门，走进花园的这一刻起，她感到自己不再孤单。」",
+  "40": "「你只要播下种子，并耐心等待，生命自会在不知不觉中生长。」",
+  "55": "「世界并不小，只要你不把自己关在屋里。」",
+  "70": "「魔法就在你自己心里，比任何咒语都灵验。」",
+  "85": "「春天一到，整个花园都活了，连墙角的野草也在歌唱。」"
+};

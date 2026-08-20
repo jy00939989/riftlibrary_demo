@@ -11,6 +11,7 @@ export const meta = {
   "totalWords": 95002,
   "description": "本草纲目·草部第二卷。",
   "emoji": "🌿",
+  "cover": 'visual/book_covers/book_007.png',
   "certMessage": "第二卷已成。一草一木皆有其名，你亲手为它们正名。",
   "isVolume": true,
   "collectedBookId": "book_007",
@@ -68,4 +69,11 @@ export const chapters = [
   }
 ];
 
-export const quotes = {};
+export const quotes = {
+  "10": "\"医者仁心，辨药须细，一草一木，皆关人命。\"",
+  "25": "\"人可以不做官，但不可以不做学问。\"",
+  "40": "\"草木虽微，亦有灵性；医者用药，当怀敬畏。\"",
+  "55": "\"读万卷书，行万里路，访万名医，此药学之正道也。\"",
+  "70": "\"一味药之误，或夺人命；一味药之得，可活死人。\"",
+  "85": "\"药有君臣佐使，人有贤愚忠佞，治国用药，其理一也。\""
+};

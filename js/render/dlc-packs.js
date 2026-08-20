@@ -7,7 +7,8 @@ import { el, updateStatusBar, getBookTitle, actions } from './common.js';
 import { t } from '../i18n/terms.js';
 import { playSfx } from '../audio.js';
 import {
-  getDlcPacks, isDlcPackUnlocked, purchaseDlcPack, redeemDlcCode
+  getDlcPacks, isDlcPackUnlocked, purchaseDlcPack, redeemDlcCode,
+  getPackInspirationCost
 } from '../shop.js';
 
 export function renderDlcPacksSection(container) {
@@ -43,6 +44,9 @@ function renderDlcPackCard(pack) {
     const book = BOOKS[id];
     return sum + (book?.totalWords || 0);
   }, 0);
+  const inspirationCost = getPackInspirationCost(pack.id);
+  const regularCost = pack.inspirationCost ?? 120;
+  const isFirstPackDiscount = inspirationCost < regularCost;
 
   const card = el('div', `rounded-xl p-4 border-2 transition-all ${
     unlocked ? 'bg-gray-100 border-gray-200 opacity-70' : 'bg-white border-wood/20 hover:border-magic-gold/50 hover:shadow-lg cursor-pointer'
@@ -60,7 +64,13 @@ function renderDlcPackCard(pack) {
     <div class="flex items-center justify-between">
       ${unlocked
         ? `<span class="text-xs font-bold text-green-600">${t('dlcPackUnlocked')}</span>`
-        : `<span class="text-sm text-magic-gold font-bold">💰${pack.price.toLocaleString()}</span>`
+        : `<div class="flex items-center gap-2">
+             ${isFirstPackDiscount ? `<span class="text-[10px] px-1.5 py-0.5 bg-magic-gold/10 text-magic-gold rounded-full">${t('dlcPackFirstPackDiscount')}</span>` : ''}
+             <span class="text-sm text-magic-gold font-bold">
+               ✨${inspirationCost}
+               ${isFirstPackDiscount ? `<span class="text-ink-light/40 line-through font-normal text-xs ml-1">${regularCost}</span>` : ''}
+             </span>
+           </div>`
       }
       ${unlocked
         ? ''
@@ -100,7 +110,10 @@ function showDlcPackModal(pack) {
     `;
   }).join('');
 
-  const canAfford = (state.coins || 0) >= pack.price;
+  const inspirationCost = getPackInspirationCost(pack.id);
+  const regularCost = pack.inspirationCost ?? 120;
+  const isFirstPackDiscount = inspirationCost < regularCost;
+  const canAfford = (state.inspiration || 0) >= inspirationCost;
 
   const content = el('div', 'parchment-bg rounded-2xl p-6 max-w-sm w-full magic-glow animate-scale-in');
   content.innerHTML = `
@@ -114,8 +127,10 @@ function showDlcPackModal(pack) {
       ${bookListHtml}
     </div>
     <div class="text-center mb-4">
-      <span class="text-magic-gold font-bold text-lg">💰${pack.price.toLocaleString()}</span>
-      <span class="text-xs text-ink-light ml-2">${t('dlcPackPrice')}</span>
+      ${isFirstPackDiscount ? `<span class="text-[10px] px-2 py-0.5 bg-magic-gold/10 text-magic-gold rounded-full mr-2">${t('dlcPackFirstPackDiscount')}</span>` : ''}
+      <span class="text-magic-gold font-bold text-lg">✨${inspirationCost}</span>
+      ${isFirstPackDiscount ? `<span class="text-ink-light/40 line-through text-sm ml-2">${regularCost}</span>` : ''}
+      <div class="text-xs text-ink-light mt-1">${t('dlcPackInspirationPrice')}</div>
     </div>
     <div class="flex justify-center gap-3">
       <button class="cancel-btn px-6 py-2.5 bg-wood/20 text-ink-light rounded-lg font-bold hover:bg-wood/30 transition-all">${t('cancel')}</button>
@@ -124,7 +139,7 @@ function showDlcPackModal(pack) {
         : `<button class="confirm-btn px-6 py-2.5 bg-magic-gold text-white rounded-lg font-bold hover:shadow-lg transition-all ${!canAfford ? 'opacity-50 cursor-not-allowed' : ''}">${t('dlcPackUnlock')}</button>`
       }
     </div>
-    ${!unlocked && !canAfford ? `<p class="text-xs text-red-500 text-center mt-2">${t('dlcPackInsufficientCoins')}</p>` : ''}
+    ${!unlocked && !canAfford ? `<p class="text-xs text-red-500 text-center mt-2">${t('dlcPackInsufficientInspiration')}</p>` : ''}
   `;
 
   overlay.appendChild(content);
@@ -146,7 +161,7 @@ function showDlcPackModal(pack) {
         if (actions.renderShopPage) actions.renderShopPage();
       } else {
         let msg = t('dlcPackUnlockFailed');
-        if (result.reason === 'insufficient_coins') msg = t('dlcPackInsufficientCoins');
+        if (result.reason === 'insufficient_inspiration') msg = t('dlcPackInsufficientInspiration');
         alert(msg);
       }
     });

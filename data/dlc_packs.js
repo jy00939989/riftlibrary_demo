@@ -13,8 +13,9 @@ export const DLC_PACKS = [
       'book_030_vol1', 'book_030_vol2', 'book_030_vol3',
       'book_031_vol1', 'book_031_vol2', 'book_031_vol3', 'book_031_vol4'
     ],
-    // 解锁 pack 的门槛费；包内书籍仍需按 SHARED_POOL 中的单价购买
-    price: 1200,
+    // 解锁 pack 所需灵感（纯灵感兑换，不可用智慧之光）
+    // 玩家解锁的第一个 pack 享受首包特惠 60 灵感，之后按此原价
+    inspirationCost: 120,
     // 可解锁本 pack 的兑换码（不区分大小写）
     codes: ['BETA2026', 'ALPHA_RIFT'],
     visible: true,

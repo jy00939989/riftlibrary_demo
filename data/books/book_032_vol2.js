@@ -11,6 +11,7 @@ export const meta = {
   "totalWords": 100667,
   "description": "坎特伯雷故事集卷二。学者、商人、侍从等朝圣者讲述的故事。",
   "emoji": "📖",
+  "cover": 'visual/book_covers/book_032.png',
   "certMessage": "卷二已成。朝圣路上的故事仍在继续，你的笔尖未停。",
   "isVolume": true,
   "collectedBookId": "book_032",
@@ -92,4 +93,11 @@ export const chapters = [
   }
 ];
 
-export const quotes = {};
+export const quotes = {
+  "10": "「他乐于学习，也乐于教导。」",
+  "25": "「生命如此短暂，技艺却需长久研习。」",
+  "40": "「五月容不得夜晚有半点懒散。」",
+  "55": "「什么比智慧更可贵？一位好妻子；什么比好妻子更可贵？没有。」",
+  "70": "「忍耐是能征服一切的美德。」",
+  "85": "「最渊博的学者，未必是最聪明的人。」"
+};

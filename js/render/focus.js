@@ -588,8 +588,9 @@ function renderCopyPreview(book) {
   const template = COPY_TEMPLATES[state.currentSession.quoteIndex % COPY_TEMPLATES.length];
   const quotes = getBookQuotes(book);
   const quoteKeys = Object.keys(quotes);
-  const randomKey = quoteKeys[Math.floor(Math.random() * quoteKeys.length)];
-  const quote = quotes[randomKey];
+  const quote = quoteKeys.length > 0
+    ? quotes[quoteKeys[Math.floor(Math.random() * quoteKeys.length)]]
+    : '每一页抄写都是对知识的致敬。';
 
   return h(`
     <div class="mt-4 parchment-bg rounded-xl p-4 border-2 border-magic-gold/30 animate-fade-in">

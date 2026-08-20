@@ -1,9 +1,14 @@
 // 书籍补充包（DLC Pack）业务逻辑
 
 import { state, saveState } from '../../state.js';
-import { spendCoins, addHistory } from '../../storage.js';
+import { spendInspiration, addHistory } from '../../storage.js';
 import { DLC_PACKS, REDEEM_CODES } from '../../../data/dlc_packs.js';
 import { track } from '../../backend/analytics.js';
+
+// 首包特惠：玩家第一次用灵感解锁任意 pack 时所需灵感
+export const FIRST_PACK_INSPIRATION_COST = 60;
+// 后续 pack 默认原价（可在 data/dlc_packs.js 中按 pack 覆盖）
+export const DEFAULT_PACK_INSPIRATION_COST = 120;
 
 const PACK_MAP = new Map(DLC_PACKS.map(p => [p.id, p]));
 
@@ -42,16 +47,32 @@ export function isBookLockedByDlc(bookId) {
 }
 
 /**
+ * 计算指定 pack 的当前灵感解锁成本
+ * - 若玩家尚未解锁任何 pack，享受首包特惠
+ * - 否则使用 pack.inspirationCost，未配置则取默认值 120
+ */
+export function getPackInspirationCost(packId) {
+  const pack = getDlcPack(packId);
+  if (!pack) return null;
+  const hasAnyPack = (state.dlcPacks?.unlocked || []).length > 0;
+  if (!hasAnyPack) return FIRST_PACK_INSPIRATION_COST;
+  return pack.inspirationCost ?? DEFAULT_PACK_INSPIRATION_COST;
+}
+
+/**
  * 获取指定 pack 的解锁信息（UI 用）
  */
 export function getDlcPackUnlockInfo(packId) {
   const pack = getDlcPack(packId);
   if (!pack) return null;
+  const cost = getPackInspirationCost(packId);
+  const isFirstPack = (state.dlcPacks?.unlocked || []).length === 0;
   return {
     pack,
     unlocked: isDlcPackUnlocked(packId),
-    price: pack.price,
-    canAfford: (state.coins || 0) >= pack.price
+    inspirationCost: cost,
+    isFirstPackDiscount: isFirstPack && cost < (pack.inspirationCost ?? DEFAULT_PACK_INSPIRATION_COST),
+    canAfford: (state.inspiration || 0) >= cost
   };
 }
 
@@ -66,27 +87,30 @@ export function unlockDlcPack(packId) {
 }
 
 /**
- * 购买/解锁 pack（花费智慧之光）
+ * 购买/解锁 pack（花费灵感）
  */
 export function purchaseDlcPack(packId) {
   const pack = getDlcPack(packId);
   if (!pack) return { ok: false, reason: 'pack_not_found' };
   if (isDlcPackUnlocked(packId)) return { ok: false, reason: 'already_unlocked' };
 
-  if ((state.coins || 0) < pack.price) {
-    return { ok: false, reason: 'insufficient_coins', price: pack.price };
+  const cost = getPackInspirationCost(packId);
+
+  if ((state.inspiration || 0) < cost) {
+    return { ok: false, reason: 'insufficient_inspiration', inspirationCost: cost };
   }
 
-  if (pack.price > 0) {
-    spendCoins(pack.price);
+  if (cost > 0) {
+    spendInspiration(cost);
   }
 
   unlockDlcPack(packId);
-  addHistory('purchase', `📦 解锁补充包「${pack.title}」`, pack.price > 0 ? `花费${pack.price}智慧之光` : '免费解锁');
+  const priceText = cost > 0 ? `花费${cost}灵感` : '免费解锁';
+  addHistory('purchase', `📦 解锁补充包「${pack.title}」`, priceText);
   saveState();
-  track('unlock_dlc_pack', { pack_id: packId, reason: 'purchase', price: pack.price });
+  track('unlock_dlc_pack', { pack_id: packId, reason: 'purchase', inspiration_cost: cost });
 
-  return { ok: true, pack };
+  return { ok: true, pack, inspirationCost: cost };
 }
 
 /**

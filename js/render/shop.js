@@ -401,6 +401,19 @@ function renderBookSection(title, slots, isRotating) {
   return section;
 }
 
+function renderShopBookCover(poolEntry, sizeClass = 'w-16 h-24') {
+  const bookDef = BOOKS[poolEntry.bookId];
+  const cover = bookDef?.cover;
+  const title = getBookTitle(poolEntry);
+  if (cover) {
+    return `
+      <img src="${cover}" alt="${title}" class="${sizeClass} object-cover mx-auto rounded shadow-sm mb-2" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+      <div class="hidden flex-col items-center justify-center ${sizeClass} mx-auto mb-2"><span class="text-3xl">${poolEntry.emoji}</span></div>
+    `;
+  }
+  return `<div class="text-3xl mb-2">${poolEntry.emoji}</div>`;
+}
+
 function renderBookCard(slot, poolEntry, owned, isRotating, mBoxFull) {
   const disabled = owned || (mBoxFull && !owned);
   let disabledReason = '';
@@ -420,7 +433,7 @@ function renderBookCard(slot, poolEntry, owned, isRotating, mBoxFull) {
     card.innerHTML = `
       ${volumeBadge}
       <div class="text-center">
-        <div class="text-3xl mb-2">${poolEntry.emoji}</div>
+        ${renderShopBookCover(poolEntry)}
         <div class="font-bold text-sm mb-1">${displayTitle}</div>
         <div class="text-xs text-ink-light mb-2">${poolEntry.author} · ${poolEntry.category}</div>
         <div class="text-xs text-magic-gold font-bold">${disabledReason}</div>
@@ -441,7 +454,7 @@ function renderBookCard(slot, poolEntry, owned, isRotating, mBoxFull) {
     card.innerHTML = `
       ${volumeBadge}
       <div class="text-center">
-        <div class="text-3xl mb-2">${poolEntry.emoji}</div>
+        ${renderShopBookCover(poolEntry)}
         <div class="font-bold text-sm mb-1">${displayTitle}</div>
         <div class="text-xs text-ink-light mb-2">${poolEntry.author}</div>
         <div class="text-xs text-magic-blue shop-countdown" data-soldat="${slot.soldAt}">⏰ ${soldText}</div>
@@ -469,7 +482,7 @@ function renderBookCard(slot, poolEntry, owned, isRotating, mBoxFull) {
     <div class="text-center">
       ${poolEntry.starter ? `<div class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full inline-block mb-1 font-bold">${t('starterRecommended')}</div>` : ''}
       ${peizhouBadge}
-      <div class="text-3xl mb-2">${poolEntry.emoji}</div>
+      ${renderShopBookCover(poolEntry)}
       <div class="font-bold text-sm mb-1">${displayTitle}</div>
       <div class="text-xs text-ink-light mb-1">${poolEntry.author}</div>
       <div class="text-xs text-ink-light mb-2">${poolEntry.category} · ${poolEntry.totalWords.toLocaleString()}${t('wordsUnit')}</div>
@@ -510,7 +523,7 @@ function showPurchaseModal(poolEntry, price, originalPrice, discount) {
   const content = el('div', 'parchment-bg rounded-2xl p-6 max-w-sm w-full magic-glow animate-scale-in');
   content.innerHTML = `
     <div class="text-center mb-4">
-      <div class="text-5xl mb-3">${poolEntry.emoji}</div>
+      ${renderShopBookCover(poolEntry, 'w-20 h-30')}
       ${volumeSubtitle}
       <h3 class="font-display text-xl font-bold mb-1">${displayTitle}</h3>
       <p class="text-sm text-ink-light">${poolEntry.author} · ${poolEntry.category}</p>

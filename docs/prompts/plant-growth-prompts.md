@@ -100,11 +100,13 @@
 生成后按 256×256px 每格切图，命名对应 `data/plants.js` 中的 `art` 字段：
 
 ```
-visual/plants/bird_of_paradise_lv1.png  ~ lv5.png
-visual/plants/magic_rose_lv1.png        ~ lv5.png
-visual/plants/starlight_fern_lv1.png    ~ lv5.png
-visual/plants/empty_pot.png
+visual/plants/plant_01_r1A.png ~ plant_05_r1E.png  （鹤望兰 Lv.1~5）
+visual/plants/plant_06_r2A.png ~ plant_10_r2E.png  （魔法玫瑰 Lv.1~5）
+visual/plants/plant_11_r3A.png ~ plant_15_r3E.png  （星光蕨 Lv.1~5）
+visual/plants/plant_16_empty_pot.png                （共享空花盆）
 ```
+
+> 注：`r1/r2/r3` 对应三条植物线；`A~E` 对应 Lv.1~5。空盆由三条线共享。
 
 ---
 

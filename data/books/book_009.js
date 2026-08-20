@@ -9,6 +9,7 @@ export const meta = {
   "totalWords": 400000,
   "description": "红楼梦典藏版。集齐全部单卷并在古籍修复室合成后可得。",
   "emoji": "🏮",
+  "cover": "visual/book_covers/book_009.png",
   "certMessage": "满纸荒唐言，一把辛酸泪——你已亲手抄下这场大梦。",
   "isCollectedEdition": true,
   "cannotBePurchased": true,

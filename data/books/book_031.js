@@ -8,7 +8,7 @@ export const meta = {
   "era": "ERA_005",
   "totalWords": 784000,
   "description": "亚瑟王之死典藏版。集齐全部单卷并在古籍修复室合成后可得。",
-  "emoji": "⚔️",
+  "emoji": "⚔️","cover": "visual/book_covers/book_031.png",
   "certMessage": "圆桌虽散，骑士长存。亚瑟与桂乃芬、兰斯洛特与圣杯的传奇，已由你亲手誊成。",
   "isCollectedEdition": true,
   "cannotBePurchased": true,

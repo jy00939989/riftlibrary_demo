@@ -9,6 +9,7 @@ export const meta = {
   totalWords: 123000,
   description: '十九世纪初英国乡村，五姐妹待嫁寻爱，傲慢与偏见交织的经典爱情传奇。',
   emoji: '👒',
+  cover: 'visual/book_covers/book_005.png',
   certMessage: '穿越两个世纪的偏见，你在文字里与伊丽莎白相遇。',
   authorBio: '简·奥斯汀（1775-1817），英国杰出小说家，以对乡绅阶层婚恋与生活的细腻讽刺笔触著称于世。',
   anecdotes: '奥斯汀21岁完成初稿《初次印象》，经十数年修改于1813年匿名出版，被誉为英语文学中最伟大的小说之一。',

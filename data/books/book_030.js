@@ -8,7 +8,7 @@ export const meta = {
   "era": "ERA_002",
   "totalWords": 318990,
   "description": "英吉利教会史典藏版。集齐全部单卷并在古籍修复室合成后可得。",
-  "emoji": "⛪",
+  "emoji": "⛪","cover": "visual/book_covers/book_030.png",
   "certMessage": "从凯撒的军团到奥古斯丁的十字架，一部英吉利的灵魂史已由你亲手誊成。",
   "isCollectedEdition": true,
   "cannotBePurchased": true,

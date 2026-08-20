@@ -11,6 +11,7 @@ export const meta = {
   description: '归墟图书馆的守护精灵墨墨为新任馆长撰写的入门指南，介绍了图书馆的历史、誊抄之法以及馆长的职责。',
   descriptionEn: "The Gui Xu Collection's guardian spirit, Momo, wrote this beginner's guide for the new curator, introducing the library's history, the art of transcription, and the curator's duties.",
   emoji: '📖',
+  cover: 'visual/book_covers/book_026.png',
   certMessage: '你已正式成为归墟图书馆的守护者。墨墨在你肩头轻轻蹭了蹭。',
   certMessageEn: 'You are now an official guardian of the Gui Xu Collection. Momo gently nudges your shoulder.',
   authorBio: '墨墨，归墟图书馆的守护精灵，一只热爱书籍的猫头鹰。没人知道它在图书馆里待了多久——也许是几百年，也许是更久。它自称"见过这座图书馆最辉煌的时刻，也见证了它最漫长的沉睡"。',

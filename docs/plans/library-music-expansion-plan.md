@@ -173,3 +173,75 @@ export const BGM_TRACKS = {
 - 古典作品本身已进入公有领域，但 Suno 生成的改编版版权归属需确认；建议保留生成记录与 prompt，避免平台版权争议。
 - 若 Suno 生成效果不理想，可改用 Udio / Stable Audio / 本地 LoRA 模型做备选。
 - 不部署，等用户后续指令。
+
+---
+
+## 七、图南原创曲 · 「馆长的私人唱片」解锁方案
+
+> 来源：图南自己创作的几首新曲。
+> 定位：与现有氛围 BGM（ruined/cozy/stellar）分离，作为「奖励曲/主题变奏」单独成组。
+> 目标：让曲子有叙事意义上的获取方式，而不是一上来就躺在列表里。
+
+### 7.1 分类概念
+
+把新曲子归到 **「馆长的私人唱片」**（Curator's Private Collection）分类下：
+
+- 现有 `ruined / cozy / stellar` 是「环境氛围音乐」，随氛围自动切换。
+- 新曲子是「奖励曲 / 角色曲 / 主题乐章」，默认不参与自动轮播，解锁后玩家可在音乐选择器里手动点选。
+
+### 7.2 解锁方式
+
+| 解锁方式 | 对应系统 | 适合什么曲风 | 叙事包装 |
+|---|---|---|---|
+| **植物种子兑换** | `data/plants.js` 的 `SEED_EXCHANGE` 新增 `type: 'music'` | 轻松、日常、循环感强的短曲 | 「某株植物在绽放时，叶脉间漏出了一段旋律」 |
+| **访客赠送** | `data/visitor-events.js` 的 `reward` 字段扩展 | 有角色记忆、故事感的曲子 | 「XX 把一张泛黄的唱片放在了缮写室桌上」 |
+| **某本书满级** | 书籍 `masteryLevel === 5` 时检测 | 厚重、有终章感的主题乐章 | 「这本书的最后一页夹着一张乐谱」 |
+
+#### 植物兑换
+
+- 放在 `starlight_fern` / `magic_rose` 等高阶种子兑换里。
+- 建议成本：**5 颗种子** 换一首循环短曲。
+- 命名示例：《浇水时》《午后窗台》《星蕨摇曳》。
+
+#### 访客赠送
+
+- 绑定到对应角色的 **偶层/稀层/终局事件**。
+- 如果某首曲子一听就想到某个访客，就让它成为该角色好感度事件的最高奖励。
+- 示例：沈明远终局事件赠送一首「牛津记忆」变奏。
+
+#### 书籍满级
+
+- 挑 1~2 本代表性大书（如《亚瑟王之死》《神曲》《庄子》）。
+- 当该书 `masteryLevel === 5` 时触发解锁。
+- 适合有起承转合、不适合当背景循环的「主题曲」。
+
+### 7.3 数据与实现
+
+在 `js/audio.js` 的 `TRACK_DEFS` 中新增 `tier: 'special'` 曲目：
+
+```js
+{ id: 'curator_melody_1', name: '浇水时', emoji: '🌿', tier: 'special', file: 'audio/curator_melody_1.mp3', unlockType: 'seed_exchange', unlockData: { seedType: 'starlight_fern', required: 5 } },
+{ id: 'curator_melody_2', name: '牛津记忆', emoji: '📜', tier: 'special', file: 'audio/curator_melody_2.mp3', unlockType: 'visitor_event', unlockData: { visitorId: 'shenmingyuan', eventType: 'rare' } },
+{ id: 'curator_melody_3', name: '亚瑟王终章', emoji: '⚔️', tier: 'special', file: 'audio/curator_melody_3.mp3', unlockType: 'book_mastery', unlockData: { bookId: 'book_031', masteryLevel: 5 } }
+```
+
+state 中新增：
+
+```js
+unlockedTracks: []
+```
+
+改动点：
+1. `js/audio.js`：扩展 `TRACK_DEFS` 解锁元数据；`getAllTrackDefs()` 返回锁定状态。
+2. `js/render/music-selector.js`：`special` 曲目单独分组渲染，显示解锁条件。
+3. `data/plants.js`：`SEED_EXCHANGE` 支持 `type: 'music'`。
+4. `data/visitor-events.js`：`reward` 支持 `music: 'trackId'`。
+5. `js/core/book-progress.js`：书籍满级时检测并解锁对应曲目。
+6. 解锁时弹出轻提示：「解锁新曲目：《XX》」。
+
+### 7.4 待图南确认
+
+- [ ] 新曲总数与文件名
+- [ ] 每首曲子的大致情绪/风格
+- [ ] 是否有明确对应的访客或书籍
+- [ ] 是否参与自动 BGM 轮播（默认不建议）

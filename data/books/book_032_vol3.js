@@ -11,6 +11,7 @@ export const meta = {
   "totalWords": 100667,
   "description": "坎特伯雷故事集卷三。托巴斯、梅利比、牧师等朝圣者讲述的故事。",
   "emoji": "📖",
+  "cover": 'visual/book_covers/book_032.png',
   "certMessage": "卷三已成。朝圣之路的最后一个故事，终于在你的笔下落定。",
   "isVolume": true,
   "collectedBookId": "book_032",
@@ -92,4 +93,11 @@ export const chapters = [
   }
 ];
 
-export const quotes = {};
+export const quotes = {
+  "10": "「他乐于学习，也乐于教导。」",
+  "25": "「生命如此短暂，技艺却需长久研习。」",
+  "40": "「五月容不得夜晚有半点懒散。」",
+  "55": "「什么比智慧更可贵？一位好妻子；什么比好妻子更可贵？没有。」",
+  "70": "「忍耐是能征服一切的美德。」",
+  "85": "「最渊博的学者，未必是最聪明的人。」"
+};

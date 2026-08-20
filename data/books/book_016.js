@@ -8,7 +8,7 @@ export const meta = {
   "era": "ERA_005",
   "totalWords": 860000,
   "description": "西游记典藏版。集齐全部单卷并在古籍修复室合成后可得。",
-  "emoji": "🐒",
+  "emoji": "🐒","cover": "visual/book_covers/book_016.png",
   "certMessage": "九九八十一难，第一难是提笔，你已经过了。",
   "isCollectedEdition": true,
   "cannotBePurchased": true,

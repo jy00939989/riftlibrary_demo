@@ -6,7 +6,7 @@ if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
   console.warn = () => {};
 }
 
-import { state, initState, saveState, ensureAllBooksInManuscriptBox } from './state.js';
+import { state, initState, saveState, ensureAllBooksInManuscriptBox, DEFAULT_BOOKS } from './state.js';
 import { runLegacyMigration, remove, STORAGE_KEYS, load, save } from './persistence.js';
 import { initSettings, getSettings } from './settings.js';
 import { t, getLocale, setLocale } from './i18n/terms.js';
@@ -676,4 +676,106 @@ function updateVisitorBadge() {
   }
 }
 
+// ========== 演示模式（仅本地开发/录屏用）==========
+
+function enterDemoMode() {
+  if (!confirm('进入演示模式？\n\n这将：\n· 把氛围设为 500（星辰之境）\n· 重置所有普通书籍为未抄写\n· 清空当前访客并生成王小磊、沈明远、程远\n· 重置植物和种子\n· 补充智慧与灵感\n\n当前存档会被覆盖，建议先备份。')) {
+    return;
+  }
+
+  // 1. 重置书籍：普通书回到 unlocked，卷/典藏版保持默认
+  Object.keys(state.books).forEach(bookId => {
+    const book = BOOKS[bookId];
+    const defaultState = DEFAULT_BOOKS[bookId];
+    if (!book || !defaultState) return;
+    state.books[bookId] = { ...defaultState };
+  });
+
+  // 2. 氛围拉满
+  state.library.atmosphere = 500;
+  updateBodyBackground();
+
+  // 3. 资源
+  state.coins = 9999;
+  state.inspiration = 10;
+  state.seeds = { bird_of_paradise: 0, magic_rose: 0, starlight_fern: 0 };
+
+  // 4. 植物清空
+  state.plant = {
+    activeType: null,
+    level: 0,
+    growthProgress: 0,
+    waterAvailable: 0,
+    lastCareTime: 0,
+    plantedAt: 0,
+    harvested: false
+  };
+
+  // 5. 访客：清空后生成三位
+  state.visitors = [];
+  spawnVisitor('wangxiaolei');
+  spawnVisitor('shenmingyuan');
+  spawnVisitor('chengyuan');
+
+  // 6. 日常/引导标记
+  state.introCompleted = true;
+  state.tutorialFlags.firstVisitorEventDone = true;
+  state.tutorialFlags.firstLibraryOpen = true;
+  state.tutorialFlags.firstShopOpen = true;
+  state.tutorialFlags.firstFocusComplete = true;
+
+  // 7. 清空手稿箱和书架，让书回到未开始状态
+  state.manuscriptBox = [];
+  state.library.shelves = [[null, null, null, null, null]];
+
+  saveState();
+
+  // 8. 刷新 UI
+  updateStatusBar();
+  renderFocusPage();
+  renderBookshelfPage();
+  renderLibraryPage();
+  renderVisitorsPage();
+  renderShopPage();
+  renderArchivePage();
+
+  // 9. 切到图书馆页展示效果
+  if (typeof switchTab === 'function') {
+    switchTab('library');
+  }
+
+  showToast('已进入演示模式 🎬');
+}
+
+function showToast(message) {
+  const toast = document.createElement('div');
+  toast.className = 'fixed bottom-8 left-1/2 -translate-x-1/2 px-4 py-2 bg-ink/80 text-white rounded-full text-sm z-[200] animate-fade-in-up';
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 0.3s';
+    setTimeout(() => toast.remove(), 300);
+  }, 2000);
+}
+
+function createDemoModeButton() {
+  // 仅本地开发环境显示
+  if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') return;
+
+  const btn = document.createElement('button');
+  btn.id = 'demo-mode-btn';
+  btn.title = '进入演示模式（录屏用）';
+  btn.innerHTML = '🎬';
+  btn.className = 'fixed bottom-6 right-6 z-[90] w-12 h-12 rounded-full bg-magic-gold text-white shadow-lg hover:shadow-xl hover:scale-110 transition-all text-xl flex items-center justify-center';
+  btn.style.cssText = 'border: 2px solid rgba(255,255,255,0.3);';
+  btn.addEventListener('click', enterDemoMode);
+  document.body.appendChild(btn);
+}
+
+// 暴露给控制台，方便脚本化
+window.__dev = window.__dev || {};
+window.__dev.enterDemoMode = enterDemoMode;
+
 init();
+createDemoModeButton();

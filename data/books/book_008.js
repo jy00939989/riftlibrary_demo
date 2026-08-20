@@ -9,6 +9,7 @@ export const meta = {
   "totalWords": 193000,
   "description": "物种起源典藏版。集齐全部单卷并在古籍修复室合成后可得。",
   "emoji": "🐦",
+  "cover": "visual/book_covers/book_008.png",
   "certMessage": "生命之树在你笔下生长，每一片叶子都是演化的奇迹。",
   "isCollectedEdition": true,
   "cannotBePurchased": true,

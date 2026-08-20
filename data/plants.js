@@ -8,11 +8,12 @@ export const PLANT_TYPES = {
     descKey: 'plant.birdOfParadise.description',
     emoji: '🌿',
     art: {
-      1: 'visual/plants/bird_of_paradise_lv1.png',
-      2: 'visual/plants/bird_of_paradise_lv2.png',
-      3: 'visual/plants/bird_of_paradise_lv3.png',
-      4: 'visual/plants/bird_of_paradise_lv4.png',
-      5: 'visual/plants/bird_of_paradise_lv5.png'
+      0: 'visual/plants/plant_16_empty_pot.png',
+      1: 'visual/plants/plant_01_r1A.png',
+      2: 'visual/plants/plant_02_r1B.png',
+      3: 'visual/plants/plant_03_r1C.png',
+      4: 'visual/plants/plant_04_r1D.png',
+      5: 'visual/plants/plant_05_r1E.png'
     },
     description: '一盆高挑的花叶植物，叶片如鹤翅般优雅伸展，花苞中蕴藏着异世界的生机。',
     growthPerLevel: 80,
@@ -38,11 +39,12 @@ export const PLANT_TYPES = {
     descKey: 'plant.magicRose.description',
     emoji: '🌹',
     art: {
-      1: 'visual/plants/magic_rose_lv1.png',
-      2: 'visual/plants/magic_rose_lv2.png',
-      3: 'visual/plants/magic_rose_lv3.png',
-      4: 'visual/plants/magic_rose_lv4.png',
-      5: 'visual/plants/magic_rose_lv5.png'
+      0: 'visual/plants/plant_16_empty_pot.png',
+      1: 'visual/plants/plant_06_r2A.png',
+      2: 'visual/plants/plant_07_r2B.png',
+      3: 'visual/plants/plant_08_r2C.png',
+      4: 'visual/plants/plant_09_r2D.png',
+      5: 'visual/plants/plant_10_r2E.png'
     },
     description: '花瓣在月光下会微微发光的奇异玫瑰，据说是某位旅法师从异位面带回的种子。',
     growthPerLevel: 100,
@@ -68,11 +70,12 @@ export const PLANT_TYPES = {
     descKey: 'plant.starlightFern.description',
     emoji: '🌿',
     art: {
-      1: 'visual/plants/starlight_fern_lv1.png',
-      2: 'visual/plants/starlight_fern_lv2.png',
-      3: 'visual/plants/starlight_fern_lv3.png',
-      4: 'visual/plants/starlight_fern_lv4.png',
-      5: 'visual/plants/starlight_fern_lv5.png'
+      0: 'visual/plants/plant_16_empty_pot.png',
+      1: 'visual/plants/plant_11_r3A.png',
+      2: 'visual/plants/plant_12_r3B.png',
+      3: 'visual/plants/plant_13_r3C.png',
+      4: 'visual/plants/plant_14_r3D.png',
+      5: 'visual/plants/plant_15_r3E.png'
     },
     description: '叶片在暗处会泛起银色微光的蕨类植物，孢子成熟时会像坠落星河一样流淌。',
     growthPerLevel: 120,

@@ -8,7 +8,7 @@ export const meta = {
   "era": "ERA_001",
   "totalWords": 600000,
   "description": "几何原本典藏版。集齐全部单卷并在古籍修复室合成后可得。",
-  "emoji": "📐",
+  "emoji": "📐","cover": "visual/book_covers/book_018.png",
   "certMessage": "从公理到定理，你亲手搭建了理性的圣殿。",
   "isCollectedEdition": true,
   "cannotBePurchased": true,

@@ -1,0 +1,641 @@
+[
+  {
+    "file": "book_001.js",
+    "id": "book_001",
+    "title": "小王子",
+    "titleEn": "The Little Prince",
+    "author": "安托万·德·圣-埃克苏佩里",
+    "category": "童话",
+    "description": "一个来自小行星B-612的小王子的星际旅行故事，关于爱、责任与生命的意义。"
+  },
+  {
+    "file": "book_002.js",
+    "id": "book_002",
+    "title": "动物农场",
+    "titleEn": "Animal Farm",
+    "author": "乔治·奥威尔",
+    "category": "寓言",
+    "description": "一个关于权力与腐败的经典寓言，讲述农场动物推翻人类统治后发生的故事。"
+  },
+  {
+    "file": "book_003.js",
+    "id": "book_003",
+    "title": "老人与海",
+    "titleEn": "",
+    "author": "海明威",
+    "category": "小说",
+    "description": "一位古巴老渔夫与海洋的史诗对决。八十四天空手而归后，他驶向命运的深处，独自对抗一条比船还长的大马林鱼。三天三夜的搏斗，是人与自然最古老的对话——关于尊严、坚韧与永不言败的灵魂。"
+  },
+  {
+    "file": "book_004.js",
+    "id": "book_004",
+    "title": "东京梦华录",
+    "titleEn": "",
+    "author": "孟元老（宋代）",
+    "category": "历史",
+    "description": "北宋东京汴梁繁华尽录，御街酒楼、相国寺万姓交易，一卷市井风情画与帝国盛衰见证。"
+  },
+  {
+    "file": "book_005.js",
+    "id": "book_005",
+    "title": "傲慢与偏见",
+    "titleEn": "",
+    "author": "简·奥斯汀",
+    "category": "小说",
+    "description": "十九世纪初英国乡村，五姐妹待嫁寻爱，傲慢与偏见交织的经典爱情传奇。"
+  },
+  {
+    "file": "book_006.js",
+    "id": "book_006",
+    "title": "庄子",
+    "titleEn": "",
+    "author": "庄周",
+    "category": "哲学",
+    "description": "战国庄周所著，以汪洋恣肆之文笔与恢诡谲怪之寓言，构建逍遥齐物的哲学天地。"
+  },
+  {
+    "file": "book_007.js",
+    "id": "book_007",
+    "title": "本草纲目·草部（典藏版）",
+    "titleEn": "",
+    "author": "李时珍（明代）",
+    "category": "科学",
+    "description": "本草纲目·草部典藏版。集齐全部单卷并在古籍修复室合成后可得。"
+  },
+  {
+    "file": "book_007_vol1.js",
+    "id": "book_007_vol1",
+    "title": "本草纲目·草部",
+    "titleEn": "",
+    "author": "李时珍（明代）",
+    "category": "科学",
+    "description": "本草纲目·草部第一卷。"
+  },
+  {
+    "file": "book_007_vol2.js",
+    "id": "book_007_vol2",
+    "title": "本草纲目·草部",
+    "titleEn": "",
+    "author": "李时珍（明代）",
+    "category": "科学",
+    "description": "本草纲目·草部第二卷。"
+  },
+  {
+    "file": "book_008.js",
+    "id": "book_008",
+    "title": "物种起源（典藏版）",
+    "titleEn": "",
+    "author": "达尔文（Charles Darwin）",
+    "category": "科学",
+    "description": "物种起源典藏版。集齐全部单卷并在古籍修复室合成后可得。"
+  },
+  {
+    "file": "book_008_vol1.js",
+    "id": "book_008_vol1",
+    "title": "物种起源",
+    "titleEn": "",
+    "author": "达尔文（Charles Darwin）",
+    "category": "科学",
+    "description": "物种起源第一卷。"
+  },
+  {
+    "file": "book_008_vol2.js",
+    "id": "book_008_vol2",
+    "title": "物种起源",
+    "titleEn": "",
+    "author": "达尔文（Charles Darwin）",
+    "category": "科学",
+    "description": "物种起源第二卷。"
+  },
+  {
+    "file": "book_009.js",
+    "id": "book_009",
+    "title": "红楼梦（典藏版）",
+    "titleEn": "Dream of the Red Chamber",
+    "author": "曹雪芹",
+    "category": "小说",
+    "description": "红楼梦典藏版。集齐全部单卷并在古籍修复室合成后可得。"
+  },
+  {
+    "file": "book_009_vol1.js",
+    "id": "book_009_vol1",
+    "title": "红楼梦",
+    "titleEn": "Dream of the Red Chamber",
+    "author": "曹雪芹",
+    "category": "小说",
+    "description": "红楼梦第一卷。"
+  },
+  {
+    "file": "book_009_vol2.js",
+    "id": "book_009_vol2",
+    "title": "红楼梦",
+    "titleEn": "Dream of the Red Chamber",
+    "author": "曹雪芹",
+    "category": "小说",
+    "description": "红楼梦第二卷。"
+  },
+  {
+    "file": "book_009_vol3.js",
+    "id": "book_009_vol3",
+    "title": "红楼梦",
+    "titleEn": "Dream of the Red Chamber",
+    "author": "曹雪芹",
+    "category": "小说",
+    "description": "红楼梦第三卷。"
+  },
+  {
+    "file": "book_010.js",
+    "id": "book_010",
+    "title": "纯粹理性批判",
+    "titleEn": "Critique of Pure Reason",
+    "author": "康德（Immanuel Kant）",
+    "category": "哲学",
+    "description": "以哥白尼革命式勇气追问人类理性边界与认识何以可能的哲学经典"
+  },
+  {
+    "file": "book_011.js",
+    "id": "book_011",
+    "title": "道德经",
+    "titleEn": "Tao Te Ching",
+    "author": "老子",
+    "category": "哲学",
+    "description": "中国哲学的源头，短短五千言影响了整个东亚文明两千多年。"
+  },
+  {
+    "file": "book_012.js",
+    "id": "book_012",
+    "title": "沉思录",
+    "titleEn": "Meditations",
+    "author": "马可·奥勒留",
+    "category": "哲学",
+    "description": "罗马皇帝写给自己的日记，斯多葛派哲学的巅峰之作，关于如何保持内心平静。"
+  },
+  {
+    "file": "book_013.js",
+    "id": "book_013",
+    "title": "理想国（典藏版）",
+    "titleEn": "The Republic",
+    "author": "柏拉图",
+    "category": "哲学",
+    "description": "理想国典藏版。集齐全部单卷并在古籍修复室合成后可得。"
+  },
+  {
+    "file": "book_013_vol1.js",
+    "id": "book_013_vol1",
+    "title": "理想国",
+    "titleEn": "The Republic",
+    "author": "柏拉图",
+    "category": "哲学",
+    "description": "理想国第一卷。"
+  },
+  {
+    "file": "book_013_vol2.js",
+    "id": "book_013_vol2",
+    "title": "理想国",
+    "titleEn": "The Republic",
+    "author": "柏拉图",
+    "category": "哲学",
+    "description": "理想国第二卷。"
+  },
+  {
+    "file": "book_014.js",
+    "id": "book_014",
+    "title": "史记（典藏版）",
+    "titleEn": "Records of the Grand Historian",
+    "author": "司马迁",
+    "category": "历史",
+    "description": "史记典藏版。集齐全部单卷并在古籍修复室合成后可得。"
+  },
+  {
+    "file": "book_014_vol1.js",
+    "id": "book_014_vol1",
+    "title": "史记",
+    "titleEn": "Records of the Grand Historian",
+    "author": "司马迁",
+    "category": "历史",
+    "description": "史记第一卷。"
+  },
+  {
+    "file": "book_014_vol2.js",
+    "id": "book_014_vol2",
+    "title": "史记",
+    "titleEn": "Records of the Grand Historian",
+    "author": "司马迁",
+    "category": "历史",
+    "description": "史记第二卷。"
+  },
+  {
+    "file": "book_014_vol3.js",
+    "id": "book_014_vol3",
+    "title": "史记",
+    "titleEn": "Records of the Grand Historian",
+    "author": "司马迁",
+    "category": "历史",
+    "description": "史记第三卷。"
+  },
+  {
+    "file": "book_014_vol4.js",
+    "id": "book_014_vol4",
+    "title": "史记",
+    "titleEn": "Records of the Grand Historian",
+    "author": "司马迁",
+    "category": "历史",
+    "description": "史记第四卷。"
+  },
+  {
+    "file": "book_015.js",
+    "id": "book_015",
+    "title": "诗经",
+    "titleEn": "The Book of Songs",
+    "author": "孔子编订",
+    "category": "诗歌",
+    "description": "中国最早的诗歌总集，收录西周初年至春秋中叶诗歌305篇，又称"
+  },
+  {
+    "file": "book_016.js",
+    "id": "book_016",
+    "title": "西游记（典藏版）",
+    "titleEn": "Journey to the West",
+    "author": "吴承恩",
+    "category": "小说",
+    "description": "西游记典藏版。集齐全部单卷并在古籍修复室合成后可得。"
+  },
+  {
+    "file": "book_016_vol1.js",
+    "id": "book_016_vol1",
+    "title": "西游记",
+    "titleEn": "Journey to the West",
+    "author": "吴承恩",
+    "category": "小说",
+    "description": "西游记第一卷。"
+  },
+  {
+    "file": "book_016_vol2.js",
+    "id": "book_016_vol2",
+    "title": "西游记",
+    "titleEn": "Journey to the West",
+    "author": "吴承恩",
+    "category": "小说",
+    "description": "西游记第二卷。"
+  },
+  {
+    "file": "book_016_vol3.js",
+    "id": "book_016_vol3",
+    "title": "西游记",
+    "titleEn": "Journey to the West",
+    "author": "吴承恩",
+    "category": "小说",
+    "description": "西游记第三卷。"
+  },
+  {
+    "file": "book_016_vol4.js",
+    "id": "book_016_vol4",
+    "title": "西游记",
+    "titleEn": "Journey to the West",
+    "author": "吴承恩",
+    "category": "小说",
+    "description": "西游记第四卷。"
+  },
+  {
+    "file": "book_016_vol5.js",
+    "id": "book_016_vol5",
+    "title": "西游记",
+    "titleEn": "Journey to the West",
+    "author": "吴承恩",
+    "category": "小说",
+    "description": "西游记第五卷。"
+  },
+  {
+    "file": "book_016_vol6.js",
+    "id": "book_016_vol6",
+    "title": "西游记",
+    "titleEn": "Journey to the West",
+    "author": "吴承恩",
+    "category": "小说",
+    "description": "西游记第六卷。"
+  },
+  {
+    "file": "book_017.js",
+    "id": "book_017",
+    "title": "鲁滨逊漂流记",
+    "titleEn": "Robinson Crusoe",
+    "author": "丹尼尔·笛福",
+    "category": "小说",
+    "description": "英国文学史上第一部现实主义长篇小说，讲述主人公鲁滨逊在荒岛上度过28年的传奇故事。"
+  },
+  {
+    "file": "book_018.js",
+    "id": "book_018",
+    "title": "几何原本（典藏版）",
+    "titleEn": "Elements",
+    "author": "欧几里得",
+    "category": "科学",
+    "description": "几何原本典藏版。集齐全部单卷并在古籍修复室合成后可得。"
+  },
+  {
+    "file": "book_018_vol1.js",
+    "id": "book_018_vol1",
+    "title": "几何原本",
+    "titleEn": "Elements",
+    "author": "欧几里得",
+    "category": "科学",
+    "description": "几何原本第一卷。"
+  },
+  {
+    "file": "book_018_vol2.js",
+    "id": "book_018_vol2",
+    "title": "几何原本",
+    "titleEn": "Elements",
+    "author": "欧几里得",
+    "category": "科学",
+    "description": "几何原本第二卷。"
+  },
+  {
+    "file": "book_018_vol3.js",
+    "id": "book_018_vol3",
+    "title": "几何原本",
+    "titleEn": "Elements",
+    "author": "欧几里得",
+    "category": "科学",
+    "description": "几何原本第三卷。"
+  },
+  {
+    "file": "book_018_vol4.js",
+    "id": "book_018_vol4",
+    "title": "几何原本",
+    "titleEn": "Elements",
+    "author": "欧几里得",
+    "category": "科学",
+    "description": "几何原本第四卷。"
+  },
+  {
+    "file": "book_019.js",
+    "id": "book_019",
+    "title": "卡拉马佐夫兄弟（典藏版）",
+    "titleEn": "The Brothers Karamazov",
+    "author": "陀思妥耶夫斯基",
+    "category": "哲学",
+    "description": "卡拉马佐夫兄弟典藏版。集齐全部单卷并在古籍修复室合成后可得。"
+  },
+  {
+    "file": "book_019_vol1.js",
+    "id": "book_019_vol1",
+    "title": "卡拉马佐夫兄弟",
+    "titleEn": "The Brothers Karamazov",
+    "author": "陀思妥耶夫斯基",
+    "category": "哲学",
+    "description": "卡拉马佐夫兄弟第一卷。"
+  },
+  {
+    "file": "book_019_vol2.js",
+    "id": "book_019_vol2",
+    "title": "卡拉马佐夫兄弟",
+    "titleEn": "The Brothers Karamazov",
+    "author": "陀思妥耶夫斯基",
+    "category": "哲学",
+    "description": "卡拉马佐夫兄弟第二卷。"
+  },
+  {
+    "file": "book_019_vol3.js",
+    "id": "book_019_vol3",
+    "title": "卡拉马佐夫兄弟",
+    "titleEn": "The Brothers Karamazov",
+    "author": "陀思妥耶夫斯基",
+    "category": "哲学",
+    "description": "卡拉马佐夫兄弟第三卷。"
+  },
+  {
+    "file": "book_020.js",
+    "id": "book_020",
+    "title": "社会契约论",
+    "titleEn": "The Social Contract",
+    "author": "卢梭",
+    "category": "哲学",
+    "description": "卢梭政治哲学代表作，提出"
+  },
+  {
+    "file": "book_021.js",
+    "id": "book_021",
+    "title": "第一哲学沉思集",
+    "titleEn": "Meditations on First Philosophy",
+    "author": "笛卡尔",
+    "category": "哲学",
+    "description": "近代哲学的真正起点，"
+  },
+  {
+    "file": "book_022.js",
+    "id": "book_022",
+    "title": "传习录",
+    "titleEn": "Instructions for Practical Living",
+    "author": "王阳明",
+    "category": "哲学",
+    "description": "心即理，知行合一，致良知。阳明心学的全部精义，尽在此书中。"
+  },
+  {
+    "file": "book_023.js",
+    "id": "book_023",
+    "title": "绿野仙踪",
+    "titleEn": "The Wonderful Wizard of Oz",
+    "author": "莱曼·弗兰克·鲍姆",
+    "category": "童话",
+    "description": "一场龙卷风把多萝西带到了奇妙的奥兹国，她与稻草人、铁皮人和胆小的狮子一起，踏上了寻找魔法师的冒险之旅。"
+  },
+  {
+    "file": "book_024.js",
+    "id": "book_024",
+    "title": "爱丽丝梦游奇境",
+    "titleEn": "Alice",
+    "author": "刘易斯·卡罗尔",
+    "category": "童话",
+    "description": "小女孩爱丽丝追逐一只揣着怀表的白兔，掉进了奇妙的兔子洞。在那个颠倒的世界里，一切都充满了荒诞与奇思妙想。"
+  },
+  {
+    "file": "book_026.js",
+    "id": "book_026",
+    "title": "图书馆指南",
+    "titleEn": "A Guide to the Library",
+    "author": "墨墨",
+    "category": "散文",
+    "description": "归墟图书馆的守护精灵墨墨为新任馆长撰写的入门指南，介绍了图书馆的历史、誊抄之法以及馆长的职责。"
+  },
+  {
+    "file": "book_027.js",
+    "id": "book_027",
+    "title": "飞鸟集",
+    "titleEn": "Stray Birds",
+    "author": "拉宾德拉纳特·泰戈尔",
+    "category": "诗歌",
+    "description": "印度诗人泰戈尔的短诗集，326首无题短诗如飞鸟掠过天空，关于爱、自然与生命的沉思。"
+  },
+  {
+    "file": "book_028.js",
+    "id": "book_028",
+    "title": "伊索寓言选",
+    "titleEn": "Selected Aesop\\",
+    "author": "伊索",
+    "category": "寓言",
+    "description": "古希腊寓言家伊索的经典寓言选集，以动物故事喻人世智慧，流传两千余年的启蒙读物。"
+  },
+  {
+    "file": "book_029.js",
+    "id": "book_029",
+    "title": "菜根谭选",
+    "titleEn": "Selected Vegetable Roots Discourse",
+    "author": "洪应明",
+    "category": "哲学",
+    "description": "明代洪应明的处世箴言集，融合儒释道三家智慧，以简练文字道破人情世故与修身养性之理。"
+  },
+  {
+    "file": "book_030.js",
+    "id": "book_030",
+    "title": "英吉利教会史（典藏版）",
+    "titleEn": "Ecclesiastical History of the English People",
+    "author": "比德",
+    "category": "历史",
+    "description": "英吉利教会史典藏版。集齐全部单卷并在古籍修复室合成后可得。"
+  },
+  {
+    "file": "book_030_vol1.js",
+    "id": "book_030_vol1",
+    "title": "英吉利教会史",
+    "titleEn": "Ecclesiastical History of the English People",
+    "author": "比德",
+    "category": "历史",
+    "description": "英吉利教会史卷一。从不列颠的古代居民，到奥古斯丁在肯特建立教会。"
+  },
+  {
+    "file": "book_030_vol2.js",
+    "id": "book_030_vol2",
+    "title": "英吉利教会史",
+    "titleEn": "Ecclesiastical History of the English People",
+    "author": "比德",
+    "category": "历史",
+    "description": "英吉利教会史卷二。诺森伯利亚皈依与盎格鲁诸王国的基督教化。"
+  },
+  {
+    "file": "book_030_vol3.js",
+    "id": "book_030_vol3",
+    "title": "英吉利教会史",
+    "titleEn": "Ecclesiastical History of the English People",
+    "author": "比德",
+    "category": "历史",
+    "description": "英吉利教会史卷三。圣徒生平、诗人之歌与全岛教会的一统。"
+  },
+  {
+    "file": "book_031.js",
+    "id": "book_031",
+    "title": "亚瑟王之死（典藏版）",
+    "titleEn": "Le Morte d",
+    "author": "托马斯·马洛礼",
+    "category": "小说",
+    "description": "亚瑟王之死典藏版。集齐全部单卷并在古籍修复室合成后可得。"
+  },
+  {
+    "file": "book_031_vol1.js",
+    "id": "book_031_vol1",
+    "title": "亚瑟王之死",
+    "titleEn": "Le Morte d",
+    "author": "托马斯·马洛礼",
+    "category": "小说",
+    "description": "亚瑟王之死卷一「奇迹·亚瑟称王」。从尤瑟王与亚瑟的诞生，到兰斯洛特骑士登场，见证石中剑、圆桌骑士团与罗马之战的王者崛起。"
+  },
+  {
+    "file": "book_031_vol2.js",
+    "id": "book_031_vol2",
+    "title": "亚瑟王之死",
+    "titleEn": "Le Morte d",
+    "author": "托马斯·马洛礼",
+    "category": "小说",
+    "description": "亚瑟王之死卷二「历险·圆桌骑士」。兰斯洛特、加雷斯、特里斯坦诸骑士的历险与爱情，圆桌骑士团的黄金时代。"
+  },
+  {
+    "file": "book_031_vol3.js",
+    "id": "book_031_vol3",
+    "title": "亚瑟王之死",
+    "titleEn": "Le Morte d",
+    "author": "托马斯·马洛礼",
+    "category": "小说",
+    "description": "亚瑟王之死卷三「追寻·圣杯故事」。加拉哈德与诸骑士追寻圣杯的试炼之路，信仰与纯净的终极考验。"
+  },
+  {
+    "file": "book_031_vol4.js",
+    "id": "book_031_vol4",
+    "title": "亚瑟王之死",
+    "titleEn": "Le Morte d",
+    "author": "托马斯·马洛礼",
+    "category": "小说",
+    "description": "亚瑟王之死卷四「传奇·亚瑟王之死」。兰斯洛特与桂乃芬的爱情、莫德雷德的叛乱与卡姆兰之战，圆桌时代的悲壮终结。"
+  },
+  {
+    "file": "book_032.js",
+    "id": "book_032",
+    "title": "坎特伯雷故事集（典藏版）",
+    "titleEn": "The Canterbury Tales",
+    "author": "杰弗里·乔叟",
+    "category": "诗歌",
+    "description": "坎特伯雷故事集典藏版。集齐全部单卷并在古籍修复室合成后可得。"
+  },
+  {
+    "file": "book_032_vol1.js",
+    "id": "book_032_vol1",
+    "title": "坎特伯雷故事集",
+    "titleEn": "The Canterbury Tales",
+    "author": "杰弗里·乔叟",
+    "category": "诗歌",
+    "description": "坎特伯雷故事集卷一。武士、磨坊主、管家等朝圣者讲述的故事。"
+  },
+  {
+    "file": "book_032_vol2.js",
+    "id": "book_032_vol2",
+    "title": "坎特伯雷故事集",
+    "titleEn": "The Canterbury Tales",
+    "author": "杰弗里·乔叟",
+    "category": "诗歌",
+    "description": "坎特伯雷故事集卷二。学者、商人、侍从等朝圣者讲述的故事。"
+  },
+  {
+    "file": "book_032_vol3.js",
+    "id": "book_032_vol3",
+    "title": "坎特伯雷故事集",
+    "titleEn": "The Canterbury Tales",
+    "author": "杰弗里·乔叟",
+    "category": "诗歌",
+    "description": "坎特伯雷故事集卷三。托巴斯、梅利比、牧师等朝圣者讲述的故事。"
+  },
+  {
+    "file": "book_033.js",
+    "id": "book_033",
+    "title": "十四行诗集",
+    "titleEn": "Shakespeare",
+    "author": "莎士比亚",
+    "category": "诗歌",
+    "description": "莎士比亚154首十四行诗全译，献给美貌青年与黑肤女郎的情诗，梁宗岱译，关于爱、时间、美与不朽的永恒诗篇。"
+  },
+  {
+    "file": "book_034.js",
+    "id": "book_034",
+    "title": "秘密花园（典藏版）",
+    "titleEn": "The Secret Garden",
+    "author": "弗朗西丝·霍奇森·伯内特",
+    "category": "小说",
+    "description": "秘密花园典藏版。集齐全部单卷并在古籍修复室合成后可得。"
+  },
+  {
+    "file": "book_034_vol1.js",
+    "id": "book_034_vol1",
+    "title": "秘密花园",
+    "titleEn": "The Secret Garden",
+    "author": "弗朗西丝·霍奇森·伯内特",
+    "category": "小说",
+    "description": "秘密花园卷一。玛丽小姐倔乖乖，荒原上古怪的庄园，走廊里的哭声与引路的知更鸟，一扇尘封的园门正等待被打开。"
+  },
+  {
+    "file": "book_034_vol2.js",
+    "id": "book_034_vol2",
+    "title": "秘密花园",
+    "titleEn": "The Secret Garden",
+    "author": "弗朗西丝·霍奇森·伯内特",
+    "category": "小说",
+    "description": "秘密花园卷二。春天来到花园，科林学会奔跑与大笑，本·韦瑟斯塔夫发现秘密，克雷文先生回到庄园，一家人终在花园团聚。"
+  }
+]

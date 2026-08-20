@@ -8,7 +8,7 @@ export const meta = {
   "era": "ERA_002",
   "totalWords": 530000,
   "description": "史记典藏版。集齐全部单卷并在古籍修复室合成后可得。",
-  "emoji": "📜",
+  "emoji": "📜","cover": "visual/book_covers/book_014.png",
   "certMessage": "史家之绝唱，如今也有了你的一笔。",
   "isCollectedEdition": true,
   "cannotBePurchased": true,

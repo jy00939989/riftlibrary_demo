@@ -8,7 +8,7 @@ export const meta = {
   "era": "ERA_001",
   "totalWords": 300000,
   "description": "理想国典藏版。集齐全部单卷并在古籍修复室合成后可得。",
-  "emoji": "🏺",
+  "emoji": "🏺","cover": "visual/book_covers/book_013.png",
   "certMessage": "你走出了洞穴，看见了阳光——理想国的大门为你敞开。",
   "isCollectedEdition": true,
   "cannotBePurchased": true,

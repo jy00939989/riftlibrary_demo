@@ -7,7 +7,8 @@ export {
 export {
   getDlcPacks, getDlcPack, isDlcPackUnlocked, isBookLockedByDlc,
   getDlcPackUnlockInfo, purchaseDlcPack, redeemDlcCode,
-  unlockDlcPack, checkAutoUnlockPacks
+  unlockDlcPack, checkAutoUnlockPacks, getPackInspirationCost,
+  FIRST_PACK_INSPIRATION_COST, DEFAULT_PACK_INSPIRATION_COST
 } from './core/shop/dlc-packs.js';
 
 export {

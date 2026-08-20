@@ -382,14 +382,14 @@ function renderBookCard(book) {
   const starIcon = bookState.starred ? '⭐' : '☆';
   const coverSrc = book.cover || null;
   const hasCover = !!coverSrc;
-  const cardDiv = el('div', `book-spine ${isCompleted ? 'completed' : isCopying ? 'copying' : 'unstarted'} flex flex-col min-h-[200px]`);
+  const cardDiv = el('div', `book-spine ${isCompleted ? 'completed' : isCopying ? 'copying' : 'unstarted'} flex flex-col`);
 
   cardDiv.innerHTML = `
     <button class="star-btn absolute top-1.5 right-1.5 text-sm w-7 h-7 flex items-center justify-center rounded-full bg-white/60 hover:bg-white z-10 transition-all" data-book-id="${book.id}">${starIcon}</button>
 
-    <!-- 封面区 -->
-    <div class="book-cover flex-1 flex flex-col items-center justify-center p-4 relative min-h-[130px] overflow-hidden rounded-t-lg">
-      <div class="cover-fallback flex flex-col items-center justify-center w-full h-full ${hasCover ? 'hidden' : ''}">
+    <!-- 封面区：按 2:3 比例显示，匹配 512x768 封面图 -->
+    <div class="book-cover relative aspect-[2/3] overflow-hidden rounded-t-lg flex items-center justify-center">
+      <div class="cover-fallback flex flex-col items-center justify-center w-full h-full p-4 ${hasCover ? 'hidden' : ''}">
         <div class="text-5xl mb-2 drop-shadow-sm">${book.emoji}</div>
         <div class="font-bold text-sm text-center text-ink leading-tight px-1">${getBookTitle(book)}</div>
         <div class="text-[10px] text-ink-light/60 mt-1">${book.author}</div>

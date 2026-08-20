@@ -83,7 +83,9 @@ function renderPlantArea() {
     const empty = document.createElement('div');
     empty.className = 'text-center py-8';
     empty.innerHTML = `
-      <div class="text-5xl mb-3">🪴</div>
+      <div class="mb-3 flex justify-center">
+        <img src="visual/plants/plant_16_empty_pot.png" alt="空花盆" class="w-24 h-24 object-contain opacity-80">
+      </div>
       <p class="text-ink-light mb-2">盆栽空空如也</p>
       <p class="text-xs text-ink-light">前往 <span class="text-magic-gold font-bold">位面商店 → 馆内装潢</span> 购买一盆植物吧</p>
     `;

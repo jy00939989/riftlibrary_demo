@@ -8,7 +8,7 @@ export const meta = {
   "era": "ERA_005",
   "totalWords": 302000,
   "description": "坎特伯雷故事集典藏版。集齐全部单卷并在古籍修复室合成后可得。",
-  "emoji": "📖",
+  "emoji": "📖","cover": "visual/book_covers/book_032.png",
   "certMessage": "从客栈到坎特伯雷的朝圣路上，二十四个故事已由你亲手誊成。",
   "isCollectedEdition": true,
   "cannotBePurchased": true,
