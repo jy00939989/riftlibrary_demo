@@ -3,6 +3,7 @@
 import {
   isBackendReady, getBackendError, getCurrentUser,
   signUp, signIn, signOut, resendVerification,
+  resetPassword, updatePassword,
   getSyncStatus, getPendingEventCount, downloadSave
 } from './index.js';
 import { t } from '../i18n/terms.js';
@@ -165,6 +166,7 @@ export function showAccountPanel() {
               <input id="account-email" type="email" class="w-full px-3 py-2 border border-wood/30 rounded-lg text-sm" placeholder="email@example.com" />
               <label class="text-xs text-ink-light block">${t('accountPasswordLabel')}</label>
               <input id="account-password" type="password" class="w-full px-3 py-2 border border-wood/30 rounded-lg text-sm" placeholder="••••••••" />
+              <button id="account-forgot" type="button" class="text-xs text-magic-blue hover:underline text-left">${t('accountForgotPassword')}</button>
               <p class="text-[10px] text-ink-light/60">${t('accountPasswordRequirement')}</p>
               ${HCAPTCHA_SITE_KEY ? `
                 <div id="account-hcaptcha" class="flex justify-center min-h-[78px]"></div>
@@ -271,6 +273,10 @@ export function showAccountPanel() {
     }
   });
 
+  overlay.querySelector('#account-forgot')?.addEventListener('click', () => {
+    showPasswordResetPanel();
+  });
+
   overlay.querySelector('#account-signout')?.addEventListener('click', async () => {
     const result = await signOut();
     msg(result.ok ? t('accountActionSuccess') : t('accountActionFailed').replace('{error}', result.error), !result.ok);
@@ -292,9 +298,129 @@ export function showAccountPanel() {
 }
 
 /**
- * 在「更多」菜单中注入「账号 / 云端同步」入口
+ * 显示密码重置邮件发送面板
+ */
+function showPasswordResetPanel() {
+  const existing = document.getElementById('password-reset-modal');
+  if (existing) { existing.remove(); return; }
+
+  const overlay = document.createElement('div');
+  overlay.id = 'password-reset-modal';
+  overlay.className = 'fixed inset-0 bg-black/50 z-[210] flex items-center justify-center p-4';
+  overlay.innerHTML = `
+    <div class="parchment-bg rounded-2xl p-6 max-w-sm w-full magic-glow animate-scale-in">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-display text-lg font-bold">${t('accountResetPasswordTitle')}</h3>
+        <button id="reset-close" class="text-ink-light/50 hover:text-ink text-xl leading-none">&times;</button>
+      </div>
+      <p class="text-xs text-ink-light mb-3">${t('accountResetPasswordDesc')}</p>
+      <input id="reset-email" type="email" class="w-full px-3 py-2 border border-wood/30 rounded-lg text-sm mb-3" placeholder="email@example.com" />
+      <button id="reset-submit" class="w-full px-4 py-2 bg-magic-blue text-white rounded-lg font-bold text-sm hover:shadow transition-all">${t('accountSendResetEmail')}</button>
+      <p id="reset-msg" class="text-xs text-center mt-3 min-h-[1rem]"></p>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  const msg = (text, isError) => {
+    const el = document.getElementById('reset-msg');
+    if (!el) return;
+    el.textContent = text;
+    el.className = `text-xs text-center mt-3 min-h-[1rem] ${isError ? 'text-red-500' : 'text-green-600'}`;
+  };
+
+  const close = () => overlay.remove();
+  overlay.querySelector('#reset-close').addEventListener('click', close);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+
+  overlay.querySelector('#reset-submit').addEventListener('click', async () => {
+    const email = document.getElementById('reset-email')?.value?.trim();
+    if (!email) { msg(t('accountEmailRequired'), true); return; }
+    const redirectTo = typeof window !== 'undefined' ? window.location.origin : undefined;
+    const result = await resetPassword(email, redirectTo);
+    if (result.ok) {
+      msg(t('accountResetEmailSent'));
+    } else {
+      msg(t('accountActionFailed').replace('{error}', result.error), true);
+    }
+  });
+}
+
+/**
+ * 显示密码更新面板（用户从重置邮件链接返回后）
+ */
+function showPasswordUpdatePanel() {
+  const existing = document.getElementById('password-update-modal');
+  if (existing) { existing.remove(); return; }
+
+  const overlay = document.createElement('div');
+  overlay.id = 'password-update-modal';
+  overlay.className = 'fixed inset-0 bg-black/50 z-[210] flex items-center justify-center p-4';
+  overlay.innerHTML = `
+    <div class="parchment-bg rounded-2xl p-6 max-w-sm w-full magic-glow animate-scale-in">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-display text-lg font-bold">${t('accountUpdatePasswordTitle')}</h3>
+        <button id="update-close" class="text-ink-light/50 hover:text-ink text-xl leading-none">&times;</button>
+      </div>
+      <p class="text-xs text-ink-light mb-3">${t('accountUpdatePasswordDesc')}</p>
+      <input id="update-password" type="password" class="w-full px-3 py-2 border border-wood/30 rounded-lg text-sm mb-3" placeholder="••••••••" />
+      <button id="update-submit" class="w-full px-4 py-2 bg-magic-blue text-white rounded-lg font-bold text-sm hover:shadow transition-all">${t('accountUpdatePassword')}</button>
+      <p id="update-msg" class="text-xs text-center mt-3 min-h-[1rem]"></p>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  const msg = (text, isError) => {
+    const el = document.getElementById('update-msg');
+    if (!el) return;
+    el.textContent = text;
+    el.className = `text-xs text-center mt-3 min-h-[1rem] ${isError ? 'text-red-500' : 'text-green-600'}`;
+  };
+
+  const close = () => overlay.remove();
+  overlay.querySelector('#update-close').addEventListener('click', close);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+
+  overlay.querySelector('#update-submit').addEventListener('click', async () => {
+    const password = document.getElementById('update-password')?.value;
+    if (!password) { msg(t('accountPasswordRequirement'), true); return; }
+    if (!isValidPassword(password)) { msg(t('accountPasswordRequirement'), true); return; }
+    const result = await updatePassword(password);
+    if (result.ok) {
+      msg(t('accountPasswordUpdated'));
+      setTimeout(() => {
+        close();
+        // 清理 URL 中的 recovery token
+        if (window.history?.replaceState) {
+          window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+        }
+      }, 1500);
+    } else {
+      msg(t('accountActionFailed').replace('{error}', result.error), true);
+    }
+  });
+}
+
+/**
+ * 检查 URL 中是否有 Supabase 密码恢复 token
+ */
+function isPasswordRecoveryFlow() {
+  if (typeof window === 'undefined') return false;
+  const hash = window.location.hash || '';
+  return hash.includes('type=recovery');
+}
+
+/**
+ * 初始化账号入口，并检查是否需要显示密码更新面板
  */
 export function initAccountEntry() {
+  // 如果用户通过密码重置邮件返回，直接显示更新密码面板
+  if (isPasswordRecoveryFlow()) {
+    // 等 Supabase client 自动从 URL 建立 session
+    setTimeout(() => showPasswordUpdatePanel(), 500);
+  }
+
   const menu = document.getElementById('nav-more-menu');
   if (!menu || document.getElementById('nav-more-account')) return;
 

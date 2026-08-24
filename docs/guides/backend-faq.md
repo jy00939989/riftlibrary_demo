@@ -36,16 +36,35 @@ Supabase Auth 对邮件类操作（注册、验证邮件重发、密码重置）
 
 ### 长期解决：接入第三方 SMTP
 
-配置自定义 SMTP 后，邮件不再走 Supabase 共享池，可显著放宽限制并提升送达率。
+配置自定义 SMTP 后，邮件不再走 Supabase 共享池，可显著放宽限制并提升送达率。详见第 7 节。
 
 ---
 
-## 2. 用户说确认邮件里的链接打不开，登录提示「邮箱或密码错误」
+## 2. 用户注册后提示密码错误 / 无法登录
+
+### 现象
+
+用户注册成功后，再次登录时提示「邮箱或密码错误」，但不确定自己输入的密码是否正确。
+
+### 可能原因
+
+1. 用户记错了密码。
+2. 注册时邮箱确认未关闭，账号未真正激活。
+3. 键盘大小写、输入法全角半角问题。
+
+### 解决
+
+- 引导用户使用登录面板的 **忘记密码？** 功能重置密码。
+- 如果重置邮件也收不到，可在 Supabase Dashboard 中手动为该用户重置密码，或删除该用户后让她重新注册。
+
+---
+
+## 3. 用户说确认邮件里的链接打不开，登录提示「邮箱或密码错误」
 
 ### 现象
 
 1. 注册后收到了确认邮件。
-2. 邮件里的链接点击后打不开（空白页 / 超时 / 被拦截）。
+2. 邮件里的链接点击后打不开（空白 / 超时 / 被拦截）。
 3. 返回游戏用邮箱 + 密码登录，提示：
 
 ```
@@ -94,7 +113,7 @@ Supabase 默认开启**邮箱确认（Email Confirmations）**。注册后用户
 
 ---
 
-## 3. 用户注册成功了，但存档没有同步到云端
+## 4. 用户注册成功了，但存档没有同步到云端
 
 ### 可能原因
 
@@ -117,11 +136,31 @@ Supabase 默认开启**邮箱确认（Email Confirmations）**。注册后用户
 
 ---
 
-## 4. 如何接入第三方邮件服务（SMTP）
+## 5. 如何重置密码
+
+### 用户自助流程
+
+1. 打开游戏 → 账号 / 云端同步面板。
+2. 点击密码输入框下方的 **忘记密码？**。
+3. 输入注册邮箱，点击 **发送重置邮件**。
+4. 查收邮件（含垃圾邮件文件夹），点击重置链接。
+5. 在弹出的面板中输入新密码（至少 8 位，包含字母和数字），点击 **更新密码**。
+6. 用新密码重新登录。
+
+### 管理员手动处理
+
+如果用户收不到重置邮件：
+
+1. 打开 Supabase Dashboard → **Authentication → Users**。
+2. 找到该用户，点击 **Send password reset** 或手动删除用户后让她重新注册。
+
+---
+
+## 6. 如何接入第三方邮件服务（SMTP）
 
 推荐方案：**Resend**（开发者友好、免费额度充足）。
 
-### 4.1 注册并验证域名
+### 6.1 注册并验证域名
 
 1. 访问 https://resend.com 注册账号。
 2. 进入 **Domains → Add Domain**。
@@ -129,13 +168,13 @@ Supabase 默认开启**邮箱确认（Email Confirmations）**。注册后用户
 4. 按提示在域名 DNS 添加 TXT / MX / DKIM / SPF 记录。
 5. 等待验证通过（通常几分钟到几小时）。
 
-### 4.2 创建 API Key
+### 6.2 创建 API Key
 
 1. 进入 **API Keys → Create API Key**。
 2. 权限选择 **Sending access**。
 3. 复制生成的 key（以 `re_` 开头）。
 
-### 4.3 在 Supabase 配置 SMTP
+### 6.3 在 Supabase 配置 SMTP
 
 1. 打开 Supabase Dashboard → 你的项目 → **Authentication → SMTP**。
 2. 开启 **Enable Custom SMTP**。
@@ -154,7 +193,7 @@ Supabase 默认开启**邮箱确认（Email Confirmations）**。注册后用户
 4. 点击 **Send test email**，输入自己的邮箱测试是否能收到。
 5. 保存设置。
 
-### 4.4 验证
+### 6.4 验证
 
 - 重新打开游戏账号面板，尝试注册一个新邮箱。
 - 检查收件箱（含垃圾邮件文件夹）是否收到验证邮件。
@@ -162,7 +201,7 @@ Supabase 默认开启**邮箱确认（Email Confirmations）**。注册后用户
 
 ---
 
-## 5. 邮件服务费用
+## 7. 邮件服务费用
 
 | 服务商 | 免费额度 | 超出后价格 | 备注 |
 |---|---|---|---|
@@ -179,7 +218,7 @@ Supabase 默认开启**邮箱确认（Email Confirmations）**。注册后用户
 
 ---
 
-## 6. 如何查看 Supabase Auth 日志
+## 8. 如何查看 Supabase Auth 日志
 
 1. Supabase Dashboard → 你的项目 → **Authentication → Logs**。
 2. 可筛选事件类型：`user_signed_up`、`user_confirmed`、`token_revoked` 等。
@@ -187,10 +226,10 @@ Supabase 默认开启**邮箱确认（Email Confirmations）**。注册后用户
 
 ---
 
-## 7. 相关文件
+## 9. 相关文件
 
 - `js/backend/auth.js` — 认证逻辑与错误码映射
-- `js/backend/account-ui.js` — 账号面板 UI 与注册冷却
+- `js/backend/account-ui.js` — 账号面板 UI、注册冷却、密码重置
 - `js/backend/client.js` — Supabase client 初始化
 - `js/backend/config.js` / `config.local.js` — Supabase 项目配置
 - `docs/plans/backend-supabase-implementation-plan.md` — 后端整体实施计划

@@ -1078,6 +1078,16 @@ const TERM_DATA = Object.freeze({
   accountActionFailed: { zh: '操作失败：{error}', en: 'Action failed: {error}' },
   accountPendingEvents: { zh: '待上报事件：{n}', en: 'Pending events: {n}' },
   accountCaptchaRequired: { zh: '请先完成人机验证。', en: 'Please complete the captcha.' },
+  accountForgotPassword: { zh: '忘记密码？', en: 'Forgot password?' },
+  accountResetPasswordTitle: { zh: '重置密码', en: 'Reset Password' },
+  accountResetPasswordDesc: { zh: '输入注册邮箱，我们将发送密码重置链接。', en: 'Enter your registered email and we will send a reset link.' },
+  accountSendResetEmail: { zh: '发送重置邮件', en: 'Send Reset Email' },
+  accountResetEmailSent: { zh: '重置邮件已发送，请查收邮箱（含垃圾邮件文件夹）。', en: 'Reset email sent. Please check your inbox (including spam).' },
+  accountEmailRequired: { zh: '请输入邮箱地址。', en: 'Please enter your email address.' },
+  accountUpdatePasswordTitle: { zh: '设置新密码', en: 'Set New Password' },
+  accountUpdatePasswordDesc: { zh: '请设置新密码（至少 8 位，包含字母和数字）。', en: 'Please set a new password (at least 8 characters with letters and numbers).' },
+  accountUpdatePassword: { zh: '更新密码', en: 'Update Password' },
+  accountPasswordUpdated: { zh: '密码已更新，请用新密码登录。', en: 'Password updated. Please log in with your new password.' },
 
   // DLC 补充包
   dlcPackTitle: { zh: '补充包', en: 'DLC Packs' },

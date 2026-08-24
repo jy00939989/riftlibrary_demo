@@ -167,3 +167,29 @@ export async function resendVerification(email) {
   if (error) return { ok: false, error: mapAuthError(error), code: error.code };
   return { ok: true, data };
 }
+
+/**
+ * 发送密码重置邮件
+ * @param {string} email
+ * @param {string} [redirectTo] - 重置链接跳转地址
+ */
+export async function resetPassword(email, redirectTo) {
+  if (!isBackendReady()) return { ok: false, error: 'backend_not_ready' };
+  const client = getClient();
+  const options = redirectTo ? { redirectTo } : {};
+  const { data, error } = await client.auth.resetPasswordForEmail(email, options);
+  if (error) return { ok: false, error: mapAuthError(error), code: error.code };
+  return { ok: true, data };
+}
+
+/**
+ * 更新当前登录用户的密码
+ * @param {string} newPassword
+ */
+export async function updatePassword(newPassword) {
+  if (!isBackendReady()) return { ok: false, error: 'backend_not_ready' };
+  const client = getClient();
+  const { data, error } = await client.auth.updateUser({ password: newPassword });
+  if (error) return { ok: false, error: mapAuthError(error), code: error.code };
+  return { ok: true, user: data.user };
+}
