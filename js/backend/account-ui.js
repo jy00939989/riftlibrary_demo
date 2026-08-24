@@ -20,6 +20,47 @@ let hcaptchaWidgetId = null;
 let hcaptchaLoaded = false;
 let hcaptchaLoading = false;
 
+// 注册按钮冷却：防止连续点击触发 Supabase 邮件频率限制
+const SIGNUP_COOLDOWN_MS = 60000;
+const SIGNUP_COOLDOWN_KEY = 'riftlib_signup_cooldown';
+let signupCooldownTimer = null;
+
+function getSignupCooldownRemaining() {
+  const last = parseInt(localStorage.getItem(SIGNUP_COOLDOWN_KEY) || '0', 10);
+  if (!last) return 0;
+  return Math.max(0, last + SIGNUP_COOLDOWN_MS - Date.now());
+}
+
+function setSignupCooldown() {
+  localStorage.setItem(SIGNUP_COOLDOWN_KEY, String(Date.now()));
+}
+
+function clearSignupCooldownTimer() {
+  if (signupCooldownTimer) {
+    clearInterval(signupCooldownTimer);
+    signupCooldownTimer = null;
+  }
+}
+
+function formatSignupCooldownText(ms) {
+  const seconds = Math.ceil(ms / 1000);
+  return `${seconds} 秒后可重试`;
+}
+
+function updateSignupButtonState(button) {
+  const remaining = getSignupCooldownRemaining();
+  if (remaining > 0) {
+    button.disabled = true;
+    button.classList.add('opacity-60', 'cursor-not-allowed');
+    button.textContent = formatSignupCooldownText(remaining);
+    return remaining;
+  }
+  button.disabled = false;
+  button.classList.remove('opacity-60', 'cursor-not-allowed');
+  button.textContent = t('accountSignUp');
+  return 0;
+}
+
 function loadHCaptcha() {
   if (window.hcaptcha) return Promise.resolve();
   if (hcaptchaLoading) return new Promise((resolve, reject) => {
@@ -155,7 +196,10 @@ export function showAccountPanel() {
     el.className = `text-xs text-center mt-3 min-h-[1rem] ${isError ? 'text-red-500' : 'text-green-600'}`;
   };
 
-  const close = () => overlay.remove();
+  const close = () => {
+    clearSignupCooldownTimer();
+    overlay.remove();
+  };
   overlay.querySelector('#account-close').addEventListener('click', close);
   overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
 
@@ -176,17 +220,38 @@ export function showAccountPanel() {
     password: passwordInput?.value || ''
   });
 
-  overlay.querySelector('#account-signup')?.addEventListener('click', async () => {
+  const signupBtn = overlay.querySelector('#account-signup');
+  signupBtn?.addEventListener('click', async () => {
+    const cooldownRemaining = getSignupCooldownRemaining();
+    if (cooldownRemaining > 0) {
+      msg(formatSignupCooldownText(cooldownRemaining), true);
+      updateSignupButtonState(signupBtn);
+      return;
+    }
+
     const { email, password } = getCredentials();
     if (!email || !password) { msg(t('accountPasswordRequirement'), true); return; }
     if (!isValidPassword(password)) { msg(t('accountPasswordRequirement'), true); return; }
     if (HCAPTCHA_SITE_KEY && !hcaptchaToken) { msg(t('accountCaptchaRequired'), true); return; }
-    const result = await signUp(email, password, hcaptchaToken || undefined);
+
+    // 发送请求前立即上锁，防止等待响应期间重复点击
+    setSignupCooldown();
+    updateSignupButtonState(signupBtn);
+
+    const redirectTo = typeof window !== 'undefined' ? window.location.origin : undefined;
+    const result = await signUp(email, password, hcaptchaToken || undefined, redirectTo);
     if (result.ok) {
       msg(t('accountVerifyEmailSent'));
       passwordInput.value = '';
       resetHCaptcha();
+      // 注册成功后立即尝试上传当前本地存档（仅在已建立 session 时有效）
+      saveState();
     } else {
+      // 非频率类错误时解锁按钮，让用户可以立即修正输入
+      if (result.code !== 'over_email_send_rate_limit' && !result.error.includes('太频繁')) {
+        localStorage.removeItem(SIGNUP_COOLDOWN_KEY);
+        updateSignupButtonState(signupBtn);
+      }
       msg(t('accountActionFailed').replace('{error}', result.error), true);
       resetHCaptcha();
     }
@@ -215,6 +280,15 @@ export function showAccountPanel() {
     const result = await resendVerification(email);
     msg(result.ok ? t('accountVerifyEmailSent') : t('accountActionFailed').replace('{error}', result.error), !result.ok);
   });
+
+  // 启动注册按钮冷却倒计时
+  if (signupBtn) {
+    updateSignupButtonState(signupBtn);
+    signupCooldownTimer = setInterval(() => {
+      const remaining = updateSignupButtonState(signupBtn);
+      if (remaining <= 0) clearSignupCooldownTimer();
+    }, 1000);
+  }
 }
 
 /**

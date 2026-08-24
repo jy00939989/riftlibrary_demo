@@ -14,6 +14,11 @@ import { VOLUME_GROUPS, getIncompleteVolumeGroups, isVolumeBookId } from '../dat
 import { PLANT_TYPES } from '../data/plants.js';
 import { track } from './backend/analytics.js';
 
+// 台风灾难参数：新植物保护期 + 触发概率 + 冷却时间
+const TYPHOON_PROBABILITY = 0.0005; // 每分钟判定概率
+const TYPHOON_COOLDOWN_DAYS = 7;    // 两次台风之间的最小间隔
+const TYPHOON_NEW_PLANT_GRACE_HOURS = 48; // 新种下植物的保护期
+
 // ========== 访客角色定义（10位，2026-05-27 重构） ==========
 
 export const VISITOR_DEFS = {
@@ -554,11 +559,18 @@ export function tryTriggerTyphoonDisaster() {
   if (!state.plant.activeType || state.plant.level === 0) return null;
 
   const now = getNow();
+
+  // 新植物保护期：种下后 N 小时内不触发台风
+  const plantedAt = state.plant.plantedAt || 0;
+  const hoursSincePlanted = (now - plantedAt) / (1000 * 60 * 60);
+  if (hoursSincePlanted < TYPHOON_NEW_PLANT_GRACE_HOURS) return null;
+
+  // 两次台风之间的冷却期
   const lastDisaster = state.lastTyphoonTime || 0;
   const daysSinceLast = (now - lastDisaster) / (1000 * 60 * 60 * 24);
-  if (daysSinceLast < 7) return null;
+  if (daysSinceLast < TYPHOON_COOLDOWN_DAYS) return null;
 
-  if (Math.random() >= 0.003) return null;
+  if (Math.random() >= TYPHOON_PROBABILITY) return null;
 
   const def = PLANT_TYPES[state.plant.activeType];
   if (!def) return null;
@@ -583,12 +595,48 @@ export function tryTriggerTyphoonDisaster() {
   }
 
   saveState();
+
+  // 灾难弹窗提示：避免玩家误以为植物/存档丢失
+  showTyphoonPopup(savedByGuyu, def);
+
   return {
     lost: !savedByGuyu || state.plant.level === 0,
     downgraded: savedByGuyu && state.plant.level > 0,
     plantId: def.id,
     savedByGuyu
   };
+}
+
+function showTyphoonPopup(savedByGuyu, def) {
+  if (typeof document === 'undefined') return;
+  const existing = document.getElementById('typhoon-disaster-popup');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'typhoon-disaster-popup';
+  overlay.className = 'fixed inset-0 bg-black/60 z-[200] flex items-center justify-center p-4';
+  const title = t('disasterTyphoonTitle');
+  const message = savedByGuyu
+    ? t('disasterTyphoonSaved')
+    : t('disasterTyphoonText').replace('{name}', t(def.nameKey));
+  const emoji = savedByGuyu ? '🌾' : '🌪️';
+  overlay.innerHTML = `
+    <div class="parchment-bg rounded-2xl p-6 max-w-sm w-full text-center magic-glow animate-scale-in">
+      <div class="text-5xl mb-3">${emoji}</div>
+      <h3 class="font-display text-xl font-bold mb-2">${title}</h3>
+      <p class="text-sm text-ink-light mb-5">${message}</p>
+      <button class="px-6 py-2.5 bg-magic-gold text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all">${t('gotIt')}</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  const close = () => {
+    overlay.style.opacity = '0';
+    overlay.style.transition = 'opacity 0.3s';
+    setTimeout(() => overlay.remove(), 300);
+  };
+  overlay.querySelector('button').addEventListener('click', close);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
 }
 
 function resetPlantToEmptyState() {

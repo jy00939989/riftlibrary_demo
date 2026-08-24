@@ -3,7 +3,7 @@ import { state, saveState } from '../state.js';
 import { updateStatusBar } from './common.js';
 import { PLANT_TYPES, SEED_EXCHANGE } from '../../data/plants.js';
 import { SIGNBOARDS } from '../../data/signboards.js';
-import { canHarvest, harvestPlant, canExchangeSeed, exchangeSeed, getActivePlantDef, canWater, canFertilize, abandonPlant, getSeedExchanges } from '../plants.js';
+import { canHarvest, harvestPlant, canExchangeSeed, exchangeSeed, getActivePlantDef, canWater, canFertilize, abandonPlant, getSeedExchanges, waterPlant, fertilizePlant } from '../plants.js';
 import { t } from '../i18n/terms.js';
 
 export function renderDecorationPage() {
@@ -142,6 +142,36 @@ function renderPlantArea() {
       renderDecorationPage();
     });
     actions.appendChild(harvestBtn);
+  } else {
+    // 浇水按钮
+    const canWaterNow = canWater();
+    const waterBtn = document.createElement('button');
+    waterBtn.className = `px-3 py-2 bg-blue-500 text-white rounded-lg text-sm font-bold hover:shadow-lg transition-all ${!canWaterNow ? 'opacity-50 cursor-not-allowed' : ''}`;
+    waterBtn.disabled = !canWaterNow;
+    waterBtn.innerHTML = `💧 浇水 (+${def.waterGrowth})`;
+    waterBtn.addEventListener('click', () => {
+      const result = waterPlant();
+      if (result.ok && result.justMatured) showPlantMaturityToast(def);
+      renderDecorationPage();
+      if (typeof window.renderShopPage === 'function') window.renderShopPage();
+      updateStatusBar();
+    });
+    actions.appendChild(waterBtn);
+
+    // 施肥按钮
+    const canFertNow = canFertilize();
+    const fertBtn = document.createElement('button');
+    fertBtn.className = `px-3 py-2 bg-amber-600 text-white rounded-lg text-sm font-bold hover:shadow-lg transition-all ${!canFertNow ? 'opacity-50 cursor-not-allowed' : ''}`;
+    fertBtn.disabled = !canFertNow;
+    fertBtn.innerHTML = `✨ 施肥 (+${def.fertilizeGrowth} 💰${def.fertilizeCosts[plant.level + 1] || 0})`;
+    fertBtn.addEventListener('click', () => {
+      const result = fertilizePlant();
+      if (result.ok && result.justMatured) showPlantMaturityToast(def);
+      renderDecorationPage();
+      if (typeof window.renderShopPage === 'function') window.renderShopPage();
+      updateStatusBar();
+    });
+    actions.appendChild(fertBtn);
   }
 
   // 铲除按钮
