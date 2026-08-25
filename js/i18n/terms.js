@@ -1088,6 +1088,18 @@ const TERM_DATA = Object.freeze({
   accountUpdatePasswordDesc: { zh: '请设置新密码（至少 8 位，包含字母和数字）。', en: 'Please set a new password (at least 8 characters with letters and numbers).' },
   accountUpdatePassword: { zh: '更新密码', en: 'Update Password' },
   accountPasswordUpdated: { zh: '密码已更新，请用新密码登录。', en: 'Password updated. Please log in with your new password.' },
+  accountSigningIn: { zh: '正在登录…', en: 'Signing in…' },
+  accountDownloading: { zh: '正在读取云端存档…', en: 'Reading cloud save…' },
+  accountNoCloudSave: { zh: '云端暂无存档。', en: 'No cloud save found.' },
+  accountDownloadSave: { zh: '从云端恢复存档', en: 'Restore from Cloud' },
+  accountSyncChoiceTitle: { zh: '选择同步方向', en: 'Choose Sync Direction' },
+  accountSyncChoiceDesc: { zh: '检测到云端已有存档，请选择保留哪一份。注意：选择后另一份将被覆盖。', en: 'Cloud save detected. Choose which copy to keep. The other will be overwritten.' },
+  accountUploadLocal: { zh: '📤 用本机存档覆盖云端', en: '📤 Upload local save' },
+  accountDownloadCloud: { zh: '📥 用云端存档覆盖本机（刷新页面）', en: '📥 Download cloud save (reloads page)' },
+  accountDecideLater: { zh: '稍后再决定', en: 'Decide later' },
+  accountUploadSuccess: { zh: '本机存档已上传。', en: 'Local save uploaded.' },
+  accountDownloadSuccess: { zh: '云端存档已恢复，即将刷新页面…', en: 'Cloud save restored. Reloading…' },
+  accountDownloadFailed: { zh: '存档恢复失败，请重试。', en: 'Failed to restore save. Please retry.' },
 
   // DLC 补充包
   dlcPackTitle: { zh: '补充包', en: 'DLC Packs' },
