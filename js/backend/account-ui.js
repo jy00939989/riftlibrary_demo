@@ -10,6 +10,8 @@ import { t } from '../i18n/terms.js';
 import { saveState } from '../state.js';
 import { HCAPTCHA_SITE_KEY } from './config.js';
 
+import { save, STORAGE_KEYS } from '../persistence.js';
+
 function isValidPassword(password) {
   return password.length >= 8 && /[a-zA-Z]/.test(password) && /\d/.test(password);
 }
@@ -177,7 +179,8 @@ export function showAccountPanel() {
               <button id="account-signin" class="px-4 py-2 bg-magic-blue text-white rounded-lg font-bold text-sm hover:shadow transition-all">${t('accountSignIn')}</button>
             </div>
           ` : `
-            <button id="account-signout" class="w-full px-4 py-2 bg-wood/15 text-ink rounded-lg font-bold text-sm hover:bg-wood/25 transition-all">${t('accountSignOut')}</button>
+            <button id="account-download" class="w-full px-4 py-2 bg-magic-blue text-white rounded-lg font-bold text-sm hover:shadow transition-all">${t('accountDownloadSave')}</button>
+            <button id="account-signout" class="w-full px-4 py-2 bg-wood/15 text-ink rounded-lg font-bold text-sm hover:bg-wood/25 transition-all mt-2">${t('accountSignOut')}</button>
             ${!user.email_confirmed_at ? `
               <button id="account-resend" class="w-full px-4 py-2 bg-magic-blue text-white rounded-lg font-bold text-sm hover:shadow transition-all mt-2">${t('accountResendVerify')}</button>
             ` : ''}
@@ -262,12 +265,21 @@ export function showAccountPanel() {
   overlay.querySelector('#account-signin')?.addEventListener('click', async () => {
     const { email, password } = getCredentials();
     if (!email || !password) { msg(t('accountPasswordRequirement'), true); return; }
+    msg(t('accountSigningIn'));
     const result = await signIn(email, password);
     if (result.ok) {
-      msg(t('accountActionSuccess'));
-      // 登录成功后尝试合并云端存档：此处仅提示，由用户决定下一步
       passwordInput.value = '';
-      saveState();
+      // 登录成功后先检查云端是否有存档，再决定上传还是下载
+      const cloudSave = await downloadSave();
+      if (cloudSave) {
+        close();
+        showSyncChoiceModal(cloudSave);
+      } else {
+        // 云端无存档，直接上传本地存档
+        saveState();
+        msg(t('accountActionSuccess'));
+        setTimeout(close, 1000);
+      }
     } else {
       msg(t('accountActionFailed').replace('{error}', result.error), true);
     }
@@ -280,6 +292,17 @@ export function showAccountPanel() {
   overlay.querySelector('#account-signout')?.addEventListener('click', async () => {
     const result = await signOut();
     msg(result.ok ? t('accountActionSuccess') : t('accountActionFailed').replace('{error}', result.error), !result.ok);
+  });
+
+  overlay.querySelector('#account-download')?.addEventListener('click', async () => {
+    msg(t('accountDownloading'));
+    const cloudSave = await downloadSave();
+    if (cloudSave) {
+      close();
+      showSyncChoiceModal(cloudSave, true);
+    } else {
+      msg(t('accountNoCloudSave'), true);
+    }
   });
 
   overlay.querySelector('#account-resend')?.addEventListener('click', async () => {
@@ -409,6 +432,68 @@ function isPasswordRecoveryFlow() {
   if (typeof window === 'undefined') return false;
   const hash = window.location.hash || '';
   return hash.includes('type=recovery');
+}
+
+/**
+ * 显示云端 / 本地存档二选一弹窗
+ * @param {object} cloudSave - 从云端下载的 save_data
+ * @param {boolean} [isManual] - 是否为用户手动点击「从云端恢复」触发
+ */
+function showSyncChoiceModal(cloudSave, isManual = false) {
+  const existing = document.getElementById('sync-choice-modal');
+  if (existing) { existing.remove(); return; }
+
+  const overlay = document.createElement('div');
+  overlay.id = 'sync-choice-modal';
+  overlay.className = 'fixed inset-0 bg-black/60 z-[210] flex items-center justify-center p-4';
+  overlay.innerHTML = `
+    <div class="parchment-bg rounded-2xl p-6 max-w-sm w-full magic-glow animate-scale-in">
+      <h3 class="font-display text-lg font-bold mb-2 text-center">${t('accountSyncChoiceTitle')}</h3>
+      <p class="text-xs text-ink-light mb-5 text-center">${t('accountSyncChoiceDesc')}</p>
+      <div class="space-y-3">
+        <button id="sync-upload-local" class="w-full px-4 py-2 bg-magic-gold text-white rounded-lg font-bold text-sm hover:shadow transition-all">
+          ${t('accountUploadLocal')}
+        </button>
+        <button id="sync-download-cloud" class="w-full px-4 py-2 bg-magic-blue text-white rounded-lg font-bold text-sm hover:shadow transition-all">
+          ${t('accountDownloadCloud')}
+        </button>
+        ${isManual ? '' : `<button id="sync-decide-later" class="w-full px-4 py-2 bg-wood/15 text-ink rounded-lg font-bold text-sm hover:bg-wood/25 transition-all">${t('accountDecideLater')}</button>`}
+      </div>
+      <p id="sync-msg" class="text-xs text-center mt-3 min-h-[1rem]"></p>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  const msg = (text, isError) => {
+    const el = document.getElementById('sync-msg');
+    if (!el) return;
+    el.textContent = text;
+    el.className = `text-xs text-center mt-3 min-h-[1rem] ${isError ? 'text-red-500' : 'text-green-600'}`;
+  };
+
+  const close = () => overlay.remove();
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+
+  overlay.querySelector('#sync-upload-local').addEventListener('click', async () => {
+    saveState();
+    msg(t('accountUploadSuccess'));
+    setTimeout(close, 1200);
+  });
+
+  overlay.querySelector('#sync-download-cloud').addEventListener('click', () => {
+    if (save(STORAGE_KEYS.STATE, cloudSave)) {
+      msg(t('accountDownloadSuccess'));
+      setTimeout(() => {
+        window.location.reload();
+      }, 1200);
+    } else {
+      msg(t('accountDownloadFailed'), true);
+    }
+  });
+
+  const laterBtn = overlay.querySelector('#sync-decide-later');
+  if (laterBtn) laterBtn.addEventListener('click', close);
 }
 
 /**

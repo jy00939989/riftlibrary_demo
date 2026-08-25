@@ -123,8 +123,11 @@ Supabase 默认开启**邮箱确认（Email Confirmations）**。注册后用户
 
 ### 已做的代码改进
 
-- `js/backend/account-ui.js`：注册成功后自动调用 `saveState()`，触发 `debouncedUploadSave()`。
-- `js/backend/auth.js`：`signUp` 增加 `emailRedirectTo` 参数，指向当前页面 origin。
+- `js/backend/account-ui.js`：
+  - 登录成功后若检测到云端已有存档，会弹出二选一面板：「用本机存档覆盖云端」或「用云端存档覆盖本机」。
+  - 已登录用户可在账号面板点击 **从云端恢复存档** 手动触发下载。
+  - 注册成功后自动调用 `saveState()`，将本地存档上传到云端。
+- `js/backend/auth.js`：`signUp` 增加 `emailRedirectTo` 参数。
 - 若仍有问题，请先确认 Supabase 中 **Confirm email** 已关闭。
 
 ### 排查步骤
@@ -132,7 +135,8 @@ Supabase 默认开启**邮箱确认（Email Confirmations）**。注册后用户
 1. 在浏览器控制台查看是否有 `[backend] save upload failed` 报错。
 2. 打开 Supabase Dashboard → **Table Editor → saves**，查看该用户的 `user_id` 是否有记录。
 3. 检查 `saves` 表的 RLS 策略是否正确（参考 `backend-supabase-implementation-plan.md`）。
-4. 让用户重新登录一次，登录成功后会再次触发存档上传。
+4. 在另一台设备登录时，注意选择同步方向；选错会导致存档被覆盖。
+5. 让用户重新登录一次，登录成功后会弹出同步选择。
 
 ---
 
