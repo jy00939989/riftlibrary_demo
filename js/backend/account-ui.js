@@ -180,6 +180,7 @@ export function showAccountPanel() {
             </div>
           ` : `
             <button id="account-download" class="w-full px-4 py-2 bg-magic-blue text-white rounded-lg font-bold text-sm hover:shadow transition-all">${t('accountDownloadSave')}</button>
+            <button id="account-change-password" class="w-full px-4 py-2 bg-wood/15 text-ink rounded-lg font-bold text-sm hover:bg-wood/25 transition-all mt-2">${t('accountChangePassword')}</button>
             <button id="account-signout" class="w-full px-4 py-2 bg-wood/15 text-ink rounded-lg font-bold text-sm hover:bg-wood/25 transition-all mt-2">${t('accountSignOut')}</button>
             ${!user.email_confirmed_at ? `
               <button id="account-resend" class="w-full px-4 py-2 bg-magic-blue text-white rounded-lg font-bold text-sm hover:shadow transition-all mt-2">${t('accountResendVerify')}</button>
@@ -310,6 +311,10 @@ export function showAccountPanel() {
     msg(result.ok ? t('accountVerifyEmailSent') : t('accountActionFailed').replace('{error}', result.error), !result.ok);
   });
 
+  overlay.querySelector('#account-change-password')?.addEventListener('click', () => {
+    showChangePasswordPanel();
+  });
+
   // 启动注册按钮冷却倒计时
   if (signupBtn) {
     updateSignupButtonState(signupBtn);
@@ -419,6 +424,86 @@ function showPasswordUpdatePanel() {
           window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
         }
       }, 1500);
+    } else {
+      msg(t('accountActionFailed').replace('{error}', result.error), true);
+    }
+  });
+}
+
+/**
+ * 显示已登录用户的修改密码面板（需验证当前密码）
+ */
+function showChangePasswordPanel() {
+  const existing = document.getElementById('change-password-modal');
+  if (existing) { existing.remove(); return; }
+
+  const user = getCurrentUser();
+  const email = user?.email || '';
+
+  const overlay = document.createElement('div');
+  overlay.id = 'change-password-modal';
+  overlay.className = 'fixed inset-0 bg-black/50 z-[210] flex items-center justify-center p-4';
+  overlay.innerHTML = `
+    <div class="parchment-bg rounded-2xl p-6 max-w-sm w-full magic-glow animate-scale-in">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-display text-lg font-bold">${t('accountChangePasswordTitle')}</h3>
+        <button id="change-pw-close" class="text-ink-light/50 hover:text-ink text-xl leading-none">&times;</button>
+      </div>
+      <p class="text-xs text-ink-light mb-3">${t('accountChangePasswordDesc')}</p>
+      <input id="change-pw-current" type="password" class="w-full px-3 py-2 border border-wood/30 rounded-lg text-sm mb-3" placeholder="${t('accountCurrentPassword')}" />
+      <input id="change-pw-new" type="password" class="w-full px-3 py-2 border border-wood/30 rounded-lg text-sm mb-3" placeholder="${t('accountNewPassword')}" />
+      <input id="change-pw-confirm" type="password" class="w-full px-3 py-2 border border-wood/30 rounded-lg text-sm mb-3" placeholder="${t('accountConfirmPassword')}" />
+      <button id="change-pw-submit" class="w-full px-4 py-2 bg-magic-blue text-white rounded-lg font-bold text-sm hover:shadow transition-all">${t('accountUpdatePassword')}</button>
+      <p id="change-pw-msg" class="text-xs text-center mt-3 min-h-[1rem]"></p>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  const msg = (text, isError) => {
+    const el = document.getElementById('change-pw-msg');
+    if (!el) return;
+    el.textContent = text;
+    el.className = `text-xs text-center mt-3 min-h-[1rem] ${isError ? 'text-red-500' : 'text-green-600'}`;
+  };
+
+  const close = () => overlay.remove();
+  overlay.querySelector('#change-pw-close').addEventListener('click', close);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+
+  overlay.querySelector('#change-pw-submit').addEventListener('click', async () => {
+    const currentPassword = document.getElementById('change-pw-current')?.value;
+    const newPassword = document.getElementById('change-pw-new')?.value;
+    const confirmPassword = document.getElementById('change-pw-confirm')?.value;
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      msg(t('accountPasswordRequirement'), true);
+      return;
+    }
+    if (!isValidPassword(newPassword)) {
+      msg(t('accountPasswordRequirement'), true);
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      msg(t('accountPasswordMismatch'), true);
+      return;
+    }
+    if (!email) {
+      msg(t('accountActionFailed').replace('{error}', '未获取到邮箱'), true);
+      return;
+    }
+
+    msg(t('accountSigningIn'));
+    const verifyResult = await signIn(email, currentPassword);
+    if (!verifyResult.ok) {
+      msg(t('accountCurrentPasswordWrong'), true);
+      return;
+    }
+
+    const result = await updatePassword(newPassword);
+    if (result.ok) {
+      msg(t('accountChangePasswordSuccess'));
+      setTimeout(close, 1500);
     } else {
       msg(t('accountActionFailed').replace('{error}', result.error), true);
     }

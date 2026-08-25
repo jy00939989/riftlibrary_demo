@@ -91,7 +91,7 @@ export const PLANT_TYPES = {
     harvestAtmosphere: 15,
     harvestCoins: 15,
     seedType: 'starlight_fern',
-    seedDropRate: 0.5,
+    seedDropRate: 0.6,
     levelNames: ['', '孢子', '嫩芽', '舒展', '流光', '星瀑']
   }
 };

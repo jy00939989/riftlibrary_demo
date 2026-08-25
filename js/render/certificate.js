@@ -19,7 +19,7 @@ export function showCertificate(book, callback) {
   const masteryNames = ['', '初识', '熟悉', '精通', '大师', '传承'];
   const masteryName = masteryNames[bs.masteryLevel] || '初识';
   const quote = getRandomQuote(book);
-  const hasCover = !!book.cover;
+  const hasCoverImage = !!book.cover;
 
   const overlay = el('div', 'fixed inset-0 bg-black/70 z-[120] flex items-center justify-center p-4');
   overlay.style.transition = 'opacity 0.3s';
@@ -36,13 +36,17 @@ export function showCertificate(book, callback) {
     <div class="text-3xl mb-2">🎉</div>
     <h2 class="font-display text-xl font-bold mb-1">${getBookTitle(book)} · 誊抄完成</h2>
     <p class="text-magic-blue italic text-sm leading-relaxed mb-4 px-2">「${certMsg}」</p>
-    <div class="text-5xl mb-4">
-      ${hasCover
-        ? `<img src="${book.cover}" alt="${getBookTitle(book)}" class="w-24 h-36 object-cover mx-auto rounded shadow-lg"
-             onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-          <span class="hidden">${book.emoji}</span>`
-        : book.emoji}
+
+    <div class="mb-5 flex justify-center">
+      ${hasCoverImage
+        ? `<div class="relative inline-block p-1.5 bg-gradient-to-br from-magic-gold/30 via-magic-gold/10 to-magic-gold/30 rounded-lg shadow-xl">
+            <img src="${book.cover}" alt="${getBookTitle(book)}" class="w-32 h-48 object-cover rounded shadow-lg"
+               onerror="this.parentElement.style.display='none'; this.parentElement.nextElementSibling.style.display='flex';">
+           </div>
+           <div class="hidden w-32 h-48 items-center justify-center bg-wood/20 rounded-lg border-2 border-dashed border-wood/40 text-6xl">${book.emoji}</div>`
+        : `<div class="w-32 h-48 flex items-center justify-center bg-gradient-to-br from-wood/20 to-wood/5 rounded-lg border-2 border-dashed border-wood/40 shadow-lg text-6xl">${book.emoji}</div>`}
     </div>
+
     <p class="text-ink-light text-sm mb-5">${book.author} · ${book.category}</p>
 
     <div class="grid grid-cols-3 gap-3 mb-5">
