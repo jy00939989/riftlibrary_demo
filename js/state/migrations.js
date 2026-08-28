@@ -26,8 +26,21 @@ export const EMPTY_PLANT = {
  * 每个迁移必须幂等：同一存档多次运行结果相同。
  */
 const MIGRATIONS = [
-  { version: 1, up: migrateV1 }
+  { version: 1, up: migrateV1 },
+  { version: 2, up: migrateV2 }
 ];
+
+function migrateV2() {
+  // 新版迁移：消耗型道具背包
+  if (!state.inventory) state.inventory = {};
+  // 确保 inventory 值为非负整数
+  Object.keys(state.inventory).forEach(key => {
+    const count = state.inventory[key];
+    if (typeof count !== 'number' || count < 0 || !Number.isFinite(count)) {
+      state.inventory[key] = 0;
+    }
+  });
+}
 
 function migrateV1() {
   // 合并书籍状态：保留用户进度，但用默认值补充新增/变更的书籍

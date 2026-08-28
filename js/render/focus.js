@@ -9,6 +9,8 @@ import { ensureDailyTasks, claimAllDoneBonus } from '../dailytasks.js';
 import { getActiveChapterTaskForBook } from '../quests.js';
 import { getActiveAuras } from '../visitors.js';
 import { getEffectiveCopiedWords, getRepairProgress } from '../core/book-utils.js';
+import { isNoMasteryBook } from '../core/book-eligibility.js';
+import { getFocusSpeedMultiplier, getMasteredBookSpeedBonus } from '../core/shop/library-upgrades.js';
 
 // 缮写室素材
 const FOCUS_IMG_NAMES = [
@@ -45,11 +47,13 @@ export function renderFocusPage() {
 
   // 缮写室全景图 banner（仿馆长办公室形式）
   const flv = state.library.focusLevel || 0;
+  const totalMultiplier = getFocusSpeedMultiplier();
+  const masteryBonus = getMasteredBookSpeedBonus();
   const banner = el('div', 'mb-6 rounded-xl overflow-hidden border-2 border-wood/30 shadow-lg');
   banner.innerHTML = `
     <img src="visual/focusroom/${FOCUS_IMG_NAMES[flv]}" alt="${t('tabScriptorium')} · ${getFocusRoomLevelName(flv)}" class="w-full h-48 object-cover">
     <div class="bg-ink/70 text-white text-center py-2 text-sm">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-icon"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"></path><line x1="16" y1="8" x2="2" y2="22"></line><line x1="17.5" y1="15" x2="9" y2="15"></line></svg> ${t('tabScriptorium')} ·${getFocusRoomLevelName(flv)}${flv > 0 ? ` · ${t('transcribeSpeed').replace('{value}', Math.round((1 + flv * 0.05) * 100))}` : ''}
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-icon"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"></path><line x1="16" y1="8" x2="2" y2="22"></line><line x1="17.5" y1="15" x2="9" y2="15"></line></svg> ${t('tabScriptorium')} · ${getFocusRoomLevelName(flv)} · 专注倍率 ${Math.round(totalMultiplier * 100)}%${masteryBonus > 0 ? ` <span class="text-magic-gold">(精通 +${(masteryBonus * 100).toFixed(1)}%)</span>` : ''}
     </div>
   `;
   container.appendChild(banner);
@@ -294,10 +298,10 @@ function renderBookSelector(sess) {
   const eligibleBooks = Object.values(BOOKS).filter(book => {
     const bs = state.books[book.id];
     if (!bs || bs.status === 'locked') return false;
-    // 无熟练度的书抄完就不再出现在选择器中
-    if (book.noMastery && bs.status === 'completed') return false;
-    // mastery Lv5 = 500%+，不再出现在誊抄选择器中
-    if (bs.masteryLevel >= 5 || bs.copyCount >= 5) return false;
+    // 不参与精通系统的书，完成后不再出现在选择器中
+    if (isNoMasteryBook(book.id) && bs.status === 'completed') return false;
+    // 已精通的书，只有已解锁重抄的才继续显示（给玩家一次重抄到master的机会）
+    if ((bs.masteryLevel >= 5 || bs.copyCount >= 5) && !bs.reCopyUnlocked) return false;
     // 已完成的书需要先花费灵感解锁重抄
     if (bs.status === 'completed' && !bs.reCopyUnlocked) return false;
     return (bs.status === 'unlocked' || bs.status === 'copying' || bs.copiedWords > 0);

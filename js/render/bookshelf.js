@@ -9,6 +9,7 @@ import { spendInspiration } from '../storage.js';
 import { getManuscriptSlots, getManuscriptBoxCount, getManuscriptSlotPrice, expandManuscriptSlots, getBookCapacity, getOwnedBookCount, placeOnShelf } from '../capacity.js';
 import { calcCurationEffects } from '../curation.js';
 import { getEffectiveCopiedWords } from '../core/book-utils.js';
+import { isNoMasteryBook } from '../core/book-eligibility.js';
 
 const SHELF_CAPACITY = 5;
 let currentFilter = 'all';
@@ -36,6 +37,19 @@ const CATEGORY_LABEL_KEYS = {
 
 function getCategoryLabel(c) {
   return t(CATEGORY_LABEL_KEYS[c] || c) || c;
+}
+
+function tryUnlockReCopy(book) {
+  const cost = 1;
+  if (!spendInspiration(cost)) {
+    window.showToast(t('insufficientInspiration').replace('{cost}', cost).replace('{current}', state.inspiration || 0), 'error');
+    return false;
+  }
+  state.books[book.id].reCopyUnlocked = true;
+  saveState();
+  playSfx('buy_success');
+  window.showToast(t('reCopyUnlockedToast'), 'success');
+  return true;
 }
 
 export function renderBookshelfPage() {
@@ -151,7 +165,7 @@ export function renderBookshelfPage() {
           updateStatusBar();
           renderBookshelfPage();
         } else if (mPrice2 > 0) {
-          alert(t('insufficientCoinsExclamation'));
+          window.showToast(t('insufficientCoinsExclamation'), 'error');
         }
       });
     }
@@ -414,6 +428,11 @@ function renderBookCard(book) {
       <div class="text-[10px] text-ink-light/60 mt-1">
         ${isCompleted ? `${t('completed')} ✓` : isCopying ? `${t('copying')} ${progress}%` : t('pendingTranscription')}
       </div>
+      ${isCompleted && !bookState.reCopyUnlocked && !isNoMasteryBook(book.id)
+        ? `<button class="re-copy-card-btn w-full mt-2 px-3 py-1.5 bg-purple-600/90 text-white rounded-lg text-[10px] font-bold hover:shadow-lg transition-all flex items-center justify-center gap-1">
+             ${t('unlockReCopyCost').replace('{cost}', 1)}
+           </button>`
+        : ''}
     </div>
   `;
 
@@ -425,10 +444,22 @@ function renderBookCard(book) {
     renderBookshelfPage();
   });
 
+  // 卡片上直接解锁重抄
+  const reCopyCardBtn = cardDiv.querySelector('.re-copy-card-btn');
+  if (reCopyCardBtn) {
+    reCopyCardBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (tryUnlockReCopy(book)) {
+        renderBookshelfPage();
+      }
+    });
+  }
+
   // 整卡点击
   cardDiv.addEventListener('click', (e) => {
     if (e.target.classList.contains('star-btn')) return;
-    if (isCompleted && bookState.masteryLevel >= 1 && !book.noMastery) {
+    if (e.target.classList.contains('re-copy-card-btn')) return;
+    if (isCompleted && bookState.masteryLevel >= 1 && !isNoMasteryBook(book.id)) {
       showMasteryDetail(book);
     } else {
       renderChapterList(book);
@@ -445,11 +476,11 @@ function renderChapterList(book) {
   const modal = el('div', 'fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4');
   const content = el('div', 'parchment-bg rounded-2xl p-6 max-w-lg w-full max-h-[80vh] overflow-y-auto magic-glow');
 
-  // 重抄灵感费用：固定 2 灵感一次
-  const getReCopyCost = () => 2;
+  // 重抄灵感费用：1 灵感一次
+  const getReCopyCost = () => 1;
 
   const isCompleted = bookState.status === 'completed';
-  const needReCopy = isCompleted && !bookState.reCopyUnlocked && !book.noMastery;
+  const needReCopy = isCompleted && !bookState.reCopyUnlocked && !isNoMasteryBook(book.id);
 
   content.innerHTML = `
     <div class="flex items-center justify-between mb-4">
@@ -503,16 +534,11 @@ function renderChapterList(book) {
   const reCopyBtn = content.querySelector('#re-copy-btn');
   if (reCopyBtn) {
     reCopyBtn.addEventListener('click', () => {
-      const cost = getReCopyCost();
-      if (!spendInspiration(cost)) {
-        alert(t('insufficientInspiration').replace('{cost}', cost).replace('{current}', state.inspiration || 0));
-        return;
+      if (tryUnlockReCopy(book)) {
+        modal.remove();
+        state.currentSession.bookId = book.id;
+        document.getElementById('tab-focus').click();
       }
-      bookState.reCopyUnlocked = true;
-      saveState();
-      modal.remove();
-      state.currentSession.bookId = book.id;
-      document.getElementById('tab-focus').click();
     });
   }
 
@@ -774,19 +800,15 @@ export function showMasteryDetail(book) {
     </div>
     <div class="text-sm text-ink-light mb-4">${book.author} · ${getCategoryLabel(book.category)} · ${t('totalCopies').replace('{n}', bookState.copyCount)}</div>
     <div class="space-y-3 mb-4">
-      ${[1,2,3,4,5].map(lv => {
-        const unlocked = lv <= level;
-        return `
-          <div class="p-3 rounded-lg border ${unlocked ? 'bg-white border-magic-gold/30' : 'bg-gray-100 border-gray-200 opacity-50'}">
-            <div class="flex items-center gap-2 mb-1">
-              <span class="text-sm">${unlocked ? '🔓' : '🔒'}</span>
-              <span class="font-bold text-sm">Lv${lv} · ${titles[lv]}</span>
-              ${lv === level ? `<span class="text-xs text-magic-gold font-bold">${t('currentLabel')}</span>` : ''}
-            </div>
-            <p class="text-xs text-ink-light ml-6">${unlocked ? contents[lv] : t('unlockAfterCopies').replace('{n}', lv - level)}</p>
+      ${[1,2,3,4,5].map(lv => `
+        <div class="p-3 rounded-lg border bg-white border-magic-gold/30">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-sm">🔓</span>
+            <span class="font-bold text-sm">${titles[lv]}</span>
           </div>
-        `;
-      }).join('')}
+          <p class="text-xs text-ink-light ml-6">${contents[lv]}</p>
+        </div>
+      `).join('')}
     </div>
     <button class="read-chapters-btn w-full mt-4 px-4 py-2 bg-magic-gold text-white rounded-lg font-bold text-sm hover:shadow-lg transition-all">${t('readChapters')}</button>
   `;

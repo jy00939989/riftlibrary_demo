@@ -13,7 +13,11 @@ export const meta = {
   "isCollectedEdition": true,
   "cannotBePurchased": true,
   "indestructible": true,
-  "volumeGroupId": "book_018"
+  "volumeGroupId": "book_018",
+  "authorBio": "欧几里得（约前330-前275），古希腊数学家，曾受教于柏拉图学园，后主持亚历山大里亚数学学派。他以公理化方法整理前人之学，著《几何原本》十三卷，建立平面几何、数论与无理量的严密体系，被誉为“几何之父”，其影响延及科学各域。",
+  "anecdotes": "传说托勒密王曾问欧几里得，学习几何是否有捷径。欧几里得答曰：“几何无王者之路。”此话流传两千余年，成为求真知的箴言。《几何原本》以五条公设为基，层层推演四百六十五个命题，展现了理性思维最纯粹的力量。",
+  "reviews": "爱因斯坦曾言，若欧几里得未能激起少年时代的科学热情，那便不会有什么人能成为科学家。《几何原本》以简洁公理推演出宏伟大厦，是西方理性精神的永恒丰碑。",
+  "collectorCover": "📐",
 };
 
 export const chapters = [];

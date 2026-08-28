@@ -13,7 +13,11 @@ export const meta = {
   "isCollectedEdition": true,
   "cannotBePurchased": true,
   "indestructible": true,
-  "volumeGroupId": "book_014"
+  "volumeGroupId": "book_014",
+  "authorBio": "司马迁（前145或前135-约前86），字子长，西汉夏阳人。父司马谈任太史令，遗命继志。司马迁承父业，遍历名山大川，搜集史料。后因李陵之祸受腐刑，忍辱负重，发愤著书，终成“究天人之际，通古今之变，成一家之言”的《史记》。",
+  "anecdotes": "司马迁受刑后，在《报任安书》中自述著书之志：“仆以口语遇遭此祸，重为乡党所笑，以污辱先人。”他隐忍苟活，只为完成《史记》。书中项羽入本纪、陈涉入世家，不以成败论英雄，可见其独立史识与孤愤情怀。",
+  "reviews": "鲁迅评《史记》为“史家之绝唱，无韵之离骚”。其纪传体例贯穿古今，人物栩栩如生，不仅开创了正史书写传统，更以文学之笔赋予历史永恒的温度。",
+  "collectorCover": "📜",
 };
 
 export const chapters = [];

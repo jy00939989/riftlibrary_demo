@@ -61,5 +61,27 @@ export const SIGNBOARDS = {
     price: 600,
     page: 'visitors',    // 挂在读者沙龙
     buff: { type: 'damage_reduction', value: 0.01, desc: '访客还书时损坏概率 -1%' }
+  },
+  pioneer_ink: {
+    id: 'pioneer_ink',
+    name: '先驱者的墨印',
+    emoji: '🏛️',
+    icon: '🏛️',
+    image: 'visual/signboards/sign_pioneer.png',
+    description: '第一批踏入归墟图书馆的读者留下的印记，时光在此流速稍缓。全球限量 10 个。',
+    price: 0,
+    page: 'focus',
+    buff: { type: 'focus_speed', value: 0.03, desc: '缮写速率 +3%' }
+  },
+  opening_plaque: {
+    id: 'opening_plaque',
+    name: '开馆纪念牌',
+    emoji: '🦉',
+    icon: '🦉',
+    image: 'visual/signboards/sign_opening.png',
+    description: '归墟图书馆正式开馆的纪念，墨墨亲手挂上的牌子。限量 100 个。',
+    price: 0,
+    page: 'focus',
+    buff: { type: 'focus_speed', value: 0.02, desc: '缮写速率 +2%' }
   }
 };

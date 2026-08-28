@@ -120,6 +120,9 @@ export const state = {
   // 标志牌
   signboards: [],
 
+  // 消耗型道具背包
+  inventory: {},
+
   // 新手引导
   introCompleted: false,
 

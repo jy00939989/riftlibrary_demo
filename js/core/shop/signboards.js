@@ -7,6 +7,27 @@ export function hasSignboard(id) {
   return (state.signboards || []).includes(id);
 }
 
+/** 通用标志牌 buff 聚合：累加所有已拥有标志牌中指定 type 的 value */
+export function getSignboardBuffSum(type) {
+  const boards = state.signboards || [];
+  let sum = 0;
+  for (const id of boards) {
+    const def = SIGNBOARDS[id];
+    if (!def || !def.buff) continue;
+    if (def.buff.type === type) {
+      sum += Number(def.buff.value) || 0;
+    }
+  }
+  return sum;
+}
+
+/** 获取所有已拥有标志牌定义 */
+export function getOwnedSignboards() {
+  return (state.signboards || [])
+    .map(id => SIGNBOARDS[id])
+    .filter(Boolean);
+}
+
 export function purchaseSignboard(signboardId) {
   const def = SIGNBOARDS[signboardId];
   if (!def) return false;

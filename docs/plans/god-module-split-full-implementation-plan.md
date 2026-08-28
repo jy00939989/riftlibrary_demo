@@ -1,8 +1,6 @@
-# 归墟图书馆神模块拆分完整实施计划
+# 归墟图书馆神模块拆分完整实施计划（剩余 Phase 2/4/5）
 
-> 文档状态：待审核  
-> 目标读者：图南 + 架构师  
-> 范围：`js/state.js` / `js/app.js` / `js/shop.js` / `js/render/focus.js` / `js/render/shop.js` 的职责拆分
+> 文档状态：Phase 1/3 已落地归档；本文件只记录剩余未实施的 Phase 2 商店业务、Phase 4 渲染拆分、Phase 5 app.js 最终瘦身。
 
 ---
 
@@ -89,53 +87,9 @@ js/
 
 ## 四、Phase 1：状态层拆分（低风险，约 0.5-1 天）
 
-### 4.1 目标
+✅ **已完成并归档**，详见 `docs/archive/plans/god-module-split-full-implementation-plan-completed.md`。
 
-把 `js/state.js` 拆成：
-- `js/state/state.js`：纯 schema + `DEFAULT_BOOKS`
-- `js/state/migrations.js`：所有旧存档迁移/规范化逻辑
-- `js/state/save.js`：`saveState` 序列化逻辑
-- `js/state.js`：薄 shim，向后兼容重新导出
-
-### 4.2 关键动作
-
-1. 创建 `js/state/state.js`
-   - 复制 `state` 对象和 `DEFAULT_BOOKS`
-   - 加 `_schemaVersion: 1`
-   - 不导入任何业务模块
-
-2. 创建 `js/state/migrations.js`
-   - 复制 `initState()` 和 `ensureAllBooksInManuscriptBox()`
-   - 导入 `state, DEFAULT_BOOKS` from `'./state.js'`、`saveState` from `'./save.js'`、`load, STORAGE_KEYS` from `'../persistence.js'`、`BOOKS` from `'../data/books.js'`、`VOLUME_GROUPS` from `'../data/volume_groups.js'`
-   - 把 `js/app.js:1229-1284` 的书籍状态修正迁移搬进来
-   - 末尾设置 `state._schemaVersion = 1`，调用 `saveState()`
-
-3. 创建 `js/state/save.js`
-   - 复制 `saveState()`
-   - 导入 `state` from `'./state.js'`、`save, STORAGE_KEYS` from `'../persistence.js'`
-
-4. 替换 `js/state.js` 为薄 shim：
-   ```js
-   export { state, DEFAULT_BOOKS } from './state/state.js';
-   export { initState, ensureAllBooksInManuscriptBox } from './state/migrations.js';
-   export { saveState } from './state/save.js';
-   ```
-
-5. 清理 `js/app.js`
-   - 删除 `js/app.js:1229-1284` 的书籍状态修正块
-
-### 4.3 验证
-
-- `node --input-type=module` 动态导入检查 `js/state.js` / `js/app.js` 无语法错误
-- 新存档：清空 localStorage 后刷新，`_schemaVersion === 1`
-- 旧存档迁移：测试 shelves 数字格式 → 位置格式、visitorFavors 4→10、长书分卷
-- 持久化：操作后刷新，数据保留
-
-### 4.4 不碰的范围
-
-- `js/render/` 下任何文件
-- `js/app.js` 里的专注生命周期逻辑
-- `js/shop.js`、`js/timer.js`、`js/storage.js` 等
+当前状态：`js/state/state.js`、`js/state/migrations.js`、`js/state/save.js` 已拆分；`js/state.js` 为薄 shim；旧存档迁移正确。
 
 ---
 
@@ -180,57 +134,9 @@ js/
 
 ## 六、Phase 3：专注业务拆分（中风险，约 2-3 天）
 
-### 6.1 目标
+✅ **已完成并归档**，详见 `docs/archive/plans/god-module-split-full-implementation-plan-completed.md`。
 
-把 `js/app.js` 中的专注生命周期拆到 `js/core/focus-*.js`。
-
-### 6.2 文件映射
-
-| 原函数 | 新位置 |
-|---|---|
-| `handleStartFocus` / `handleTogglePause` / `handleCompleteFocus` / `handleAbandonFocus` | `js/core/focus-session.js` |
-| 奖励计算（words/coins/milestones/buff） | `js/core/focus-rewards.js` |
-| 完成后副作用链（弹窗顺序、访客、成就、引导任务） | `js/core/focus-orchestrator.js` |
-| `checkMilestones` / `MILESTONES` | `js/core/focus-rewards.js` |
-
-### 6.3 关键动作
-
-1. 创建 `js/core/focus-session.js`
-   - `startFocus(bookId, mode, targetMinutes)`
-   - `pauseFocus()` / `resumeFocus()`
-   - `completeFocus()`
-   - `abandonFocus()`
-   - 只修改 `state.currentSession`，不操作弹窗、不渲染 DOM
-
-2. 创建 `js/core/focus-rewards.js`
-   - `calculateFocusRewards({ minutes, bookId, teaBoost, candleInspiration })`
-   - `checkMilestones(prevTotalWords, currentTotalWords)`
-   - 输入 session 信息，输出奖励明细对象
-
-3. 创建 `js/core/focus-orchestrator.js`
-   - 协调专注完成后的副作用链：
-     1. 调用 `focusRewards.calculate()`
-     2. 应用奖励（通过 `book-progress.js` / `economy.js`）
-     3. 触发成就检测
-     4. 按顺序调度弹窗（修复完成 → 书籍完成 → 章节解锁 → 里程碑 → 结算卡片）
-     5. 触发访客到来
-     6. 触发引导任务
-
-4. 修改 `js/app.js`
-   - `setActions` 改为引用新的 core 函数
-   - 删除已迁移的专注相关函数
-
-5. 修改 `js/timer.js`
-   - 保持为低层 interval 工具
-   - 完成回调仍通过 `setCompleteCallback` 注入，避免循环依赖
-
-### 6.4 验证
-
-- 专注开始、暂停、完成、放弃全部正常
-- 自动完成（倒计时结束 / 字数满）正常
-- 弹窗链顺序正确：修复完成 → 书籍完成/证书 → 章节解锁 → 里程碑 → 结算卡片
-- 访客在完成后按规则出现
-- 引导任务正确触发
+当前状态：`js/core/focus-session.js`、`js/core/focus-rewards.js`、`js/core/focus-orchestrator.js` 已创建；专注生命周期及完成后副作用链已迁出 `app.js`。
 
 ---
 
@@ -376,36 +282,27 @@ export const actions = {
 
 ---
 
-## 十、时间估算
+## 十、时间估算（剩余 Phase）
 
 | Phase | 天数 |
 |---|---|
-| Phase 1 状态层拆分 | 0.5-1 |
 | Phase 2 商店业务拆分 | 2 |
-| Phase 3 专注业务拆分 | 2-3 |
 | Phase 4 渲染拆分 | 3 |
 | Phase 5 app.js 瘦身 | 1 |
-| **总计** | **8.5-10 天** |
-
-> 注：与 `docs/plans/god-module-split-plan.md` 原估算 9-11 天基本一致，Phase 1 因当前状态更清晰而略有压缩。
+| **总计** | **6 天** |
 
 ---
 
-## 十一、建议实施顺序
+## 十一、建议实施顺序（剩余 Phase）
 
-1. **Phase 1（状态层）**：风险最低，为后续所有拆分打基础
-2. **Phase 2（商店业务）**：业务边界清晰，不容易出大错
-3. **Phase 3（专注业务）**：核心玩法，拆分后收益最大
-4. **Phase 4（渲染拆分）**：依赖 Phase 3 的 actions 稳定
-5. **Phase 5（app.js 瘦身）**：收尾
-
-如果时间有限，可以只做 **Phase 1 + Phase 3**，先把 `state.js` 和 `app.js` 中最痛的专注逻辑拆出来，收益最大。
+1. **Phase 2（商店业务）**：业务边界清晰，不容易出大错
+2. **Phase 4（渲染拆分）**：依赖 Phase 2 的 actions 稳定
+3. **Phase 5（app.js 瘦身）**：收尾
 
 ---
 
-## 十二、验收标准
+## 十二、验收标准（剩余 Phase）
 
-- [ ] `js/state.js` 行数 < 10，只含重新导出
 - [ ] `js/app.js` 行数 < 400，只含启动和全局事件
 - [ ] `js/shop.js` 消失或变成纯转发文件
 - [ ] `js/render/focus.js` 和 `js/render/shop.js` 消失或大幅瘦身

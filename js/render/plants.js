@@ -1,6 +1,6 @@
 // 馆内布置子标签渲染 —— 植物状态 + 标志牌展示 + 种子库存
 import { state, saveState } from '../state.js';
-import { updateStatusBar } from './common.js';
+import { updateStatusBar, showImagePreview } from './common.js';
 import { PLANT_TYPES, SEED_EXCHANGE } from '../../data/plants.js';
 import { SIGNBOARDS } from '../../data/signboards.js';
 import { canHarvest, harvestPlant, canExchangeSeed, exchangeSeed, getActivePlantDef, canWater, canFertilize, abandonPlant, getSeedExchanges, waterPlant, fertilizePlant } from '../plants.js';
@@ -310,12 +310,21 @@ function renderSignboardCollection() {
     const card = document.createElement('div');
     card.className = 'bg-white rounded-xl p-3 border-2 border-magic-gold/30 text-center hover:shadow-md transition-all';
     const buffNote = sb.buff && sb.buff.desc ? `<div class="text-xs text-magic-gold/70 mt-1 italic">${sb.buff.desc}</div>` : '';
+    const iconHtml = sb.image
+      ? `<img src="${sb.image}" alt="${sb.name}" class="w-10 h-10 object-contain mx-auto mb-2 cursor-pointer" title="点击看大图" />`
+      : `<div class="text-3xl mb-2">${sb.emoji}</div>`;
     card.innerHTML = `
-      <div class="text-3xl mb-2">${sb.emoji}</div>
+      ${iconHtml}
       <div class="font-bold text-xs">${sb.name}</div>
       <div class="text-xs text-ink-light mt-1">📌 ${getPageDisplayName(sb.page)}</div>
       ${buffNote}
     `;
+
+    const iconImg = card.querySelector('img');
+    if (iconImg && sb.image) {
+      iconImg.addEventListener('click', () => showImagePreview(sb.image, sb.name));
+    }
+
     grid.appendChild(card);
   });
 

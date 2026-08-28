@@ -5,7 +5,7 @@ import { SHARED_POOL } from '../../../data/book_pool.js';
 import { getAuraShopDiscount } from '../../visitors.js';
 import { SIGNBOARDS } from '../../../data/signboards.js';
 import { isManuscriptBoxFull, addToManuscriptBox, createBookRecord } from '../../capacity.js';
-import { hasSignboard } from './signboards.js';
+import { hasSignboard, getSignboardBuffSum } from './signboards.js';
 import { track } from '../../backend/analytics.js';
 import { isBookLockedByDlc } from './dlc-packs.js';
 import {
@@ -151,7 +151,7 @@ export function ensureShopState() {
 
 export function getBookActualPrice(bookId, basePrice) {
   const auraDiscount = getAuraShopDiscount();
-  const signboardDiscount = hasSignboard('curator_pick') ? (SIGNBOARDS.curator_pick?.buff?.value || 0) : 0;
+  const signboardDiscount = getSignboardBuffSum('shop_discount');
   let peizhouDiscount = 0;
   const rec = getActivePeizhouRec();
   if (rec && rec.bookId === bookId) {

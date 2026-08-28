@@ -2,12 +2,12 @@
 import { state, saveState } from '../state.js';
 import { BOOKS } from '../../data/books.js';
 import { SHARED_POOL } from '../../data/book_pool.js';
-import { el, h, actions, updateStatusBar, getBookTitle } from './common.js';
+import { el, h, actions, updateStatusBar, getBookTitle, showImagePreview } from './common.js';
 import { playSfx } from '../audio.js';
 import { ensureShopState, getShopState, purchaseBook, getBookActualPrice, getBorrowLevelPrice, upgradeBorrowLevel, getFocusLevelPrice, upgradeFocusLevel, purchaseSignboard, purchasePlanePortal, getPlanePortalPrice, getActivePeizhouRec } from '../shop.js';
 import { getManuscriptSlots, getManuscriptBoxCount, isRestorationUnlocked, unlockRestorationRoom, getRestorationUnlockPrice, getRestorationLevel, getRestorationUpgradePrice, upgradeRestorationLevel } from '../capacity.js';
 import { PLANES, canUnlockPlane } from '../../data/planes.js';
-import { showFocusRoomUpgrade } from './tutorial-ui.js';
+import { showFocusRoomUpgrade, showBorrowAreaUpgrade, showRestorationUpgrade } from './tutorial-ui.js';
 import { getBorrowLevelConfig } from '../visitors.js';
 import { PLANT_TYPES } from '../../data/plants.js';
 import { checkAchievements } from '../achievements.js';
@@ -29,6 +29,38 @@ function formatDiscount(discount) {
     ? Math.round((1 - discount) * 100)
     : Math.round(discount * 10);
   return t('discountLabel').replace('{value}', value);
+}
+
+function showLimitedSignboardPopup(signboard) {
+  const modal = el('div', 'fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4');
+  const content = el('div', 'parchment-bg rounded-2xl p-6 max-w-sm w-full text-center magic-glow relative overflow-hidden');
+  const hasImage = signboard.image;
+
+  content.innerHTML = `
+    <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-magic-gold via-amber-300 to-magic-gold"></div>
+    <div class="mb-4 mt-2">
+      ${hasImage
+        ? `<img src="${signboard.image}" alt="${signboard.name}" class="w-28 h-28 object-contain mx-auto drop-shadow-lg">`
+        : `<span class="text-5xl inline-block">${signboard.emoji || '🏛️'}</span>`}
+    </div>
+    <h2 class="font-display text-lg font-bold text-ink mb-1">${t('limitedSignboardTitle')}</h2>
+    <div class="text-base text-magic-gold font-bold mb-3">${signboard.name}</div>
+    <p class="text-xs text-ink-light leading-relaxed mb-4">${signboard.description}</p>
+    <div class="bg-amber-50/50 rounded-lg p-3 mb-5 border border-amber-100">
+      <p class="text-sm text-ink italic leading-relaxed">“${t('limitedSignboardThanks')}”</p>
+    </div>
+    <button class="close-modal px-6 py-2 bg-magic-gold text-white rounded-full font-bold text-sm hover:shadow-lg transition-all">
+      ${t('continue')}
+    </button>
+  `;
+
+  modal.appendChild(content);
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal || e.target.classList.contains('close-modal')) {
+      modal.remove();
+    }
+  });
+  document.body.appendChild(modal);
 }
 
 export function renderShopPage() {
@@ -126,8 +158,9 @@ function renderLibraryUpgrades() {
         updateStatusBar();
         playSfx('buy_success');
         renderShopPage();
+        showBorrowAreaUpgrade(state.library.borrowLevel);
       } else {
-        alert(`${t('insufficientCoins')} 💰`);
+        window.showToast(`${t('insufficientCoins')} 💰`, 'error');
       }
     });
   }
@@ -185,7 +218,7 @@ function renderLibraryUpgrades() {
         renderShopPage();
         showFocusRoomUpgrade(state.library.focusLevel);
       } else {
-        alert(`${t('insufficientCoins')} 💰`);
+        window.showToast(`${t('insufficientCoins')} 💰`, 'error');
       }
     });
   }
@@ -240,7 +273,7 @@ function renderLibraryUpgrades() {
             updateStatusBar();
             renderShopPage();
           } else {
-            alert(`${t('insufficientCoins')} 💰`);
+            window.showToast(`${t('insufficientCoins')} 💰`, 'error');
           }
         });
       }
@@ -325,8 +358,9 @@ function renderLibraryUpgrades() {
         const trigger = checkAndShowTutorial('restoration_unlock');
         if (trigger) dispatchTutorialUI(trigger);
         renderShopPage();
+        showRestorationUpgrade(0);
       } else {
-        alert(`${t('insufficientCoins')} 💰`);
+        window.showToast(`${t('insufficientCoins')} 💰`, 'error');
       }
     });
   }
@@ -338,8 +372,9 @@ function renderLibraryUpgrades() {
         playSfx('buy_success');
         updateStatusBar();
         renderShopPage();
+        showRestorationUpgrade(state.restorationLevel);
       } else {
-        alert(`${t('insufficientCoins')} 💰`);
+        window.showToast(`${t('insufficientCoins')} 💰`, 'error');
       }
     });
   }
@@ -561,19 +596,19 @@ function showPurchaseModal(poolEntry, price, originalPrice, discount) {
     } else {
       switch (result.reason) {
         case 'insufficient_coins':
-          alert(`${t('insufficientCoinsExclamation')} ${t('purchaseNeedsCoins').replace('{actual}', result.actualPrice).replace('{price}', price)}`);
+          window.showToast(`${t('insufficientCoinsExclamation')} ${t('purchaseNeedsCoins').replace('{actual}', result.actualPrice).replace('{price}', price)}`, 'error');
           break;
         case 'already_owned':
-          alert(t('youAlreadyOwnThisBook'));
+          window.showToast(t('youAlreadyOwnThisBook'), 'error');
           break;
         case 'manuscript_box_full': {
           const mSlots = getManuscriptSlots();
           const mCount = getManuscriptBoxCount();
-          alert(`${t('manuscriptBoxFull')}（${mCount}/${mSlots}${t('slots')}）！${t('expandManuscriptBoxFirst')}`);
+          window.showToast(`${t('manuscriptBoxFull')}（${mCount}/${mSlots}${t('slots')}）！${t('expandManuscriptBoxFirst')}`, 'error');
           break;
         }
         default:
-          alert(t('purchaseFailed'));
+          window.showToast(t('purchaseFailed'), 'error');
       }
     }
   });
@@ -707,9 +742,9 @@ function renderAmbientShop() {
           updateStatusBar();
           renderShopPage();
         } else if (result.reason === 'no_coins') {
-          alert(`${t('insufficientCoins')} 💰`);
+          window.showToast(`${t('insufficientCoins')} 💰`, 'error');
         } else if (result.reason === 'dlc_locked') {
-          alert(t('ambientLockedByPackHint').replace('{pack}', pack?.title || ''));
+          window.showToast(t('ambientLockedByPackHint').replace('{pack}', pack?.title || ''), 'error');
         }
       });
     }
@@ -772,7 +807,7 @@ function renderDecorationShop() {
             updateStatusAndRefresh();
             if (typeof window.renderLibraryPage === 'function') window.renderLibraryPage();
           } else {
-            alert(t('purchaseFailed'));
+            window.showToast(t('purchaseFailed'), 'error');
           }
         });
       }
@@ -792,7 +827,7 @@ function renderDecorationShop() {
     const owned = state.signboards.includes(sb.id);
     const card = el('div', `rounded-xl p-4 border-2 flex gap-3 items-center ${owned ? 'bg-green-50 border-green-200 opacity-80' : 'bg-white border-wood/20 hover:border-magic-gold/50 hover:shadow-lg transition-all'}`);
     card.innerHTML = `
-      <span class="text-3xl">${sb.emoji}</span>
+      ${renderSignboardIcon(sb)}
       <div class="flex-1">
         <div class="font-bold text-sm flex items-center gap-2">
           ${sb.name}
@@ -808,14 +843,26 @@ function renderDecorationShop() {
            </button>`
         : ''}
     `;
+
+    const iconImg = card.querySelector('img');
+    if (iconImg && sb.image) {
+      iconImg.classList.add('cursor-pointer');
+      iconImg.title = '点击看大图';
+      iconImg.addEventListener('click', () => showImagePreview(sb.image, sb.name));
+    }
+
     if (!owned && state.coins >= sb.price) {
       card.querySelector('.signboard-buy-btn').addEventListener('click', () => {
         if (purchaseSignboard(sb.id)) {
           playSfx('buy_success');
+          const isLimited = sb.price === 0 && sb.image;
+          if (isLimited) {
+            showLimitedSignboardPopup(sb);
+          }
           updateStatusAndRefresh();
           if (typeof window.renderLibraryPage === 'function') window.renderLibraryPage();
         } else {
-          alert(`${t('insufficientCoins')} 💰`);
+          window.showToast(`${t('insufficientCoins')} 💰`, 'error');
         }
       });
     }
@@ -970,3 +1017,11 @@ function cleanupTimer() {
 }
 
 window.renderShopPage = renderShopPage;
+
+/** 渲染标志牌图标：优先使用图片，否则回退 emoji */
+function renderSignboardIcon(sb) {
+  if (sb.image) {
+    return `<img src="${sb.image}" alt="${sb.name}" class="w-10 h-10 object-contain flex-shrink-0" />`;
+  }
+  return `<span class="text-3xl">${sb.emoji}</span>`;
+}

@@ -14,7 +14,11 @@ export const meta = {
   "isCollectedEdition": true,
   "cannotBePurchased": true,
   "indestructible": true,
-  "volumeGroupId": "book_034"
+  "volumeGroupId": "book_034",
+  "authorBio": "弗朗西丝·霍奇森·伯内特（1849-1924），英裔美国儿童文学作家。生于伦敦，幼年家道中落，随母移居美国田纳西。早年以连载小说成名，后创作《小勋爵》《小公主》与《秘密花园》。她擅长以花园、城堡与童稚心灵，书写孤独、成长与自然的治愈力量。",
+  "anecdotes": "伯内特晚年长居英国肯特郡的梅菲尔德庄园，亲自打理一座玫瑰花园。《秘密花园》中那座被锁闭的古老花园，正源于她对园丁生活的迷恋。她曾在日记中写道：“当我种下一株玫瑰，便觉得自己与一个更大的秘密相连。”",
+  "reviews": "《纽约时报》早年书评称：“这是一本关于愤怒如何被花园化解的书。”伯内特以细腻笔触描绘自然对人心的重塑，使《秘密花园》成为跨越时代的成长寓言与心灵疗愈经典。",
+  "collectorCover": "🌹",
 };
 
 export const chapters = [];
