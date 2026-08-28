@@ -149,6 +149,26 @@ body {
   animation: scale-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
+/* 证书封面图：缓缓浮现 + 发光 */
+@keyframes cert-reveal {
+  0%   { opacity: 0; transform: scale(0.85) translateY(10px); filter: brightness(1.2) blur(4px); }
+  60%  { opacity: 1; transform: scale(1.02) translateY(0); filter: brightness(1.1) blur(0); }
+  100% { opacity: 1; transform: scale(1) translateY(0); filter: brightness(1) blur(0); }
+}
+
+@keyframes cert-glow-pulse {
+  0%, 100% { box-shadow: 0 0 12px 2px rgba(201, 162, 39, 0.25), 0 0 24px 6px rgba(201, 162, 39, 0.1); }
+  50%      { box-shadow: 0 0 20px 4px rgba(201, 162, 39, 0.4), 0 0 36px 10px rgba(201, 162, 39, 0.15); }
+}
+
+.animate-cert-reveal {
+  animation: cert-reveal 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.cert-glow-active {
+  animation: cert-glow-pulse 2.4s ease-in-out infinite;
+}
+
 @keyframes slide-in-right {
   from { opacity: 0; transform: translateX(30px); }
   to { opacity: 1; transform: translateX(0); }

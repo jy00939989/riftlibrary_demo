@@ -433,7 +433,7 @@ function renderRestorationTab(container) {
         updateStatusBar();
         renderRestorationTab(container);
       } else {
-        alert(t('insufficientCoinsExclamation') + ' 💰');
+        window.showToast(t('insufficientCoinsExclamation') + ' 💰', 'error');
       }
     });
   }
@@ -546,7 +546,7 @@ function renderRestorationTab(container) {
         updateStatusBar();
         renderRestorationTab(container);
       } else {
-        alert(t('insufficientCoinsExclamation') + ' 💰');
+        window.showToast(t('insufficientCoinsExclamation') + ' 💰', 'error');
       }
     });
   }
@@ -595,7 +595,7 @@ function renderRestorationTab(container) {
       if (storeInRestorationBox(btn.dataset.id)) {
         renderRestorationTab(container);
       } else {
-        alert(t('restorationBoxFullOrInvalid'));
+        window.showToast(t('restorationBoxFullOrInvalid'), 'error');
       }
     });
   });

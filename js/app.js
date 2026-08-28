@@ -13,11 +13,12 @@ import { t, getLocale, setLocale } from './i18n/terms.js';
 import { addCoins, spendCoins, addHistory, updateStreak, addAtmosphere, updateBodyBackground, getAtmosphereLevel, onStageCross, addInspiration } from './storage.js';
 import { renderFocusPage, renderBookshelfPage, renderLibraryPage,
   renderVisitorsPage, renderArchivePage, renderShopPage, setActions,
-  updateStatusBar
+  updateStatusBar, initBagEntry
 } from './render/index.js';
 import { startTimer, togglePauseTimer, abandonTimer, setCompleteCallback } from './timer.js';
 import { runFocusOrchestration } from './core/focus-orchestrator.js';
 import { triggerQuestCheck } from './core/quest-trigger.js';
+import { isNoMasteryBook } from './core/book-eligibility.js';
 import { BOOKS } from '../data/books.js';
 import { spawnVisitor, tickVisitorBrowsing, checkDueVisitors, collectReturn, getAuraCoinsMultiplier, getAuraSpawnBonus, getBorrowSpawnBonus, getStageWitnesses, tryTriggerGuyuPlantCare, tryTriggerTyphoonDisaster } from './visitors.js';
 import { upgradeBorrowLevel, checkAutoUnlockPacks } from './shop.js';
@@ -470,6 +471,8 @@ function init() {
       if (!bs || bs.status === 'locked') return false;
       // 已完成的书必须已经解锁重抄，才默认选中
       if (bs.status === 'completed' && !bs.reCopyUnlocked) return false;
+      // 不参与精通系统的 completed 书不再默认选中
+      if (bs.status === 'completed' && isNoMasteryBook(id) && !bs.reCopyUnlocked) return false;
       return bs.copiedWords > 0 || bs.status === 'copying' || bs.status === 'unlocked';
     });
     if (firstBook) state.currentSession.bookId = firstBook;
@@ -550,6 +553,10 @@ function init() {
   }
 
   initAccountEntry();
+  initBagEntry();
+
+  // 暴露给 bag.js 等模块使用
+  window.showToast = showToast;
 
   initAudio();
   initMusicSelector();
@@ -747,9 +754,10 @@ function enterDemoMode() {
   showToast('已进入演示模式 🎬');
 }
 
-function showToast(message) {
+function showToast(message, type = 'info') {
   const toast = document.createElement('div');
-  toast.className = 'fixed bottom-8 left-1/2 -translate-x-1/2 px-4 py-2 bg-ink/80 text-white rounded-full text-sm z-[200] animate-fade-in-up';
+  const bgClass = type === 'error' ? 'bg-red-800' : 'bg-ink/80';
+  toast.className = `fixed bottom-8 left-1/2 -translate-x-1/2 px-4 py-2 ${bgClass} text-white rounded-full text-sm z-[200] animate-fade-in-up`;
   toast.textContent = message;
   document.body.appendChild(toast);
   setTimeout(() => {

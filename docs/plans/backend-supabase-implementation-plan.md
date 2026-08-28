@@ -1,7 +1,7 @@
-# 归墟图书馆后端实施计划
+# 归墟图书馆后端实施计划（剩余 Phase 3–5）
 
 > 基于 2026-08-10 后端决策：Supabase + 渐进式登录 + 本地优先存档 + 详细行为统计。
-> 目标：在不影响现有纯前端体验的前提下，引入真实后端，实现用户注册统计、云端存档同步、Kimi API 代理。
+> 目标：Phase 1–2 已完成归档；本文件只记录剩余未实施的 Phase 3 行为统计、Phase 4 Kimi API 代理、Phase 5 统计看板。
 
 ---
 
@@ -134,45 +134,15 @@ CREATE POLICY "Users can read own events"
 
 ### Phase 1：基础接入（约 1-2 天）
 
-1. **创建 Supabase 项目**
-   - 注册/登录 Supabase
-   - 拿到 `SUPABASE_URL` 和 `SUPABASE_ANON_KEY`
-   - 将配置写入 `js/backend/config.js`（不提交到公开仓库）
+✅ **已完成并归档**，详见 `docs/archive/plans/backend-supabase-implementation-plan-completed.md`。
 
-2. **初始化后端模块**
-   - 创建 `js/backend/client.js`
-   - 导出 `supabase` 单例
-   - 处理本地开发/生产环境 key 切换
-
-3. **Auth 模块**
-   - `signInWithOAuth('google')`
-   - `signInWithOAuth('github')`
-   - `signOut()`
-   - `getCurrentUser()`
-   - `onAuthStateChange()`
-
-4. **游客标识**
-   - 未登录时生成 `anonymous_id` 存入 localStorage
-   - 登录后将匿名事件与 `user_id` 关联（可选，后台批处理）
+当前状态：`js/backend/client.js`、`js/backend/auth.js` 已存在；匿名/邮箱登录、注册、密码重置、登出均已实现。
 
 ### Phase 2：存档同步（约 2-3 天）
 
-1. **封装同步 API**
-   - `uploadSave(saveData)`：登录后上传
-   - `downloadSave()`：登录后下载
-   - `getLastSyncTime()`
+✅ **已完成并归档**，详见 `docs/archive/plans/backend-supabase-implementation-plan-completed.md`。
 
-2. **修改 `js/state.js` 和 `js/persistence.js`**
-   - 保留本地 localStorage 为第一优先
-   - 登录成功后：
-     - 询问/自动上传本地存档覆盖云端
-     - 或询问用户「本地覆盖云端 / 云端覆盖本地」
-   - 关键操作后自动触发上传（如专注完成、购买、访客事件）
-
-3. **同步策略锁定**
-   - 默认：本地存档优先，登录后自动上传覆盖云端
-   - 提供手动「从云端恢复」按钮
-   - 不做自动双向合并，避免冲突
+当前状态：`js/backend/sync.js`、`account-ui.js` 中的云端同步 UI 已实现；登录用户可上传/下载存档。
 
 ### Phase 3：行为统计（约 2 天）
 
@@ -261,10 +231,8 @@ CREATE POLICY "Users can read own events"
 
 ---
 
-## 七、验收标准
+## 七、验收标准（剩余 Phase）
 
-- [ ] 游客模式与现有体验完全一致
-- [ ] 登录用户可在新设备恢复存档
 - [ ] 专注完成、购买、访客等关键事件成功写入 `events` 表
 - [ ] Kimi API 调用通过 Supabase Edge Function 成功返回
 - [ ] 断网时游戏可继续游玩，联网后自动补报事件
@@ -273,16 +241,14 @@ CREATE POLICY "Users can read own events"
 
 ---
 
-## 八、时间估算
+## 八、时间估算（剩余 Phase）
 
 | Phase | 天数 |
 |---|---|
-| Phase 1 基础接入 | 1-2 |
-| Phase 2 存档同步 | 2-3 |
 | Phase 3 行为统计 | 2 |
 | Phase 4 Kimi 代理 | 1-2 |
 | Phase 5 统计看板 | 2-3（可选） |
-| **总计** | **8-12 天** |
+| **总计** | **5-7 天** |
 
 ---
 

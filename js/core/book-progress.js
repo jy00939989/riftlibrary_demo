@@ -4,6 +4,7 @@
 import { state, saveState } from '../state.js';
 import { BOOKS } from '../../data/books.js';
 import { getEffectiveCopiedWords } from './book-utils.js';
+import { isNoMasteryBook } from './book-eligibility.js';
 import { addAtmosphere, addCoins, addHistory, addInspiration } from '../storage.js';
 import { placeOnShelf, removeFromManuscriptBox, isBookCapacityFull } from '../capacity.js';
 import { addDiaryEntry } from '../diary.js';
@@ -60,8 +61,9 @@ export function completeBook(bookId) {
   const isFirstCompletion = prevCopyCount === 0;
 
   bookState.copyCount = prevCopyCount + 1;
-  if (!book.noMastery) {
-    bookState.masteryLevel = Math.min(5, bookState.copyCount);
+  if (!isNoMasteryBook(bookId)) {
+    // 普通书：首次完成即 master（重抄保持 master）
+    bookState.masteryLevel = 5;
   }
 
   if (isFirstCompletion) {

@@ -11,3 +11,4 @@ export { showUnlockAnimation, showBookCompleteAnimation, showBookShelvingAnimati
 export { renderAchievements, showAchievementToast, showAchievementBatch } from './achievements.js';
 export { renderGuideQuestWidget, showQuestCompleteToast } from './guidequests.js';
 export { renderMomoSuggestion, resetMomoSuggestion } from './momo-suggestion.js';
+export { showBagPanel, hideBagPanel, initBagEntry, updateBagBadge } from './bag.js';

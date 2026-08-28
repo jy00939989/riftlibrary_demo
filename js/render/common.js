@@ -157,3 +157,26 @@ export function getChapterContent(chapter) {
 export function getBookQuotes(book) {
   return getLocale() === 'en' && book.quotesEn ? book.quotesEn : book.quotes;
 }
+
+/** 点击图片看大图预览 */
+export function showImagePreview(src, alt = '') {
+  const overlay = document.createElement('div');
+  overlay.className = 'fixed inset-0 bg-black/80 z-[300] flex items-center justify-center p-4 cursor-zoom-out animate-fade-in';
+  overlay.innerHTML = `
+    <img src="${src}" alt="${alt}" class="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl" />
+    <button class="absolute top-4 right-4 text-white text-2xl hover:text-magic-gold">✕</button>
+  `;
+
+  const close = () => overlay.remove();
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay || e.target.tagName === 'BUTTON') close();
+  });
+  document.addEventListener('keydown', function escClose(e) {
+    if (e.key === 'Escape') {
+      close();
+      document.removeEventListener('keydown', escClose);
+    }
+  });
+
+  document.body.appendChild(overlay);
+}

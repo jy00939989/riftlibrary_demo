@@ -6,14 +6,21 @@ import {
   resetPassword, updatePassword,
   getSyncStatus, getPendingEventCount, downloadSave
 } from './index.js';
+import { redeemCode } from './redeem-code.js';
 import { t } from '../i18n/terms.js';
 import { saveState } from '../state.js';
+import { applyRedeemRewards, formatRewardSummary } from '../core/redeem.js';
 import { HCAPTCHA_SITE_KEY } from './config.js';
 
 import { save, STORAGE_KEYS } from '../persistence.js';
 
 function isValidPassword(password) {
   return password.length >= 8 && /[a-zA-Z]/.test(password) && /\d/.test(password);
+}
+
+function isLocalhost() {
+  if (typeof window === 'undefined') return false;
+  return location.hostname === 'localhost' || location.hostname === '127.0.0.1';
 }
 
 // ========== hCaptcha 人机验证 ==========
@@ -133,6 +140,18 @@ export function showAccountPanel() {
   const user = getCurrentUser();
   const isAnonymous = !user || user.is_anonymous;
   const email = user?.email || '';
+  const allowLocalRedeem = isLocalhost();
+
+  const redeemCodeUi = `
+    <div class="space-y-2">
+      <label class="text-xs text-ink-light block">${t('redeemCodeLabel') || '兑换礼包码'}${allowLocalRedeem && isAnonymous ? '（本地测试）' : ''}</label>
+      <div class="flex gap-2">
+        <input id="redeem-code-input" type="text" class="flex-1 px-3 py-2 border border-wood/30 rounded-lg text-sm uppercase" placeholder="PIONEER-XXXX-XXXX-XXXX" />
+        <button id="redeem-code-btn" class="px-4 py-2 bg-magic-gold text-white rounded-lg font-bold text-sm hover:shadow transition-all">${t('redeemCodeBtn') || '兑换'}</button>
+      </div>
+      ${allowLocalRedeem && isAnonymous ? `<p class="text-[10px] text-ink-light/60">本地测试码：TEST-LOCAL-2026</p>` : ''}
+    </div>
+  `;
 
   const overlay = document.createElement('div');
   overlay.id = 'account-panel-modal';
@@ -154,7 +173,8 @@ export function showAccountPanel() {
       <div class="text-sm mb-4">
         ${isAnonymous
           ? `<span class="text-ink-light">${t('accountLoggedInAs').replace('{email}', t('accountAnonymousUser'))}</span>
-             <div class="text-xs text-ink-light/60 mt-1">${formatSyncStatus()} · ${t('accountPendingEvents').replace('{n}', getPendingEventCount())}</div>`
+             <div class="text-xs text-ink-light/60 mt-1">${formatSyncStatus()} · ${t('accountPendingEvents').replace('{n}', getPendingEventCount())}</div>
+             <div class="text-xs text-magic-gold mt-2">${t('redeemNeedEmail') || '注册邮箱账号后即可兑换礼包'}</div>`
           : `<span class="text-magic-blue font-bold">${t('accountLoggedInAs').replace('{email}', email)}</span>
              <div class="text-xs text-ink-light/60 mt-1">${formatSyncStatus()} · ${t('accountPendingEvents').replace('{n}', getPendingEventCount())}</div>`
         }
@@ -162,7 +182,7 @@ export function showAccountPanel() {
 
       ${configured ? `
         <div class="space-y-3">
-          ${isAnonymous ? `
+          ${isAnonymous && !allowLocalRedeem ? `
             <div class="space-y-2">
               <label class="text-xs text-ink-light block">${t('accountEmailLabel')}</label>
               <input id="account-email" type="email" class="w-full px-3 py-2 border border-wood/30 rounded-lg text-sm" placeholder="email@example.com" />
@@ -179,11 +199,14 @@ export function showAccountPanel() {
               <button id="account-signin" class="px-4 py-2 bg-magic-blue text-white rounded-lg font-bold text-sm hover:shadow transition-all">${t('accountSignIn')}</button>
             </div>
           ` : `
-            <button id="account-download" class="w-full px-4 py-2 bg-magic-blue text-white rounded-lg font-bold text-sm hover:shadow transition-all">${t('accountDownloadSave')}</button>
-            <button id="account-change-password" class="w-full px-4 py-2 bg-wood/15 text-ink rounded-lg font-bold text-sm hover:bg-wood/25 transition-all mt-2">${t('accountChangePassword')}</button>
-            <button id="account-signout" class="w-full px-4 py-2 bg-wood/15 text-ink rounded-lg font-bold text-sm hover:bg-wood/25 transition-all mt-2">${t('accountSignOut')}</button>
-            ${!user.email_confirmed_at ? `
-              <button id="account-resend" class="w-full px-4 py-2 bg-magic-blue text-white rounded-lg font-bold text-sm hover:shadow transition-all mt-2">${t('accountResendVerify')}</button>
+            ${redeemCodeUi}
+            ${!isAnonymous ? `
+              <button id="account-download" class="w-full px-4 py-2 bg-magic-blue text-white rounded-lg font-bold text-sm hover:shadow transition-all">${t('accountDownloadSave')}</button>
+              <button id="account-change-password" class="w-full px-4 py-2 bg-wood/15 text-ink rounded-lg font-bold text-sm hover:bg-wood/25 transition-all mt-2">${t('accountChangePassword')}</button>
+              <button id="account-signout" class="w-full px-4 py-2 bg-wood/15 text-ink rounded-lg font-bold text-sm hover:bg-wood/25 transition-all mt-2">${t('accountSignOut')}</button>
+              ${!user.email_confirmed_at ? `
+                <button id="account-resend" class="w-full px-4 py-2 bg-magic-blue text-white rounded-lg font-bold text-sm hover:shadow transition-all mt-2">${t('accountResendVerify')}</button>
+              ` : ''}
             ` : ''}
           `}
         </div>
@@ -314,6 +337,31 @@ export function showAccountPanel() {
   overlay.querySelector('#account-change-password')?.addEventListener('click', () => {
     showChangePasswordPanel();
   });
+
+  // 兑换礼包码
+  const redeemInput = overlay.querySelector('#redeem-code-input');
+  const redeemBtn = overlay.querySelector('#redeem-code-btn');
+  if (redeemBtn && redeemInput) {
+    redeemBtn.addEventListener('click', async () => {
+      const code = redeemInput.value.trim();
+      if (!code) { msg(t('redeemCodeEmpty') || '请输入兑换码', true); return; }
+      redeemBtn.disabled = true;
+      redeemBtn.textContent = t('redeemCodeProcessing') || '兑换中…';
+      const result = await redeemCode(code);
+      redeemBtn.disabled = false;
+      redeemBtn.textContent = t('redeemCodeBtn') || '兑换';
+      if (result.ok) {
+        redeemInput.value = '';
+        const summary = formatRewardSummary(result.rewards);
+        msg(t('redeemCodeSuccess') || '兑换成功！');
+        if (typeof window.showToast === 'function') {
+          window.showToast(`兑换成功：${summary}`);
+        }
+      } else {
+        msg(t('redeemCodeFailed') || '兑换码无效或已过期', true);
+      }
+    });
+  }
 
   // 启动注册按钮冷却倒计时
   if (signupBtn) {

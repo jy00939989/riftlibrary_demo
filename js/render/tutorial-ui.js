@@ -2,7 +2,7 @@
 import { state } from '../state.js';
 import { el } from './common.js';
 import { markTutorialSeen } from '../tutorial.js';
-import { t, getAtmosphereStageName, getFocusRoomLevelName, getBorrowLevelName } from '../i18n/terms.js';
+import { t, getAtmosphereStageName, getFocusRoomLevelName, getBorrowLevelName, getRestorationLevelName } from '../i18n/terms.js';
 
 // 氛围阶段背景图
 const STAGE_BG = {
@@ -277,6 +277,31 @@ export function showBorrowAreaUpgrade(newLevel) {
     title: `${t('readingArea')} · ${name}`,
     narrative,
     footer: `${t('readingArea')} Lv.${newLevel} · ${t('borrowAreaCapacityBoost')}`
+  });
+}
+
+// ========== 古籍修复室升级弹窗 ==========
+
+const RESTORATION_IMG_NAMES = [
+  'restoration_lv0_ruins.jpg',
+  'restoration_lv1_shelter.jpg',
+  'restoration_lv2_tidy.jpg',
+  'restoration_lv3_bright.jpg',
+  'restoration_lv4_elegant.jpg',
+  'restoration_lv5_sanctum.jpg'
+];
+
+export function showRestorationUpgrade(newLevel) {
+  const imageUrl = `visual/restoration/${RESTORATION_IMG_NAMES[newLevel]}`;
+  const name = getRestorationLevelName(newLevel);
+  const narrative = t(`restorationNarrative${newLevel}`) || t('restorationNarrativeDefault');
+
+  showUpgradeCard({
+    imageUrl,
+    badge: newLevel === 0 ? t('restorationRoomUnlock') : t('restorationRoomUpgrade'),
+    title: `${t('restorationRoom')} · ${name}`,
+    narrative,
+    footer: `${t('restorationRoom')} Lv.${newLevel}`
   });
 }
 

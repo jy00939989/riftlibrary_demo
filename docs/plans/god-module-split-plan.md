@@ -1,7 +1,7 @@
-# 归墟图书馆神模块拆分计划
+# 归墟图书馆神模块拆分计划（剩余 Phase 2/4/5）
 
 > 针对 7 月总结遗留项：state.js / app.js / focus.js / shop.js 的职责过重问题。
-> 目标：把「什么都管」的 God Module 拆成边界清晰、可独立理解的小模块，降低后续功能迭代和排查 bug 的成本。
+> 目标：Phase 0/1/3 已完成归档；本文件只记录剩余未实施的 Phase 2 商店业务、Phase 4 渲染拆分、Phase 5 app.js 最终瘦身。
 
 ---
 
@@ -245,10 +245,9 @@ export function calculateFocusRewards({ minutes, bookId, teaBoost, candleInspira
 
 ### Phase 1：状态层拆分（低风险，约 1-2 天）
 
-1. 创建 `js/state/migrations.js`，把 `state.js` 中的迁移逻辑原样迁移
-2. 创建 `js/state/save.js`，把 `saveState()` 迁过去
-3. `js/state.js` 只保留状态定义 + 重新导出 `initState`/`saveState`
-4. 验证：`node --check` 通过 + 游戏能正常启动 + 旧存档能正确迁移
+✅ **已完成并归档**，详见 `docs/archive/plans/god-module-split-plan-completed.md`。
+
+当前状态：`js/state/state.js`、`js/state/migrations.js`、`js/state/save.js` 已拆分；`js/state.js` 为薄 shim。
 
 ### Phase 2：商店业务拆分（中低风险，约 2 天）
 
@@ -259,11 +258,9 @@ export function calculateFocusRewards({ minutes, bookId, teaBoost, candleInspira
 
 ### Phase 3：专注业务拆分（中风险，约 2-3 天）
 
-1. 创建 `js/core/focus-session.js` 和 `js/core/focus-rewards.js`
-2. 把 `app.js` 中的 `handleStartFocus` / `handleCompleteFocus` / `handleAbandonFocus` 逐步迁移
-3. 创建 `js/core/focus-orchestrator.js` 处理完成后的副作用链
-4. `app.js` 中的 `setActions` 改为引用新 core 模块
-5. 验证：专注开始、暂停、完成、放弃、弹窗链全部正常
+✅ **已完成并归档**，详见 `docs/archive/plans/god-module-split-plan-completed.md`。
+
+当前状态：`js/core/focus-session.js`、`js/core/focus-rewards.js`、`js/core/focus-orchestrator.js` 已创建；专注开始/暂停/完成/放弃及完成后副作用链已迁出 `app.js`。
 
 ### Phase 4：渲染拆分（中风险，约 3 天）
 
@@ -354,39 +351,33 @@ export const actions = {
 
 ---
 
-## 八、验收标准
+## 八、验收标准（剩余 Phase）
 
-- [ ] `js/state.js` 行数 < 200，只含状态定义
-- [ ] `js/app.js` 行数 < 400，只含启动和全局事件
 - [ ] `js/shop.js` 消失或变成纯转发文件
 - [ ] `js/render/focus.js` 和 `js/render/shop.js` 消失或大幅瘦身
+- [ ] `js/app.js` 行数 < 400，只含启动和全局事件
 - [ ] `node --check` 全部通过
 - [ ] 专注、购买、访客、教程、成就等核心流程手动测试无回归
 - [ ] 旧存档启动后数据正确（重点测长书分卷、访客好感度、植物状态）
 
 ---
 
-## 九、时间估算
+## 九、时间估算（剩余 Phase）
 
 | Phase | 天数 |
 |---|---|
-| Phase 1 状态层拆分 | 1-2 |
 | Phase 2 商店业务拆分 | 2 |
-| Phase 3 专注业务拆分 | 2-3 |
 | Phase 4 渲染拆分 | 3 |
 | Phase 5 app.js 瘦身 | 1 |
-| **总计** | **9-11 天** |
+| **总计** | **6 天** |
 
 ---
 
-## 十、建议实施顺序
+## 十、建议实施顺序（剩余 Phase）
 
-1. **先做 Phase 1（状态层）**：风险最低，为后续所有拆分打基础
-2. **再做 Phase 2（商店业务）**：业务边界清晰，不容易出大错
-3. **Phase 3 + Phase 4 可以交错**：但建议先拆 focus 业务，再拆 focus 渲染
-4. **Phase 5 最后收尾**
-
-> 如果时间有限，可以只做 Phase 1 + Phase 3，先把 `state.js` 和 `app.js` 中最痛的专注逻辑拆出来，收益最大。
+1. **Phase 2（商店业务）**：业务边界清晰，不容易出大错
+2. **Phase 4（渲染拆分）**：依赖 Phase 2 的 actions 稳定
+3. **Phase 5（app.js 瘦身）**：收尾
 
 ---
 

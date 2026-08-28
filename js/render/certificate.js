@@ -37,13 +37,12 @@ export function showCertificate(book, callback) {
     <h2 class="font-display text-xl font-bold mb-1">${getBookTitle(book)} · 誊抄完成</h2>
     <p class="text-magic-blue italic text-sm leading-relaxed mb-4 px-2">「${certMsg}」</p>
 
-    <div class="mb-5 flex justify-center">
+    <div class="mb-5 flex justify-center certificate-cover-wrap">
       ${hasCoverImage
-        ? `<div class="relative inline-block p-1.5 bg-gradient-to-br from-magic-gold/30 via-magic-gold/10 to-magic-gold/30 rounded-lg shadow-xl">
-            <img src="${book.cover}" alt="${getBookTitle(book)}" class="w-32 h-48 object-cover rounded shadow-lg"
-               onerror="this.parentElement.style.display='none'; this.parentElement.nextElementSibling.style.display='flex';">
+        ? `<div id="cert-cover-frame" class="relative inline-block p-1.5 bg-gradient-to-br from-magic-gold/30 via-magic-gold/10 to-magic-gold/30 rounded-lg shadow-xl cert-glow animate-cert-reveal">
+            <img id="cert-cover-img" src="${book.cover}" alt="${getBookTitle(book)}" class="w-32 h-48 object-cover rounded shadow-lg">
            </div>
-           <div class="hidden w-32 h-48 items-center justify-center bg-wood/20 rounded-lg border-2 border-dashed border-wood/40 text-6xl">${book.emoji}</div>`
+           <div id="cert-cover-fallback" class="hidden w-32 h-48 items-center justify-center bg-wood/20 rounded-lg border-2 border-dashed border-wood/40 text-6xl">${book.emoji}</div>`
         : `<div class="w-32 h-48 flex items-center justify-center bg-gradient-to-br from-wood/20 to-wood/5 rounded-lg border-2 border-dashed border-wood/40 shadow-lg text-6xl">${book.emoji}</div>`}
     </div>
 
@@ -79,6 +78,23 @@ export function showCertificate(book, callback) {
   `;
 
   overlay.appendChild(cert);
+
+  // 封面图加载成功：加发光 + 浮现动效；加载失败：回退到 emoji
+  if (hasCoverImage) {
+    const img = cert.querySelector('#cert-cover-img');
+    const frame = cert.querySelector('#cert-cover-frame');
+    const fallback = cert.querySelector('#cert-cover-fallback');
+    if (img) {
+      img.addEventListener('error', () => {
+        if (frame) frame.classList.add('hidden');
+        if (fallback) fallback.classList.remove('hidden');
+        fallback.classList.add('flex');
+      });
+      img.addEventListener('load', () => {
+        frame.classList.add('cert-glow-active');
+      });
+    }
+  }
 
   const dismiss = (cb) => {
     overlay.style.opacity = '0';

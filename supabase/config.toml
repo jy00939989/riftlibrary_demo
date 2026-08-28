@@ -1,0 +1,5 @@
+# Supabase CLI 最小配置
+# 仅用于 Edge Function 部署与项目链接
+
+[project]
+project_id = "jfehwxfjiwfmbprrfoxt"

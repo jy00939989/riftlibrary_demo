@@ -18,4 +18,4 @@ export {
 
 export { getPlanePortalPrice, purchasePlanePortal } from './core/shop/plane-portals.js';
 
-export { purchaseSignboard, hasSignboard } from './core/shop/signboards.js';
+export { purchaseSignboard, hasSignboard, getSignboardBuffSum } from './core/shop/signboards.js';

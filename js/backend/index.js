@@ -10,3 +10,4 @@ export {
 export { debouncedUploadSave, downloadSave, getSyncStatus } from './sync.js';
 export { track, getPendingEventCount } from './analytics.js';
 export { showAccountPanel, initAccountEntry } from './account-ui.js';
+export { redeemCode } from './redeem-code.js';

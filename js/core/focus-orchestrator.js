@@ -9,7 +9,7 @@ import { checkAchievements, getAchievementBonuses } from '../achievements.js';
 import { getAuraCoinsMultiplier, getAuraSpawnBonus, getBorrowSpawnBonus, spawnVisitor } from '../visitors.js';
 import { getCurationCoinsBonus } from '../curation.js';
 import { addDiaryEntry } from '../diary.js';
-import { hasSignboard } from '../shop.js';
+import { hasSignboard, getSignboardBuffSum } from '../shop.js';
 import { canDrawActionCards, drawActionCards, applyAction } from '../actioncards.js';
 import { checkAndShowTutorial } from '../tutorial.js';
 import { dispatchTutorialUI } from '../render/tutorial-ui.js';
@@ -150,7 +150,7 @@ export function runFocusOrchestration(result, isAuto) {
           showFirstVisitorEvent(visitor);
         }
       } else if (state.tutorialFlags.firstVisitorEventDone) {
-        const welcomeBonus = hasSignboard('welcome') ? 0.03 : 0;
+        const welcomeBonus = getSignboardBuffSum('spawn_chance');
         const perRollChance = 0.20 + (state.library.atmosphere / 1000) * 0.15 + getAuraSpawnBonus() + getBorrowSpawnBonus() + welcomeBonus;
         const rolls = Math.max(1, Math.ceil(minutes / 12));
         for (let r = 0; r < rolls; r++) {
