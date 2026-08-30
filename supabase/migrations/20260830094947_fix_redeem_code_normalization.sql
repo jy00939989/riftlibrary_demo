@@ -1,13 +1,7 @@
--- 2026-08-30：为限量纪念牌增加编号（serial_number）支持
--- 已在项目 jfehwxfjiwfmbprrfoxt 应用后追加
+-- 修复：兑换码在数据库存储时带连字符，但前端/Edge Function 会标准化为纯字母数字，
+-- 导致 redeem_code_atomic 查询时匹配失败，表现为“无效或已兑换”。
+-- 本迁移将函数内所有 code 比较改为标准化后比较，并在写入 user_redeems 时保留原始带连字符的码。
 
--- 1. 为用户兑换记录增加编号字段
-ALTER TABLE public.user_redeems
-ADD COLUMN IF NOT EXISTS serial_number int;
-
-COMMENT ON COLUMN public.user_redeems.serial_number IS '该次兑换在对应兑换码中的序号，用于限量纪念牌展示编号';
-
--- 2. 更新原子化兑换函数，返回 serial_number
 CREATE OR REPLACE FUNCTION public.redeem_code_atomic(p_user_id uuid, p_code text)
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -76,4 +70,4 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.redeem_code_atomic(uuid, text) IS '原子化兑换：校验、扣次数、写记录、返回限量编号一次性完成';
+COMMENT ON FUNCTION public.redeem_code_atomic(uuid, text) IS '原子化兑换：支持带连字符存储，内部按标准化形式匹配';
