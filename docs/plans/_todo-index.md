@@ -6,6 +6,14 @@
 
 ## 🟢 已 ready 可立即做
 
+### atmosphere-source-narrowing-plan（氛围来源收窄）
+- [x] `js/core/book-progress.js`：誊抄氛围改为首通全额、重抄 ×0.5
+- [x] `data/visitor-events.js`：稀层事件氛围 30/40 改为 10/15，金币保持 60/80
+- [x] `js/visitors.js`：借阅区 Lv7 `returnAtmo` 由 8 降到 5
+- [x] `data/plants.js`：魔法玫瑰收获氛围 25→10，星光蕨 45→15，鹤望兰 2 不动
+- [x] 验证新存档连续誊抄、稀层事件、Lv7 还书、植物收获数值正确（`scripts/verify-atmosphere-narrowing.js` 16 项全过）
+- [x] 后续把 `BORROW_LEVEL_TABLE` 三处重复定义合并为单一真源（`data/borrow-levels.js`）
+
 ### borrow-level-damage-reduction（借阅等级减损）
 - [ ] 在 `js/visitors.js` 还书损毁判定中读取 `state.library.borrowLevel`
 - [ ] 按等级减免：基础概率 - `(borrowLevel - 1) * 0.004`，下限 0.5%
@@ -173,3 +181,19 @@
 - [ ] 实现 `renderPlantArt` 预加载 fallback，不要依赖行内 `onerror`
 - [ ] 新增 `addSeed()` / `spendSeed()` 集中 helper，替换裸赋值
 - [ ] 确认 `DEFAULT_BOOKS` 是否含 book_023/024，若不含则明确 book 分支走 `createBookRecord`
+
+### item-distribution-system-plan（道具分发系统）
+- [x] `data/items.js`：6 种道具定义（笔类/修缮符/便签）
+- [x] `js/core/redeem.js`：兑换奖励应用、背包增删、道具使用逻辑
+- [x] `js/render/bag.js`：行囊面板、目标选择器、二次确认
+- [x] 三种笔改名：莎草芦管/天鹅翎管/秘银笔尖（方案 C）
+- [x] 本地测试码与生成脚本中的道具 ID 同步为新 ID
+- [x] Supabase 后端部署：`redeem_codes` 表、Edge Function `redeem-code`
+- [x] 生成并发放 10 个 `PIONEER` 先驱者码给 7 名测试用户（已生成 10 个码并入库）
+- [x] 账号面板兑换入口 UI（已存在，注册登录后可用）
+- [x] `supabase/migrations/20260830000000_add_signboard_serial_number.sql`：限量纪念牌增加 `serial_number` 字段并更新原子化兑换函数
+- [x] `supabase/functions/redeem-code/index.ts`：兑换成功返回 `serial_number`
+- [x] `js/render/library.js` / `js/i18n/terms.js`：纪念牌展示“第 N 号 / 共 N 块”
+- [x] 新建 `data/borrow-levels.js` 作为 `BORROW_LEVEL_TABLE` 单一真源
+- [x] `js/visitors.js` / `js/core/economy.js` / `js/core/visitor-lookup.js` 改从 `data/borrow-levels.js` 读取
+- [x] 提交 8.30 改动并推送 Gitee `feature/2026-08-28-updates` + `deploy`
