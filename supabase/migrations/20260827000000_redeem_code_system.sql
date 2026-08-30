@@ -84,13 +84,13 @@ DECLARE
   v_exists boolean;
   v_serial int;
 BEGIN
-  -- 标准化兑换码
+  -- 标准化兑换码（忽略连字符、空格、大小写）
   p_code := upper(regexp_replace(p_code, '[^A-Z0-9]', '', 'g'));
 
-  -- 查询兑换码
+  -- 查询兑换码（存储时可能带连字符，按标准化形式匹配）
   SELECT * INTO v_code
   FROM public.redeem_codes
-  WHERE code = p_code;
+  WHERE upper(regexp_replace(code, '[^A-Z0-9]', '', 'g')) = p_code;
 
   IF NOT FOUND THEN
     RETURN jsonb_build_object('ok', false, 'error', 'invalid_or_expired_code');
@@ -111,9 +111,11 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'error', 'invalid_or_expired_code');
   END IF;
 
-  -- 重复兑换检查
+  -- 重复兑换检查（同样按标准化形式比较）
   SELECT EXISTS(
-    SELECT 1 FROM public.user_redeems WHERE user_id = p_user_id AND code = p_code
+    SELECT 1 FROM public.user_redeems
+    WHERE user_id = p_user_id
+      AND upper(regexp_replace(code, '[^A-Z0-9]', '', 'g')) = p_code
   ) INTO v_exists;
 
   IF v_exists THEN
@@ -123,11 +125,12 @@ BEGIN
   -- 递增使用次数并捕获编号（第几块）
   UPDATE public.redeem_codes
   SET used_count = used_count + 1
-  WHERE code = p_code
+  WHERE upper(regexp_replace(code, '[^A-Z0-9]', '', 'g')) = p_code
   RETURNING used_count INTO v_serial;
 
+  -- 写入兑换记录时保留原始带连字符的码，以满足外键约束
   INSERT INTO public.user_redeems (user_id, code, rewards_json, serial_number)
-  VALUES (p_user_id, p_code, v_code.reward_json, v_serial);
+  VALUES (p_user_id, v_code.code, v_code.reward_json, v_serial);
 
   RETURN jsonb_build_object(
     'ok', true,
