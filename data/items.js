@@ -2,33 +2,33 @@
 // 纯数据模块，不依赖任何其他模块
 
 export const ITEMS = {
-  brush_rat_whisker: {
-    id: 'brush_rat_whisker',
-    name: '鼠须笔',
-    nameEn: 'Rat Whisker Brush',
+  brush_reed_pen: {
+    id: 'brush_reed_pen',
+    name: '莎草芦管',
+    nameEn: 'Reed Pen',
     emoji: '🖌️',
     icon: '🖌️',
-    description: '以鼠须制成的软笔，誊抄时可迅速写下大量文字。',
+    description: '取自尼罗河畔的莎草茎秆，是中世纪缮写室最常见的入门之笔。',
     category: 'brush',
     effect: { type: 'add_copied_words', value: 10000 }
   },
-  brush_ji_ju: {
-    id: 'brush_ji_ju',
-    name: '鸡距笔',
-    nameEn: 'Ji-Ju Brush',
+  brush_swan_quill: {
+    id: 'brush_swan_quill',
+    name: '天鹅翎管',
+    nameEn: 'Swan Quill',
     emoji: '✒️',
     icon: '✒️',
-    description: '笔锋劲挺如鸡距，能助你更快完成誊抄。',
+    description: '天鹅翅羽制成的翎管，柔韧有力，是缮写室抄经人的骄傲。',
     category: 'brush',
     effect: { type: 'add_copied_words', value: 20000 }
   },
-  brush_purple_rabbit: {
-    id: 'brush_purple_rabbit',
-    name: '紫毫笔',
-    nameEn: 'Purple Rabbit-Hair Brush',
+  brush_mithril_nib: {
+    id: 'brush_mithril_nib',
+    name: '秘银笔尖',
+    nameEn: 'Mithril Nib',
     emoji: '🖋️',
     icon: '🖋️',
-    description: '采野兔紫毫精制而成，一挥而就，万字毕现。',
+    description: '以秘银锻造的细小笔尖，落字如刻，一挥而就，万字毕现。',
     category: 'brush',
     effect: { type: 'add_copied_words', value: 30000 }
   },

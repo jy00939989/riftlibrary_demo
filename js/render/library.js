@@ -292,9 +292,27 @@ function renderGuideTab(container) {
   container.innerHTML = `
     <div class="space-y-6 max-w-2xl">
 
+      <!-- 欢迎语 -->
+      <section class="bg-magic-gold/10 border border-magic-gold/30 rounded-xl p-5 text-center">
+        <p class="font-bold text-ink mb-1">${t('curatorOfficeGuide')}</p>
+        <p class="text-sm text-ink-light">${t('guideWelcome')}</p>
+      </section>
+
+      <!-- 核心循环 -->
+      <section class="bg-white/60 rounded-xl p-5 border border-wood/20">
+        <h3 class="font-display text-lg font-bold mb-3">${t('coreLoopDesc')}</h3>
+        <p class="text-sm text-ink-light">${t('coreLoopDetail')}</p>
+      </section>
+
+      <!-- 核心资源 -->
+      <section class="bg-white/60 rounded-xl p-5 border border-wood/20">
+        <h3 class="font-display text-lg font-bold mb-3">${t('guideResourcesTitle')}</h3>
+        <div class="text-sm text-ink-light whitespace-pre-line">${t('guideResourcesDesc')}</div>
+      </section>
+
       <!-- 5个子标签说明 -->
       <section class="bg-white/60 rounded-xl p-5 border border-wood/20">
-        <h3 class="font-display text-lg font-bold mb-3">${t('curatorOfficeGuide')}</h3>
+        <h3 class="font-display text-lg font-bold mb-3">${t('tutorialOfficeDesc')}</h3>
         <div class="space-y-2 text-sm text-ink-light">
           <div class="bg-white rounded-lg p-3 flex items-start gap-2">
             <span class="text-lg">📊</span>
@@ -319,40 +337,52 @@ function renderGuideTab(container) {
         </div>
       </section>
 
-      <!-- 核心循环 -->
-      <section class="bg-magic-gold/10 border border-magic-gold/30 rounded-xl p-5 text-center">
-        <p class="font-bold text-ink mb-1">${t('coreLoopDesc')}</p>
-        <p class="text-xs text-ink-light">${t('coreLoopDetail')}</p>
+      <!-- 系统说明 -->
+      <section class="bg-white/60 rounded-xl p-5 border border-wood/20">
+        <h3 class="font-display text-lg font-bold mb-3">${t('guideFocusTitle')}</h3>
+        <p class="text-sm text-ink-light">${t('guideFocusDesc')}</p>
+      </section>
+
+      <section class="bg-white/60 rounded-xl p-5 border border-wood/20">
+        <h3 class="font-display text-lg font-bold mb-3">${t('guideVisitorTitle')}</h3>
+        <p class="text-sm text-ink-light">${t('guideVisitorDesc')}</p>
+      </section>
+
+      <section class="bg-white/60 rounded-xl p-5 border border-wood/20">
+        <h3 class="font-display text-lg font-bold mb-3">${t('guideItemTitle')}</h3>
+        <div class="text-sm text-ink-light whitespace-pre-line">${t('guideItemDesc')}</div>
+      </section>
+
+      <section class="bg-white/60 rounded-xl p-5 border border-wood/20">
+        <h3 class="font-display text-lg font-bold mb-3">${t('guideRedeemTitle')}</h3>
+        <div class="text-sm text-ink-light whitespace-pre-line">${t('guideRedeemDesc')}</div>
+      </section>
+
+      <section class="bg-white/60 rounded-xl p-5 border border-wood/20">
+        <h3 class="font-display text-lg font-bold mb-3">${t('guideRestorationTitle')}</h3>
+        <p class="text-sm text-ink-light">${t('guideRestorationDesc')}</p>
+      </section>
+
+      <section class="bg-white/60 rounded-xl p-5 border border-wood/20">
+        <h3 class="font-display text-lg font-bold mb-3">${t('guideRecopyTitle')}</h3>
+        <p class="text-sm text-ink-light">${t('guideRecopyDesc')}</p>
+      </section>
+
+      <section class="bg-white/60 rounded-xl p-5 border border-wood/20">
+        <h3 class="font-display text-lg font-bold mb-3">${t('guidePlantTitle')}</h3>
+        <p class="text-sm text-ink-light">${t('guidePlantDesc')}</p>
       </section>
 
       <!-- 常见问题 -->
       <section class="bg-white/60 rounded-xl p-5 border border-wood/20">
         <h3 class="font-display text-lg font-bold mb-3">${t('faq')}</h3>
         <div class="space-y-3 text-sm">
-          <div class="bg-white rounded-lg p-3">
-            <div class="font-bold mb-1">${t('faqQ1')}</div>
-            <p class="text-ink-light">${t('faqA1')}</p>
-          </div>
-          <div class="bg-white rounded-lg p-3">
-            <div class="font-bold mb-1">${t('faqQ2')}</div>
-            <p class="text-ink-light">${t('faqA2')}</p>
-          </div>
-          <div class="bg-white rounded-lg p-3">
-            <div class="font-bold mb-1">${t('faqQ3')}</div>
-            <p class="text-ink-light">${t('faqA3')}</p>
-          </div>
-          <div class="bg-white rounded-lg p-3">
-            <div class="font-bold mb-1">${t('faqQ4')}</div>
-            <p class="text-ink-light">${t('faqA4')}</p>
-          </div>
-          <div class="bg-white rounded-lg p-3">
-            <div class="font-bold mb-1">${t('faqQ5')}</div>
-            <p class="text-ink-light">${t('faqA5')}</p>
-          </div>
-          <div class="bg-white rounded-lg p-3">
-            <div class="font-bold mb-1">${t('faqQ6')}</div>
-            <p class="text-ink-light">${t('faqA6')}</p>
-          </div>
+          ${[1,2,3,4,5,6,7,8,9,10,11,12].map(i => `
+            <div class="bg-white rounded-lg p-3">
+              <div class="font-bold mb-1">${t('faqQ' + i)}</div>
+              <p class="text-ink-light">${t('faqA' + i)}</p>
+            </div>
+          `).join('')}
         </div>
       </section>
 

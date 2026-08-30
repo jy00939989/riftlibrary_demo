@@ -3,18 +3,6 @@
 
 import { VOLUME_GROUPS, VOLUME_REFRESH, VOLUME_GUARANTEE } from '../../data/volume_groups.js';
 
-// ── 借阅区等级配置表 ──
-const BORROW_LEVEL_TABLE = [
-  null,
-  { cap:2, returnCoins:30, favorBonus:0,  returnAtmo:1, spawnBonus:0.05 },
-  { cap:3, returnCoins:35, favorBonus:10, returnAtmo:1, spawnBonus:0.08 },
-  { cap:6, returnCoins:40, favorBonus:20, returnAtmo:3, spawnBonus:0.12 },
-  { cap:7, returnCoins:45, favorBonus:30, returnAtmo:3, spawnBonus:0.16 },
-  { cap:8, returnCoins:50, favorBonus:40, returnAtmo:5, spawnBonus:0.20 },
-  { cap:9, returnCoins:55, favorBonus:50, returnAtmo:5, spawnBonus:0.25 },
-  { cap:10,returnCoins:60, favorBonus:60, returnAtmo:8, spawnBonus:0.30 }
-];
-
 // ── 氛围阶段 ──
 export function getAtmosphereLevel(atmosphere) {
   if (atmosphere <= 30) return { level: 1, name: '废墟' };
@@ -24,20 +12,7 @@ export function getAtmosphereLevel(atmosphere) {
   return { level: 5, name: '星辰' };
 }
 
-// ── 借阅区 ──
-export function getBorrowLevelConfig(borrowLevel) {
-  return BORROW_LEVEL_TABLE[borrowLevel] || { cap:1, returnCoins:30, favorBonus:0, returnAtmo:0, spawnBonus:0 };
-}
-
-export function getVisitorCap(borrowLevel, auraCapBonus) {
-  const cfg = getBorrowLevelConfig(borrowLevel);
-  return (cfg.cap || 1) + (auraCapBonus || 0);
-}
-
-export function getBorrowSpawnBonus(borrowLevel) {
-  return getBorrowLevelConfig(borrowLevel).spawnBonus || 0;
-}
-
+// ── 借阅区升级价格 ──
 export function getBorrowLevelPrice(borrowLevel) {
   return Math.min(5700, Math.round(500 * Math.pow(1.5, borrowLevel)));
 }

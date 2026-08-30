@@ -32,3 +32,6 @@ server.log
 scripts/*-codes.csv
 scripts/*-codes.txt
 scripts/*-codes-insert.sql
+
+# Supabase CLI 本地临时文件
+supabase/.temp/
