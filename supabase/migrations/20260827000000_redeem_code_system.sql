@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS public.user_redeems (
   user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   code text NOT NULL REFERENCES redeem_codes(code),
   rewards_json jsonb NOT NULL DEFAULT '{}'::jsonb,
+  serial_number int,
   redeemed_at timestamptz DEFAULT now(),
   UNIQUE (user_id, code)
 );
@@ -81,6 +82,7 @@ AS $$
 DECLARE
   v_code public.redeem_codes%ROWTYPE;
   v_exists boolean;
+  v_serial int;
 BEGIN
   -- 标准化兑换码
   p_code := upper(regexp_replace(p_code, '[^A-Z0-9]', '', 'g'));
@@ -118,20 +120,22 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'error', 'already_redeemed');
   END IF;
 
-  -- 递增使用次数并写入兑换记录
+  -- 递增使用次数并捕获编号（第几块）
   UPDATE public.redeem_codes
   SET used_count = used_count + 1
-  WHERE code = p_code;
+  WHERE code = p_code
+  RETURNING used_count INTO v_serial;
 
-  INSERT INTO public.user_redeems (user_id, code, rewards_json)
-  VALUES (p_user_id, p_code, v_code.reward_json);
+  INSERT INTO public.user_redeems (user_id, code, rewards_json, serial_number)
+  VALUES (p_user_id, p_code, v_code.reward_json, v_serial);
 
   RETURN jsonb_build_object(
     'ok', true,
     'rewards', v_code.reward_json,
-    'code_type', v_code.code_type
+    'code_type', v_code.code_type,
+    'serial_number', v_serial
   );
 END;
 $$;
 
-COMMENT ON FUNCTION public.redeem_code_atomic(uuid, text) IS '原子化兑换：校验、扣次数、写记录一次性完成';
+COMMENT ON FUNCTION public.redeem_code_atomic(uuid, text) IS '原子化兑换：校验、扣次数、写记录、返回限量编号一次性完成';

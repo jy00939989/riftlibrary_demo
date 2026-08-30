@@ -63,9 +63,9 @@ function buildRewardJson(type) {
         inspiration: 30,
         seeds: { starlight_fern: 2 },
         items: {
-          brush_rat_whisker: 2,
-          brush_ji_ju: 2,
-          brush_purple_rabbit: 1,
+          brush_reed_pen: 2,
+          brush_swan_quill: 2,
+          brush_mithril_nib: 1,
           repair_scroll: 2,
           favor_note_targeted: 2,
           favor_note_random: 1

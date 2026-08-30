@@ -70,6 +70,7 @@ export const SIGNBOARDS = {
     image: 'visual/signboards/sign_pioneer.png',
     description: '第一批踏入归墟图书馆的读者留下的印记，时光在此流速稍缓。全球限量 10 个。',
     price: 0,
+    maxCount: 10,
     page: 'focus',
     buff: { type: 'focus_speed', value: 0.03, desc: '缮写速率 +3%' }
   },
@@ -81,6 +82,7 @@ export const SIGNBOARDS = {
     image: 'visual/signboards/sign_opening.png',
     description: '归墟图书馆正式开馆的纪念，墨墨亲手挂上的牌子。限量 100 个。',
     price: 0,
+    maxCount: 100,
     page: 'focus',
     buff: { type: 'focus_speed', value: 0.02, desc: '缮写速率 +2%' }
   }

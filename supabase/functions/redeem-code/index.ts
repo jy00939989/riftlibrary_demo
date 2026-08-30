@@ -148,12 +148,22 @@ serve(async (req) => {
         .eq('id', logRow.id);
     }
 
-    // 8. 返回奖励
+    // 8. 为每个纪念牌分配编号
+    const serialNumbers: Record<string, number> = {};
+    const signboardIds: string[] = rpcResult.rewards?.signboards || [];
+    if (rpcResult.serial_number && signboardIds.length > 0) {
+      signboardIds.forEach((id: string) => {
+        serialNumbers[id] = rpcResult.serial_number;
+      });
+    }
+
+    // 9. 返回奖励
     return new Response(
       JSON.stringify({
         ok: true,
         rewards: rpcResult.rewards,
-        code_type: rpcResult.code_type
+        code_type: rpcResult.code_type,
+        serial_numbers: serialNumbers
       }),
       { status: 200, headers: corsHeaders }
     );

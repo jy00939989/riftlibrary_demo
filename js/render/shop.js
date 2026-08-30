@@ -35,6 +35,8 @@ function showLimitedSignboardPopup(signboard) {
   const modal = el('div', 'fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4');
   const content = el('div', 'parchment-bg rounded-2xl p-6 max-w-sm w-full text-center magic-glow relative overflow-hidden');
   const hasImage = signboard.image;
+  const serial = state.signboardSerials?.[signboard.id];
+  const serialText = serial !== undefined ? `NO.${serial} / ${signboard.maxCount || 10}` : '';
 
   content.innerHTML = `
     <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-magic-gold via-amber-300 to-magic-gold"></div>
@@ -44,7 +46,8 @@ function showLimitedSignboardPopup(signboard) {
         : `<span class="text-5xl inline-block">${signboard.emoji || '🏛️'}</span>`}
     </div>
     <h2 class="font-display text-lg font-bold text-ink mb-1">${t('limitedSignboardTitle')}</h2>
-    <div class="text-base text-magic-gold font-bold mb-3">${signboard.name}</div>
+    <div class="text-base text-magic-gold font-bold mb-1">${signboard.name}</div>
+    ${serialText ? `<div class="text-xs text-ink-light mb-2 font-mono tracking-wider">${serialText}</div>` : ''}
     <p class="text-xs text-ink-light leading-relaxed mb-4">${signboard.description}</p>
     <div class="bg-amber-50/50 rounded-lg p-3 mb-5 border border-amber-100">
       <p class="text-sm text-ink italic leading-relaxed">“${t('limitedSignboardThanks')}”</p>
@@ -825,13 +828,20 @@ function renderDecorationShop() {
   // === Signboards ===
   Object.values(SIGNBOARDS).forEach(sb => {
     const owned = state.signboards.includes(sb.id);
+    const serial = state.signboardSerials?.[sb.id];
+    const serialBadge = owned && serial !== undefined
+      ? `<span class="text-xs bg-amber-200 text-amber-800 px-1.5 py-0.5 rounded" title="限量编号">NO.${serial}</span>`
+      : '';
+    const ownedBadge = owned
+      ? `<span class="text-xs bg-green-200 text-green-700 px-1.5 py-0.5 rounded">✅ ${t('owned')}</span>${serialBadge}`
+      : '';
     const card = el('div', `rounded-xl p-4 border-2 flex gap-3 items-center ${owned ? 'bg-green-50 border-green-200 opacity-80' : 'bg-white border-wood/20 hover:border-magic-gold/50 hover:shadow-lg transition-all'}`);
     card.innerHTML = `
       ${renderSignboardIcon(sb)}
       <div class="flex-1">
         <div class="font-bold text-sm flex items-center gap-2">
           ${sb.name}
-          ${owned ? `<span class="text-xs bg-green-200 text-green-700 px-1.5 py-0.5 rounded">✅ ${t('owned')}</span>` : ''}
+          ${ownedBadge}
         </div>
         <p class="text-xs text-ink-light">${sb.description}</p>
         <p class="text-xs text-ink-light mt-0.5">${t('hungOnPage').replace('{page}', getPageName(sb.page))}</p>

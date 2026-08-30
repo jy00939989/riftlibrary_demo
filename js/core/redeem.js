@@ -22,8 +22,9 @@ const MAX_FAVOR = 600;
  * @param {object} rewards
  * @param {string} [codeType]
  */
-export function applyRedeemRewards(rewards, codeType) {
+export function applyRedeemRewards(rewards, codeType, serialNumbers) {
   rewards = rewards || {};
+  serialNumbers = serialNumbers || {};
 
   // 货币
   if (rewards.coins) addCoins(rewards.coins);
@@ -46,9 +47,14 @@ export function applyRedeemRewards(rewards, codeType) {
 
   // 纪念标志牌
   if (rewards.signboards) {
+    if (!state.signboardSerials) state.signboardSerials = {};
     rewards.signboards.forEach(signboardId => {
       if (!hasSignboard(signboardId)) {
         state.signboards.push(signboardId);
+      }
+      // 记录限量编号（如有）
+      if (serialNumbers[signboardId] !== undefined) {
+        state.signboardSerials[signboardId] = serialNumbers[signboardId];
       }
     });
   }

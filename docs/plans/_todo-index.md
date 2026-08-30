@@ -6,14 +6,6 @@
 
 ## 🟢 已 ready 可立即做
 
-### atmosphere-source-narrowing-plan（氛围来源收窄）
-- [ ] `js/core/book-progress.js`：誊抄氛围改为首通全额、重抄 ×0.5
-- [ ] `data/visitor-events.js`：稀层事件氛围 30/40 改为 10/15，金币保持 60/80
-- [ ] `js/visitors.js`：借阅区 Lv7 `returnAtmo` 由 8 降到 5
-- [ ] `data/plants.js`：魔法玫瑰收获氛围 25→10，星光蕨 45→15，鹤望兰 2 不动
-- [ ] 验证新存档连续誊抄、稀层事件、Lv7 还书、植物收获数值正确
-- [ ] 后续把 `BORROW_LEVEL_TABLE` 三处重复定义合并为单一真源
-
 ### borrow-level-damage-reduction（借阅等级减损）
 - [ ] 在 `js/visitors.js` 还书损毁判定中读取 `state.library.borrowLevel`
 - [ ] 按等级减免：基础概率 - `(borrowLevel - 1) * 0.004`，下限 0.5%

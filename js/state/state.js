@@ -120,6 +120,9 @@ export const state = {
   // 标志牌
   signboards: [],
 
+  // 标志牌限量编号 { [signboardId]: serialNumber }
+  signboardSerials: {},
+
   // 消耗型道具背包
   inventory: {},
 

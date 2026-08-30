@@ -16,18 +16,6 @@ export const VISITOR_DEFS = {
   wangxiaolei:  { id: 'wangxiaolei', name: '王小磊', emoji: '📦', title: '快递员诗人', category: ['诗歌','小说','散文'], aura: { name: '波浪诗笺', type: 'poem_collect', value: 10 } }
 };
 
-// ── 借阅区等级表（常量）──
-export const BORROW_LEVEL_TABLE_CORE = [
-  null,
-  { cap:2, returnCoins:30, favorBonus:0,  returnAtmo:1, spawnBonus:0.05 },
-  { cap:3, returnCoins:35, favorBonus:10, returnAtmo:1, spawnBonus:0.08 },
-  { cap:6, returnCoins:40, favorBonus:20, returnAtmo:3, spawnBonus:0.12 },
-  { cap:7, returnCoins:45, favorBonus:30, returnAtmo:3, spawnBonus:0.16 },
-  { cap:8, returnCoins:50, favorBonus:40, returnAtmo:5, spawnBonus:0.20 },
-  { cap:9, returnCoins:55, favorBonus:50, returnAtmo:5, spawnBonus:0.25 },
-  { cap:10,returnCoins:60, favorBonus:60, returnAtmo:8, spawnBonus:0.30 }
-];
-
 // ── 纯查表 ──
 export function getVisitorDef(charId) {
   return VISITOR_DEFS[charId] || null;

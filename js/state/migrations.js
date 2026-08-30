@@ -27,8 +27,31 @@ export const EMPTY_PLANT = {
  */
 const MIGRATIONS = [
   { version: 1, up: migrateV1 },
-  { version: 2, up: migrateV2 }
+  { version: 2, up: migrateV2 },
+  { version: 3, up: migrateV3 },
+  { version: 4, up: migrateV4 }
 ];
+
+function migrateV4() {
+  // 2026-08-30：纪念牌限量编号
+  if (!state.signboardSerials) state.signboardSerials = {};
+}
+
+function migrateV3() {
+  // 2026-08-30：三种笔从中式名改为西式名，ID 同步变更
+  if (!state.inventory) state.inventory = {};
+  const itemIdMapping = {
+    brush_rat_whisker: 'brush_reed_pen',
+    brush_ji_ju: 'brush_swan_quill',
+    brush_purple_rabbit: 'brush_mithril_nib'
+  };
+  Object.entries(itemIdMapping).forEach(([oldId, newId]) => {
+    if (state.inventory[oldId]) {
+      state.inventory[newId] = (state.inventory[newId] || 0) + state.inventory[oldId];
+      delete state.inventory[oldId];
+    }
+  });
+}
 
 function migrateV2() {
   // 新版迁移：消耗型道具背包
