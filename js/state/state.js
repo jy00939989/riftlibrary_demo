@@ -10,7 +10,8 @@ export const state = {
     todayMinutes: 0,
     todayDate: new Date().toDateString(),
     streak: 0,
-    lastFocusDate: null
+    lastFocusDate: null,
+    sessions: []
   },
 
   // 当前计时会话
@@ -20,9 +21,14 @@ export const state = {
     bookId: null,
     targetMinutes: 25,
     elapsedSeconds: 0,
+    fractionalSeconds: 0,
     paused: false,
     intervalId: null,
-    quoteIndex: 0
+    quoteIndex: 0,
+    lastQuoteMinute: 0,
+    startTime: 0,
+    lastTickTime: 0,
+    speedMultiplier: 1
   },
 
   // 书籍状态（新增书籍时同步更新 DEFAULT_BOOKS）

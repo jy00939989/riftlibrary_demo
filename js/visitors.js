@@ -806,7 +806,9 @@ function attemptBorrow(visitor, completedBooks, now) {
 
   const bookWords = book.totalWords || 28000;
   // 还书时间：3小时 ~ 120小时（5天），每2500字=1小时，大部头拉出层次
-  const borrowHours = Math.max(3, Math.min(120, Math.round(bookWords / 2500)));
+  const baseHours = Math.max(3, Math.min(120, Math.round(bookWords / 2500)));
+  const variance = 0.7 + Math.random() * 0.6; // ±30% 浮动
+  const borrowHours = Math.max(3, Math.min(120, Math.round(baseHours * variance)));
   const dueTime = now + borrowHours * 3600000;
 
   visitor.status = 'borrowed';
@@ -1111,6 +1113,16 @@ export function collectReturn(visitorId) {
   addCoins(retCfg.returnCoins);
   if (retCfg.returnAtmo > 0) addAtmosphere(retCfg.returnAtmo);
 
+  // 按借阅计划时长追加智慧之光（仅 coins，不加氛围）
+  const plannedDurationMs = (visitor.dueTime && visitor.borrowTime)
+    ? visitor.dueTime - visitor.borrowTime
+    : 0;
+  const plannedDurationHours = Math.max(0, plannedDurationMs / (1000 * 60 * 60));
+  const extraCoins = Math.floor(plannedDurationHours / 24) * 5;
+  if (extraCoins > 0) {
+    addCoins(extraCoins);
+  }
+
   // 乔一一光环：还书好感度加成
   const favorBonus = getAuraReturnFavorBonus();
   const baseFavor = Math.round(5 * (1 + retCfg.favorBonus / 100));
@@ -1131,8 +1143,9 @@ export function collectReturn(visitorId) {
     }
   }
 
+  const extraCoinsText = extraCoins > 0 ? ` (+${extraCoins}借阅时长)` : '';
   addHistory('visitor', `${visitor.emoji} ${visitor.name} 归还了《${bookTitle}》`,
-    `${retCfg.returnCoins}智慧之光 +${retCfg.returnAtmo}氛围 · 好感+${returnFavor}`);
+    `${retCfg.returnCoins + extraCoins}智慧之光${extraCoinsText} +${retCfg.returnAtmo}氛围 · 好感+${returnFavor}`);
   if (!state.diaryFirsts.visitorReturn) {
     state.diaryFirsts.visitorReturn = true;
     addDiaryEntry('visitor_return', { emoji: visitor.emoji, name: visitor.name, bookTitle });
@@ -1193,7 +1206,8 @@ export function collectReturn(visitorId) {
   return {
     damaged, event: eventResult, narrative: narrativeResult, bookId, bookTitle, charId, wavePoem,
     visitorName: visitor.name, visitorEmoji: visitor.emoji,
-    coins: retCfg.returnCoins, atmosphere: retCfg.returnAtmo, favor: returnFavor,
+    coins: retCfg.returnCoins + extraCoins, atmosphere: retCfg.returnAtmo, favor: returnFavor,
+    extraCoins,
     quote
   };
 }

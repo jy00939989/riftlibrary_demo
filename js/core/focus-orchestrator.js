@@ -3,7 +3,7 @@
 // 设计：显式回流（ADR-001），orchestrator 改完 state 后显式调用 renderXxx()。
 
 import { state, saveState } from '../state.js';
-import { addCoins, addHistory, addInspiration, addAtmosphere, getAtmosphereLevel } from '../storage.js';
+import { addCoins, addHistory, addInspiration, addAtmosphere, getAtmosphereLevel, addFocusSession } from '../storage.js';
 import { markTaskDone } from '../dailytasks.js';
 import { checkAchievements, getAchievementBonuses } from '../achievements.js';
 import { getAuraCoinsMultiplier, getAuraSpawnBonus, getBorrowSpawnBonus, spawnVisitor } from '../visitors.js';
@@ -78,8 +78,7 @@ export function runFocusOrchestration(result, isAuto) {
     }
   }
 
-  addHistory('focus', `专注 ${minutes} 分钟`, `誊抄 ${wordsGained.toLocaleString()} 字 · +${coinsEarned}智慧之光`);
-  saveState();
+  // 注意：focus 历史记录会在结算弹窗收集到 label 后写入
 
   // ── 今日馆务：专注 ≥25 分钟
   if (minutes >= 25) {
@@ -129,7 +128,7 @@ export function runFocusOrchestration(result, isAuto) {
   // ── 结算卡弹窗链 + 访客 + 引导任务
   try {
     handlePostFocusEffects({
-      minutes, wordsGained, coinsEarned,
+      minutes, wordsGained, coinsEarned, bookId,
       unlockedChapter,
       bookCompleted, completedBook, copyCount, bookMastery,
       isFirstBookComplete,
@@ -204,7 +203,7 @@ export function runFocusOrchestration(result, isAuto) {
 
 function handlePostFocusEffects(effects) {
   const {
-    minutes, wordsGained, coinsEarned,
+    minutes, wordsGained, coinsEarned, bookId,
     unlockedChapter,
     bookCompleted, completedBook, copyCount, bookMastery,
     isFirstBookComplete,
@@ -224,7 +223,23 @@ function handlePostFocusEffects(effects) {
       nextMilestone: nextMs,
       chapterInfo,
       nextPreview
-    }, () => {
+    }, (label) => {
+      // 玩家已提交 label（可能为空），写入历史、会话记录、墨墨日志
+      const labelText = label ? ` · ${label}` : '';
+      addHistory('focus', `专注 ${minutes} 分钟${labelText}`, `誊抄 ${wordsGained.toLocaleString()} 字 · +${coinsEarned}智慧之光`);
+      addFocusSession({
+        minutes,
+        words: wordsGained,
+        coins: coinsEarned,
+        label,
+        bookId: bookId || null,
+        bookTitle: book ? getBookTitle(book) : '',
+        mode: state.currentSession.mode || 'pomodoro'
+      });
+      const diaryVars = { title: book ? getBookTitle(book) : t('tabScriptorium'), minutes };
+      if (label) diaryVars.label = label;
+      addDiaryEntry('focus_complete', diaryVars);
+
       renderFocusPage();
       updateStatusBar();
       checkAndShowPostFocusTutorials();

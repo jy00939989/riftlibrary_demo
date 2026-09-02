@@ -62,8 +62,10 @@ export function completeBook(bookId) {
 
   bookState.copyCount = prevCopyCount + 1;
   if (!isNoMasteryBook(bookId)) {
-    // 普通书：首次完成即 master（重抄保持 master）
-    bookState.masteryLevel = 5;
+    // 普通书简化为两次抄写周期：
+    // - 首次完成 → Lv2（解锁上架信息 + 作者生平）
+    // - 第二次重抄 → Lv5（解锁轶事、书评、典藏封面与 master 增益）
+    bookState.masteryLevel = isFirstCompletion ? 2 : 5;
   }
 
   if (isFirstCompletion) {

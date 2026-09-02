@@ -27,6 +27,7 @@ js/dev-console.js
 # Supabase 本地敏感配置（含 URL / publishable key / anon key）
 js/backend/config.local.js
 server.log
+server-*.log
 
 # 生成的兑换码文件（需手动保管，不提交到仓库）
 scripts/*-codes.csv
@@ -35,3 +36,6 @@ scripts/*-codes-insert.sql
 
 # Supabase CLI 本地临时文件
 supabase/.temp/
+
+# Local Netlify folder
+.netlify

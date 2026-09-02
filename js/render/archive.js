@@ -8,6 +8,17 @@ import { renderPlaneDetail } from './plane.js';
 import { VISITOR_DEFS } from '../visitors.js';
 import { getVisitorMemory, getVisitorMemoryNewCount, markSeen, clearAllNew, getVisitorStats, getVisitorItemTitle, getVisitorItemText, retroCollectVisitorMemories } from '../visitorMemory.js';
 
+// 安全转义，防止动态文本经 innerHTML 注入
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, c => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[c]));
+}
+
 let archiveTab = 'history'; // 'history' | 'diary' | 'planes' | 'visitor-memory'
 
 export function renderArchivePage() {
@@ -84,8 +95,8 @@ function renderHistoryTab() {
             </div>
             <div class="pb-4">
               <div class="text-xs text-ink-light">${new Date(h.time).toLocaleString(getLocale())}</div>
-              <div class="font-bold">${h.title}</div>
-              <div class="text-sm text-ink-light">${h.detail}</div>
+              <div class="font-bold">${escapeHtml(h.title)}</div>
+              <div class="text-sm text-ink-light">${escapeHtml(h.detail)}</div>
             </div>
           </div>
         `).join('')}
@@ -222,7 +233,7 @@ function renderDiaryTab() {
       return `
         <div class="parchment-bg rounded-xl p-4 mb-3 magic-glow ${i === 0 ? 'border-l-4 border-magic-gold' : ''}">
           <div class="text-xs text-ink-light mb-2">${sparkle}${new Date(entry.time).toLocaleString(getLocale())}</div>
-          <div class="text-sm text-ink whitespace-pre-line leading-relaxed">${entry.text}</div>
+          <div class="text-sm text-ink whitespace-pre-line leading-relaxed">${escapeHtml(entry.text)}</div>
         </div>
       `;
     }).join('');

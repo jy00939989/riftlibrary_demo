@@ -873,36 +873,46 @@ export function showCompletionCard({ minutes, words, coins, book, streak, totalW
   }
 
   const overlay = el('div', 'fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4');
-  const card = el('div', 'parchment-bg rounded-2xl p-6 max-w-sm w-full text-center magic-glow animate-scale-in');
+  const card = el('div', 'parchment-bg rounded-2xl p-5 max-w-md w-full text-center magic-glow animate-scale-in');
 
   card.innerHTML = `
-    <div class="text-4xl mb-3">✨</div>
-    <h3 class="font-display text-xl font-bold mb-4">${t('focusCompleted')}</h3>
-    <div class="grid grid-cols-3 gap-2 mb-4">
-      <div class="bg-white/60 rounded-lg p-3">
-        <div class="text-lg font-bold text-magic-blue">${minutes}</div>
-        <div class="text-xs text-ink-light">${t('unitMinutes')}</div>
-      </div>
-      <div class="bg-white/60 rounded-lg p-3">
-        <div class="text-lg font-bold text-magic-blue">${words.toLocaleString()}</div>
-        <div class="text-xs text-ink-light">${t('copiedWordsLabel')}</div>
-      </div>
-      <div class="bg-white/60 rounded-lg p-3">
-        <div class="text-lg font-bold text-magic-gold">+${coins}</div>
-        <div class="text-xs text-ink-light">${t('coins')}</div>
+    <div class="flex items-start gap-4 mb-3 text-left">
+      <div class="text-4xl flex-shrink-0">✨</div>
+      <div class="flex-1 min-w-0">
+        <h3 class="font-display text-lg font-bold leading-tight">${t('focusCompleted')}</h3>
+        <div class="flex gap-3 mt-1 text-xs text-ink-light">
+          ${streak !== undefined ? `<span>🔥 ${t('streakDays').replace('{n}', streak)}</span>` : ''}
+          ${totalWords !== undefined ? `<span>📝 ${t('totalWordsLabel').replace('{n}', totalWords.toLocaleString())}</span>` : ''}
+        </div>
       </div>
     </div>
-    ${streak !== undefined ? `<div class="flex justify-center gap-4 mb-3 text-sm">
-      <span>🔥 ${t('streakDays').replace('{n}', streak)}</span>
-      ${totalWords !== undefined ? `<span>📝 ${t('totalWordsLabel').replace('{n}', totalWords.toLocaleString())}</span>` : ''}
-    </div>` : ''}
+    <div class="grid grid-cols-3 gap-2 mb-3">
+      <div class="bg-white/60 rounded-lg p-2">
+        <div class="text-base font-bold text-magic-blue">${minutes}</div>
+        <div class="text-[10px] text-ink-light">${t('unitMinutes')}</div>
+      </div>
+      <div class="bg-white/60 rounded-lg p-2">
+        <div class="text-base font-bold text-magic-blue">${words.toLocaleString()}</div>
+        <div class="text-[10px] text-ink-light">${t('copiedWordsLabel')}</div>
+      </div>
+      <div class="bg-white/60 rounded-lg p-2">
+        <div class="text-base font-bold text-magic-gold">+${coins}</div>
+        <div class="text-[10px] text-ink-light">${t('coins')}</div>
+      </div>
+    </div>
     ${milestoneHtml}
     ${chapterHtml}
     ${echoHtml}
     ${nextPreviewHtml}
-    <div class="italic text-ink-light mb-3 text-sm">「${quoteText}」${quoteSource}</div>
     ${momoHtml}
-    <button class="px-6 py-3 bg-magic-gold text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all">${t('continueText')}</button>
+    <div class="bg-white/60 rounded-lg p-2.5 mb-2 text-left">
+      <label class="text-[10px] text-ink-light block mb-0.5" for="focus-session-label">${t('focusSessionLabelPrompt')}</label>
+      <input type="text" id="focus-session-label"
+        class="w-full px-2.5 py-1.5 bg-white border border-wood rounded-lg text-sm text-ink focus:outline-none focus:border-magic-gold"
+        placeholder="${t('focusSessionLabelPlaceholder')}" maxlength="40" autocomplete="off">
+    </div>
+    <div class="italic text-ink-light mb-2 text-xs">「${quoteText}」${quoteSource}</div>
+    <button class="px-6 py-2.5 bg-magic-gold text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all text-sm">${t('continueText')}</button>
   `;
 
   overlay.appendChild(card);
@@ -913,12 +923,20 @@ export function showCompletionCard({ minutes, words, coins, book, streak, totalW
   card.style.overflowY = 'auto';
 
   const btn = card.querySelector('button');
-  btn.addEventListener('click', () => {
+  const labelInput = card.querySelector('#focus-session-label');
+  const finish = () => {
+    const label = labelInput ? labelInput.value.trim().slice(0, 40) : '';
     overlay.style.opacity = '0';
     overlay.style.transition = 'opacity 0.3s';
     setTimeout(() => {
       overlay.remove();
-      if (callback) callback();
+      if (callback) callback(label);
     }, 300);
-  });
+  };
+  btn.addEventListener('click', finish);
+  if (labelInput) {
+    labelInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') finish();
+    });
+  }
 }

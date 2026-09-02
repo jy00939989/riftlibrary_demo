@@ -28,9 +28,14 @@ export function startFocus(bookId, mode, targetMinutes) {
     bookId,
     targetMinutes,
     elapsedSeconds: 0,
+    fractionalSeconds: 0,
     paused: false,
     intervalId: null,
     quoteIndex: 0,
+    lastQuoteMinute: 0,
+    startTime: 0,
+    lastTickTime: 0,
+    speedMultiplier: 1,
     teaBoost: state.pendingTeaBoost || false,
     candleInspiration: state.pendingCandleInspiration || false
   };

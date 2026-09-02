@@ -1,3 +1,7 @@
+---
+layout: breakdown
+---
+
 # 归墟图书馆 · 待办总览
 
 > 本文件由项目规划器自动同步使用。每条 `- [ ]` 会作为独立待办条目导入 planner。
@@ -83,6 +87,8 @@
 - [ ] 书价分层：前 30 本 400–600，后 38 本 700–1000
 - [ ] 给后期增加可重复金币来源，如高等级访客赠礼事件或 Lv7 归还币提升
 - [ ] 新增 1–2 个灵感来源，或把首次重抄成本从 2 降到 1
+- [ ] 典藏版被访客借阅时提供额外还书收益（智慧之光/氛围），体现终极产物价值
+- [ ] 评审并落地 `docs/plans/visitor-borrow-duration-and-reward-adjustment.md`：借阅时长随机化 + 按时长追加智慧之光收益
 
 ### atmosphere-venue-map-design（场馆地图）
 - [ ] 改造 `addAtmosphere`：藏书厅 `atmosphere` 仍封顶 500，溢出自动转入 `venueAtmosphere`
