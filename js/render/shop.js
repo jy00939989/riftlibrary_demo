@@ -829,11 +829,20 @@ function renderDecorationShop() {
   Object.values(SIGNBOARDS).forEach(sb => {
     const owned = state.signboards.includes(sb.id);
     const serial = state.signboardSerials?.[sb.id];
+    const isLimited = sb.price === 0 && sb.image;
     const serialBadge = owned && serial !== undefined
       ? `<span class="text-xs bg-amber-200 text-amber-800 px-1.5 py-0.5 rounded" title="限量编号">NO.${serial}</span>`
       : '';
     const ownedBadge = owned
       ? `<span class="text-xs bg-green-200 text-green-700 px-1.5 py-0.5 rounded">✅ ${t('owned')}</span>${serialBadge}`
+      : '';
+    const actionBadge = !owned
+      ? (isLimited
+        ? `<span class="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded font-bold">${t('limitedSignboardLabel') || '兑换码获取'}</span>`
+        : `<button class="signboard-buy-btn px-3 py-1.5 ${state.coins >= sb.price ? 'bg-magic-gold text-white hover:shadow-lg' : 'bg-gray-300 text-gray-500 cursor-not-allowed'} rounded-lg text-sm font-bold transition-all"
+            ${state.coins < sb.price ? 'disabled' : ''}>
+            💰${sb.price}
+           </button>`)
       : '';
     const card = el('div', `rounded-xl p-4 border-2 flex gap-3 items-center ${owned ? 'bg-green-50 border-green-200 opacity-80' : 'bg-white border-wood/20 hover:border-magic-gold/50 hover:shadow-lg transition-all'}`);
     card.innerHTML = `
@@ -846,12 +855,7 @@ function renderDecorationShop() {
         <p class="text-xs text-ink-light">${sb.description}</p>
         <p class="text-xs text-ink-light mt-0.5">${t('hungOnPage').replace('{page}', getPageName(sb.page))}</p>
       </div>
-      ${!owned
-        ? `<button class="signboard-buy-btn px-3 py-1.5 ${state.coins >= sb.price ? 'bg-magic-gold text-white hover:shadow-lg' : 'bg-gray-300 text-gray-500 cursor-not-allowed'} rounded-lg text-sm font-bold transition-all"
-            ${state.coins < sb.price ? 'disabled' : ''}>
-            💰${sb.price}
-           </button>`
-        : ''}
+      ${actionBadge}
     `;
 
     const iconImg = card.querySelector('img');
@@ -861,14 +865,11 @@ function renderDecorationShop() {
       iconImg.addEventListener('click', () => showImagePreview(sb.image, sb.name));
     }
 
-    if (!owned && state.coins >= sb.price) {
-      card.querySelector('.signboard-buy-btn').addEventListener('click', () => {
+    const buyBtn = card.querySelector('.signboard-buy-btn');
+    if (buyBtn && !owned && !isLimited && state.coins >= sb.price) {
+      buyBtn.addEventListener('click', () => {
         if (purchaseSignboard(sb.id)) {
           playSfx('buy_success');
-          const isLimited = sb.price === 0 && sb.image;
-          if (isLimited) {
-            showLimitedSignboardPopup(sb);
-          }
           updateStatusAndRefresh();
           if (typeof window.renderLibraryPage === 'function') window.renderLibraryPage();
         } else {

@@ -106,3 +106,27 @@ export function updateStreak() {
   }
   saveState();
 }
+
+/**
+ * 记录一次完成的专注会话，用于后续统计与可视化。
+ * @param {object} session - { minutes, words, coins, label, bookId, bookTitle, mode }
+ */
+export function addFocusSession(session) {
+  if (!state.focus.sessions) state.focus.sessions = [];
+  const now = Date.now();
+  state.focus.sessions.unshift({
+    id: `${now}-${Math.random().toString(36).slice(2, 8)}`,
+    date: new Date().toISOString(),
+    timestamp: now,
+    minutes: session.minutes || 0,
+    words: session.words || 0,
+    coins: session.coins || 0,
+    label: (session.label || '').trim().slice(0, 40),
+    bookId: session.bookId || null,
+    bookTitle: session.bookTitle || '',
+    mode: session.mode || 'pomodoro'
+  });
+  // 保留最近 365 条，约等于一整年的专注记录，支撑跨年热力图与月度环比
+  if (state.focus.sessions.length > 365) state.focus.sessions.length = 365;
+  saveState();
+}

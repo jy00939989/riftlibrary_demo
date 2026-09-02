@@ -15,7 +15,7 @@ import { renderFocusPage, renderBookshelfPage, renderLibraryPage,
   renderVisitorsPage, renderArchivePage, renderShopPage, setActions,
   updateStatusBar, initBagEntry
 } from './render/index.js';
-import { startTimer, togglePauseTimer, abandonTimer, setCompleteCallback } from './timer.js';
+import { startTimer, togglePauseTimer, abandonTimer, setCompleteCallback, syncTimer } from './timer.js';
 import { runFocusOrchestration } from './core/focus-orchestrator.js';
 import { triggerQuestCheck } from './core/quest-trigger.js';
 import { isNoMasteryBook } from './core/book-eligibility.js';
@@ -463,6 +463,13 @@ function init() {
 
   // 注入回调
   setCompleteCallback(handleCompleteFocus);
+
+  // 切换回页面时立即校正计时器，避免后台标签页节流导致显示冻结
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      syncTimer();
+    }
+  });
 
   // 默认选择第一本已开启过抄写、且可以立即誊抄的书
   if (!state.currentSession.bookId) {

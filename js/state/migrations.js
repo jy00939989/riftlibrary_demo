@@ -129,10 +129,18 @@ function migrateV1() {
     bookId: null,
     targetMinutes: 25,
     elapsedSeconds: 0,
+    fractionalSeconds: 0,
     paused: false,
     intervalId: null,
-    quoteIndex: 0
+    quoteIndex: 0,
+    lastQuoteMinute: 0,
+    startTime: 0,
+    lastTickTime: 0,
+    speedMultiplier: 1
   };
+
+  // 专注记录 sessions（用于后期统计/可视化）
+  if (!state.focus.sessions) state.focus.sessions = [];
 
   // 检查日期
   const today = new Date().toDateString();

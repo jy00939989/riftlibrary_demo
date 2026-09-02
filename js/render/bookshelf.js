@@ -780,18 +780,23 @@ export function showMasteryDetail(book) {
   const level = bookState.masteryLevel;
   const container = document.getElementById('page-bookshelf');
 
-  const titles = ['', t('masteryName1'), t('masteryName2'), t('masteryName3'), t('masteryName4'), t('masteryName5')];
-  const contents = [
-    null,
+  const firstPhaseUnlocked = level >= 2;
+  const recopyPhaseUnlocked = level >= 5;
+
+  const firstPhaseContents = [
     t('bookShelvedAvailable'),
-    getBookAuthorBio(book) || t('authorBioMissing'),
+    getBookAuthorBio(book) || t('authorBioMissing')
+  ].filter(Boolean);
+
+  const recopyPhaseContents = [
     getBookAnecdotes(book) || t('anecdotesMissing'),
     getBookReviews(book) || t('reviewsMissing'),
-    t('collectorCoverEffect').replace('{cover}', book.collectorCover || '🌟')
-  ];
+    t('collectorCoverEffect').replace('{cover}', book.collectorCover || '🌟'),
+    t('masteryMasterBonus')
+  ].filter(Boolean);
 
   const modal = el('div', 'fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4');
-  const content = el('div', `parchment-bg rounded-2xl p-6 max-w-lg w-full max-h-[80vh] overflow-y-auto magic-glow ${level >= 5 ? 'animate-glow' : ''}`);
+  const content = el('div', `parchment-bg rounded-2xl p-6 max-w-lg w-full max-h-[80vh] overflow-y-auto magic-glow ${recopyPhaseUnlocked ? 'animate-glow' : ''}`);
 
   content.innerHTML = `
     <div class="flex items-center justify-between mb-4">
@@ -799,18 +804,30 @@ export function showMasteryDetail(book) {
       <button class="text-2xl text-ink-light hover:text-ink close-modal">✕</button>
     </div>
     <div class="text-sm text-ink-light mb-4">${book.author} · ${getCategoryLabel(book.category)} · ${t('totalCopies').replace('{n}', bookState.copyCount)}</div>
-    <div class="space-y-3 mb-4">
-      ${[1,2,3,4,5].map(lv => `
-        <div class="p-3 rounded-lg border bg-white border-magic-gold/30">
-          <div class="flex items-center gap-2 mb-1">
-            <span class="text-sm">🔓</span>
-            <span class="font-bold text-sm">${titles[lv]}</span>
-          </div>
-          <p class="text-xs text-ink-light ml-6">${contents[lv]}</p>
-        </div>
-      `).join('')}
+
+    <!-- 阶段一：首次完成 -->
+    <div class="p-3 rounded-lg border mb-3 ${firstPhaseUnlocked ? 'bg-white border-magic-gold/30' : 'bg-wood/5 border-wood/20 opacity-70'}">
+      <div class="flex items-center gap-2 mb-2">
+        <span class="text-sm">${firstPhaseUnlocked ? '🔓' : '🔒'}</span>
+        <span class="font-bold text-sm ${firstPhaseUnlocked ? '' : 'text-ink-light/70'}">${t('masteryPhaseFirst')}</span>
+      </div>
+      ${firstPhaseUnlocked
+        ? firstPhaseContents.map(c => `<p class="text-xs text-ink-light ml-6 mb-1">${c}</p>`).join('')
+        : `<p class="text-xs text-ink-light/70 ml-6">${t('masteryUnlockOnFirst')}</p>`}
     </div>
-    <button class="read-chapters-btn w-full mt-4 px-4 py-2 bg-magic-gold text-white rounded-lg font-bold text-sm hover:shadow-lg transition-all">${t('readChapters')}</button>
+
+    <!-- 阶段二：重抄解锁 -->
+    <div class="p-3 rounded-lg border mb-4 ${recopyPhaseUnlocked ? 'bg-white border-magic-gold/30' : 'bg-wood/5 border-wood/20 opacity-70'}">
+      <div class="flex items-center gap-2 mb-2">
+        <span class="text-sm">${recopyPhaseUnlocked ? '🔓' : '🔒'}</span>
+        <span class="font-bold text-sm ${recopyPhaseUnlocked ? '' : 'text-ink-light/70'}">${t('masteryPhaseRecopy')}</span>
+      </div>
+      ${recopyPhaseUnlocked
+        ? recopyPhaseContents.map(c => `<p class="text-xs text-ink-light ml-6 mb-1">${c}</p>`).join('')
+        : `<p class="text-xs text-ink-light/70 ml-6">${t('masteryUnlockOnRecopy')}</p>`}
+    </div>
+
+    <button class="read-chapters-btn w-full mt-2 px-4 py-2 bg-magic-gold text-white rounded-lg font-bold text-sm hover:shadow-lg transition-all">${t('readChapters')}</button>
   `;
 
   modal.appendChild(content);

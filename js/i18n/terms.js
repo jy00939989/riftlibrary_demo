@@ -244,6 +244,7 @@ const TERM_DATA = Object.freeze({
   masteryName3: { zh: '精通', en: 'Proficient' },
   masteryName4: { zh: '大师', en: 'Master' },
   masteryName5: { zh: '传承', en: 'Legacy' },
+  masteryLockedHint: { zh: '熟练度达到「{level}」后解锁', en: 'Unlock at mastery level "{level}"' },
 
   // ========== 策展共鸣 ==========
   categoryResonance: { zh: '分类共鸣', en: 'Category Resonance' },
@@ -274,6 +275,11 @@ const TERM_DATA = Object.freeze({
   anecdotesMissing: { zh: '创作轶闻待发现', en: 'Anecdotes yet to be discovered' },
   reviewsMissing: { zh: '名家书评待发现', en: 'Critical reviews yet to be discovered' },
   collectorCoverEffect: { zh: '典藏封面 · 金光特效 · {cover}', en: 'Collector cover · golden glow · {cover}' },
+  masteryPhaseFirst: { zh: '📖 首次完成', en: '📖 First Completion' },
+  masteryPhaseRecopy: { zh: '🔮 重抄解锁', en: '🔮 Recopy Unlock' },
+  masteryUnlockOnFirst: { zh: '首次完成本书后解锁', en: 'Unlock upon first completion' },
+  masteryUnlockOnRecopy: { zh: '花费 1 灵感重抄后解锁', en: 'Unlock after spending 1 inspiration to recopy' },
+  masteryMasterBonus: { zh: '✦ 已计入全局精通加成：专注速度 +0.1%', en: '✦ Counted toward global mastery bonus: focus speed +0.1%' },
   insufficientInspiration: { zh: '灵感不足！需要 {cost} 💡，当前拥有 {current} 💡', en: 'Not enough Inspiration! Need {cost} 💡, currently have {current} 💡' },
 
   // ========== 书籍分类 ==========
@@ -660,6 +666,8 @@ const TERM_DATA = Object.freeze({
   nextChapterQuotePreview: { zh: '📮 下一章引文预告', en: '📮 Next chapter preview' },
   momosBookReview: { zh: '墨墨的书评', en: "Momo's Review" },
   continueText: { zh: '继续 →', en: 'Continue →' },
+  focusSessionLabelPrompt: { zh: '这笔抄写，是为哪一段时光留的痕？', en: 'What moment is this copying for?' },
+  focusSessionLabelPlaceholder: { zh: '写个项目名，或留空……', en: 'Name this session, or leave blank...' },
   completionQuote1: { zh: '每一页抄写都是对知识的致敬。', en: 'Every page copied is a tribute to knowledge.' },
   completionQuote2: { zh: '持之以恒，终有回响。', en: 'Persistence, in time, echoes back.' },
   completionQuote3: { zh: '文字因你的笔触而重生。', en: 'Words are reborn through your hand.' },
@@ -783,6 +791,7 @@ const TERM_DATA = Object.freeze({
   availableToBuild: { zh: '可建造', en: 'Can Build' },
   limitedSignboardTitle: { zh: '🏛️ 获得限量挂牌', en: '🏛️ Limited Signboard Acquired' },
   limitedSignboardThanks: { zh: '感谢你成为归墟图书馆的同行者。这块挂牌是时光写下的收据，也是你与这座图书馆共同签下的一份温柔契约。', en: 'Thank you for walking alongside the Rift Library. This signboard is a receipt written by time, and a gentle covenant signed between you and this library.' },
+  limitedSignboardLabel: { zh: '兑换码获取', en: 'Redeem Code Only' },
   continue: { zh: '继续', en: 'Continue' },
   conditionsNotMet: { zh: '条件不足', en: 'Requirements not met' },
   requirements: { zh: '需要：氛围 ≥{atmo} · 拥有 ≥{books} 本书', en: 'Requires: Atmosphere ≥{atmo} · ≥{books} books' },
@@ -1035,6 +1044,7 @@ const TERM_DATA = Object.freeze({
     en: "A light rain falls outside the window.|Sunlight slants in through the high window.|A gentle breeze stirs the curtains.|The air is cool, but the library is warm.|Today's sky is pale gold.|The air smells of old pages and ink.|The afternoon light is perfect.|The evening light is beautiful."
   },
   diaryLogHeader: { zh: '📜 {momo}的日志 · 第{page}页', en: "📜 {momo}'s Diary · Page {page}" },
+  diaryFocusLabelSuffix: { zh: '\n（这次是为「{label}」而写。）', en: '\n(This time it was written for “{label}”.)' },
   diary_opening_focus_complete_0: { zh: '今天{master}专注抄写了《{title}》，整整{minutes}分钟。', en: 'Today {master} focused on copying “{title}” for {minutes} minutes.' },
   diary_opening_focus_complete_1: { zh: '缮写室的灯亮了起来，{master}安静地坐了{minutes}分钟。', en: 'The Scriptorium lamp lit up, and {master} sat quietly for {minutes} minutes.' },
   diary_opening_focus_complete_2: { zh: '{momo}在一旁看着，{master}的羽毛笔在《{title}》上沙沙响了{minutes}分钟。', en: '{momo} watched from the side as {master}’s quill rustled over “{title}” for {minutes} minutes.' },
@@ -1167,6 +1177,10 @@ const TERM_DATA = Object.freeze({
   redeemCodeProcessing: { zh: '兑换中…', en: 'Redeeming…' },
   redeemCodeSuccess: { zh: '兑换成功！', en: 'Redemption successful!' },
   redeemCodeFailed: { zh: '兑换码无效或已过期', en: 'Invalid or expired code' },
+  redeemCodeRateLimited: { zh: '兑换太频繁，请稍后再试', en: 'Too many attempts. Please try again later.' },
+  redeemCodeAlreadyRedeemed: { zh: '你已兑换过该礼包码', en: 'You have already redeemed this code.' },
+  redeemCodeNeedLogin: { zh: '请登录邮箱账号后兑换礼包', en: 'Please log in with an email account to redeem codes.' },
+  redeemCodeBackendError: { zh: '服务暂时不可用，请稍后再试', en: 'Service temporarily unavailable. Please try again later.' },
   redeemNeedEmail: { zh: '注册邮箱账号后即可兑换礼包', en: 'Register an email account to redeem codes' },
   accountDownloadSuccess: { zh: '云端存档已恢复，即将刷新页面…', en: 'Cloud save restored. Reloading…' },
   accountDownloadFailed: { zh: '存档恢复失败，请重试。', en: 'Failed to restore save. Please retry.' },

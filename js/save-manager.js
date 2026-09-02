@@ -93,10 +93,16 @@ function importFromJSON(jsonStr) {
       bookId: null,
       targetMinutes: 25,
       elapsedSeconds: 0,
+      fractionalSeconds: 0,
       paused: false,
       intervalId: null,
-      quoteIndex: 0
+      quoteIndex: 0,
+      lastQuoteMinute: 0,
+      startTime: 0,
+      lastTickTime: 0,
+      speedMultiplier: 1
     };
+    if (!clean.focus.sessions) clean.focus.sessions = [];
     save(STORAGE_KEYS.STATE, clean);
 
     return {

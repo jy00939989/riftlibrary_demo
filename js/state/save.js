@@ -13,9 +13,14 @@ export function saveState() {
     bookId: null,
     targetMinutes: 25,
     elapsedSeconds: 0,
+    fractionalSeconds: 0,
     paused: false,
     intervalId: null,
-    quoteIndex: 0
+    quoteIndex: 0,
+    lastQuoteMinute: 0,
+    startTime: 0,
+    lastTickTime: 0,
+    speedMultiplier: 1
   };
   // locale 已迁移到 settings，不再写入主存档
   delete toSave.locale;

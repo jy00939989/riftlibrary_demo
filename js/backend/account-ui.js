@@ -358,7 +358,12 @@ export function showAccountPanel() {
           window.showToast(`兑换成功：${summary}`);
         }
       } else {
-        msg(t('redeemCodeFailed') || '兑换码无效或已过期', true);
+        const errorKey = result.error === 'anonymous_user' ? 'redeemCodeNeedLogin'
+          : result.error === 'backend_not_ready' ? 'redeemCodeBackendError'
+          : result.error === 'rate_limited' ? 'redeemCodeRateLimited'
+          : result.error === 'already_redeemed' ? 'redeemCodeAlreadyRedeemed'
+          : 'redeemCodeFailed';
+        msg(t(errorKey) || t('redeemCodeFailed') || '兑换码无效或已过期', true);
       }
     });
   }

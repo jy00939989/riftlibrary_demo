@@ -168,7 +168,8 @@ export function generateDiaryEntry(type, vars = {}) {
 
   const logNumber = (state.diaryLogs ? state.diaryLogs.length : 0) + 1;
   const header = fill(t('diaryLogHeader'), { ...commonVars(), page: logNumber });
-  const log = `${header}\n${date}\n${weather}\n\n${opening}\n${middle}\n\n${ending}`;
+  const labelSuffix = vars.label ? fill(t('diaryFocusLabelSuffix'), { label: vars.label }) : '';
+  const log = `${header}\n${date}\n${weather}\n\n${opening}${labelSuffix}\n${middle}\n\n${ending}`;
 
   return log;
 }

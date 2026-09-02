@@ -19,15 +19,22 @@ let momoAccelerating = false;
 
 export function isMomoAccelerating() { return momoAccelerating; }
 
+function getNow() {
+  return window.__dev && window.__dev.getNow ? window.__dev.getNow() : Date.now();
+}
+
 export function startTimer() {
   const sess = state.currentSession;
   if (sess.active) return;
 
   sess.active = true;
   sess.elapsedSeconds = 0;
+  sess.fractionalSeconds = 0;
   sess.paused = false;
   sess.quoteIndex = 0;
-  sess.startTime = Date.now();
+  sess.lastQuoteMinute = 0;
+  sess.startTime = getNow();
+  sess.lastTickTime = getNow();
   sess.teaBoost = false;
   sess.candleInspiration = false;
 
@@ -44,6 +51,7 @@ export function startTimer() {
 
   // 首次专注：墨墨的魔法加速（10倍速）
   momoAccelerating = state.focus.totalMinutes === 0;
+  sess.speedMultiplier = momoAccelerating ? 10 : 1;
 
   // 缓存本次专注的书籍信息，用于正计时自动完成判断
   const bookId = sess.bookId;
@@ -64,7 +72,16 @@ export function startTimer() {
 }
 
 export function togglePauseTimer() {
-  state.currentSession.paused = !state.currentSession.paused;
+  const sess = state.currentSession;
+  const wasPaused = sess.paused;
+  sess.paused = !wasPaused;
+  if (!wasPaused) {
+    // 暂停时记录暂停开始时间（可选，用于调试/后续扩展）
+    sess.pauseStartTime = getNow();
+  } else {
+    // 恢复时重置时间基线，排除暂停期间
+    sess.lastTickTime = getNow();
+  }
   saveState();
   renderFocusPage();
 }
@@ -73,7 +90,20 @@ function tick() {
   const sess = state.currentSession;
   if (sess.paused || !sess.active) return;
 
-  sess.elapsedSeconds += 1;
+  const now = getNow();
+  const realDeltaMs = now - sess.lastTickTime;
+  sess.lastTickTime = now;
+
+  // 防御：系统时间回调时不应倒退计时
+  if (realDeltaMs <= 0) return;
+
+  // 根据真实经过时间和倍率计算游戏内经过秒数
+  const speed = sess.speedMultiplier || 1;
+  const deltaGameSeconds = (realDeltaMs / 1000) * speed;
+  sess.fractionalSeconds = (sess.fractionalSeconds || 0) + deltaGameSeconds;
+  const wholeSeconds = Math.floor(sess.fractionalSeconds);
+  sess.fractionalSeconds -= wholeSeconds;
+  sess.elapsedSeconds += wholeSeconds;
 
   // 倒计时/番茄钟模式：检测是否到时间
   if ((sess.mode === 'countdown' || sess.mode === 'pomodoro') && sess.targetMinutes > 0) {
@@ -122,7 +152,9 @@ function tick() {
   }
 
   // 每分钟触发誊抄预览刷新
-  if (sess.elapsedSeconds % 60 === 0) {
+  const currentMinute = Math.floor(sess.elapsedSeconds / 60);
+  if (currentMinute > sess.lastQuoteMinute) {
+    sess.lastQuoteMinute = currentMinute;
     sess.quoteIndex += 1;
     renderFocusPage();
   }
@@ -138,6 +170,10 @@ function tick() {
   const effectiveWords = book && bookState ? getEffectiveCopiedWords(bookState, book.totalWords) : 0;
   const bookWords = book ? effectiveWords + sessionEstimate : 0;
   updateTimerDisplay(timeStr, totalWords, bookWords);
+}
+
+export function syncTimer() {
+  tick();
 }
 
 function stopTimer() {
