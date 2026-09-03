@@ -1120,7 +1120,7 @@ export function collectReturn(visitorId) {
     ? visitor.dueTime - visitor.borrowTime
     : 0;
   const plannedDurationHours = Math.max(0, plannedDurationMs / (1000 * 60 * 60));
-  const extraCoins = Math.floor(plannedDurationHours / 24) * 5;
+  const extraCoins = Math.floor(plannedDurationHours / 6) * 3;
   if (extraCoins > 0) {
     addCoins(extraCoins);
   }
