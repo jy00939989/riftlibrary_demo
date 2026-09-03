@@ -1,5 +1,5 @@
 // Plane Shop page rendering — pure rendering, no state ownership
-import { state, saveState } from '../state.js';
+import { state } from '../state.js';
 import { BOOKS } from '../../data/books.js';
 import { SHARED_POOL } from '../../data/book_pool.js';
 import { el, h, actions, updateStatusBar, getBookTitle, showImagePreview } from './common.js';
@@ -8,6 +8,7 @@ import { ensureShopState, getShopState, purchaseBook, getBookActualPrice, getBor
 import { getManuscriptSlots, getManuscriptBoxCount, isRestorationUnlocked, unlockRestorationRoom, getRestorationUnlockPrice, getRestorationLevel, getRestorationUpgradePrice, upgradeRestorationLevel } from '../capacity.js';
 import { PLANES, canUnlockPlane } from '../../data/planes.js';
 import { showFocusRoomUpgrade, showBorrowAreaUpgrade, showRestorationUpgrade } from './tutorial-ui.js';
+import { setLibraryName } from '../core/library.js';
 import { getBorrowLevelConfig } from '../visitors.js';
 import { PLANT_TYPES } from '../../data/plants.js';
 import { checkAchievements } from '../achievements.js';
@@ -669,18 +670,16 @@ function showNamingModal() {
     const rawName = input.value.trim();
     const finalName = rawName || state.library.name; // keep default if empty
 
-    if (finalName.length > 12) {
+    const result = setLibraryName(finalName);
+    if (!result.ok) {
       hint.textContent = t('nameTooLong');
       hint.className = 'text-xs text-center mt-2 text-red-500';
       return;
     }
 
-    state.library.name = finalName;
-    state.library.nameLocked = true;
-    saveState();
     // Refresh top navigation name
     const nameEl = document.getElementById('nav-library-name');
-    if (nameEl) nameEl.textContent = finalName;
+    if (nameEl) nameEl.textContent = result.name;
     overlay.remove();
     renderShopPage();
     // Refresh curator office if visible

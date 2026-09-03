@@ -11,6 +11,7 @@ import { getActiveAuras } from '../visitors.js';
 import { getEffectiveCopiedWords, getRepairProgress } from '../core/book-utils.js';
 import { isNoMasteryBook } from '../core/book-eligibility.js';
 import { getFocusSpeedMultiplier, getMasteredBookSpeedBonus } from '../core/shop/library-upgrades.js';
+import { setFocusMode, setFocusTargetMinutes, setFocusBook } from '../core/focus-session.js';
 
 // 缮写室素材
 const FOCUS_IMG_NAMES = [
@@ -250,10 +251,7 @@ function renderModeSelector(sess) {
     btn.innerHTML = `<div class="text-2xl mb-1">${m.icon}</div><div class="font-bold text-sm">${m.name}</div><div class="text-xs text-ink-light">${desc}</div>`;
     btn.addEventListener('click', () => {
       if (!state.currentSession.active) {
-        state.currentSession.mode = m.id;
-        if (m.id !== 'stopwatch' && state.currentSession.targetMinutes === 0) {
-          state.currentSession.targetMinutes = m.target;
-        }
+        setFocusMode(m.id);
         renderFocusPage();
       }
     });
@@ -274,12 +272,12 @@ function renderModeSelector(sess) {
     `;
     row.querySelector('input').addEventListener('input', (e) => {
       const v = Math.max(1, Math.min(180, parseInt(e.target.value) || 1));
-      state.currentSession.targetMinutes = v;
+      setFocusTargetMinutes(v);
       e.target.value = v;
     });
     row.querySelector('input').addEventListener('change', (e) => {
       const v = Math.max(1, Math.min(180, parseInt(e.target.value) || 1));
-      state.currentSession.targetMinutes = v;
+      setFocusTargetMinutes(v);
       e.target.value = v;
     });
     div.appendChild(row);
@@ -328,7 +326,7 @@ function renderBookSelector(sess) {
     btn.innerHTML = `<div class="text-3xl mb-1">${book.emoji}</div><div class="font-bold text-xs">${getBookTitle(book)}</div><div class="text-xs text-ink-light">${progress}%</div>${repairHtml}`;
     btn.addEventListener('click', () => {
       if (!state.currentSession.active) {
-        state.currentSession.bookId = book.id;
+        setFocusBook(book.id);
         renderFocusPage();
       }
     });

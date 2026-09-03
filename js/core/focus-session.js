@@ -49,6 +49,44 @@ export function startFocus(bookId, mode, targetMinutes) {
   return { ok: true };
 }
 
+// ========== 专注预配置 setter（Phase A：消除渲染层直接 state mutation） ==========
+
+const DEFAULT_TARGET_MINUTES = {
+  pomodoro: 25,
+  countdown: 25,
+  stopwatch: 0
+};
+
+export function setFocusMode(mode) {
+  if (state.currentSession.active) return false;
+  if (!['pomodoro', 'countdown', 'stopwatch'].includes(mode)) return false;
+
+  state.currentSession.mode = mode;
+  if (mode !== 'stopwatch' && state.currentSession.targetMinutes === 0) {
+    state.currentSession.targetMinutes = DEFAULT_TARGET_MINUTES[mode];
+  }
+  saveState();
+  return true;
+}
+
+export function setFocusTargetMinutes(minutes) {
+  if (state.currentSession.active) return false;
+  const v = Math.max(1, Math.min(180, parseInt(minutes, 10) || 1));
+  state.currentSession.targetMinutes = v;
+  saveState();
+  return v;
+}
+
+export function setFocusBook(bookId) {
+  if (state.currentSession.active) return false;
+  const bs = state.books[bookId];
+  if (!bs || bs.status === 'locked') return false;
+
+  state.currentSession.bookId = bookId;
+  saveState();
+  return true;
+}
+
 export function togglePauseFocus() {
   togglePauseTimer();
 }

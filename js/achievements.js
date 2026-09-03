@@ -301,3 +301,73 @@ export function getAchievementStats() {
   const unlocked = all.filter(a => a.unlocked).length;
   return { unlocked, total: all.length, list: all };
 }
+
+// ========== 墨墨成就点评（Phase A：从 render/achievements.js 迁来，消除渲染层直接 state mutation） ==========
+
+const MOMO_ACHIEVEMENT_COMMENTS = {
+  restoration: [
+    'momoComment_restoration_0',
+    'momoComment_restoration_1',
+    'momoComment_restoration_2',
+    'momoComment_restoration_3',
+  ],
+  wisdom: [
+    'momoComment_wisdom_0',
+    'momoComment_wisdom_1',
+    'momoComment_wisdom_2',
+    'momoComment_wisdom_3',
+  ],
+  collection: [
+    'momoComment_collection_0',
+    'momoComment_collection_1',
+    'momoComment_collection_2',
+    'momoComment_collection_3',
+  ],
+  reconstruction: [
+    'momoComment_reconstruction_0',
+    'momoComment_reconstruction_1',
+    'momoComment_reconstruction_2',
+    'momoComment_reconstruction_3',
+  ],
+  visitors: [
+    'momoComment_visitors_0',
+    'momoComment_visitors_1',
+    'momoComment_visitors_2',
+    'momoComment_visitors_3',
+  ],
+  secrets: [
+    'momoComment_secrets_0',
+    'momoComment_secrets_1',
+    'momoComment_secrets_2',
+    'momoComment_secrets_3',
+  ],
+};
+
+export function pickMomoComment(category) {
+  const pool = MOMO_ACHIEVEMENT_COMMENTS[category];
+  if (!pool) return '';
+
+  const today = new Date().toDateString();
+  if (!state.momoCommentUsedToday) {
+    state.momoCommentUsedToday = { date: today, comments: [] };
+  }
+  if (state.momoCommentUsedToday.date !== today) {
+    state.momoCommentUsedToday.date = today;
+    state.momoCommentUsedToday.comments = [];
+  }
+
+  const used = state.momoCommentUsedToday.comments;
+  const available = pool.filter(c => !used.includes(c));
+  if (available.length === 0) {
+    state.momoCommentUsedToday.comments = [];
+    const pick = pool[Math.floor(Math.random() * pool.length)];
+    state.momoCommentUsedToday.comments.push(pick);
+    saveState();
+    return pick;
+  }
+
+  const pick = available[Math.floor(Math.random() * available.length)];
+  state.momoCommentUsedToday.comments.push(pick);
+  saveState();
+  return pick;
+}
