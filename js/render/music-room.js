@@ -1,13 +1,18 @@
 // 留声阁 —— 馆主的唱片陈列室：浏览、购买、播放全部曲目
 import { state } from '../state.js';
-import { el } from './common.js';
+import { el, updateStatusBar } from './common.js';
 import { t } from '../i18n/terms.js';
 import { MUSIC_ROOM_UNLOCK_PRICE } from '../../data/music.js';
 import { playSfx } from '../audio.js';
 import {
   getAllTrackDefs, getCurrentTrackId, isBgmPlaying,
-  selectTrack, purchaseTrack, toggleMusic, isMusicOn
+  selectTrack, purchaseTrack, toggleMusic, isMusicOn, updateToggleIcon
 } from '../audio.js';
+import {
+  getAmbientDefs, buyAmbient, selectAmbient,
+  getCurrentAmbientId, isAmbientEnabled, setAmbientEnabled
+} from '../ambient.js';
+import { isDlcPackUnlocked, getDlcPack } from '../shop.js';
 
 function getTrackDisplayName(track) {
   const key = 'musicTrack_' + track.id;
@@ -130,4 +135,83 @@ export function renderMusicRoomPage() {
     shelf.appendChild(card);
   });
   container.appendChild(shelf);
+
+  // 环境音陈列架
+  const ambients = getAmbientDefs();
+  const currentAmbientId = getCurrentAmbientId();
+  const ambientOn = isAmbientEnabled();
+
+  const ambientHeader = el('div', 'flex items-center justify-between mt-8 mb-3');
+  ambientHeader.innerHTML = `
+    <h3 class="font-display text-lg font-bold">🎧 ${t('ambientSounds')}
+      <span class="text-xs font-normal text-ink-light ml-1">${t('musicRoomCollected').replace('{n}', ambients.filter(a => a.unlocked).length).replace('{total}', ambients.length)}</span>
+    </h3>
+    <button id="mr-ambient-toggle" class="text-xs px-3 py-1.5 rounded-full border transition-all ${ambientOn ? 'border-magic-gold bg-magic-gold/10 text-magic-gold' : 'border-wood/30 bg-white/50 text-ink-light'}">
+      ${ambientOn ? t('enabled') : t('disabled')}
+    </button>
+  `;
+  ambientHeader.querySelector('#mr-ambient-toggle').addEventListener('click', () => {
+    setAmbientEnabled(!isAmbientEnabled());
+    updateToggleIcon();
+    renderMusicRoomPage();
+  });
+  container.appendChild(ambientHeader);
+
+  const ambientShelf = el('div', 'grid grid-cols-1 sm:grid-cols-2 gap-3');
+  ambients.forEach(a => {
+    const packLocked = a.dlcPackId && !isDlcPackUnlocked(a.dlcPackId);
+    const pack = packLocked ? getDlcPack(a.dlcPackId) : null;
+    const isCurrent = a.id === currentAmbientId;
+    const card = el('button', 'w-full flex items-center gap-3 p-3 rounded-xl border-2 text-left transition-all');
+
+    let subText;
+    let badge = '';
+    if (a.unlocked) {
+      card.className += isCurrent
+        ? ' border-magic-gold bg-magic-gold/10 ring-1 ring-magic-gold'
+        : ' border-wood/20 bg-white/50 hover:border-magic-gold/40';
+      subText = isCurrent ? t('nowPlaying') : t('clickToPlay');
+      if (isCurrent) badge = `<span class="text-magic-gold text-xs font-bold flex-shrink-0">▶ ${t('playing')}</span>`;
+    } else if (packLocked) {
+      card.className += ' border-wood/10 bg-stone-100/50 opacity-50 cursor-not-allowed';
+      subText = t('ambientLockedByPackHint').replace('{pack}', pack?.title || '');
+      badge = '<span class="text-lg flex-shrink-0">🔒</span>';
+    } else {
+      card.className += ' border-magic-blue/40 bg-white/50 hover:border-magic-blue';
+      subText = `${t('clickToBuy')} 💰${a.price.toLocaleString()}`;
+      badge = `<span class="text-magic-blue text-xs font-bold flex-shrink-0">💰${a.price.toLocaleString()}</span>`;
+    }
+
+    card.innerHTML = `
+      <span class="text-2xl flex-shrink-0">${a.emoji}</span>
+      <div class="flex-1 min-w-0">
+        <div class="text-sm font-bold text-ink truncate">${a.name}</div>
+        <div class="text-[10px] text-ink-light">${subText}</div>
+      </div>
+      ${badge}
+    `;
+
+    card.addEventListener('click', () => {
+      if (a.unlocked) {
+        // 再次点击当前曲 = 停止
+        selectAmbient(isCurrent ? null : a.id);
+        playSfx('button_click');
+        renderMusicRoomPage();
+      } else if (!packLocked) {
+        const result = buyAmbient(a.id);
+        if (result.ok) {
+          playSfx('buy_success');
+          if (window.showToast) window.showToast(t('trackPurchaseSuccess'), 'success');
+          updateStatusBar();
+          selectAmbient(a.id);
+        } else if (result.reason === 'no_coins' && window.showToast) {
+          window.showToast(`${t('insufficientCoins')} 💰`, 'error');
+        }
+        renderMusicRoomPage();
+      }
+    });
+
+    ambientShelf.appendChild(card);
+  });
+  container.appendChild(ambientShelf);
 }
