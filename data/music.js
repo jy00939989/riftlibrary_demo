@@ -13,9 +13,9 @@ export const TRACK_DEFS = [
   { id: 'cozy_b',   name: '城镇·午后变奏',  emoji: '☀️', tier: 'cozy',    price: 200, file: 'audio/图书馆 demo2 城镇风格 (1).mp3' },
   { id: 'star_a',   name: '星辰图书馆',     emoji: '🌟', tier: 'stellar', price: 0,   file: 'audio/图书馆 demo 星辰图书馆.mp3' },
   { id: 'star_b',   name: '星辰·圣堂咏叹',  emoji: '✨', tier: 'stellar', price: 200, file: 'audio/图书馆 demo 星辰图书馆 (1).mp3' },
-  { id: 'winter',   name: '维瓦尔第·冬',    emoji: '🎻', tier: 'any',     price: 500, file: 'audio/维瓦尔第冬衍生-忧伤宁静.mp3' },
-  { id: 'spring',   name: '维瓦尔第·春',    emoji: '🌸', tier: 'any',     price: 500, file: 'audio/维瓦尔第春衍生-偏忧伤.mp3' },
+  { id: 'winter',   name: '维瓦尔第·冬·意象曲', emoji: '🎻', tier: 'any', price: 500, file: 'audio/维瓦尔第冬衍生-忧伤宁静.mp3' },
+  { id: 'spring',   name: '维瓦尔第·春·意象曲', emoji: '🌸', tier: 'any', price: 500, file: 'audio/维瓦尔第春衍生-偏忧伤.mp3' },
   { id: 'rhapsody', name: '蓝色狂想曲',     emoji: '🎷', tier: 'any',     price: 600, file: 'audio/蓝色狂想曲衍生-爵士风格.mp3' },
-  { id: 'lakespring', name: '湖边早春', emoji: '🌅', tier: 'any', price: 400, file: 'audio/湖边早春.mp3' },
+  { id: 'lakespring', name: '湖边早春',     emoji: '🌅', tier: 'any',     price: 400, file: 'audio/湖边早春.mp3' },
   { id: 'arthur',   name: '湖边临终的亚瑟王', emoji: '🛶', tier: 'any',    price: 800, file: 'audio/湖边临终的亚瑟王.mp3', requiresBook: 'book_031' }
 ];

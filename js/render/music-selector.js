@@ -10,6 +10,7 @@ import { t } from '../i18n/terms.js';
 
 let panelEl = null;
 let globalEscHandler = null;
+let ambientExpanded = false;
 
 function getTrackDisplayName(track) {
   const key = 'musicTrack_' + track.id;
@@ -36,6 +37,8 @@ function open() {
   if (panelEl) close();
 
   const tracks = getAllTrackDefs();
+  // 快捷面板只显示「能播的 + 能买的」；档位锁定的曲目去留声阁查看
+  const visibleTracks = tracks.filter(tr => tr.unlocked || tr.purchasable);
   const currentId = getCurrentTrackId();
   const manual = isManualMode();
   const ambients = getAmbientDefs();
@@ -71,50 +74,43 @@ function open() {
           </button>
         </div>
       </div>
-      <div class="space-y-2 mb-5">
-        ${tracks.map(track => {
+      <div class="grid grid-cols-2 gap-2 mb-4">
+        ${visibleTracks.map(track => {
           const isCurrent = track.id === currentId;
           const isPlaying = isCurrent && isBgmPlaying();
-          const lockedClass = track.unlocked
+          const cardClass = track.unlocked
             ? (isCurrent ? 'border-magic-gold bg-magic-gold/10 ring-1 ring-magic-gold' : 'border-wood/20 bg-white/50 hover:border-magic-gold/40')
-            : track.purchasable
-              ? 'border-magic-blue/40 bg-white/50 hover:border-magic-blue'
-              : 'border-wood/10 bg-stone-100/50 opacity-40';
-          const statusIcon = isPlaying ? '🎧' : isCurrent ? '⏸' : track.unlocked ? '' : track.purchasable ? '💰' : '🔒';
-          const subText = track.unlocked
-            ? (isPlaying ? t('nowPlaying') : isCurrent ? t('paused') : t('clickToPlay'))
-            : track.purchasable
-              ? `${t('clickToBuy')} 💰${track.purchasePrice.toLocaleString()}`
-              : track.lockedReason === 'requiresBook' ? t('trackRequiresBook') : t('unlockAtNextStage');
-          const onClick = (track.unlocked || track.purchasable) ? `onclick="window._msPick('${track.id}')"` : '';
-          const badge = isPlaying
-            ? `<span class="text-magic-gold text-xs font-bold flex-shrink-0">▶ ${t('playing')}</span>`
+            : 'border-magic-blue/40 bg-white/50 hover:border-magic-blue';
+          const icon = isPlaying
+            ? '<span class="text-magic-gold text-[10px] font-bold flex-shrink-0">▶</span>'
             : isCurrent
-              ? `<span class="text-ink-light text-xs font-bold flex-shrink-0">⏸ ${t('paused')}</span>`
-              : '';
+              ? '<span class="text-ink-light text-[10px] flex-shrink-0">⏸</span>'
+              : track.purchasable
+                ? `<span class="text-magic-blue text-[10px] font-bold flex-shrink-0">💰${track.purchasePrice}</span>`
+                : '';
           return `
-            <button class="ms-track-btn w-full flex items-center gap-3 p-3 rounded-lg border-2 text-left transition-all ${lockedClass}" ${onClick}>
-              <span class="text-2xl flex-shrink-0">${track.emoji}</span>
-              <div class="flex-1 min-w-0">
-                <div class="text-sm font-bold text-ink">${getTrackDisplayName(track)} ${statusIcon}</div>
-                <div class="text-[10px] text-ink-light">${subText}</div>
-              </div>
-              ${badge}
+            <button class="ms-track-btn flex items-center gap-1.5 p-2 rounded-lg border-2 text-left transition-all ${cardClass}" onclick="window._msPick('${track.id}')">
+              <span class="text-lg flex-shrink-0">${track.emoji}</span>
+              <span class="text-xs font-bold text-ink truncate flex-1">${getTrackDisplayName(track)}</span>
+              ${icon}
             </button>
           `;
         }).join('')}
       </div>
 
-      <!-- 环境音 -->
-      <div class="mb-1">
-        <div class="flex items-center justify-between mb-2">
-          <div class="text-xs font-bold text-ink-light tracking-wider">🎧 ${t('ambientSounds')}</div>
-          <button id="ms-ambient-toggle" class="text-[10px] px-2 py-1 rounded-full border transition-all ${ambientOn ? 'border-magic-gold bg-magic-gold/10 text-magic-gold' : 'border-wood/30 bg-white/50 text-ink-light'}">
-            ${ambientOn ? t('enabled') : t('disabled')}
-          </button>
-        </div>
+      <!-- 环境音（默认折叠） -->
+      <button id="ms-ambient-collapse-btn" class="w-full flex items-center justify-between mb-2 px-1 py-1.5 rounded-lg hover:bg-white/40 transition-all" type="button">
+        <span class="text-xs font-bold text-ink-light tracking-wider">🎧 ${t('ambientSounds')}（${ambients.filter(a => a.unlocked).length}/${ambients.length}）</span>
+        <span class="text-ink-light text-xs">${ambientExpanded ? '▾' : '▸'}</span>
+      </button>
+      ${ambientExpanded ? `
+      <div class="flex items-center justify-between mb-2 px-1">
+        <span class="text-[10px] text-ink-light">${t('ambientSounds')}</span>
+        <button id="ms-ambient-toggle" class="text-[10px] px-2 py-1 rounded-full border transition-all ${ambientOn ? 'border-magic-gold bg-magic-gold/10 text-magic-gold' : 'border-wood/30 bg-white/50 text-ink-light'}">
+          ${ambientOn ? t('enabled') : t('disabled')}
+        </button>
       </div>
-      <div class="space-y-2">
+      <div class="space-y-2 mb-2">
         ${ambients.map(a => {
           const isCurrent = a.id === currentAmbientId;
           const lockedClass = a.unlocked
@@ -136,7 +132,7 @@ function open() {
             </button>
           `;
         }).join('')}
-      </div>
+      </div>` : ''}
 
       <!-- 音量控制 -->
       <div class="mt-5 pt-4 border-t border-wood/20 space-y-4">
@@ -208,6 +204,14 @@ function open() {
       } catch (err) {
         if (typeof console !== 'undefined') console.error('setAmbientEnabled failed:', err);
       }
+      open();
+    });
+  }
+
+  const ambientCollapseBtn = panelEl.querySelector('#ms-ambient-collapse-btn');
+  if (ambientCollapseBtn) {
+    ambientCollapseBtn.addEventListener('click', () => {
+      ambientExpanded = !ambientExpanded;
       open();
     });
   }
