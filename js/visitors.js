@@ -508,7 +508,7 @@ export function tryTriggerGuyuPlantCare() {
   if (state.plant.level >= 5 && state.plant.growthProgress >= def.growthPerLevel) return null;
 
   const roll = Math.random();
-  if (roll >= 0.15) return null;
+  if (roll >= 0.05) return null;
 
   const actions = ['water', 'fertilize', 'talk'];
   const action = actions[Math.floor(Math.random() * actions.length)];
@@ -916,15 +916,17 @@ function triggerNarrative(charId) {
   const result = { common: null, occasional: null, rare: null, postRare: null, postRareCommon: null, postRareOccasional: null };
   const favor = state.visitorFavors?.[charId] || 0;
 
-  // 1. 常层：每次还书必然触发
-  result.common = pickCommonEvent(charId);
-  if (result.common) {
-    collectVisitorItem({
-      charId,
-      kind: 'note',
-      eventId: result.common.id,
-      text: result.common.text
-    });
+  // 1. 常层：每次还书 60% 概率触发
+  if (Math.random() < 0.60) {
+    result.common = pickCommonEvent(charId);
+    if (result.common) {
+      collectVisitorItem({
+        charId,
+        kind: 'note',
+        eventId: result.common.id,
+        text: result.common.text
+      });
+    }
   }
 
   // 2. 偶层：好感≥FAVOR_THRESHOLDS.OCCASIONAL 且 有未完成的偶层事件 → 30% 概率
@@ -1021,8 +1023,8 @@ function triggerNarrative(charId) {
     });
   }
 
-  // 5. 终局后常层：终局已触发后，每次还书可能触发终局后常层事件（可重复）
-  if (ns.postRareTriggered && narrative.postRareCommon && narrative.postRareCommon.length > 0) {
+  // 5. 终局后常层：终局已触发后，每次还书 60% 概率触发终局后常层事件（可重复）
+  if (ns.postRareTriggered && narrative.postRareCommon && narrative.postRareCommon.length > 0 && Math.random() < 0.60) {
     const pool = narrative.postRareCommon;
     const recent = ns.postRareCommonTriggered.slice(-2);
     const candidates = pool.filter(e => !recent.includes(e.id));

@@ -94,8 +94,8 @@ export function completeFocus(isAuto = false) {
   state.focus.totalWords += wordsGained;
   updateStreak();
 
-  // 植物浇水机会
-  if (sess.mode === 'pomodoro' && minutes >= 20) {
+  // 植物浇水机会（番茄钟 / 倒计时 / 正计时 均触发）
+  if (minutes >= 20) {
     addWaterOpportunity();
   }
 
