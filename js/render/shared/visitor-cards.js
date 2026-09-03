@@ -1,10 +1,9 @@
 // 访客相关弹窗卡片（共享组件）
-import { state, saveState } from '../../state.js';
 import { t } from '../../i18n/terms.js';
 import { playSfx } from '../../audio.js';
 import { addDiaryEntry } from '../../diary.js';
 import { getVisitorDef, removeVisitor, getStageWitnesses } from '../../visitors.js';
-import { checkAndShowTutorial } from '../../tutorial.js';
+import { checkAndShowTutorial, markFirstVisitorEventDone } from '../../tutorial.js';
 import { dispatchTutorialUI } from '../tutorial-ui.js';
 
 export function showFirstVisitorEvent(visitor) {
@@ -27,8 +26,7 @@ export function showFirstVisitorEvent(visitor) {
 
   // 访客离开
   removeVisitor(visitor.id);
-  state.tutorialFlags.firstVisitorEventDone = true;
-  saveState();
+  markFirstVisitorEventDone();
 
   // 5秒后切换到墨墨的反馈
   setTimeout(() => {

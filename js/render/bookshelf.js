@@ -1,15 +1,17 @@
 // 书架页面渲染
-import { state, saveState } from '../state.js';
+import { state } from '../state.js';
 import { BOOKS, CATEGORIES } from '../../data/books.js';
 import { t } from '../i18n/terms.js';
 import { el, actions, updateStatusBar, getBookTitle, getChapterTitle, getChapterPreview, getChapterContent, getBookAuthorBio, getBookAnecdotes, getBookReviews } from './common.js';
 import { playSfx } from '../audio.js';
 import { checkTaskCompletion } from '../quests.js';
-import { spendInspiration } from '../storage.js';
-import { getManuscriptSlots, getManuscriptBoxCount, getManuscriptSlotPrice, expandManuscriptSlots, getBookCapacity, getOwnedBookCount, placeOnShelf } from '../capacity.js';
+import { getManuscriptSlots, getManuscriptBoxCount, getManuscriptSlotPrice, expandManuscriptSlots, getBookCapacity, getOwnedBookCount } from '../capacity.js';
 import { calcCurationEffects } from '../curation.js';
 import { getEffectiveCopiedWords } from '../core/book-utils.js';
 import { isNoMasteryBook } from '../core/book-eligibility.js';
+import { setFocusBook } from '../core/focus-session.js';
+import { unlockReCopy, toggleBookStar, markChapterRead } from '../core/book-progress.js';
+import { autoShelveCompletedManuscripts, swapShelfSlots } from '../core/library.js';
 
 const SHELF_CAPACITY = 5;
 let currentFilter = 'all';
@@ -40,13 +42,13 @@ function getCategoryLabel(c) {
 }
 
 function tryUnlockReCopy(book) {
-  const cost = 1;
-  if (!spendInspiration(cost)) {
-    window.showToast(t('insufficientInspiration').replace('{cost}', cost).replace('{current}', state.inspiration || 0), 'error');
+  const result = unlockReCopy(book.id);
+  if (!result.ok) {
+    if (result.reason === 'insufficient_inspiration') {
+      window.showToast(t('insufficientInspiration').replace('{cost}', 1).replace('{current}', state.inspiration || 0), 'error');
+    }
     return false;
   }
-  state.books[book.id].reCopyUnlocked = true;
-  saveState();
   playSfx('buy_success');
   window.showToast(t('reCopyUnlockedToast'), 'success');
   return true;
@@ -58,23 +60,7 @@ export function renderBookshelfPage() {
   container.innerHTML = '';
 
   // 自动上架：手稿箱中已完成的书籍写入书架空位
-  const mBox = state.manuscriptBox || [];
-  if (mBox.length > 0) {
-    let changed = false;
-    for (let i = mBox.length - 1; i >= 0; i--) {
-      const bookId = mBox[i];
-      const bs = state.books[bookId];
-      if (bs && bs.status === 'completed') {
-        if (placeOnShelf(bookId)) {
-          mBox.splice(i, 1);
-          changed = true;
-        } else {
-          break; // 书架没空位了
-        }
-      }
-    }
-    if (changed) saveState();
-  }
+  autoShelveCompletedManuscripts();
 
   const card = el('div', 'parchment-bg rounded-2xl p-6 magic-glow');
   // 集齐所有已完成且不在手稿箱的书，用于筛选判断可见性
@@ -265,15 +251,10 @@ function handleDrop(e) {
   const oldEffects = calcCurationEffects(state.library.shelves);
 
   // 交换
-  const shelves = state.library.shelves;
-  const tmp = shelves[dragFromShelf][dragFromSlot];
-  shelves[dragFromShelf][dragFromSlot] = shelves[toShelf][toSlot];
-  shelves[toShelf][toSlot] = tmp;
-
-  saveState();
+  if (!swapShelfSlots(dragFromShelf, dragFromSlot, toShelf, toSlot)) return;
 
   // 检测新连携
-  const newEffects = calcCurationEffects(shelves);
+  const newEffects = calcCurationEffects(state.library.shelves);
   const oldIds = new Set(oldEffects.chains.map(c => `${c.type}:${c.shelfIdx}:${c.startSlot}`));
   const newChains = newEffects.chains.filter(c => !oldIds.has(`${c.type}:${c.shelfIdx}:${c.startSlot}`));
   const oldPairIds = new Set(oldEffects.pairs.map(p => p.pairId));
@@ -440,7 +421,7 @@ function renderBookCard(book) {
   const starBtn = cardDiv.querySelector('.star-btn');
   starBtn.addEventListener('click', (e) => {
     e.stopPropagation();
-    bookState.starred = !bookState.starred;
+    toggleBookStar(book.id);
     renderBookshelfPage();
   });
 
@@ -524,7 +505,7 @@ function renderChapterList(book) {
   const startBtn = content.querySelector('#start-copy-btn');
   if (startBtn) {
     startBtn.addEventListener('click', () => {
-      state.currentSession.bookId = book.id;
+      setFocusBook(book.id);
       modal.remove();
       document.getElementById('tab-focus').click();
     });
@@ -536,7 +517,7 @@ function renderChapterList(book) {
     reCopyBtn.addEventListener('click', () => {
       if (tryUnlockReCopy(book)) {
         modal.remove();
-        state.currentSession.bookId = book.id;
+        setFocusBook(book.id);
         document.getElementById('tab-focus').click();
       }
     });
@@ -582,11 +563,9 @@ function renderReadingPage(book, chapter) {
     return bookState.unlockedChapters.includes(idx + 1);
   }
 
-  function markChapterRead() {
-    if (!bookState.readChapters.includes(chapterIndex)) {
-      bookState.readChapters.push(chapterIndex);
+  function onChapterRead() {
+    if (markChapterRead(book.id, chapterIndex)) {
       checkTaskCompletion('chapter_read', { bookId: book.id, chapterIdx: chapterIndex });
-      saveState();
     }
   }
 
@@ -704,7 +683,7 @@ function renderReadingPage(book, chapter) {
       const prevBtn = el('button', '');
       prevBtn.textContent = `← ${getChapterTitle(prevChapter)}`;
       prevBtn.addEventListener('click', () => {
-        markChapterRead();
+        onChapterRead();
         closeReading();
         setTimeout(() => renderReadingPage(book, prevChapter), 200);
       });
@@ -720,7 +699,7 @@ function renderReadingPage(book, chapter) {
       const nextBtn = el('button', '');
       nextBtn.textContent = `${getChapterTitle(nextChapter)} →`;
       nextBtn.addEventListener('click', () => {
-        markChapterRead();
+        onChapterRead();
         closeReading();
         setTimeout(() => renderReadingPage(book, nextChapter), 200);
       });

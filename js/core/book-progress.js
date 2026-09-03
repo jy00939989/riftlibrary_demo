@@ -5,7 +5,7 @@ import { state, saveState } from '../state.js';
 import { BOOKS } from '../../data/books.js';
 import { getEffectiveCopiedWords } from './book-utils.js';
 import { isNoMasteryBook } from './book-eligibility.js';
-import { addAtmosphere, addCoins, addHistory, addInspiration } from '../storage.js';
+import { addAtmosphere, addCoins, addHistory, addInspiration, spendInspiration } from '../storage.js';
 import { placeOnShelf, removeFromManuscriptBox, isBookCapacityFull } from '../capacity.js';
 import { addDiaryEntry } from '../diary.js';
 import { checkTaskCompletion } from '../quests.js';
@@ -142,4 +142,53 @@ export function applyRepairProgress(bookId, wordsGained) {
   }
 
   return { repairCompleted: false };
+}
+
+// ========== 书籍元状态 setter（Phase A：消除渲染层直接 state mutation） ==========
+
+/**
+ * 切换书籍星标。
+ * @returns {boolean|null} 新的星标状态，失败返回 null
+ */
+export function toggleBookStar(bookId) {
+  const bs = state.books[bookId];
+  if (!bs) return null;
+  bs.starred = !bs.starred;
+  saveState();
+  return bs.starred;
+}
+
+/**
+ * 花费灵感解锁书籍重抄。
+ * @returns {object} { ok: boolean, reason?: string }
+ */
+export function unlockReCopy(bookId) {
+  const bs = state.books[bookId];
+  if (!bs) return { ok: false, reason: 'book_not_found' };
+  if (bs.reCopyUnlocked) return { ok: false, reason: 'already_unlocked' };
+  if (bs.status !== 'completed') return { ok: false, reason: 'book_not_completed' };
+
+  const cost = 1;
+  if (!spendInspiration(cost)) {
+    return { ok: false, reason: 'insufficient_inspiration' };
+  }
+
+  bs.reCopyUnlocked = true;
+  saveState();
+  return { ok: true };
+}
+
+/**
+ * 标记某章节已读。
+ * @returns {boolean} 是否成功写入（重复返回 false）
+ */
+export function markChapterRead(bookId, chapterIndex) {
+  const bs = state.books[bookId];
+  if (!bs) return false;
+  if (!Array.isArray(bs.readChapters)) bs.readChapters = [];
+  if (bs.readChapters.includes(chapterIndex)) return false;
+
+  bs.readChapters.push(chapterIndex);
+  saveState();
+  return true;
 }

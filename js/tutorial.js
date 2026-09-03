@@ -73,3 +73,12 @@ export function getTutorialFlags() {
 export function getTutorialAtmoSeenStage() {
   return state.tutorialFlags.maxAtmoStageSeen || 1;
 }
+
+/**
+ * 标记第一位访客破败事件已完成。
+ * Phase A：消除渲染层直接 state mutation。
+ */
+export function markFirstVisitorEventDone() {
+  state.tutorialFlags.firstVisitorEventDone = true;
+  saveState();
+}
