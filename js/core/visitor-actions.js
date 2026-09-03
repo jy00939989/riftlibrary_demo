@@ -4,8 +4,10 @@ import { collectReturn } from '../visitors.js';
 import { playSfx } from '../audio.js';
 import { updateStatusBar } from '../render/index.js';
 import { updateVisitorBadge } from '../render/navigation.js';
-import { checkAchievements, showAchievementBatch } from '../achievements.js';
-import { markTaskDone, addHistory } from '../storage.js';
+import { checkAchievements } from '../achievements.js';
+import { showAchievementBatch } from '../render/achievements.js';
+import { addHistory } from '../storage.js';
+import { markTaskDone } from '../dailytasks.js';
 import { track } from '../backend/index.js';
 
 function getNow() {

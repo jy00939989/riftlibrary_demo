@@ -5,7 +5,8 @@
   "private": true,
   "scripts": {
     "dev": "python3 -m http.server 8080",
-    "dev:node": "npx serve . -p 8080 --no-clipboard"
+    "dev:node": "npx serve . -p 8080 --no-clipboard",
+    "check:imports": "node scripts/check-imports.mjs"
   },
   "keywords": ["game", "pomodoro", "library", "frontend", "fantasy"],
   "author": "图南",

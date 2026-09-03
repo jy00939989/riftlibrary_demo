@@ -13,7 +13,7 @@ import { getLocale, setLocale } from './i18n/terms.js';
 import { addCoins, addHistory, updateStreak, addAtmosphere, updateBodyBackground, onStageCross } from './storage.js';
 import { renderFocusPage, renderBookshelfPage, renderLibraryPage,
   renderVisitorsPage, renderArchivePage, renderShopPage, setActions,
-  updateStatusBar, initBagEntry
+  updateStatusBar, initBagEntry, renderGuideQuestWidget
 } from './render/index.js';
 import { setCompleteCallback, syncTimer } from './timer.js';
 import { isNoMasteryBook } from './core/book-eligibility.js';
@@ -22,6 +22,7 @@ import { checkAutoUnlockPacks } from './shop.js';
 import { checkAchievements, checkAllOnInit } from './achievements.js';
 import { addWaterOpportunity, checkWither } from './plants.js';
 import { addDiaryEntry, tryGenerateDailySummary } from './diary.js';
+import { ensureGuideQuests } from './guidequests.js';
 import { tickPlaneVisitors } from './quests.js';
 import { initAudio, toggleMusic, ensureAudioContext, initSfx, playSfx, startBgm, isMusicOn } from './audio.js';
 import { showIntro } from './intro.js';

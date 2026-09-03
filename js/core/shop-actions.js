@@ -2,7 +2,8 @@
 import { state, saveState } from '../state.js';
 import { spendCoins, addHistory, addAtmosphere } from '../storage.js';
 import { upgradeBorrowLevel, checkAutoUnlockPacks } from '../shop.js';
-import { checkAchievements, showAchievementBatch } from '../achievements.js';
+import { checkAchievements } from '../achievements.js';
+import { showAchievementBatch } from '../render/achievements.js';
 import { playSfx } from '../audio.js';
 import { triggerQuestCheck } from './quest-trigger.js';
 import { renderBookshelfPage, renderShopPage, renderVisitorsPage, updateStatusBar } from '../render/index.js';
