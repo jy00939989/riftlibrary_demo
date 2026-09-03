@@ -825,6 +825,7 @@ const TERM_DATA = Object.freeze({
   restorationRoom: { zh: '古籍修复室', en: 'Restoration Room' },
   borrowAreaStatsNotBuilt: { zh: '在馆1人 · 购买升级以容纳更多访客', en: 'Capacity 1 · Upgrade to host more visitors' },
   borrowAreaStats: { zh: '在馆{cap}人 · 还书+{returnCoins}💰 · 好感+{favorBonus}% · 氛围+{returnAtmo}', en: 'Capacity {cap} · Return +{returnCoins} 💰 · Favor +{favorBonus}% · Atmosphere +{returnAtmo}' },
+  borrowAreaDamageRate: { zh: '还书损毁概率 {damage}%（升级借阅区与「爱惜书籍」标志牌可降低）', en: 'Return damage chance {damage}% (lower with reading area upgrades & the "Care for Books" signboard)' },
   focusRoomStatsNotBuilt: { zh: '残破的缮写室，修缮可提升誊抄速度', en: 'A ruined scriptorium; restore it to boost copy speed' },
   focusRoomStats: { zh: '誊抄速度 +{value}%', en: 'Transcribe speed +{value}%' },
   restorationRoomStatsNotBuilt: { zh: '残破的修复室堆满灰尘，修缮后可修复损毁珍本、合成典藏版', en: 'A dusty ruined room; restore it to repair damaged books and craft collector editions' },

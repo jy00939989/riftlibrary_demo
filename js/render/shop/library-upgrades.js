@@ -15,7 +15,7 @@ import {
 import { PLANES, canUnlockPlane } from '../../../data/planes.js';
 import { showFocusRoomUpgrade, showBorrowAreaUpgrade, showRestorationUpgrade, dispatchTutorialUI } from '../tutorial-ui.js';
 import { checkAndShowTutorial } from '../../tutorial.js';
-import { getBorrowLevelConfig } from '../../visitors.js';
+import { getBorrowLevelConfig, getDamageChance } from '../../visitors.js';
 import {
   t, getBorrowLevelName, getRestorationLevelName, getFocusRoomLevelName
 } from '../../i18n/terms.js';
@@ -63,6 +63,7 @@ export function renderLibraryUpgrades() {
         <span class="text-xs bg-magic-gold/20 text-magic-gold px-2 py-0.5 rounded-full">Lv.${lv} · ${getBorrowLevelName(lv)}</span>
       </div>
       <p class="text-xs text-ink-light mb-2">${borrowStats}</p>
+      <p class="text-xs text-magic-blue mb-2">📖 ${t('borrowAreaDamageRate').replace('{damage}', (getDamageChance(lv) * 100).toFixed(1))}</p>
       ${maxed
         ? `<span class="text-sm text-magic-gold font-bold">${t('maxLevel')} ✨</span>`
         : `<button class="upgrade-borrow-btn px-4 py-1.5 bg-magic-gold text-white rounded-lg text-sm font-bold hover:shadow-lg transition-all">${t('upgrade')} 💰${price.toLocaleString()}</button>`

@@ -375,6 +375,12 @@ export function getBorrowLevelConfig() {
   return BORROW_LEVEL_TABLE[lv] || { cap:1, returnCoins:30, favorBonus:0, returnAtmo:0 };
 }
 
+// 还书损毁概率：基础 3%，借阅区每级 -0.4%（下限 0.5%），「爱惜书籍」标志牌在等级减免后再 -1%
+export function getDamageChance(borrowLevel = state.library.borrowLevel || 0, hasCareSignboard = (state.signboards || []).includes('care_for_books')) {
+  const lvReduced = Math.max(0.005, 0.03 - (Math.max(1, borrowLevel) - 1) * 0.004);
+  return hasCareSignboard ? Math.max(0.005, lvReduced - 0.01) : lvReduced;
+}
+
 export function getVisitorCap() {
   return getBorrowLevelConfig().cap + getAuraVisitorCapBonus();
 }
@@ -1169,14 +1175,12 @@ export function collectReturn(visitorId) {
   // 还书语录
   const quote = pickReturnQuote(charId, bookTitle, state.library.atmosphere);
 
-  // 判定 1：损毁（基础 ~3%），典藏版与修缮箱中的卷不会损坏
-  // TODO-tech-debt: 借阅区等级应降低损毁概率（Lv1→Lv7 每级 -0.2%~-0.4%），当前未实现
+  // 判定 1：损毁（基础 3%，借阅区等级减免，「爱惜书籍」标志牌再减免），典藏版与修缮箱中的卷不会损坏
   let damaged = false;
   const book = bookId ? BOOKS[bookId] : null;
   const bs = bookId ? state.books[bookId] : null;
   const inRestoration = (state.restorationBox || []).includes(bookId);
-  const hasCareBooksSignboard = (state.signboards || []).includes('care_for_books');
-  const damageBaseChance = hasCareBooksSignboard ? 0.02 : 0.03;
+  const damageBaseChance = getDamageChance();
   if (Math.random() < damageBaseChance && bookId && bs && !book?.indestructible && !inRestoration) {
     bs.damaged = true;
     bs.repairWords = Math.round(bs.copiedWords * 0.15);

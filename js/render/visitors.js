@@ -2,7 +2,7 @@
 import { state } from '../state.js';
 import { BOOKS } from '../../data/books.js';
 import { el, actions, getBookTitle } from './common.js';
-import { getBorrowLevelConfig, getVisitorCap, getVisitorDef } from '../visitors.js';
+import { getBorrowLevelConfig, getVisitorCap, getVisitorDef, getDamageChance } from '../visitors.js';
 
 function getVisitorBookTitle(bookId, fallback) {
   const book = bookId ? BOOKS[bookId] : null;
@@ -101,7 +101,7 @@ export function renderVisitorsPage() {
     banner.innerHTML = `
       <img src="visual/library_readingarea/${READING_IMG_NAMES[blv - 1]}" alt="借阅区 · ${READING_LV_NAMES[blv]}" class="w-full h-48 object-cover">
       <div class="bg-ink/70 text-white text-center py-2 text-sm">
-        📚 借阅区 · ${READING_LV_NAMES[blv]} · 容纳${bcfg.cap}人 · 还书+${bcfg.returnCoins}💰
+        📚 借阅区 · ${READING_LV_NAMES[blv]} · 容纳${bcfg.cap}人 · 还书+${bcfg.returnCoins}💰 · 损毁率${(getDamageChance(blv) * 100).toFixed(1)}%
       </div>
     `;
     container.appendChild(banner);
