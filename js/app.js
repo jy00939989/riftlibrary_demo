@@ -240,7 +240,8 @@ setActions({
   buyShelf: handleBuyShelf,
   collectReturn: handleCollectReturn,
   upgradeBorrowLevel: handleUpgradeBorrowLevel,
-  renderShopPage
+  renderShopPage,
+  renderFocusPage
 });
 
 // ========== 页面切换 ==========
