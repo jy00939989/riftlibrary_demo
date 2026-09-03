@@ -8,7 +8,7 @@ import { dispatchTutorialUI } from './tutorial-ui.js';
 import { resetMomoSuggestion } from './momo-suggestion.js';
 import {
   renderFocusPage, renderBookshelfPage, renderLibraryPage,
-  renderVisitorsPage, renderArchivePage, renderShopPage
+  renderVisitorsPage, renderArchivePage, renderShopPage, renderMusicRoomPage
 } from './index.js';
 
 let currentTab = 'focus';
@@ -24,6 +24,7 @@ export function renderCurrentTab() {
     case 'library': renderLibraryPage(); break;
     case 'visitors': renderVisitorsPage(); break;
     case 'archive': renderArchivePage(); break;
+    case 'musicroom': renderMusicRoomPage(); break;
     case 'shop': renderShopPage(); break;
   }
 }
@@ -78,6 +79,7 @@ export function localizeStaticElements() {
     'tab-library': 'tabCuratorOffice',
     'tab-visitors': 'tabReaderSalon',
     'tab-archive': 'tabArchive',
+    'tab-musicroom': 'tabMusicRoom',
     'tab-shop': 'tabPlaneShop'
   };
   Object.entries(tabMap).forEach(([id, key]) => {

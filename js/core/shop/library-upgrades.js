@@ -5,6 +5,7 @@ import { getAuraFocusUpgradeDiscount } from '../../visitors.js';
 import { getAchievementBonuses } from '../../achievements.js';
 import { getBorrowLevelPrice as _getBorrowLevelPrice, getFocusLevelPrice as _getFocusLevelPrice, getFocusSpeedMultiplier as _getFocusSpeedMultiplier } from '../economy.js';
 import { SIGNBOARDS } from '../../../data/signboards.js';
+import { MUSIC_ROOM_UNLOCK_PRICE } from '../../../data/music.js';
 import { hasSignboard, getSignboardBuffSum } from './signboards.js';
 import { isNoMasteryBook } from '../book-eligibility.js';
 import { track } from '../../backend/analytics.js';
@@ -71,5 +72,22 @@ export function upgradeFocusLevel() {
   addHistory('purchase', `缮写室升至 Lv.${state.library.focusLevel}`, `花费${price}智慧之光 · +15氛围`);
   saveState();
   track('purchase_focus_level', { level: state.library.focusLevel, price });
+  return true;
+}
+
+export function isMusicRoomUnlocked() {
+  return !!state.musicRoom?.unlocked;
+}
+
+export function unlockMusicRoom() {
+  if (isMusicRoomUnlocked()) return false;
+  if (!spendCoins(MUSIC_ROOM_UNLOCK_PRICE)) return false;
+
+  if (!state.musicRoom) state.musicRoom = { unlocked: false, tracks: [] };
+  state.musicRoom.unlocked = true;
+  addAtmosphere(15);
+  addHistory('purchase', '音律阁开门迎客', `花费${MUSIC_ROOM_UNLOCK_PRICE}智慧之光 · +15氛围`);
+  saveState();
+  track('purchase_music_room', { price: MUSIC_ROOM_UNLOCK_PRICE });
   return true;
 }

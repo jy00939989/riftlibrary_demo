@@ -2,7 +2,8 @@
 import {
   getAllTrackDefs, getCurrentTrackId, selectTrack, setAutoMode, isManualMode,
   getMusicVolume, setMusicVolume, getSfxVolume, setSfxVolume,
-  toggleMusic, isMusicOn, toggleSfx, isSfxOn, updateToggleIcon, isBgmPlaying
+  toggleMusic, isMusicOn, toggleSfx, isSfxOn, updateToggleIcon, isBgmPlaying,
+  purchaseTrack
 } from '../audio.js';
 import { getAmbientDefs, getCurrentAmbientId, selectAmbient, isAmbientEnabled, setAmbientEnabled, getAmbientVolume, setAmbientVolume } from '../ambient.js';
 import { t } from '../i18n/terms.js';
@@ -76,12 +77,16 @@ function open() {
           const isPlaying = isCurrent && isBgmPlaying();
           const lockedClass = track.unlocked
             ? (isCurrent ? 'border-magic-gold bg-magic-gold/10 ring-1 ring-magic-gold' : 'border-wood/20 bg-white/50 hover:border-magic-gold/40')
-            : 'border-wood/10 bg-stone-100/50 opacity-40';
-          const statusIcon = isPlaying ? '🎧' : isCurrent ? '⏸' : track.unlocked ? '' : '🔒';
+            : track.purchasable
+              ? 'border-magic-blue/40 bg-white/50 hover:border-magic-blue'
+              : 'border-wood/10 bg-stone-100/50 opacity-40';
+          const statusIcon = isPlaying ? '🎧' : isCurrent ? '⏸' : track.unlocked ? '' : track.purchasable ? '💰' : '🔒';
           const subText = track.unlocked
             ? (isPlaying ? t('nowPlaying') : isCurrent ? t('paused') : t('clickToPlay'))
-            : t('unlockAtNextStage');
-          const onClick = track.unlocked ? `onclick="window._msPick('${track.id}')"` : '';
+            : track.purchasable
+              ? `${t('clickToBuy')} 💰${track.purchasePrice.toLocaleString()}`
+              : track.lockedReason === 'requiresBook' ? t('trackRequiresBook') : t('unlockAtNextStage');
+          const onClick = (track.unlocked || track.purchasable) ? `onclick="window._msPick('${track.id}')"` : '';
           const badge = isPlaying
             ? `<span class="text-magic-gold text-xs font-bold flex-shrink-0">▶ ${t('playing')}</span>`
             : isCurrent
@@ -264,7 +269,19 @@ function open() {
   // 全局回调
   window._msPick = (trackId) => {
     try {
-      selectTrack(trackId);
+      const track = getAllTrackDefs().find(tr => tr.id === trackId);
+      if (!track) return;
+      if (track.unlocked) {
+        selectTrack(trackId);
+      } else if (track.purchasable) {
+        const result = purchaseTrack(trackId);
+        if (result.ok) {
+          selectTrack(trackId);
+        } else if (result.reason === 'no_coins' && window.showToast) {
+          window.showToast(`${t('insufficientCoins')} 💰`, 'error');
+          open();
+        }
+      }
     } catch (err) {
       // eslint-disable-next-line no-console
       if (typeof console !== 'undefined') console.error('selectTrack failed:', err);

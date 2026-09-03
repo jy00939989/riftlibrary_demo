@@ -5,8 +5,10 @@ import { playSfx } from '../../audio.js';
 import {
   getBorrowLevelPrice, upgradeBorrowLevel,
   getFocusLevelPrice, upgradeFocusLevel,
-  getPlanePortalPrice, purchasePlanePortal
+  getPlanePortalPrice, purchasePlanePortal,
+  isMusicRoomUnlocked, unlockMusicRoom
 } from '../../shop.js';
+import { MUSIC_ROOM_UNLOCK_PRICE } from '../../../data/music.js';
 import {
   isRestorationUnlocked, unlockRestorationRoom,
   getRestorationUnlockPrice, getRestorationLevel,
@@ -308,6 +310,46 @@ export function renderLibraryUpgrades() {
     });
   }
   grid.appendChild(restorationCard);
+
+  // === Music Room（音律阁）===
+  const musicRoomUnlocked = isMusicRoomUnlocked();
+  const musicRoomCard = el('div', 'bg-white rounded-xl p-4 border-2 border-magic-gold/30 flex gap-4 items-center');
+  musicRoomCard.innerHTML = `
+    <div class="w-24 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-wood/10 flex items-center justify-center">
+      ${musicRoomUnlocked
+        ? '<span class="text-3xl">🎵</span>'
+        : '<span class="text-3xl">🔒</span>'}
+    </div>
+    <div class="flex-1">
+      <div class="flex items-center gap-2 mb-1">
+        <span class="font-bold">🎵 ${t('tabMusicRoom')}</span>
+        ${musicRoomUnlocked
+          ? `<span class="text-xs bg-magic-gold/20 text-magic-gold px-2 py-0.5 rounded-full">${t('unlocked')}</span>`
+          : `<span class="text-xs bg-gray-200 text-gray-500 px-2 py-0.5 rounded-full">${t('locked')}</span>`}
+      </div>
+      <p class="text-xs text-ink-light mb-2">${t('musicRoomShopDesc')}</p>
+      ${!musicRoomUnlocked
+        ? `<button class="buy-music-room-btn px-4 py-1.5 bg-magic-gold text-white rounded-lg text-sm font-bold hover:shadow-lg transition-all">${t('unlock')} 💰${MUSIC_ROOM_UNLOCK_PRICE.toLocaleString()}</button>`
+        : `<span class="text-sm text-magic-gold font-bold">${t('musicRoomUnlockedHint')}</span>`
+      }
+    </div>
+  `;
+
+  const buyMusicRoomBtn = musicRoomCard.querySelector('.buy-music-room-btn');
+  if (buyMusicRoomBtn) {
+    buyMusicRoomBtn.addEventListener('click', () => {
+      if (unlockMusicRoom()) {
+        playSfx('buy_success');
+        updateStatusBar();
+        if (actions.renderShopPage) {
+          actions.renderShopPage();
+        }
+      } else {
+        window.showToast(`${t('insufficientCoins')} 💰`, 'error');
+      }
+    });
+  }
+  grid.appendChild(musicRoomCard);
 
   // === Other placeholders ===
   const placeholders = [
