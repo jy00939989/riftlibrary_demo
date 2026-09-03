@@ -13,7 +13,8 @@ export {
 
 export {
   upgradeBorrowLevel, getBorrowLevelPrice,
-  upgradeFocusLevel, getFocusLevelPrice, getFocusSpeedMultiplier
+  upgradeFocusLevel, getFocusLevelPrice, getFocusSpeedMultiplier,
+  isMusicRoomUnlocked, unlockMusicRoom
 } from './core/shop/library-upgrades.js';
 
 export { getPlanePortalPrice, purchasePlanePortal } from './core/shop/plane-portals.js';

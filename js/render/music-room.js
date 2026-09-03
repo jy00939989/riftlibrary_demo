@@ -1,0 +1,133 @@
+// 音律阁 —— 馆主的唱片陈列室：浏览、购买、播放全部曲目
+import { state } from '../state.js';
+import { el } from './common.js';
+import { t } from '../i18n/terms.js';
+import { MUSIC_ROOM_UNLOCK_PRICE } from '../../data/music.js';
+import { playSfx } from '../audio.js';
+import {
+  getAllTrackDefs, getCurrentTrackId, isBgmPlaying,
+  selectTrack, purchaseTrack, toggleMusic, isMusicOn
+} from '../audio.js';
+
+function getTrackDisplayName(track) {
+  const key = 'musicTrack_' + track.id;
+  const localized = t(key);
+  return localized === key ? track.name : localized;
+}
+
+export function renderMusicRoomPage() {
+  const container = document.getElementById('page-musicroom');
+  if (!container) return;
+
+  container.innerHTML = '';
+
+  // 未解锁：引导去商店
+  if (!state.musicRoom?.unlocked) {
+    const lockedCard = el('div', 'bg-amber-50/80 rounded-xl p-6 border-2 border-amber-200 text-center max-w-md mx-auto mt-8');
+    lockedCard.innerHTML = `
+      <div class="text-4xl mb-3">🔒</div>
+      <h3 class="font-display text-lg font-bold mb-2">${t('musicRoomLocked')}</h3>
+      <p class="text-sm text-ink-light mb-4">${t('musicRoomLockedDesc')}</p>
+      <button class="goto-shop-music-room-btn px-5 py-2 bg-magic-gold text-white text-sm font-bold rounded-lg hover:shadow-lg transition-all">
+        ${t('gotoShopUnlock').replace('{price}', MUSIC_ROOM_UNLOCK_PRICE.toLocaleString())}
+      </button>
+    `;
+    lockedCard.querySelector('.goto-shop-music-room-btn').addEventListener('click', () => {
+      if (window.switchTab) window.switchTab('shop');
+    });
+    container.appendChild(lockedCard);
+    return;
+  }
+
+  const tracks = getAllTrackDefs();
+  const currentId = getCurrentTrackId();
+  const playing = isBgmPlaying();
+  const musicOn = isMusicOn();
+  const collected = tracks.filter(tr => tr.unlocked).length;
+
+  // 页头
+  const header = el('div', 'mb-6 text-center');
+  header.innerHTML = `
+    <h2 class="font-display text-2xl font-bold mb-1">🎵 ${t('tabMusicRoom')}</h2>
+    <p class="text-sm text-ink-light">${t('musicRoomCollected').replace('{n}', collected).replace('{total}', tracks.length)}</p>
+  `;
+  container.appendChild(header);
+
+  // 正在播放栏
+  const currentTrack = tracks.find(tr => tr.id === currentId);
+  const nowBar = el('div', 'parchment-bg rounded-2xl p-4 magic-glow mb-6 flex items-center gap-4');
+  nowBar.innerHTML = `
+    <span class="text-3xl flex-shrink-0">${currentTrack ? currentTrack.emoji : '🎼'}</span>
+    <div class="flex-1 min-w-0">
+      <div class="text-xs text-ink-light mb-0.5">${t('nowPlaying')}</div>
+      <div class="font-bold text-ink truncate">${currentTrack ? getTrackDisplayName(currentTrack) : t('musicNothingPlaying')}</div>
+    </div>
+    <button id="mr-music-toggle" class="text-xs px-3 py-1.5 rounded-full border transition-all ${musicOn ? 'border-magic-gold bg-magic-gold/10 text-magic-gold' : 'border-wood/30 bg-white/50 text-ink-light'}">
+      ${musicOn ? t('enabled') : t('disabled')}
+    </button>
+  `;
+  nowBar.querySelector('#mr-music-toggle').addEventListener('click', () => {
+    toggleMusic();
+    renderMusicRoomPage();
+  });
+  container.appendChild(nowBar);
+
+  // 唱片架
+  const shelf = el('div', 'grid grid-cols-1 sm:grid-cols-2 gap-3');
+  tracks.forEach(track => {
+    const isCurrent = track.id === currentId;
+    const isPlaying = isCurrent && playing;
+    const card = el('button', 'w-full flex items-center gap-3 p-3 rounded-xl border-2 text-left transition-all');
+
+    let subText;
+    let badge = '';
+    if (track.unlocked) {
+      card.className += isCurrent
+        ? ' border-magic-gold bg-magic-gold/10 ring-1 ring-magic-gold'
+        : ' border-wood/20 bg-white/50 hover:border-magic-gold/40';
+      subText = isPlaying ? t('nowPlaying') : isCurrent ? t('paused') : t('clickToPlay');
+      if (isPlaying) badge = `<span class="text-magic-gold text-xs font-bold flex-shrink-0">▶ ${t('playing')}</span>`;
+      else if (isCurrent) badge = `<span class="text-ink-light text-xs font-bold flex-shrink-0">⏸ ${t('paused')}</span>`;
+    } else if (track.purchasable) {
+      card.className += ' border-magic-blue/40 bg-white/50 hover:border-magic-blue';
+      subText = `${t('clickToBuy')} 💰${track.purchasePrice.toLocaleString()}`;
+      badge = `<span class="text-magic-blue text-xs font-bold flex-shrink-0">💰${track.purchasePrice.toLocaleString()}</span>`;
+    } else {
+      card.className += ' border-wood/10 bg-stone-100/50 opacity-50';
+      subText = track.lockedReason === 'requiresBook' ? t('trackRequiresBook') : t('unlockAtNextStage');
+      badge = '<span class="text-lg flex-shrink-0">🔒</span>';
+    }
+
+    card.innerHTML = `
+      <span class="text-2xl flex-shrink-0">${track.emoji}</span>
+      <div class="flex-1 min-w-0">
+        <div class="text-sm font-bold text-ink truncate">${getTrackDisplayName(track)}</div>
+        <div class="text-[10px] text-ink-light">${subText}</div>
+      </div>
+      ${badge}
+    `;
+
+    card.addEventListener('click', () => {
+      if (track.unlocked) {
+        if (!isCurrent) {
+          selectTrack(track.id);
+          playSfx('button_click');
+        }
+        renderMusicRoomPage();
+      } else if (track.purchasable) {
+        const result = purchaseTrack(track.id);
+        if (result.ok) {
+          playSfx('buy_success');
+          if (window.showToast) window.showToast(t('trackPurchaseSuccess'), 'success');
+          selectTrack(track.id);
+        } else if (result.reason === 'no_coins' && window.showToast) {
+          window.showToast(`${t('insufficientCoins')} 💰`, 'error');
+        }
+        renderMusicRoomPage();
+      }
+    });
+
+    shelf.appendChild(card);
+  });
+  container.appendChild(shelf);
+}

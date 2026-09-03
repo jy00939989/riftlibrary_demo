@@ -2,17 +2,8 @@
 import { state, saveState } from './state.js';
 import { initAmbient, setAmbientEnabled, isAmbientEnabled, playAmbient, stopAmbient } from './ambient.js';
 import { getSettings, setSettings, setSetting, initSettings } from './settings.js';
-
-// 曲目配置（所有 MP3 均已在 audio/ 目录下）
-const TRACK_DEFS = [
-  { id: 'theme',   name: '图书馆主题曲', emoji: '🎵', tier: 'always', file: 'audio/library-music-demo1.mp3' },
-  { id: 'ruin_a',  name: '荒废图书馆',   emoji: '🕯️', tier: 'ruined',  file: 'audio/图书馆 demo 荒废图书馆 2.mp3' },
-  { id: 'ruin_b',  name: '荒废·长夜变奏', emoji: '🌙', tier: 'ruined',  file: 'audio/图书馆 demo 荒废图书馆 2 (1).mp3' },
-  { id: 'cozy_a',  name: '城镇漫步',     emoji: '🏘️', tier: 'cozy',    file: 'audio/图书馆 demo2 城镇风格.mp3' },
-  { id: 'cozy_b',  name: '城镇·午后变奏', emoji: '☀️', tier: 'cozy',    file: 'audio/图书馆 demo2 城镇风格 (1).mp3' },
-  { id: 'star_a',  name: '星辰图书馆',   emoji: '🌟', tier: 'stellar', file: 'audio/图书馆 demo 星辰图书馆.mp3' },
-  { id: 'star_b',  name: '星辰·圣堂咏叹', emoji: '✨', tier: 'stellar', file: 'audio/图书馆 demo 星辰图书馆 (1).mp3' }
-];
+import { TRACK_DEFS } from '../data/music.js';
+import { spendCoins } from './storage.js';
 
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
@@ -29,16 +20,62 @@ function tierForAtmo(v) {
   return 'ruined';
 }
 
-/** 获取所有已解锁的曲目 */
+/** 获取所有已解锁（可播放）的曲目 */
 export function getAvailableTracks() {
-  const atmo = state.library?.atmosphere || 0;
-  const currentTier = tierForAtmo(atmo);
-  return TRACK_DEFS.filter(t => {
-    if (t.tier === 'always') return true;
-    return t.tier === currentTier ||  // 当前所在档位
-           (t.tier === 'ruined') ||
-           (t.tier === 'cozy' && (currentTier === 'stellar'));
-  });
+  return TRACK_DEFS.filter(isTrackPlayable);
+}
+
+/** 指定档位是否已到达（含向下兼容：高档位可用低档曲目） */
+export function isTierReached(tier) {
+  if (tier === 'always' || tier === 'any') return true;
+  const currentTier = tierForAtmo(state.library?.atmosphere || 0);
+  return tier === currentTier ||
+         tier === 'ruined' ||
+         (tier === 'cozy' && currentTier === 'stellar');
+}
+
+export function isTrackPurchased(trackId) {
+  return (state.musicRoom?.tracks || []).includes(trackId);
+}
+
+/** 曲目当前是否可播放：免费曲到达档位即播；付费曲需已购买 */
+export function isTrackPlayable(track) {
+  return track.price === 0 ? isTierReached(track.tier) : isTrackPurchased(track.id);
+}
+
+/**
+ * 曲目购买状态：
+ * - playable：可播放
+ * - purchasable：可花智慧之光购买（附 price）
+ * - locked：暂不可购买（附 reason: 'tier' 档位未到 / 'requiresBook' 书籍未完成）
+ */
+export function getTrackPurchaseState(track) {
+  if (isTrackPlayable(track)) return { status: 'playable' };
+  if (track.price === 0) return { status: 'locked', reason: 'tier' };
+  if (track.requiresBook && !isBookCompleted(track.requiresBook)) {
+    return { status: 'locked', reason: 'requiresBook', bookId: track.requiresBook };
+  }
+  if (!isTierReached(track.tier)) return { status: 'locked', reason: 'tier' };
+  return { status: 'purchasable', price: track.price };
+}
+
+function isBookCompleted(bookId) {
+  const bs = state.books?.[bookId];
+  return !!bs && bs.status === 'completed';
+}
+
+/** 购买唱片，返回 { ok, reason? } */
+export function purchaseTrack(trackId) {
+  const def = TRACK_DEFS.find(t => t.id === trackId);
+  if (!def) return { ok: false, reason: 'not_found' };
+  if (isTrackPurchased(trackId)) return { ok: false, reason: 'already_owned' };
+  const purchaseState = getTrackPurchaseState(def);
+  if (purchaseState.status !== 'purchasable') return { ok: false, reason: purchaseState.reason || 'locked' };
+  if (!spendCoins(def.price)) return { ok: false, reason: 'no_coins' };
+  if (!state.musicRoom) state.musicRoom = { unlocked: false, tracks: [] };
+  state.musicRoom.tracks.push(trackId);
+  saveState();
+  return { ok: true };
 }
 
 /** 获取曲目定义 */
@@ -46,16 +83,18 @@ export function getTrackDef(trackId) {
   return TRACK_DEFS.find(t => t.id === trackId) || null;
 }
 
-/** 获取所有曲目定义（含锁定状态） */
+/** 获取所有曲目定义（含购买状态） */
 export function getAllTrackDefs() {
-  const atmo = state.library?.atmosphere || 0;
-  const currentTier = tierForAtmo(atmo);
-  return TRACK_DEFS.map(t => ({
-    ...t,
-    unlocked: t.tier === 'always' || t.tier === currentTier ||
-              (t.tier === 'ruined') ||
-              (t.tier === 'cozy' && currentTier === 'stellar')
-  }));
+  return TRACK_DEFS.map(t => {
+    const purchaseState = getTrackPurchaseState(t);
+    return {
+      ...t,
+      unlocked: purchaseState.status === 'playable',
+      purchasable: purchaseState.status === 'purchasable',
+      purchasePrice: purchaseState.price || 0,
+      lockedReason: purchaseState.reason || null
+    };
+  });
 }
 
 /** 获取当前播放的曲目 ID */
@@ -190,6 +229,14 @@ export function refreshBGM() {
   if (!isMusicOn()) return;
   const manualId = state.musicManualTrack;
   if (manualId) {
+    const manualDef = TRACK_DEFS.find(t => t.id === manualId);
+    if (!manualDef || !isTrackPlayable(manualDef)) {
+      // 手动曲目已不可播放（如未购买），回退自动模式
+      state.musicManualTrack = null;
+      saveState();
+      startBgm(null);
+      return;
+    }
     if (currentTrackId !== manualId || !currentAudio) startBgm(manualId);
     return;
   }
@@ -204,9 +251,12 @@ export function refreshBGM() {
 
 /** 用户手动选择曲目，此后不再随氛围自动切换 */
 export function selectTrack(trackId) {
+  const def = TRACK_DEFS.find(t => t.id === trackId);
+  if (!def || !isTrackPlayable(def)) return false;
   state.musicManualTrack = trackId;
   saveState();
   startBgm(trackId);
+  return true;
 }
 
 /** 切换回自动模式（随氛围自动选曲） */

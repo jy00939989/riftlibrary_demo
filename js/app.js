@@ -124,7 +124,7 @@ function init() {
     state.currentSession.targetMinutes = 1;
   }
 
-  ['focus', 'bookshelf', 'library', 'visitors', 'archive', 'shop'].forEach(tab => {
+  ['focus', 'bookshelf', 'library', 'visitors', 'archive', 'musicroom', 'shop'].forEach(tab => {
     const btn = document.getElementById('tab-' + tab);
     if (btn) btn.addEventListener('click', () => switchTab(tab));
   });

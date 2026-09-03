@@ -153,6 +153,10 @@ function migrateV1() {
   if (state.library.borrowLevel === undefined) state.library.borrowLevel = 0;
   if (state.library.focusLevel === undefined) state.library.focusLevel = 0;
 
+  // 旧存档迁移：音律阁
+  if (!state.musicRoom) state.musicRoom = { unlocked: false, tracks: [] };
+  if (!Array.isArray(state.musicRoom.tracks)) state.musicRoom.tracks = [];
+
   // 旧存档迁移：introCompleted
   if (state.introCompleted === undefined) state.introCompleted = false;
 
