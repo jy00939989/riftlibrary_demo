@@ -311,7 +311,7 @@ export function renderLibraryUpgrades() {
   }
   grid.appendChild(restorationCard);
 
-  // === Music Room（音律阁）===
+  // === Music Room（留声阁）===
   const musicRoomUnlocked = isMusicRoomUnlocked();
   const musicRoomCard = el('div', 'bg-white rounded-xl p-4 border-2 border-magic-gold/30 flex gap-4 items-center');
   musicRoomCard.innerHTML = `

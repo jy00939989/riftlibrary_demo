@@ -1,4 +1,4 @@
-// 音律阁 —— 馆主的唱片陈列室：浏览、购买、播放全部曲目
+// 留声阁 —— 馆主的唱片陈列室：浏览、购买、播放全部曲目
 import { state } from '../state.js';
 import { el } from './common.js';
 import { t } from '../i18n/terms.js';
