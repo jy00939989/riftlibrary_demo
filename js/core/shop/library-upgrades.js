@@ -86,7 +86,7 @@ export function unlockMusicRoom() {
   if (!state.musicRoom) state.musicRoom = { unlocked: false, tracks: [] };
   state.musicRoom.unlocked = true;
   addAtmosphere(15);
-  addHistory('purchase', '音律阁开门迎客', `花费${MUSIC_ROOM_UNLOCK_PRICE}智慧之光 · +15氛围`);
+  addHistory('purchase', '留声阁开门迎客', `花费${MUSIC_ROOM_UNLOCK_PRICE}智慧之光 · +15氛围`);
   saveState();
   track('purchase_music_room', { price: MUSIC_ROOM_UNLOCK_PRICE });
   return true;

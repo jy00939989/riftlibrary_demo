@@ -86,7 +86,7 @@ export const state = {
   // 手稿箱
   manuscriptBox: [],
 
-  // 音律阁（乐室）：unlocked = 设施已解锁；tracks = 已购唱片 id 列表
+  // 留声阁（乐室）：unlocked = 设施已解锁；tracks = 已购唱片 id 列表
   musicRoom: { unlocked: false, tracks: [] },
 
   // 经济
