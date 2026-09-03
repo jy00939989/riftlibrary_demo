@@ -5,7 +5,6 @@ import { t } from '../../i18n/terms.js';
 import { renderDlcPacksSection } from '../dlc-packs.js';
 import { renderLibraryUpgrades } from './library-upgrades.js';
 import { renderBookSection } from './book-section.js';
-import { renderAmbientShop } from './ambient-shop.js';
 import { renderDecorationShop } from './decorations.js';
 import { cleanupTimer, startCountdownTimer } from './countdown.js';
 
@@ -29,9 +28,6 @@ export function renderShopPage() {
   // ========== New Books ==========
   wrapper.appendChild(renderBookSection(`📚 ${t('newBooksInStock')}`, shopState.fixed, false));
   wrapper.appendChild(renderBookSection(`🔥 ${t('limitedTimeOffer')}`, shopState.rotating, true));
-
-  // ========== Ambient Sounds ==========
-  wrapper.appendChild(renderAmbientShop());
 
   // ========== Decorations ==========
   wrapper.appendChild(renderDecorationShop());
