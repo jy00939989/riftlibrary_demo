@@ -4,7 +4,8 @@ import { ensureAudioContext, playSfx, pauseMusic, startBgm, isMusicOn } from '..
 import { playAmbient, isAmbientEnabled } from '../ambient.js';
 import { startFocus, togglePauseFocus, completeFocus, abandonFocus } from './focus-session.js';
 import { runFocusOrchestration } from './focus-orchestrator.js';
-import { checkAchievements, showAchievementBatch } from '../achievements.js';
+import { checkAchievements } from '../achievements.js';
+import { showAchievementBatch } from '../render/achievements.js';
 import { triggerQuestCheck } from './quest-trigger.js';
 import { track } from '../backend/index.js';
 import { showMomoIntro } from '../render/shared/momo-intro.js';

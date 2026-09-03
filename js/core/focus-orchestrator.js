@@ -3,6 +3,7 @@
 // 设计：显式回流（ADR-001），orchestrator 改完 state 后显式调用 renderXxx()。
 
 import { state, saveState } from '../state.js';
+import { t } from '../i18n/terms.js';
 import { addCoins, addHistory, addInspiration, addAtmosphere, getAtmosphereLevel, addFocusSession } from '../storage.js';
 import { markTaskDone } from '../dailytasks.js';
 import { checkAchievements, getAchievementBonuses } from '../achievements.js';

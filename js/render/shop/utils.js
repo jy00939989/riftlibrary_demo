@@ -1,5 +1,5 @@
 // Shop rendering utilities — shared helpers used by multiple shop sub-modules
-import { BOOKS } from '../../data/books.js';
+import { BOOKS } from '../../../data/books.js';
 import { actions, updateStatusBar, getBookTitle } from '../common.js';
 import { t, getLocale } from '../../i18n/terms.js';
 
