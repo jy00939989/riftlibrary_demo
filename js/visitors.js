@@ -922,8 +922,8 @@ function triggerNarrative(charId) {
   const result = { common: null, occasional: null, rare: null, postRare: null, postRareCommon: null, postRareOccasional: null };
   const favor = state.visitorFavors?.[charId] || 0;
 
-  // 1. 常层：每次还书 60% 概率触发
-  if (Math.random() < 0.60) {
+  // 1. 常层：每次还书 40% 概率触发
+  if (Math.random() < 0.40) {
     result.common = pickCommonEvent(charId);
     if (result.common) {
       collectVisitorItem({
@@ -1029,8 +1029,8 @@ function triggerNarrative(charId) {
     });
   }
 
-  // 5. 终局后常层：终局已触发后，每次还书 60% 概率触发终局后常层事件（可重复）
-  if (ns.postRareTriggered && narrative.postRareCommon && narrative.postRareCommon.length > 0 && Math.random() < 0.60) {
+  // 5. 终局后常层：终局已触发后，每次还书 40% 概率触发终局后常层事件（可重复）
+  if (ns.postRareTriggered && narrative.postRareCommon && narrative.postRareCommon.length > 0 && Math.random() < 0.40) {
     const pool = narrative.postRareCommon;
     const recent = ns.postRareCommonTriggered.slice(-2);
     const candidates = pool.filter(e => !recent.includes(e.id));
