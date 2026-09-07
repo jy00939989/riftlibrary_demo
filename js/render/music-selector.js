@@ -7,6 +7,7 @@ import {
 } from '../audio.js';
 import { getAmbientDefs, getCurrentAmbientId, selectAmbient, isAmbientEnabled, setAmbientEnabled, getAmbientVolume, setAmbientVolume } from '../ambient.js';
 import { t } from '../i18n/terms.js';
+import { getSettings, setSetting } from '../settings.js';
 
 let panelEl = null;
 let globalEscHandler = null;
@@ -49,6 +50,7 @@ function open() {
   const musicVol = Math.round(getMusicVolume() * 100);
   const ambientVol = Math.round(getAmbientVolume() * 100);
   const sfxVol = Math.round(getSfxVolume() * 100);
+  const skipAnimOn = getSettings().skipSeenAnimations;
 
   panelEl = document.createElement('div');
   panelEl.id = 'music-selector-panel';
@@ -166,6 +168,17 @@ function open() {
           </div>
         </div>
       </div>
+
+      <!-- 动画设置 -->
+      <div class="mt-5 pt-4 border-t border-wood/20 flex items-center justify-between px-1">
+        <div class="flex-1 pr-3">
+          <div class="text-xs font-bold text-ink-light tracking-wider">🎬 ${t('animSectionTitle')} · ${t('skipSeenAnimations')}</div>
+          <div class="text-[10px] text-ink-light/70 mt-0.5">${t('skipSeenAnimationsDesc')}</div>
+        </div>
+        <button id="ms-skip-anim-toggle" class="text-[10px] px-2 py-1 rounded-full border transition-all flex-shrink-0 ${skipAnimOn ? 'border-magic-gold bg-magic-gold/10 text-magic-gold' : 'border-wood/30 bg-white/50 text-ink-light'}">
+          ${skipAnimOn ? t('enabled') : t('disabled')}
+        </button>
+      </div>
     </div>
   `;
 
@@ -256,6 +269,15 @@ function open() {
       setSfxVolume(val / 100);
       const label = panelEl.querySelector('#ms-sfx-volume-value');
       if (label) label.textContent = val + '%';
+    });
+  }
+
+  const skipAnimToggle = panelEl.querySelector('#ms-skip-anim-toggle');
+  if (skipAnimToggle) {
+    skipAnimToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      setSetting('skipSeenAnimations', !getSettings().skipSeenAnimations);
+      open();
     });
   }
 
