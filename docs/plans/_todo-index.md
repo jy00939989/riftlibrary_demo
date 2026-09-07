@@ -19,9 +19,9 @@ layout: breakdown
 - [x] 后续把 `BORROW_LEVEL_TABLE` 三处重复定义合并为单一真源（`data/borrow-levels.js`）
 
 ### borrow-level-damage-reduction（借阅等级减损）
-- [ ] 在 `js/visitors.js` 还书损毁判定中读取 `state.library.borrowLevel`
-- [ ] 按等级减免：基础概率 - `(borrowLevel - 1) * 0.004`，下限 0.5%
-- [ ] “爱惜书籍”标志牌效果在等级减免后再叠加
+- [x] 在 `js/visitors.js` 还书损毁判定中读取 `state.library.borrowLevel`
+- [x] 按等级减免：基础概率 - `(borrowLevel - 1) * 0.004`，下限 0.5%
+- [x] “爱惜书籍”标志牌效果在等级减免后再叠加
 - [ ] 在读者沙龙页面/借阅区升级弹窗提示当前损毁概率
 - [ ] 考虑在成就或访客叙事中引用该机制
 
@@ -65,20 +65,20 @@ layout: breakdown
 - [ ] 补全 OAuth 回调处理、`profiles` 自动建行、离线 fallback 与错误状态暴露
 
 ### god-module-split-plan（神模块拆分）
-- [ ] Phase 1：拆出 `js/state/state.js` / `migrations.js` / `save.js`，`js/state.js` 变 shim
-- [ ] Phase 2：按购买类型拆分 `js/shop.js` 到 `js/core/shop/*.js`，原文件变转发壳
-- [ ] Phase 3：把专注生命周期从 `app.js` 迁到 `js/core/focus-session.js`、`focus-rewards.js`、`focus-orchestrator.js`
-- [ ] Phase 4：拆分 `js/render/focus.js` / `js/render/shop.js` 到子目录，确保 render 不再直接改 state
-- [ ] Phase 5：`app.js` 只保留启动顺序与全局事件，其余弹窗/卡片迁出
-- [ ] 同步改造 `actions`：由 app 注入或静态导入，建立“render → actions → core → state → save”数据流
+- [x] Phase 1：拆出 `js/state/state.js` / `migrations.js` / `save.js`，`js/state.js` 变 shim
+- [x] Phase 2：按购买类型拆分 `js/shop.js` 到 `js/core/shop/*.js`，原文件变转发壳
+- [x] Phase 3：把专注生命周期从 `app.js` 迁到 `js/core/focus-session.js`、`focus-rewards.js`、`focus-orchestrator.js`
+- [x] Phase 4：拆分 `js/render/focus.js` / `js/render/shop.js` 到子目录，确保 render 不再直接改 state
+- [x] Phase 5：`app.js` 只保留启动顺序与全局事件，其余弹窗/卡片迁出
+- [x] 同步改造 `actions`：由 app 注入或静态导入，建立“render → actions → core → state → save”数据流
 
 ### god-module-split-full-implementation-plan（神模块拆分完整实施）
-- [ ] Phase 1：落地 `js/state/state.js`、`migrations.js`、`save.js`，`js/state.js` 仅 re-export
-- [ ] Phase 2：创建 `js/core/shop/book-shop.js`、`library-upgrades.js`、`plane-portals.js`、`signboards.js`
-- [ ] Phase 3：创建 `js/core/focus-session.js`、`focus-rewards.js`、`focus-orchestrator.js`
-- [ ] Phase 4：拆分 `js/render/focus/*.js` 与 `js/render/shop/*.js`，通用弹窗抽到 `js/render/shared/`
-- [ ] Phase 5：`app.js` 瘦身到 <400 行，剩余弹窗/卡片迁到 render shared
-- [ ] 重构 `actions` 为统一入口，render 通过 actions 调用 core，不直接修改 state
+- [x] Phase 1：落地 `js/state/state.js`、`migrations.js`、`save.js`，`js/state.js` 仅 re-export
+- [x] Phase 2：创建 `js/core/shop/book-shop.js`、`library-upgrades.js`、`plane-portals.js`、`signboards.js`
+- [x] Phase 3：创建 `js/core/focus-session.js`、`focus-rewards.js`、`focus-orchestrator.js`
+- [x] Phase 4：拆分 `js/render/focus/*.js` 与 `js/render/shop/*.js`，通用弹窗抽到 `js/render/shared/`
+- [x] Phase 5：`app.js` 瘦身到 <400 行，剩余弹窗/卡片迁到 render shared
+- [x] 重构 `actions` 为统一入口，render 通过 actions 调用 core，不直接修改 state
 
 ### economy-balance-review（经济平衡）
 - [ ] 为氛围 500 硬封顶后增加消费口：溢出折算智慧之光/灵感或解锁星辰阶装饰/BGM
@@ -175,9 +175,9 @@ layout: breakdown
 ## 🟠 已部分完成待收尾
 
 ### god-module-split-full-implementation-plan（收尾）
-- [ ] Phase 2–5 继续推进：shop 拆分、focus 拆分、render 拆分、app.js 瘦身
-- [ ] 按 review 决策重渲染触发机制与 actions 注入方式
-- [ ] `migrations.js` 版本门控 runner 长期可用
+- [x] Phase 2–5 继续推进：shop 拆分、focus 拆分、render 拆分、app.js 瘦身
+- [x] 按 review 决策重渲染触发机制与 actions 注入方式
+- [x] `migrations.js` 版本门控 runner 长期可用
 
 ### recopy-system-revision-plan（重抄系统修订）
 - [ ] 修正 import 路径：`saveState` 来自 `js/state/save.js`，`createBookRecord` 来自 `js/core/book-utils.js`
@@ -203,3 +203,5 @@ layout: breakdown
 - [x] 新建 `data/borrow-levels.js` 作为 `BORROW_LEVEL_TABLE` 单一真源
 - [x] `js/visitors.js` / `js/core/economy.js` / `js/core/visitor-lookup.js` 改从 `data/borrow-levels.js` 读取
 - [x] 提交 8.30 改动并推送 Gitee `feature/2026-08-28-updates` + `deploy`
+
+> **对账注记（2026-09-04）**：本节主体由 `47235db`（2026-08-28）落地——`js/core/redeem.js`、`js/render/bag.js`、`js/backend/redeem-code.js`、Edge Function `redeem-code`、迁移 `20260827000000_redeem_code_system.sql`、限量纪念牌 serial_number 展示；道具改名、`data/items.js`、`data/borrow-levels.js` 单一真源为 8-30/8-31 后续提交。本节无独立方案文档，锚点即本清单。
