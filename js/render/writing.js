@@ -304,6 +304,7 @@ class WritingAnim {
   }
 
   appendChar(lineEl, ch) {
+    if (!lineEl) return null;
     const span = document.createElement('span');
     span.className = 'writing-char writing-fresh';
     span.textContent = ch;
@@ -442,13 +443,18 @@ class WritingAnim {
     this.timerId = setTimeout(() => {
       if (!this.running) return;
 
+      // 布局重排（resize/单页切换）会把 currentLineEl 置空；此时跳过落字，
+      // 交给下一个 tick 的 ensureLineEl 重建行元素，避免对 null appendChild
+      if (!this.currentLineEl) { this.scheduleTick(); return; }
+
       const span = this.appendChar(this.currentLineEl, ch);
+      if (!span) { this.scheduleTick(); return; }
 
       // 羽笔留在行末（不下坠到字中心，避免视觉跳动）
       // 下一个 tick 的 moveQuillToWritePos 会自然跟随行增长
 
       // 粒子
-      if (Math.random() < 0.3 && this.sceneEl) {
+      if (span && Math.random() < 0.3 && this.sceneEl) {
         const sr = this.sceneEl.getBoundingClientRect();
         const spr = span.getBoundingClientRect();
         this.spawnParticles(spr.right - sr.left, spr.top - sr.top);
