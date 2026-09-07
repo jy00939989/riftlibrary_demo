@@ -1,3 +1,61 @@
+---
+anchors:
+  - { type: file, path: "data/momo-reviews.js", weight: 0.1 }
+  - { type: file, path: "docs/plans/god-module-split-full-implementation-plan-review.md", weight: 0.1 }
+  - { type: file, path: "docs/plans/god-module-split-full-implementation-plan.md", weight: 0.1 }
+  - { type: file, path: "js/achievements.js", weight: 0.1 }
+  - { type: file, path: "js/app.js", weight: 0.1 }
+  - { type: file, path: "js/capacity.js", weight: 0.1 }
+  - { type: file, path: "js/core/book-progress.js", weight: 0.1 }
+  - { type: file, path: "js/core/economy.js", weight: 0.1 }
+  - { type: file, path: "js/core/focus-actions.js", weight: 0.1 }
+  - { type: file, path: "js/core/focus-orchestrator.js", weight: 0.1 }
+  - { type: file, path: "js/core/focus-rewards.js", weight: 0.1 }
+  - { type: file, path: "js/core/focus-session.js", weight: 0.1 }
+  - { type: file, path: "js/core/library.js", weight: 0.1 }
+  - { type: file, path: "js/core/shop-actions.js", weight: 0.1 }
+  - { type: file, path: "js/core/visitor-actions.js", weight: 0.1 }
+  - { type: file, path: "js/render/achievements.js", weight: 0.1 }
+  - { type: file, path: "js/render/bookshelf.js", weight: 0.1 }
+  - { type: file, path: "js/render/focus.js", weight: 0.1 }
+  - { type: file, path: "js/render/focus/aura-indicator.js", weight: 0.1 }
+  - { type: file, path: "js/render/focus/book-selector.js", weight: 0.1 }
+  - { type: file, path: "js/render/focus/completion-card.js", weight: 0.1 }
+  - { type: file, path: "js/render/focus/controls.js", weight: 0.1 }
+  - { type: file, path: "js/render/focus/copy-preview.js", weight: 0.1 }
+  - { type: file, path: "js/render/focus/daily-tasks.js", weight: 0.1 }
+  - { type: file, path: "js/render/focus/mode-selector.js", weight: 0.1 }
+  - { type: file, path: "js/render/focus/page.js", weight: 0.1 }
+  - { type: file, path: "js/render/focus/progress-bar.js", weight: 0.1 }
+  - { type: file, path: "js/render/focus/quest-indicator.js", weight: 0.1 }
+  - { type: file, path: "js/render/focus/timer-display.js", weight: 0.1 }
+  - { type: file, path: "js/render/navigation.js", weight: 0.1 }
+  - { type: file, path: "js/render/shared/action-cards.js", weight: 0.1 }
+  - { type: file, path: "js/render/shared/crash-recovery.js", weight: 0.1 }
+  - { type: file, path: "js/render/shared/loading-screen.js", weight: 0.1 }
+  - { type: file, path: "js/render/shared/momo-intro.js", weight: 0.1 }
+  - { type: file, path: "js/render/shared/toast.js", weight: 0.1 }
+  - { type: file, path: "js/render/shared/visitor-cards.js", weight: 0.1 }
+  - { type: file, path: "js/render/shop.js", weight: 0.1 }
+  - { type: file, path: "js/render/shop/ambient-shop.js", weight: 0.1 }
+  - { type: file, path: "js/render/shop/book-section.js", weight: 0.1 }
+  - { type: file, path: "js/render/shop/countdown.js", weight: 0.1 }
+  - { type: file, path: "js/render/shop/decorations.js", weight: 0.1 }
+  - { type: file, path: "js/render/shop/library-upgrades.js", weight: 0.1 }
+  - { type: file, path: "js/render/shop/naming-modal.js", weight: 0.1 }
+  - { type: file, path: "js/render/shop/page.js", weight: 0.1 }
+  - { type: file, path: "js/render/shop/purchase-modal.js", weight: 0.1 }
+  - { type: file, path: "js/render/shop/utils.js", weight: 0.1 }
+  - { type: file, path: "js/shop.js", weight: 0.1 }
+  - { type: file, path: "js/state.js", weight: 0.1 }
+  - { type: file, path: "js/state/migrations.js", weight: 0.1 }
+  - { type: file, path: "js/state/save.js", weight: 0.1 }
+  - { type: file, path: "js/state/state.js", weight: 0.1 }
+  - { type: file, path: "js/tutorial.js", weight: 0.1 }
+  - { type: file, path: "package.json", weight: 0.1 }
+  - { type: file, path: "scripts/check-imports.mjs", weight: 0.1 }
+---
+
 # 归墟图书馆神模块拆分完整实施计划（剩余 Phase 2/4/5）
 
 > 文档状态：Phase 1/3 已落地归档；本文件只记录剩余未实施的 Phase 2 商店业务、Phase 4 渲染拆分、Phase 5 app.js 最终瘦身。

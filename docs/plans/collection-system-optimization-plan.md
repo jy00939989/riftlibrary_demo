@@ -2,6 +2,8 @@
 status: backlog
 importance: 4
 scheduledDate:
+anchors:
+  - { type: file, path: "docs/plans/collection-system-optimization-plan.md", weight: 0.1 }
 ---
 
 # 收藏系统优化计划（collection-system-optimization）

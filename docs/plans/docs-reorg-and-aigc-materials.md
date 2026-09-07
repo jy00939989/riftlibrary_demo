@@ -7,6 +7,8 @@ anchors:
   - { type: file, path: "docs/README.md", weight: 0.1 }
   - { type: file, path: "docs/aigc-demo-video-script.md", weight: 0.1 }
   - { type: file, path: "docs/aigc-pitch-deck.html", weight: 0.1 }
+  - { type: file, path: "docs/aigc/AI工具使用清单_提交版.md", weight: 0.1 }
+  - { type: file, path: "docs/aigc/aigc-pitch-deck.html", weight: 0.1 }
   - { type: file, path: "docs/archive/bugs/2026-06-04-smart-quote-syntax-error.md", weight: 0.1 }
   - { type: file, path: "docs/archive/bugs/2026-07-29-visitor-favor-balance-issue-review.md", weight: 0.1 }
   - { type: file, path: "docs/archive/bugs/2026-07-29-visitor-favor-balance-issue.md", weight: 0.1 }
@@ -20,8 +22,12 @@ anchors:
   - { type: file, path: "docs/archive/plans/visitor-memory-collection-plan.md", weight: 0.1 }
   - { type: file, path: "docs/archive/plans/volume-split-plan.md", weight: 0.1 }
   - { type: file, path: "docs/plans/backend-supabase-implementation-plan.md", weight: 0.1 }
+  - { type: file, path: "docs/plans/docs-reorg-and-aigc-materials.md", weight: 0.1 }
   - { type: file, path: "docs/plans/god-module-split-plan.md", weight: 0.1 }
+  - { type: file, path: "docs/prompts/book-cover-prompts-batch.md", weight: 0.1 }
   - { type: file, path: "docs/tech-debt/plants-post-reward-and-abandon.md", weight: 0.1 }
+  - { type: file, path: "scripts/extract-book-meta.mjs", weight: 0.1 }
+  - { type: file, path: "scripts/generate-book-cover-prompts.mjs", weight: 0.1 }
 ---
 
 # c750b43 剩余部分对账补录——docs 归档整理 + AIGC 材料 + 计划文档入库

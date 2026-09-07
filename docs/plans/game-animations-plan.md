@@ -2,6 +2,8 @@
 status: backlog
 importance: 4
 scheduledDate:
+anchors:
+  - { type: file, path: "docs/plans/game-animations-plan.md", weight: 0.1 }
 ---
 
 # 游戏动画制作与导入计划

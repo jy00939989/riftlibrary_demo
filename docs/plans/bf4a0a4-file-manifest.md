@@ -1,0 +1,147 @@
+---
+status: done
+importance: 2
+scheduledDate:
+anchors:
+  - { type: file, path: "data/books/book_002.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_003.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_004.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_005.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_006.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_007.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_007_vol1.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_007_vol2.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_008.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_008_vol1.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_008_vol2.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_009.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_009_vol1.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_009_vol2.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_009_vol3.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_011.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_012.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_013.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_013_vol1.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_013_vol2.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_014.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_014_vol1.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_014_vol2.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_014_vol3.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_014_vol4.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_015.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_016.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_016_vol1.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_016_vol2.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_016_vol3.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_016_vol4.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_016_vol5.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_016_vol6.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_017.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_018.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_018_vol1.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_018_vol2.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_018_vol3.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_018_vol4.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_019.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_019_vol1.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_019_vol2.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_019_vol3.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_022.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_026.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_027.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_028.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_029.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_030.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_030_vol1.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_030_vol2.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_030_vol3.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_031.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_031_vol1.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_031_vol2.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_031_vol3.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_031_vol4.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_032.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_032_vol1.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_032_vol2.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_032_vol3.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_033.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_034_vol1.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_034_vol2.js", weight: 0.1 }
+  - { type: file, path: "data/dlc_packs.js", weight: 0.1 }
+  - { type: file, path: "data/plants.js", weight: 0.1 }
+  - { type: file, path: "docs/aigc/aigc-demo-video-shooting-guide.md", weight: 0.1 }
+  - { type: file, path: "docs/marketing/xiaohongshu-august-update-preview.md", weight: 0.1 }
+  - { type: file, path: "docs/plans/book-damage-events-plan.md", weight: 0.1 }
+  - { type: file, path: "docs/plans/collection-system-optimization-plan.md", weight: 0.1 }
+  - { type: file, path: "docs/plans/library-music-expansion-plan.md", weight: 0.1 }
+  - { type: file, path: "docs/plans/momo-diary-optimization-plan.md", weight: 0.1 }
+  - { type: file, path: "docs/prompts/plant-growth-prompts.md", weight: 0.1 }
+  - { type: file, path: "js/app.js", weight: 0.1 }
+  - { type: file, path: "js/core/shop/dlc-packs.js", weight: 0.1 }
+  - { type: file, path: "js/i18n/terms.js", weight: 0.1 }
+  - { type: file, path: "js/plants.js", weight: 0.1 }
+  - { type: file, path: "js/render/bookshelf.js", weight: 0.1 }
+  - { type: file, path: "js/render/dlc-packs.js", weight: 0.1 }
+  - { type: file, path: "js/render/focus.js", weight: 0.1 }
+  - { type: file, path: "js/render/plants.js", weight: 0.1 }
+  - { type: file, path: "js/render/shop.js", weight: 0.1 }
+  - { type: file, path: "js/shop.js", weight: 0.1 }
+  - { type: file, path: "scripts/add-book-covers.js", weight: 0.1 }
+  - { type: file, path: "scripts/add-volume-covers.js", weight: 0.1 }
+  - { type: file, path: "scripts/inherit-volume-quotes.js", weight: 0.1 }
+  - { type: file, path: "server.log", weight: 0.1 }
+  - { type: file, path: "temp/book-meta-list.json", weight: 0.1 }
+  - { type: file, path: "temp/verify_book_031.mjs", weight: 0.1 }
+  - { type: file, path: "visual/book_covers/book_002.png", weight: 0.1 }
+  - { type: file, path: "visual/book_covers/book_003.png", weight: 0.1 }
+  - { type: file, path: "visual/book_covers/book_004.png", weight: 0.1 }
+  - { type: file, path: "visual/book_covers/book_005.png", weight: 0.1 }
+  - { type: file, path: "visual/book_covers/book_006.png", weight: 0.1 }
+  - { type: file, path: "visual/book_covers/book_007.png", weight: 0.1 }
+  - { type: file, path: "visual/book_covers/book_008.png", weight: 0.1 }
+  - { type: file, path: "visual/book_covers/book_009.png", weight: 0.1 }
+  - { type: file, path: "visual/book_covers/book_011.png", weight: 0.1 }
+  - { type: file, path: "visual/book_covers/book_012.png", weight: 0.1 }
+  - { type: file, path: "visual/book_covers/book_013.png", weight: 0.1 }
+  - { type: file, path: "visual/book_covers/book_014.png", weight: 0.1 }
+  - { type: file, path: "visual/book_covers/book_015.png", weight: 0.1 }
+  - { type: file, path: "visual/book_covers/book_016.png", weight: 0.1 }
+  - { type: file, path: "visual/book_covers/book_017.png", weight: 0.1 }
+  - { type: file, path: "visual/book_covers/book_018.png", weight: 0.1 }
+  - { type: file, path: "visual/book_covers/book_019.png", weight: 0.1 }
+  - { type: file, path: "visual/book_covers/book_022.png", weight: 0.1 }
+  - { type: file, path: "visual/book_covers/book_026.png", weight: 0.1 }
+  - { type: file, path: "visual/book_covers/book_027.png", weight: 0.1 }
+  - { type: file, path: "visual/book_covers/book_028.png", weight: 0.1 }
+  - { type: file, path: "visual/book_covers/book_029.png", weight: 0.1 }
+  - { type: file, path: "visual/book_covers/book_030.png", weight: 0.1 }
+  - { type: file, path: "visual/book_covers/book_031.png", weight: 0.1 }
+  - { type: file, path: "visual/book_covers/book_032.png", weight: 0.1 }
+  - { type: file, path: "visual/book_covers/book_033.png", weight: 0.1 }
+  - { type: file, path: "visual/book_covers/天工开物.png", weight: 0.1 }
+  - { type: file, path: "visual/book_covers/营造法原.png", weight: 0.1 }
+  - { type: file, path: "visual/plants/plant_01_r1A.png", weight: 0.1 }
+  - { type: file, path: "visual/plants/plant_02_r1B.png", weight: 0.1 }
+  - { type: file, path: "visual/plants/plant_03_r1C.png", weight: 0.1 }
+  - { type: file, path: "visual/plants/plant_04_r1D.png", weight: 0.1 }
+  - { type: file, path: "visual/plants/plant_05_r1E.png", weight: 0.1 }
+  - { type: file, path: "visual/plants/plant_06_r2A.png", weight: 0.1 }
+  - { type: file, path: "visual/plants/plant_07_r2B.png", weight: 0.1 }
+  - { type: file, path: "visual/plants/plant_08_r2C.png", weight: 0.1 }
+  - { type: file, path: "visual/plants/plant_09_r2D.png", weight: 0.1 }
+  - { type: file, path: "visual/plants/plant_10_r2E.png", weight: 0.1 }
+  - { type: file, path: "visual/plants/plant_11_r3A.png", weight: 0.1 }
+  - { type: file, path: "visual/plants/plant_12_r3B.png", weight: 0.1 }
+  - { type: file, path: "visual/plants/plant_13_r3C.png", weight: 0.1 }
+  - { type: file, path: "visual/plants/plant_14_r3D.png", weight: 0.1 }
+  - { type: file, path: "visual/plants/plant_15_r3E.png", weight: 0.1 }
+  - { type: file, path: "visual/plants/plant_16_empty_pot.png", weight: 0.1 }
+---
+
+# bf4a0a4 file manifest
+
+> 本文档为**事后补录**（2026-09-07），drift 文件级锚点清单。
+> 补充包纯灵感兑换（首包60/后续120+）+ 演示模式按钮 + 书籍/植物封面资源入库 + 音乐扩展方案。语义见 dlc-pack-inspiration-conversion.md 与 demo-mode-button.md（09-04 quick-design 补录），本清单为文件级锚点。
+
+## 覆盖提交
+- `bf4a0a4`（2026-08-20）feat: 补充包改为纯灵感兑换（首包60/后续120+）+ 演示模式按钮 + 书籍/植物封面资源入库 + 音乐扩展方案

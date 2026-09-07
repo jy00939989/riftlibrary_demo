@@ -1,3 +1,8 @@
+---
+anchors:
+  - { type: file, path: "docs/plans/book-damage-events-plan.md", weight: 0.1 }
+---
+
 # 书籍损毁意外事件扩展计划（book-damage-events）
 
 > 现状：书籍损毁仅在访客归还时触发（~3% 基础概率），来源单一、叙事感弱。

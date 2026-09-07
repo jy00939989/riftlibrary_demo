@@ -1,3 +1,8 @@
+---
+anchors:
+  - { type: file, path: "docs/plans/god-module-split-plan.md", weight: 0.1 }
+---
+
 # 归墟图书馆神模块拆分计划（剩余 Phase 2/4/5）
 
 > 针对 7 月总结遗留项：state.js / app.js / focus.js / shop.js 的职责过重问题。

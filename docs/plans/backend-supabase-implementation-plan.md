@@ -1,3 +1,23 @@
+---
+anchors:
+  - { type: file, path: "docs/aigc/competition-shanghai-aigc-2026/01-registration-form.md", weight: 0.1 }
+  - { type: file, path: "docs/aigc/competition-shanghai-aigc-2026/02-gameplay-description.md", weight: 0.1 }
+  - { type: file, path: "docs/aigc/competition-shanghai-aigc-2026/03-ai-usage-declaration.md", weight: 0.1 }
+  - { type: file, path: "docs/aigc/competition-shanghai-aigc-2026/04-submission-checklist.md", weight: 0.1 }
+  - { type: file, path: "docs/guides/backend-faq.md", weight: 0.1 }
+  - { type: file, path: "js/backend/account-ui.js", weight: 0.1 }
+  - { type: file, path: "js/backend/auth.js", weight: 0.1 }
+  - { type: file, path: "js/backend/config.local.js", weight: 0.1 }
+  - { type: file, path: "js/backend/index.js", weight: 0.1 }
+  - { type: file, path: "js/i18n/terms.js", weight: 0.1 }
+  - { type: file, path: "js/render/plants.js", weight: 0.1 }
+  - { type: file, path: "js/visitors.js", weight: 0.1 }
+  - { type: file, path: "scripts/plant-typhoon-sim.mjs", weight: 0.1 }
+  - { type: file, path: "supabase/migrations/20260827000000_redeem_code_system.sql", weight: 0.1 }
+  - { type: file, path: "supabase/migrations/20260830000000_add_signboard_serial_number.sql", weight: 0.1 }
+  - { type: file, path: "supabase/migrations/20260830094947_fix_redeem_code_normalization.sql", weight: 0.1 }
+---
+
 # 归墟图书馆后端实施计划（剩余 Phase 3–5）
 
 > 基于 2026-08-10 后端决策：Supabase + 渐进式登录 + 本地优先存档 + 详细行为统计。

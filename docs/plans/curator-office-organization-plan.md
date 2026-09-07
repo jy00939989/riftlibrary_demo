@@ -2,6 +2,8 @@
 status: backlog
 importance: 4
 scheduledDate:
+anchors:
+  - { type: file, path: "docs/plans/curator-office-organization-plan.md", weight: 0.1 }
 ---
 
 # 馆长办公室整理计划

@@ -81,6 +81,7 @@ anchors:
   - { type: file, path: "docs/archive/plans/item-distribution-system-plan-review.md", weight: 0.1 }
   - { type: file, path: "docs/archive/plans/plant-system-improvement-plan-review.md", weight: 0.1 }
   - { type: file, path: "docs/changelogs/2026-08-28-update-preview.md", weight: 0.1 }
+  - { type: file, path: "docs/plans/47235db-file-manifest.md", weight: 0.1 }
   - { type: file, path: "docs/plans/_todo-index.md", weight: 0.1 }
   - { type: file, path: "docs/plans/backend-supabase-implementation-plan.md", weight: 0.1 }
   - { type: file, path: "docs/plans/god-module-split-full-implementation-plan.md", weight: 0.1 }
