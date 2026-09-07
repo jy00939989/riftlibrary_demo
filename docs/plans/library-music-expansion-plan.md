@@ -1,3 +1,25 @@
+---
+anchors:
+  - { type: file, path: "audio/湖边早春.mp3", weight: 0.1 }
+  - { type: file, path: "data/music.js", weight: 0.1 }
+  - { type: file, path: "docs/plans/library-music-expansion-plan.md", weight: 0.1 }
+  - { type: file, path: "index.html", weight: 0.1 }
+  - { type: file, path: "js/app.js", weight: 0.1 }
+  - { type: file, path: "js/audio.js", weight: 0.1 }
+  - { type: file, path: "js/core/shop/library-upgrades.js", weight: 0.1 }
+  - { type: file, path: "js/i18n/terms.js", weight: 0.1 }
+  - { type: file, path: "js/render/index.js", weight: 0.1 }
+  - { type: file, path: "js/render/music-room.js", weight: 0.1 }
+  - { type: file, path: "js/render/music-selector.js", weight: 0.1 }
+  - { type: file, path: "js/render/navigation.js", weight: 0.1 }
+  - { type: file, path: "js/render/shop/ambient-shop.js", weight: 0.1 }
+  - { type: file, path: "js/render/shop/library-upgrades.js", weight: 0.1 }
+  - { type: file, path: "js/render/shop/page.js", weight: 0.1 }
+  - { type: file, path: "js/shop.js", weight: 0.1 }
+  - { type: file, path: "js/state/migrations.js", weight: 0.1 }
+  - { type: file, path: "js/state/state.js", weight: 0.1 }
+---
+
 # 归墟图书馆 · BGM 扩展计划（古典打底 + Suno 改编）
 
 > 目标：以古典名曲为底，用 Suno 做风格化改编，为图书馆补充氛围音乐。

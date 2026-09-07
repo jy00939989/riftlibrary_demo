@@ -1,0 +1,127 @@
+---
+status: done
+importance: 2
+scheduledDate:
+anchors:
+  - { type: file, path: ".agent-collab/REVIEW.md", weight: 0.1 }
+  - { type: file, path: ".agent-collab/TASKS.md", weight: 0.1 }
+  - { type: file, path: ".agent-collab/audit/mechanics-systems-audit.md", weight: 0.1 }
+  - { type: file, path: ".agent-collab/audit/ui-screenshot-critique.md", weight: 0.1 }
+  - { type: file, path: ".agent-collab/audit/ux-flow-audit.md", weight: 0.1 }
+  - { type: file, path: ".codegraph/codegraph.db", weight: 0.1 }
+  - { type: file, path: "2_1787733598204_0.png", weight: 0.1 }
+  - { type: file, path: "4.5_1787130810142_1.mp3", weight: 0.1 }
+  - { type: file, path: "CLAUDE.md", weight: 0.1 }
+  - { type: file, path: "CONTRIBUTING.md", weight: 0.1 }
+  - { type: file, path: "COUPLING_RULES.md", weight: 0.1 }
+  - { type: file, path: "ISSUES.md", weight: 0.1 }
+  - { type: file, path: "STATUS.md", weight: 0.1 }
+  - { type: file, path: "audio/Suno 音乐生成 4.5_1787130810142_1.mp3", weight: 0.1 }
+  - { type: file, path: "audio/湖边临终的亚瑟王.mp3", weight: 0.1 }
+  - { type: file, path: "audio/维瓦尔第冬衍生-忧伤宁静.mp3", weight: 0.1 }
+  - { type: file, path: "audio/维瓦尔第春衍生-偏忧伤.mp3", weight: 0.1 }
+  - { type: file, path: "audio/蓝色狂想曲衍生-爵士风格.mp3", weight: 0.1 }
+  - { type: file, path: "data/books/book_011_道德经.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_012_沉思录.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_013_理想国.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_014_史记.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_015_诗经.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_016_西游记.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_017_鲁滨逊漂流记.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_018_几何原本.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_019_卡拉马佐夫兄弟.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_020_社会契约论.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_021_第一哲学沉思集.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_022_传习录.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_023_绿野仙踪.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_024_爱丽丝梦游奇境.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_026_图书馆指南.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_027_飞鸟集.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_028_伊索寓言.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_029_菜根谭.js", weight: 0.1 }
+  - { type: file, path: "data/generated-collection-content.json", weight: 0.1 }
+  - { type: file, path: "data/items.js", weight: 0.1 }
+  - { type: file, path: "docs/2026-06-03-changelog.md", weight: 0.1 }
+  - { type: file, path: "docs/aigc/competition-shanghai-aigc-2026/01-registration-form.docx", weight: 0.1 }
+  - { type: file, path: "docs/aigc/competition-shanghai-aigc-2026/04-submission-checklist.docx", weight: 0.1 }
+  - { type: file, path: "docs/architecture/ARCHITECTURE.md", weight: 0.1 }
+  - { type: file, path: "docs/architecture/ARCHITECTURE_REVIEW_2026-05-15.md", weight: 0.1 }
+  - { type: file, path: "docs/archive/changelogs/2026-07-07.md", weight: 0.1 }
+  - { type: file, path: "docs/archive/guides/backend-faq.md", weight: 0.1 }
+  - { type: file, path: "docs/archive/guides/glossary.md", weight: 0.1 }
+  - { type: file, path: "docs/archive/guides/visitor-voice-guide.md", weight: 0.1 }
+  - { type: file, path: "docs/archive/plans/atmosphere-source-narrowing-plan.md", weight: 0.1 }
+  - { type: file, path: "docs/archive/plans/backend-supabase-implementation-plan-completed.md", weight: 0.1 }
+  - { type: file, path: "docs/archive/plans/backend-supabase-implementation-plan-review.md", weight: 0.1 }
+  - { type: file, path: "docs/archive/plans/backend-supabase-phase1.sql", weight: 0.1 }
+  - { type: file, path: "docs/archive/plans/economy-balance-review.md", weight: 0.1 }
+  - { type: file, path: "docs/archive/plans/god-module-split-full-implementation-plan-completed.md", weight: 0.1 }
+  - { type: file, path: "docs/archive/plans/god-module-split-full-implementation-plan-review.md", weight: 0.1 }
+  - { type: file, path: "docs/archive/plans/god-module-split-plan-completed.md", weight: 0.1 }
+  - { type: file, path: "docs/archive/plans/item-distribution-system-plan-review.md", weight: 0.1 }
+  - { type: file, path: "docs/archive/plans/plant-system-improvement-plan-review.md", weight: 0.1 }
+  - { type: file, path: "docs/changelog/CHANGELOG_2026-05-10.md", weight: 0.1 }
+  - { type: file, path: "docs/changelog/CHANGELOG_2026-05-14.md", weight: 0.1 }
+  - { type: file, path: "docs/changelog/CHANGELOG_2026-05-15.md", weight: 0.1 }
+  - { type: file, path: "docs/changelog/CHANGELOG_2026-05-16.md", weight: 0.1 }
+  - { type: file, path: "docs/changelog/CHANGELOG_2026-05-21.md", weight: 0.1 }
+  - { type: file, path: "docs/changelog/CHANGELOG_2026-05-26.md", weight: 0.1 }
+  - { type: file, path: "docs/changelog/CHANGELOG_2026-06-01.md", weight: 0.1 }
+  - { type: file, path: "docs/changelog/CHANGELOG_2026-06-02.md", weight: 0.1 }
+  - { type: file, path: "docs/changelogs/2026-08-28-update-preview.md", weight: 0.1 }
+  - { type: file, path: "docs/demo/DEMO_SCRIPT_5MIN.md", weight: 0.1 }
+  - { type: file, path: "docs/design/AUDIO_SYSTEM_DESIGN.md", weight: 0.1 }
+  - { type: file, path: "docs/design/BOOK_TEMPLATE.md", weight: 0.1 }
+  - { type: file, path: "docs/design/DESIGN.md", weight: 0.1 }
+  - { type: file, path: "docs/design/DESIGN_LOCK_2026-05-27.md", weight: 0.1 }
+  - { type: file, path: "docs/design/MODIFY_AUDIO_SYSTEM.md", weight: 0.1 }
+  - { type: file, path: "docs/design/PLANE_SYSTEM_DESIGN.md", weight: 0.1 }
+  - { type: file, path: "docs/design/PLANE_SYSTEM_FEEDBACK_2026-05-21.md", weight: 0.1 }
+  - { type: file, path: "docs/design/PLANE_SYSTEM_REVIEW.md", weight: 0.1 }
+  - { type: file, path: "docs/design/SHOP_SYSTEM_DESIGN.md", weight: 0.1 }
+  - { type: file, path: "docs/diary/CLAUDE_DIARY.md", weight: 0.1 }
+  - { type: file, path: "docs/diary/CLAUDE_DIARY_2026-05-15.md", weight: 0.1 }
+  - { type: file, path: "docs/discussion/DISCUSSION_2026-05-17.md", weight: 0.1 }
+  - { type: file, path: "docs/discussion/VISITOR_REDESIGN_2026-05-22.md", weight: 0.1 }
+  - { type: file, path: "docs/glossary.md", weight: 0.1 }
+  - { type: file, path: "docs/library_PROJECT_INTRODUCTION.md", weight: 0.1 }
+  - { type: file, path: "docs/plans/_todo-index.md", weight: 0.1 }
+  - { type: file, path: "docs/plans/pocketbay-migration-assessment.md", weight: 0.1 }
+  - { type: file, path: "docs/plans/recopy-system-revision-plan-review.md", weight: 0.1 }
+  - { type: file, path: "docs/plans/recopy-system-revision-plan.md", weight: 0.1 }
+  - { type: file, path: "docs/prompts/visitor-silhouette-avatars.md", weight: 0.1 }
+  - { type: file, path: "docs/reference/favor-balance-montecarlo.py", weight: 0.1 }
+  - { type: file, path: "js/backend/redeem-code.js", weight: 0.1 }
+  - { type: file, path: "js/core/book-eligibility.js", weight: 0.1 }
+  - { type: file, path: "js/core/redeem.js", weight: 0.1 }
+  - { type: file, path: "js/dev-console.js", weight: 0.1 }
+  - { type: file, path: "js/render/bag.js", weight: 0.1 }
+  - { type: file, path: "scripts/apply-collection-content.js", weight: 0.1 }
+  - { type: file, path: "scripts/fix-meta-commas.js", weight: 0.1 }
+  - { type: file, path: "scripts/generate-redeem-codes.js", weight: 0.1 }
+  - { type: file, path: "scripts/pioneer-codes-insert.sql", weight: 0.1 }
+  - { type: file, path: "scripts/pioneer-codes.csv", weight: 0.1 }
+  - { type: file, path: "server.log", weight: 0.1 }
+  - { type: file, path: "supabase/config.toml", weight: 0.1 }
+  - { type: file, path: "supabase/functions/redeem-code/index.ts", weight: 0.1 }
+  - { type: file, path: "supabase/migrations/20260827000000_redeem_code_system.sql", weight: 0.1 }
+  - { type: file, path: "temple/GPT Image 2_1787733598204_0.png", weight: 0.1 }
+  - { type: file, path: "temple/sign_grand_opening_256x256.png", weight: 0.1 }
+  - { type: file, path: "temple/sign_grand_opening_512x512.png", weight: 0.1 }
+  - { type: file, path: "temple/sign_grand_opening_cropped.png", weight: 0.1 }
+  - { type: file, path: "temple/sign_grand_opening_raw.png", weight: 0.1 }
+  - { type: file, path: "temple/sign_pioneer_256x256.png", weight: 0.1 }
+  - { type: file, path: "temple/sign_pioneer_512x512.png", weight: 0.1 }
+  - { type: file, path: "temple/sign_pioneer_cropped.png", weight: 0.1 }
+  - { type: file, path: "temple/sign_pioneer_raw.png", weight: 0.1 }
+  - { type: file, path: "visual/signboards/sign_opening.png", weight: 0.1 }
+  - { type: file, path: "visual/signboards/sign_pioneer.png", weight: 0.1 }
+---
+
+# c46f63b deploy snapshot manifest
+
+> 本文档为**事后补录**（2026-09-07），drift 文件级锚点清单。
+> deploy 分支「untracked files」批量入账快照：.agent-collab/ 审计文档、.codegraph、根目录工作区 MD、旧版 docs/ 结构文件（changelog/design/architecture 等）+ 与 47235db 重叠的数据/素材文件。属工作区快照性质，非功能提交；多数旧路径已随 docs 重构消失。
+
+## 覆盖提交
+- `c46f63b`（2026-08-28）untracked files on deploy: 9ec9d51 feat: 星光蕨掉率60% + 已登录用户修改密码 + 证书封面强化

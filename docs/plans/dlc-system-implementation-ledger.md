@@ -1,0 +1,112 @@
+---
+status: done
+importance: 2
+scheduledDate:
+anchors:
+  - { type: file, path: ".gitignore", weight: 0.1 }
+  - { type: file, path: "data/book_pool.js", weight: 0.1 }
+  - { type: file, path: "data/books.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_007_vol1.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_007_vol2.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_008_vol1.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_008_vol2.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_009_vol1.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_009_vol2.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_009_vol3.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_011.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_012.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_013.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_013_vol1.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_013_vol2.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_014.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_014_vol1.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_014_vol2.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_014_vol3.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_014_vol4.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_015.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_016.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_016_vol1.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_016_vol2.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_016_vol3.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_016_vol4.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_016_vol5.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_016_vol6.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_017.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_018.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_018_vol1.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_018_vol2.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_018_vol3.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_018_vol4.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_019.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_019_vol1.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_019_vol2.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_019_vol3.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_020.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_021.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_022.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_023.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_024.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_026.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_027.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_028.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_029.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_030.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_030_vol1.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_030_vol2.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_030_vol3.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_031.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_031_vol1.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_031_vol2.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_031_vol3.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_031_vol4.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_032.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_032_vol1.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_032_vol2.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_032_vol3.js", weight: 0.1 }
+  - { type: file, path: "data/books/book_033.js", weight: 0.1 }
+  - { type: file, path: "data/dlc_packs.js", weight: 0.1 }
+  - { type: file, path: "data/volume_groups.js", weight: 0.1 }
+  - { type: file, path: "docs/plans/backend-supabase-implementation-plan-review.md", weight: 0.1 }
+  - { type: file, path: "docs/plans/backend-supabase-phase1.sql", weight: 0.1 }
+  - { type: file, path: "index.html", weight: 0.1 }
+  - { type: file, path: "js/achievements.js", weight: 0.1 }
+  - { type: file, path: "js/app.js", weight: 0.1 }
+  - { type: file, path: "js/backend/account-ui.js", weight: 0.1 }
+  - { type: file, path: "js/backend/analytics.js", weight: 0.1 }
+  - { type: file, path: "js/backend/auth.js", weight: 0.1 }
+  - { type: file, path: "js/backend/client.js", weight: 0.1 }
+  - { type: file, path: "js/backend/config.js", weight: 0.1 }
+  - { type: file, path: "js/backend/index.js", weight: 0.1 }
+  - { type: file, path: "js/backend/sync.js", weight: 0.1 }
+  - { type: file, path: "js/core/focus-orchestrator.js", weight: 0.1 }
+  - { type: file, path: "js/core/focus-session.js", weight: 0.1 }
+  - { type: file, path: "js/core/quest-trigger.js", weight: 0.1 }
+  - { type: file, path: "js/core/shop/book-shop.js", weight: 0.1 }
+  - { type: file, path: "js/core/shop/dlc-packs.js", weight: 0.1 }
+  - { type: file, path: "js/core/shop/library-upgrades.js", weight: 0.1 }
+  - { type: file, path: "js/core/shop/plane-portals.js", weight: 0.1 }
+  - { type: file, path: "js/core/shop/signboards.js", weight: 0.1 }
+  - { type: file, path: "js/i18n/terms.js", weight: 0.1 }
+  - { type: file, path: "js/render/achievements.js", weight: 0.1 }
+  - { type: file, path: "js/render/dlc-packs.js", weight: 0.1 }
+  - { type: file, path: "js/render/index.js", weight: 0.1 }
+  - { type: file, path: "js/render/shared/milestone-card.js", weight: 0.1 }
+  - { type: file, path: "js/render/shared/repair-card.js", weight: 0.1 }
+  - { type: file, path: "js/render/shared/visitor-cards.js", weight: 0.1 }
+  - { type: file, path: "js/render/shop.js", weight: 0.1 }
+  - { type: file, path: "js/shop.js", weight: 0.1 }
+  - { type: file, path: "js/state/migrations.js", weight: 0.1 }
+  - { type: file, path: "js/state/save.js", weight: 0.1 }
+  - { type: file, path: "js/state/state.js", weight: 0.1 }
+  - { type: file, path: "js/storage.js", weight: 0.1 }
+  - { type: file, path: "js/visitors.js", weight: 0.1 }
+  - { type: file, path: "scripts/generate-book-pool.mjs", weight: 0.1 }
+---
+
+# dlc system implementation ledger
+
+> 本文档为**事后补录**（2026-09-07），drift 文件级锚点清单。
+> DLC 补充包系统首次实现（08-17）+ 注册 hCaptcha 验证 + 修复收取书崩溃。后续热修 a3ad51a（dlc-packs.js 错误导入 t）。语义锚点见 dlc-pack-inspiration-conversion.md（09-04 揪出两处设计问题）。
+
+## 覆盖提交
+- `78e5b34`（2026-08-17）feat: DLC补充包系统 + 注册hCaptcha验证 + 修复收取书崩溃

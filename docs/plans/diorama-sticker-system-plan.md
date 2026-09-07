@@ -2,6 +2,8 @@
 status: backlog
 importance: 4
 scheduledDate:
+anchors:
+  - { type: file, path: "docs/plans/diorama-sticker-system-plan.md", weight: 0.1 }
 ---
 
 # 造景贴纸系统开发计划

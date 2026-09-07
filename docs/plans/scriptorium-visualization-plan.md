@@ -2,6 +2,8 @@
 status: backlog
 importance: 4
 scheduledDate:
+anchors:
+  - { type: file, path: "docs/plans/scriptorium-visualization-plan.md", weight: 0.1 }
 ---
 
 # 缮写室视觉化计划

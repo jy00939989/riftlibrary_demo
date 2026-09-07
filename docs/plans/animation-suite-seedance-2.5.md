@@ -1,3 +1,35 @@
+---
+anchors:
+  - { type: file, path: "2_1787733598204_0.png", weight: 0.1 }
+  - { type: file, path: "audio/music/ruined-library-variation.mp3", weight: 0.1 }
+  - { type: file, path: "audio/music/ruined-library.mp3", weight: 0.1 }
+  - { type: file, path: "audio/music/starlight-library-variation.mp3", weight: 0.1 }
+  - { type: file, path: "audio/music/starlight-library.mp3", weight: 0.1 }
+  - { type: file, path: "audio/music/town-stroll-variation.mp3", weight: 0.1 }
+  - { type: file, path: "audio/music/town-stroll.mp3", weight: 0.1 }
+  - { type: file, path: "docs/plans/animation-suite-seedance-2.5.md", weight: 0.1 }
+  - { type: file, path: "js/core/focus-orchestrator.js", weight: 0.1 }
+  - { type: file, path: "js/i18n/terms.js", weight: 0.1 }
+  - { type: file, path: "js/persistence.js", weight: 0.1 }
+  - { type: file, path: "js/render/animations.js", weight: 0.1 }
+  - { type: file, path: "js/render/index.js", weight: 0.1 }
+  - { type: file, path: "js/render/shared/video-overlay.js", weight: 0.1 }
+  - { type: file, path: "js/settings.js", weight: 0.1 }
+  - { type: file, path: "temp/book-meta-list.json", weight: 0.1 }
+  - { type: file, path: "temp/verify_book_031.mjs", weight: 0.1 }
+  - { type: file, path: "temple/GPT Image 2_1787733598204_0.png", weight: 0.1 }
+  - { type: file, path: "temple/sign_grand_opening_256x256.png", weight: 0.1 }
+  - { type: file, path: "temple/sign_grand_opening_512x512.png", weight: 0.1 }
+  - { type: file, path: "temple/sign_grand_opening_cropped.png", weight: 0.1 }
+  - { type: file, path: "temple/sign_grand_opening_raw.png", weight: 0.1 }
+  - { type: file, path: "temple/sign_pioneer_256x256.png", weight: 0.1 }
+  - { type: file, path: "temple/sign_pioneer_512x512.png", weight: 0.1 }
+  - { type: file, path: "temple/sign_pioneer_cropped.png", weight: 0.1 }
+  - { type: file, path: "temple/sign_pioneer_raw.png", weight: 0.1 }
+  - { type: file, path: "visual/animations/book_complete_shelving_480p.mp4", weight: 0.1 }
+  - { type: file, path: "visual/animations/manifest.json", weight: 0.1 }
+---
+
 # 归墟图书馆 · Seedance 2.5 动画套案
 
 > 2026-09-04 与图南共同头脑风暴锁定。开场动画不在本次范围（太长太贵）。

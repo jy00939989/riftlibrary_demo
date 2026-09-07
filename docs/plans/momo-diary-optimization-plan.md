@@ -2,6 +2,8 @@
 status: backlog
 importance: 4
 scheduledDate:
+anchors:
+  - { type: file, path: "docs/plans/momo-diary-optimization-plan.md", weight: 0.1 }
 ---
 
 # 墨墨日志优化计划（momo-diary-optimization）

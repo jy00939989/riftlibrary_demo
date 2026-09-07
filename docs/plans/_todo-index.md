@@ -1,5 +1,7 @@
 ---
 layout: breakdown
+anchors:
+  - { type: file, path: "docs/plans/_todo-index.md", weight: 0.1 }
 ---
 
 # 归墟图书馆 · 待办总览
@@ -22,7 +24,7 @@ layout: breakdown
 - [x] 在 `js/visitors.js` 还书损毁判定中读取 `state.library.borrowLevel`
 - [x] 按等级减免：基础概率 - `(borrowLevel - 1) * 0.004`，下限 0.5%
 - [x] “爱惜书籍”标志牌效果在等级减免后再叠加
-- [ ] 在读者沙龙页面/借阅区升级弹窗提示当前损毁概率
+- [x] 在读者沙龙页面/借阅区升级弹窗提示当前损毁概率
 - [ ] 考虑在成就或访客叙事中引用该机制
 
 ### public-domain-linear-copy-plan（公版书线性誊抄）
