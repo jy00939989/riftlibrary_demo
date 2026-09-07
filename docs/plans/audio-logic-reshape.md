@@ -2,6 +2,12 @@
 status: done
 importance: 2
 scheduledDate:
+anchors:
+  - { type: file, path: "js/audio.js", weight: 0.1 }
+  - { type: file, path: "js/app.js", weight: 0.1 }
+  - { type: file, path: "js/ambient.js", weight: 0.1 }
+  - { type: file, path: "js/render/music-selector.js", weight: 0.1 }
+  - { type: file, path: "js/i18n/terms.js", weight: 0.1 }
 ---
 
 # 音频逻辑重塑 · 对账补录（audio-logic-reshape）
