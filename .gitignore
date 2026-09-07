@@ -39,3 +39,9 @@ supabase/.temp/
 
 # Local Netlify folder
 .netlify
+
+# 临时工作目录（打样脚本、中间产物，不入库）
+temp/
+
+# 挂牌素材打样原始图（正式图在 visual/signboards/）
+temple/
