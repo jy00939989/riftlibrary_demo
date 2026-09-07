@@ -9,6 +9,7 @@ export { renderArchivePage } from './archive.js';
 export { renderMusicRoomPage } from './music-room.js';
 export { renderShopPage } from './shop.js';
 export { showUnlockAnimation, showBookCompleteAnimation, showBookShelvingAnimation, showDiaryLevelUpPopup } from './animations.js';
+export { playVideoOverlay, hasSeenAnimation } from './shared/video-overlay.js';
 export { renderAchievements, showAchievementToast, showAchievementBatch } from './achievements.js';
 export { renderGuideQuestWidget, showQuestCompleteToast } from './guidequests.js';
 export { renderMomoSuggestion, resetMomoSuggestion } from './momo-suggestion.js';

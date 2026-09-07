@@ -3,6 +3,7 @@ import { el, actions, getBookTitle, getBookAuthorBio, getBookAnecdotes, getBookR
 import { UNLOCK_TEXTS } from '../../data/books.js';
 import { addCoins, addAtmosphere, addHistory } from '../storage.js';
 import { saveState } from '../state.js';
+import { playVideoOverlay } from './shared/video-overlay.js';
 
 // ========== 馆长目标阶段完成弹窗 ==========
 
@@ -158,6 +159,16 @@ export function showBookShelvingAnimation(book, callback) {
 }
 
 export function showBookCompleteAnimation(bookTitle, bookEmoji, copyCount, callback, book, newLevel) {
+  const showCard = () => showBookCompleteCard(bookTitle, bookEmoji, copyCount, callback, book, newLevel);
+  // 仅首次誊抄（copyCount === 1）播放 Seedance 合成动画（完成+上架一体，5s）；重抄直接出卡片
+  if (copyCount === 1) {
+    playVideoOverlay('book_complete_shelving', { onDone: showCard, onFail: showCard });
+  } else {
+    showCard();
+  }
+}
+
+function showBookCompleteCard(bookTitle, bookEmoji, copyCount, callback, book, newLevel) {
   const overlay = el('div', 'fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4');
   const card = el('div', 'parchment-bg rounded-2xl p-8 max-w-md w-full text-center magic-glow animate-scale-in relative');
 

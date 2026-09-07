@@ -1220,6 +1220,10 @@ const TERM_DATA = Object.freeze({
   dlcPackInsufficientInspiration: { zh: '灵感不足，无法解锁此补充包。', en: 'Insufficient inspiration to unlock this pack.' },
   dlcPackFirstPackDiscount: { zh: '首包特惠', en: 'First Pack Offer' },
   dlcPackInspirationPrice: { zh: '灵感解锁', en: 'Inspiration unlock' },
+  animTapToSkip: { zh: '点击跳过', en: 'Tap to skip' },
+  animSectionTitle: { zh: '动画', en: 'Animations' },
+  skipSeenAnimations: { zh: '跳过重复动画', en: 'Skip Repeat Animations' },
+  skipSeenAnimationsDesc: { zh: '开启后，已播放过的动画不会再播', en: "Once seen, animations won't play again" },
 
   // ========== 占位功能 ==========
   coffeeCorner: { zh: '咖啡角', en: 'Coffee Corner' },

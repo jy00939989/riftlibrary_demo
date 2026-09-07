@@ -19,7 +19,7 @@ import { BOOKS } from '../../data/books.js';
 import { triggerQuestCheck } from './quest-trigger.js';
 import {
   renderFocusPage, showCompletionCard, showActionCards,
-  showUnlockAnimation, showBookCompleteAnimation, showBookShelvingAnimation,
+  showUnlockAnimation, showBookCompleteAnimation, playVideoOverlay,
   updateStatusBar
 } from '../render/index.js';
 import { showCertificate } from '../render/certificate.js';
@@ -268,16 +268,15 @@ function handlePostFocusEffects(effects) {
   if (bookCompleted && !repairCompleted) {
     const prevNext = next;
     if (isFirstBookComplete && completedBook) {
+      // 馆生首书：先出证书，再播完成+上架合成动画（原 emoji 飞书动画已由 mp4 取代）
       next = () => {
         showCertificate(completedBook, () => {
-          showBookShelvingAnimation(completedBook, prevNext);
+          playVideoOverlay('book_complete_shelving', { onDone: prevNext, onFail: prevNext });
         });
       };
     } else if (copyCount === 1) {
       next = () => {
-        showBookCompleteAnimation(getBookTitle(completedBook), completedBook.emoji, copyCount, () => {
-          showBookShelvingAnimation(completedBook, prevNext);
-        }, completedBook, bookMastery);
+        showBookCompleteAnimation(getBookTitle(completedBook), completedBook.emoji, copyCount, prevNext, completedBook, bookMastery);
       };
     } else {
       next = () => {
