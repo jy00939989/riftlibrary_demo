@@ -7,7 +7,7 @@ export const meta = {
   author: '洪应明',
   category: '哲学',
   era: 'ERA_005',
-  totalWords: 18000,
+  totalWords: 19000,
   description: '明代洪应明的处世箴言集，融合儒释道三家智慧，以简练文字道破人情世故与修身养性之理。',
   emoji: '🥬',
   cover: 'visual/book_covers/book_029.png',
