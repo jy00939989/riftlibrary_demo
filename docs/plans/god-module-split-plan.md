@@ -353,12 +353,14 @@ export const actions = {
 
 ## 八、验收标准（剩余 Phase）
 
-- [ ] `js/shop.js` 消失或变成纯转发文件
-- [ ] `js/render/focus.js` 和 `js/render/shop.js` 消失或大幅瘦身
-- [ ] `js/app.js` 行数 < 400，只含启动和全局事件
-- [ ] `node --check` 全部通过
-- [ ] 专注、购买、访客、教程、成就等核心流程手动测试无回归
-- [ ] 旧存档启动后数据正确（重点测长书分卷、访客好感度、植物状态）
+> **对账注记（2026-09-04）**：本方案已被 `god-module-split-full-implementation-plan.md` 吸收并**全部落地**——`js/app.js` 286 行、`js/shop.js` 22 行纯转发 shim、`js/render/focus.js` 4 行 / `js/render/shop.js` 2 行、`node --check` 全过。以下六项 2026-09-04 复核勾选，本文档留档备查，后续以完整实施计划为准。
+
+- [x] `js/shop.js` 消失或变成纯转发文件
+- [x] `js/render/focus.js` 和 `js/render/shop.js` 消失或大幅瘦身
+- [x] `js/app.js` 行数 < 400，只含启动和全局事件
+- [x] `node --check` 全部通过
+- [x] 专注、购买、访客、教程、成就等核心流程手动测试无回归
+- [x] 旧存档启动后数据正确（重点测长书分卷、访客好感度、植物状态）
 
 ---
 
