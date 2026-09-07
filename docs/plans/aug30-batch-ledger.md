@@ -27,6 +27,7 @@ anchors:
   - { type: file, path: "supabase/functions/redeem-code/index.ts", weight: 0.1 }
   - { type: file, path: "supabase/migrations/20260827000000_redeem_code_system.sql", weight: 0.1 }
   - { type: file, path: "supabase/migrations/20260830000000_add_signboard_serial_number.sql", weight: 0.1 }
+  - { type: file, path: "docs/plans/aug30-batch-ledger.md", weight: 0.1 }
 ---
 
 # aug30 batch ledger

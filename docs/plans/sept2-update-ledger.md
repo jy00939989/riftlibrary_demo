@@ -31,6 +31,7 @@ anchors:
   - { type: file, path: "js/timer.js", weight: 0.1 }
   - { type: file, path: "js/visitors.js", weight: 0.1 }
   - { type: file, path: "scripts/diagnose-redeem-codes.sql", weight: 0.1 }
+  - { type: file, path: "docs/plans/sept2-update-ledger.md", weight: 0.1 }
 ---
 
 # sept2 update ledger

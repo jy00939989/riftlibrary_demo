@@ -116,6 +116,7 @@ anchors:
   - { type: file, path: "temple/sign_pioneer_raw.png", weight: 0.1 }
   - { type: file, path: "visual/signboards/sign_opening.png", weight: 0.1 }
   - { type: file, path: "visual/signboards/sign_pioneer.png", weight: 0.1 }
+  - { type: file, path: "docs/plans/c46f63b-deploy-snapshot-manifest.md", weight: 0.1 }
 ---
 
 # c46f63b deploy snapshot manifest
