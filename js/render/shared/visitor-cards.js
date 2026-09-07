@@ -5,6 +5,7 @@ import { addDiaryEntry } from '../../diary.js';
 import { getVisitorDef, removeVisitor, getStageWitnesses } from '../../visitors.js';
 import { checkAndShowTutorial, markFirstVisitorEventDone } from '../../tutorial.js';
 import { dispatchTutorialUI } from '../tutorial-ui.js';
+import { suppressGuideWidget } from '../guidequests.js';
 
 export function showFirstVisitorEvent(visitor) {
   const def = getVisitorDef(visitor.charId);
@@ -56,8 +57,10 @@ export function showMomoShabbyLibraryCard() {
     </div>
   `;
   document.body.appendChild(overlay);
+  const releaseWidget = suppressGuideWidget();
 
   const close = () => {
+    releaseWidget();
     overlay.style.opacity = '0';
     overlay.style.transition = 'opacity 0.3s';
     setTimeout(() => overlay.remove(), 300);
@@ -94,8 +97,10 @@ export function showVisitorArrivalCard(visitor) {
     </div>
   `;
   document.body.appendChild(overlay);
+  const releaseWidget = suppressGuideWidget();
 
   const close = () => {
+    releaseWidget();
     overlay.style.opacity = '0';
     overlay.style.transition = 'opacity 0.3s';
     setTimeout(() => overlay.remove(), 300);
@@ -140,8 +145,10 @@ export function showWitnessToast(witnesses, stage) {
     </div>
   `;
   document.body.appendChild(overlay);
+  const releaseWidget = suppressGuideWidget();
 
   const close = () => {
+    releaseWidget();
     overlay.style.opacity = '0';
     overlay.style.transition = 'opacity 0.3s';
     setTimeout(() => overlay.remove(), 300);
@@ -167,8 +174,10 @@ export function showMomoBorrowReadyCard() {
     </div>
   `;
   document.body.appendChild(overlay);
+  const releaseWidget = suppressGuideWidget();
 
   const close = () => {
+    releaseWidget();
     overlay.style.opacity = '0';
     overlay.style.transition = 'opacity 0.3s';
     setTimeout(() => overlay.remove(), 300);

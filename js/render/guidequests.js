@@ -7,12 +7,33 @@ import { t } from '../i18n/terms.js';
 let widgetEl = null;
 let isExpanded = false;
 let dismissedUntil = 0;
+let suppressCount = 0;
+
+// 右下角避让：访客卡片 / 植物成熟提示等共用右下角且 z-index 更高，
+// 打开期间隐藏引导任务卡片，全部关闭后恢复。返回幂等的 release 函数。
+export function suppressGuideWidget() {
+  suppressCount++;
+  removeWidget();
+  let released = false;
+  return () => {
+    if (released) return;
+    released = true;
+    suppressCount = Math.max(0, suppressCount - 1);
+    if (suppressCount === 0) renderGuideQuestWidget();
+  };
+}
 
 function getPhaseName(phase) {
   return t(`guidePhase${phase}`) || '';
 }
 
 export function renderGuideQuestWidget() {
+  // 被右下角高优先级弹窗（访客卡片/植物成熟等）避让期间不渲染
+  if (suppressCount > 0) {
+    removeWidget();
+    return;
+  }
+
   // 用户已手动关闭且在冷却期内 → 不重新出现
   if (Date.now() < dismissedUntil) return;
 

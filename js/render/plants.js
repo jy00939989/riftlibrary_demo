@@ -5,6 +5,7 @@ import { PLANT_TYPES, SEED_EXCHANGE } from '../../data/plants.js';
 import { SIGNBOARDS } from '../../data/signboards.js';
 import { canHarvest, harvestPlant, canExchangeSeed, exchangeSeed, getActivePlantDef, canWater, canFertilize, abandonPlant, getSeedExchanges, waterPlant, fertilizePlant } from '../plants.js';
 import { t } from '../i18n/terms.js';
+import { suppressGuideWidget } from './guidequests.js';
 
 export function renderDecorationPage() {
   const container = document.getElementById('decoration-content');
@@ -370,8 +371,10 @@ export function showPlantMaturityToast(def) {
     </div>
   `;
   document.body.appendChild(overlay);
+  const releaseWidget = suppressGuideWidget();
 
   const close = () => {
+    releaseWidget();
     overlay.style.opacity = '0';
     overlay.style.transition = 'opacity 0.3s';
     setTimeout(() => overlay.remove(), 300);
