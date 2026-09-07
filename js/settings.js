@@ -12,6 +12,7 @@ export const DEFAULT_SETTINGS = {
   ambientVolume: 0.5,
   locale: 'zh',
   skipSeenAnimations: false, // 跳过重复动画：开启后已播放过的动画不再播
+  disastersEnabled: true,   // 灾难事件（鼠患/霉斑/火灾）；关闭后仅保留还书损毁
 };
 
 // 旧版设置类 key → 新 settings 字段映射

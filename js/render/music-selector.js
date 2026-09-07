@@ -51,6 +51,7 @@ function open() {
   const ambientVol = Math.round(getAmbientVolume() * 100);
   const sfxVol = Math.round(getSfxVolume() * 100);
   const skipAnimOn = getSettings().skipSeenAnimations;
+  const disastersOn = getSettings().disastersEnabled !== false;
 
   panelEl = document.createElement('div');
   panelEl.id = 'music-selector-panel';
@@ -179,6 +180,17 @@ function open() {
           ${skipAnimOn ? t('enabled') : t('disabled')}
         </button>
       </div>
+
+      <!-- 灾难事件开关 -->
+      <div class="mt-3 flex items-center justify-between px-1">
+        <div class="flex-1 pr-3">
+          <div class="text-xs font-bold text-ink-light tracking-wider">🌪️ ${t('settingsDisasters')}</div>
+          <div class="text-[10px] text-ink-light/70 mt-0.5">${t('settingsDisastersDesc')}</div>
+        </div>
+        <button id="ms-disasters-toggle" class="text-[10px] px-2 py-1 rounded-full border transition-all flex-shrink-0 ${disastersOn ? 'border-magic-gold bg-magic-gold/10 text-magic-gold' : 'border-wood/30 bg-white/50 text-ink-light'}">
+          ${disastersOn ? t('enabled') : t('disabled')}
+        </button>
+      </div>
     </div>
   `;
 
@@ -277,6 +289,15 @@ function open() {
     skipAnimToggle.addEventListener('click', (e) => {
       e.stopPropagation();
       setSetting('skipSeenAnimations', !getSettings().skipSeenAnimations);
+      open();
+    });
+  }
+
+  const disastersToggle = panelEl.querySelector('#ms-disasters-toggle');
+  if (disastersToggle) {
+    disastersToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      setSetting('disastersEnabled', !getSettings().disastersEnabled);
       open();
     });
   }

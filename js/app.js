@@ -18,6 +18,7 @@ import { renderFocusPage, renderBookshelfPage, renderLibraryPage,
 import { setCompleteCallback, syncTimer } from './timer.js';
 import { isNoMasteryBook } from './core/book-eligibility.js';
 import { spawnVisitor, tickVisitorBrowsing, checkDueVisitors, getStageWitnesses, tryTriggerGuyuPlantCare, tryTriggerTyphoonDisaster } from './visitors.js';
+import { tryTriggerBookDisasters } from './core/disasters.js';
 import { checkAutoUnlockPacks } from './shop.js';
 import { checkAchievements, checkAllOnInit } from './achievements.js';
 import { addWaterOpportunity, checkWither } from './plants.js';
@@ -265,6 +266,13 @@ function init() {
       if (switchTab && typeof renderLibraryPage === 'function') renderLibraryPage();
       if (typeof window.renderShopPage === 'function') window.renderShopPage();
       if (typeof window.renderDecorationPage === 'function') window.renderDecorationPage();
+    }
+
+    // 书籍灾难事件（鼠患/霉斑/火灾，可在设置关闭）
+    const bookDisasters = tryTriggerBookDisasters();
+    if (bookDisasters.length) {
+      if (typeof renderLibraryPage === 'function') renderLibraryPage();
+      if (typeof renderBookshelfPage === 'function') renderBookshelfPage();
     }
 
     if (getCurrentTab() === 'visitors') {
