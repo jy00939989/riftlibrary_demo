@@ -9,6 +9,7 @@ export const STORAGE_KEYS = {
   SETTINGS: 'settings',         // 用户偏好设置（JSON）
   ACHIEVEMENTS: 'achievements', // 成就解锁状态
   META: 'meta',                 // 运行元数据（如 emoji 点击计数）
+  SEEN_ANIMATIONS: 'seen_animations', // 已播放过的动画 key 列表（配合「跳过重复动画」设置）
 };
 
 // 旧版独立 key → 新版 key 映射（settings 类旧 key 在 settings.js 自行迁移）

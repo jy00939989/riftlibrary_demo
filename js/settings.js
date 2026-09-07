@@ -11,6 +11,7 @@ export const DEFAULT_SETTINGS = {
   ambientEnabled: true,
   ambientVolume: 0.5,
   locale: 'zh',
+  skipSeenAnimations: false, // 跳过重复动画：开启后已播放过的动画不再播
 };
 
 // 旧版设置类 key → 新 settings 字段映射
