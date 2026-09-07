@@ -2,7 +2,8 @@
 import { state } from '../state.js';
 import { ATMOSPHERE_STAGES, getAtmosphereStage, getRandomDescription } from '../../data/atmosphere.js';
 import { getAtmosphereLevel } from '../storage.js';
-import { getFocusSpeedMultiplier } from '../shop.js';
+import { getFocusSpeedMultiplier, getSignboardBuffSum } from '../shop.js';
+import { getMasteredBookSpeedBonus } from '../core/shop/library-upgrades.js';
 import { renderAchievements } from './achievements.js';
 import { renderCollection } from './collection.js';
 import { renderDecorationPage } from './plants.js';
@@ -13,7 +14,7 @@ import { canCollectVolumeGroup, collectVolumeGroup } from '../volumes.js';
 import { storeInRestorationBox, removeFromRestorationBox, getRestorationBoxSlots, getRestorationBoxCount, getRestorationSlotPrice, expandRestorationBoxSlots, getRestorationLevel, getRestorationUpgradePrice, upgradeRestorationLevel, getRestorationRepairSpeedBonus, isRestorationUnlocked, getRestorationUnlockPrice } from '../capacity.js';
 import { updateStatusBar, getBookTitle } from './common.js';
 import { playSfx } from '../audio.js';
-import { checkAchievements } from '../achievements.js';
+import { checkAchievements, getAchievementBonuses } from '../achievements.js';
 import { showAchievementToast } from './achievements.js';
 import { t, getAtmosphereStageName } from '../i18n/terms.js';
 
@@ -215,6 +216,23 @@ function renderTierGoals(stage) {
 function renderOverview(container, stage, levelInfo, desc, maxAtmo, atmoPercent) {
   const curAtmo = state.library.atmosphere;
   const stageName = getAtmosphereStageName(stage.level);
+
+  // 誊抄速度加成分解（悬停卡片显示）
+  const pct = (v) => '+' + Math.round(v * 100) + '%';
+  const speedAch = getAchievementBonuses();
+  const speedFocusLv = state.library.focusLevel || 0;
+  const speedSignboard = getSignboardBuffSum('focus_speed');
+  const speedMastery = getMasteredBookSpeedBonus();
+  const speedStreakDays = state.focus.streak || 0;
+  const speedStreak = speedStreakDays * speedAch.streakMultiplier;
+  const speedAchFlat = speedAch.speedFlat || 0;
+  const speedLines = [
+    `<div class="flex justify-between gap-6"><span>${t('speedTooltipScriptorium').replace('{lv}', speedFocusLv)}</span><span class="font-bold text-magic-blue">${pct(speedFocusLv * 0.05)}</span></div>`,
+    speedSignboard > 0 ? `<div class="flex justify-between gap-6"><span>${t('speedTooltipSignboard')}</span><span class="font-bold text-magic-blue">${pct(speedSignboard)}</span></div>` : '',
+    speedMastery > 0 ? `<div class="flex justify-between gap-6"><span>${t('speedTooltipMastery')}</span><span class="font-bold text-magic-blue">${pct(speedMastery)}</span></div>` : '',
+    speedAchFlat > 0 ? `<div class="flex justify-between gap-6"><span>${t('speedTooltipAchievement')}</span><span class="font-bold text-magic-blue">${pct(speedAchFlat)}</span></div>` : '',
+    speedStreak > 0 ? `<div class="flex justify-between gap-6"><span>${t('speedTooltipStreak').replace('{days}', speedStreakDays)}</span><span class="font-bold text-magic-blue">${pct(speedStreak)}</span></div>` : '',
+  ].filter(Boolean).join('');
   const stageMin = stage.min;
   const stageMax = stage.max;
   const stageRange = stageMax - stageMin;
@@ -252,8 +270,14 @@ function renderOverview(container, stage, levelInfo, desc, maxAtmo, atmoPercent)
       <p class="text-sm leading-relaxed text-ink-light">${desc}</p>
     </div>
     <div class="grid grid-cols-3 gap-3">
-      <div class="bg-white/50 rounded-lg p-3 text-center">
+      <div class="bg-white/50 rounded-lg p-3 text-center group relative cursor-help">
         <div class="text-2xl mb-1">📝</div><div class="text-xs text-ink-light">${t('transcribeSpeedLabel')}</div><div class="font-bold text-magic-blue">${Math.round(getFocusSpeedMultiplier() * 100)}%</div>
+        <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-60 parchment-bg rounded-xl border border-wood/30 shadow-xl p-3 text-left text-xs text-ink leading-relaxed opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 pointer-events-none">
+          <p class="font-bold text-magic-gold mb-1.5">${t('speedTooltipTitle')}</p>
+          ${speedLines}
+          <p class="mt-1.5 pt-1.5 border-t border-wood/20 text-ink-light">${t('speedTooltipCap')}</p>
+          <p class="mt-1 text-ink-light/80">${t('speedTooltipAuraNote')}</p>
+        </div>
       </div>
       <div class="bg-white/50 rounded-lg p-3 text-center">
         <div class="text-2xl mb-1">💰</div><div class="text-xs text-ink-light">${t('coinsGainLabel')}</div><div class="font-bold text-magic-blue">${t('baseline')}</div>
