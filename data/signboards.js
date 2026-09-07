@@ -85,5 +85,35 @@ export const SIGNBOARDS = {
     maxCount: 100,
     page: 'focus',
     buff: { type: 'focus_speed', value: 0.02, desc: '缮写速率 +2%' }
+  },
+  cat_chief: {
+    id: 'cat_chief',
+    name: '猫馆长',
+    emoji: '🐱',
+    icon: '🐱',
+    description: '一只神情严肃的橘猫，编制上属于图书馆正式员工。有它在，老鼠不敢造次。',
+    price: 900,
+    page: 'bookshelf',
+    buff: { type: 'disaster_defense', target: 'rat', value: 0.85, desc: '鼠患概率 -85%' }
+  },
+  dehumidifier: {
+    id: 'dehumidifier',
+    name: '除湿炭包',
+    emoji: '🧺',
+    icon: '🧺',
+    description: '挂在书架角落的竹炭包，默默吸走潮气。书页不再长出灰绿色的地图。',
+    price: 650,
+    page: 'bookshelf',
+    buff: { type: 'disaster_defense', target: 'mold', value: 0.75, desc: '潮湿霉斑概率 -75%' }
+  },
+  fire_notice: {
+    id: 'fire_notice',
+    name: '防火标识',
+    emoji: '🧯',
+    icon: '🧯',
+    description: '墨墨用爪印按出来的告示：烛台远离书架，墨水瓶远离烛台。图书馆安全，人人有责。',
+    price: 1500,
+    page: 'bookshelf',
+    buff: { type: 'disaster_defense', target: 'fire', value: 0.88, desc: '火灾概率 -88%' }
   }
 };

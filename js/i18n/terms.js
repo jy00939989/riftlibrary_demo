@@ -1232,6 +1232,17 @@ const TERM_DATA = Object.freeze({
   animSectionTitle: { zh: '动画', en: 'Animations' },
   skipSeenAnimations: { zh: '跳过重复动画', en: 'Skip Repeat Animations' },
   skipSeenAnimationsDesc: { zh: '开启后，已播放过的动画不会再播', en: "Once seen, animations won't play again" },
+  settingsDisasters: { zh: '灾难事件', en: 'Disaster Events' },
+  settingsDisastersDesc: { zh: '鼠患、霉斑、火灾等意外（不影响还书损毁）', en: 'Rats, mold, fire, etc. (return damage unaffected)' },
+  disasterRatTitle: { zh: '鼠患！', en: 'Rats!' },
+  disasterRatDesc: { zh: '昨夜有老鼠从窗缝钻了进来，啃坏了一本书。', en: 'Rats slipped in through the window last night and gnawed a book.' },
+  disasterMoldTitle: { zh: '潮湿霉斑', en: 'Mold Outbreak' },
+  disasterMoldDesc: { zh: '空气太潮，书页边缘长出了灰绿色的霉斑。', en: 'The damp air bred gray-green mold along the page edges.' },
+  disasterFireTitle: { zh: '火灾！', en: 'Fire!' },
+  disasterFireDesc: { zh: '烛台倒了，火舌舔伤了几本书的脊背。', en: 'A candle fell; flames scorched the spines of several books.' },
+  disasterBookLossLine: { zh: '《{title}》损失 {loss} 字，需专注修复', en: '"{title}" lost {loss} words — needs focused repair' },
+  disasterAtmosphereLoss: { zh: '氛围 -{n}', en: 'Atmosphere -{n}' },
+  disasterRepairHint: { zh: '受损的书需在专注中慢慢修复；可在 🎼 设置里关闭灾难事件', en: 'Damaged books need focused repair. You can turn disasters off in 🎼 Settings.' },
 
   // ========== 占位功能 ==========
   coffeeCorner: { zh: '咖啡角', en: 'Coffee Corner' },
