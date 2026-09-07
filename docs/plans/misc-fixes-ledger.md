@@ -11,6 +11,7 @@ anchors:
   - { type: file, path: "js/render/focus.js", weight: 0.1 }
   - { type: file, path: "js/render/music-selector.js", weight: 0.1 }
   - { type: file, path: "server.log", weight: 0.1 }
+  - { type: file, path: "docs/plans/misc-fixes-ledger.md", weight: 0.1 }
 ---
 
 # misc fixes ledger
