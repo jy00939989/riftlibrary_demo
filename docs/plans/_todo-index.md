@@ -57,6 +57,18 @@ anchors:
 
 ## 🟡 需先决策/设计
 
+### bookshelf-visual-optimization-plan（大书库视觉优化）
+- [ ] 决策视觉主方向：实景书架（层板书脊）vs 封面墙+场景背景
+- [ ] 决策背景切换维度：按书架数量还是氛围阶段（倾向书架数量，对齐借阅区/修复室惯例）
+- [ ] 决策受损书视觉是否区分灾种（啃痕/霉斑/焦痕）还是统一受损标
+- [ ] 决策封面网格视图是否保留为切换项
+- [ ] 书库场景背景 6 档 AI 出图（风格锚定 parchment/wood/琥珀金）
+- [ ] 受损 overlay 小图 3 张（透明底：鼠啃痕/霉斑/焦痕）
+- [ ] 书架层板/书立 CSS 视觉 + 书库网格包裹进书架单元
+- [ ] 新书架空位虚线轮廓 + 等待新书插画
+- [ ] 受损书视觉联动 disasters.js damaged 状态（修复完成消失）
+- [ ] 移动端响应式验收（不溢出不堆叠）
+
 ### backend-supabase-implementation-plan（后端接入）
 - [ ] 创建 Supabase 项目并把 `SUPABASE_URL` / `SUPABASE_ANON_KEY` 注入前端配置
 - [ ] 新建 `js/backend/client.js`、`auth.js`、`sync.js`、`analytics.js`、`api-proxy.js`
