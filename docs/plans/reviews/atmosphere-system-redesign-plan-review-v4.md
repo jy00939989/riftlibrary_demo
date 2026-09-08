@@ -10,6 +10,7 @@ anchors:
   - { type: file, path: "js/collection.js", weight: 0.1 }
   - { type: file, path: "js/core/disasters.js", weight: 0.1 }
   - { type: file, path: "js/core/focus-orchestrator.js", weight: 0.1 }
+  - { type: file, path: "docs/plans/reviews/atmosphere-system-redesign-plan-review-v4.md", weight: 0.1 }
 ---
 
 # 氛围 v4「EXP 模型」· 第三轮评审（机制 & 数值）
