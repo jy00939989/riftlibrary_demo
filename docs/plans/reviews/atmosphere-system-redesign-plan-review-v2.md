@@ -10,6 +10,7 @@ anchors:
   - { type: file, path: "js/visitors.js", weight: 0.1 }
   - { type: file, path: "js/plants.js", weight: 0.1 }
   - { type: file, path: "js/dailytasks.js", weight: 0.1 }
+  - { type: file, path: "docs/plans/reviews/atmosphere-system-redesign-plan-review-v2.md", weight: 0.1 }
 ---
 
 # 氛围系统重设计 · 第二轮评审（机制 & 数值）
