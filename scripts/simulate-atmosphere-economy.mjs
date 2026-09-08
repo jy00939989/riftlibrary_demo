@@ -18,9 +18,9 @@ import { BORROW_LEVEL_TABLE } from '../data/borrow-levels.js';
 // 三档玩家画像（现实锚定：hardcore 13 天 ≈ 500 氛围）
 // ==============================
 const PROFILES = {
-  hardcore: { label: '硬核（13天/500 实测定标）', turnover: 2.5, completionsPerDay: 1.5, completionAtmo: 5, share: 0.1 },
-  core:     { label: '核心（≈硬核×0.6）',          turnover: 1.5, completionsPerDay: 0.8, completionAtmo: 5, share: 0.3 },
-  casual:   { label: '休闲（≈硬核×0.3）',          turnover: 0.8, completionsPerDay: 0.3, completionAtmo: 5, share: 0.6 },
+  hardcore: { label: '硬核（13天/500 实测定标）', turnover: 2.5, completionsPerDay: 1.5, completionAtmo: 5, inspirationPerDay: 7, share: 0.1 },
+  core:     { label: '核心（≈硬核×0.6）',          turnover: 1.5, completionsPerDay: 0.8, completionAtmo: 5, inspirationPerDay: 4.5, share: 0.3 },
+  casual:   { label: '休闲（≈硬核×0.3）',          turnover: 0.8, completionsPerDay: 0.3, completionAtmo: 5, inspirationPerDay: 2.5, share: 0.6 },
 };
 
 // ==============================
@@ -37,15 +37,16 @@ const P = {
   // 设施：金币成本（economy.js 公式）+ EXP 产出
   coinsBorrow: lv => Math.min(5700, Math.round(500 * Math.pow(1.5, lv))),
   coinsFocus:  lv => Math.min(5000, Math.round(400 * Math.pow(1.45, lv))),
-  facilityExpOneTime: lv => 40 * lv,   // 升级一次性 +EXP [标定中]
+  facilityExpOneTime: lv => 20 * lv,   // D19：等级×20（占比 35%→~16%，评审 P1-C）
   facilityExpDaily: 0,                 // 每级每日 +EXP（--trickle 覆盖）[标定中]
 
   // 设施等级受图书馆阶段门槛（RPG 装备等级要求）
-  stageFacilityGate: { 2: 3, 3: 4, 4: 5, 5: 6 },  // 阶段 → 各设施允许的最高等级（1 阶段全 1-2 级新手区）
+  stageFacilityGate: { 1: 2, 2: 3, 3: 4, 4: 5, 5: 7 },  // D22 新手补 1:2；D18 5 阶解锁 Lv6-7
+  linearReturnAtmo: true,               // D18：returnAtmo = 借阅区等级（1-7 真实产能台阶）
   maxLv: { borrow: 7, focus: 6, restore: 5 },
 
   // 阶段阈值（EXP 总量）——待标定输出
-  stageThresholds: [300, 1200, 3200, 6500],  // 2/3/4/5 阶 仿真标定 v4.2 定版：硬核173/核心207/休闲252
+  stageThresholds: [400, 900, 2800, 5600],  // v4.3 定版：11/10/48/90 天形状，等真实数据回测微调
 
   // 灾难/磨损链
   fireFineCoins: 200,       // 火灾罚金币（EXP 模型不掉经验）
@@ -73,7 +74,7 @@ function simulate(profileName, trickle) {
 
   while (s.day < P.playDays && s.stage < 5) {
     s.day++;
-    const bl = BORROW_LEVEL_TABLE[s.borrowLv];
+    const bl = { ...BORROW_LEVEL_TABLE[s.borrowLv], returnAtmo: P.linearReturnAtmo ? s.borrowLv : BORROW_LEVEL_TABLE[s.borrowLv].returnAtmo };
 
     // ── EXP 收入（只增不减）──
     let expIn = prof.turnover * bl.returnAtmo + P.dailyFixedAtmo + P.plantAtmoPerDay + P.eventAtmoPerDay;
@@ -95,7 +96,7 @@ function simulate(profileName, trickle) {
     }
     const pDmg = Math.max(P.damageBase * P.damageFloorRatio, P.damageBase - (s.borrowLv - 1) * P.damagePerLevel) * (1 + P.wearStepChance * Math.min(s.wear, 15) / 15);
     for (let i = 0; i < Math.round(prof.turnover); i++) s.wear = Math.min(15, s.wear + 1);
-    s.inspiration += P.inspirationPerDay;
+    s.inspiration += prof.inspirationPerDay;
     if (s.wear >= P.wearRecopyAt && s.inspiration >= P.recopyInspirationCost) { s.inspiration -= 1; s.wear = 0; s.recopies++; }
 
     // ── 购买（金币）：产能杠杆优先；受阶段门槛 ──
@@ -137,7 +138,7 @@ console.log(`氛围 EXP 模型 · 收支测算（v4，设施每日涓流 ${trick
 console.log(`阶段阈值候选：2阶 ${P.stageThresholds[0]} / 3阶 ${P.stageThresholds[1]} / 4阶 ${P.stageThresholds[2]} / 5阶 ${P.stageThresholds[3]}`);
 console.log('═'.repeat(74));
 console.log('');
-console.log('画像   | 首通天数 | 阶段2 | 阶段3 | 阶段4 | 阶段5 | 365天EXP | 金币消耗 | 金币结余 | 火灾 | 重抄 | 灵感结余');
+console.log('画像   | 首通天数 | 阶段2 | 阶段3 | 阶段4 | 阶段5 | 达标EXP | 金币消耗 | 金币结余 | 火灾 | 重抄 | 灵感结余');
 console.log('-'.repeat(105));
 
 for (const pn of targets) {
