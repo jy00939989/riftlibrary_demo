@@ -93,15 +93,25 @@ anchors:
 - [ ] 留声阁环境音陈列架验证上架/播放/购买流程
 - [ ] 试听验收：循环无爆音、音量与现有环境音档位一致
 
-### atmosphere-economy-rework（氛围经济改造 · 用户构想 2026-09-08）
-- [ ] 设施升级（缮写室/借阅区等）双消耗：智慧之光 + 氛围值（改造现有纯金币升级）
-- [ ] 设施升级后提供固定不变的氛围值（改变氛围来源结构：从纯流水变成流水+固定资产）
-- [ ] 图书馆整体氛围阶段升级增加设施等级前置要求（如星辰期要求缮写室 Lv5+）
-- [ ] 决策：氛围被消耗后氛围阶段是否回退（不回退=库存制，回退=水位制，影响整个手感）
-- [ ] 决策：设施固定氛围是否计入现有 500 上限，还是并行新池
-- [ ] 决策：老存档迁移策略（已升级的设施如何补记固定氛围）
-- [ ] 与 atmosphere-venue-map-design（场馆修复地图）的关系梳理：吸收合并还是并行两套
-- [ ] 数值测算：改造后氛围收支曲线（来源收窄方案的基础上再叠加消耗口，防通胀也防通缩）
+### atmosphere-economy-rework（氛围经济改造 · grill 已锁定，见 atmosphere-system-redesign-plan）
+- [x] 决策：最高水位制——阶段只进不退，库存可花（state 新增 atmospherePeak）
+- [x] 决策：双池制——藏书厅 500 封顶，溢出入自由氛围池
+- [x] 决策：升阶仪式制——手动仪式消耗大笔氛围 + 修缮任务链，阶段永久 +1
+- [x] 决策：设施固定氛围 = 一次性加成 + 每日产出混合
+- [x] 决策：设施范围设计全覆盖，MVP 三项（缮写室/借阅区/修复室）
+- [x] 决策：双消耗占比随级爬升（低等级纯智慧之光新手保护）
+- [x] 决策：升阶前置 = 修缮任务链（设施等级是链上一环）
+- [x] 决策：老档保底映射+不追溯，赠「开馆元老」成就+称号
+- [x] 决策：损毁递增 = 单书借阅磨损，重抄清零
+- [x] 决策：自由池出口 = 50:1 兑灵感 + 四个场馆房间
+- [x] 插单决策：典藏版借出回报调高（智慧之光×2、氛围×3）
+- [ ] Phase 1 核心模型：双池 + peak + spendAtmosphere + 顶栏双池展示
+- [ ] Phase 2 设施三项：双消耗升级 + 一次性加成 + 每日产出结算
+- [ ] Phase 3 升阶仪式：仪式入口 + 修缮任务链
+- [ ] Phase 4 借还改造：borrowCount + 磨损 + 重抄清零 + 典藏回报 + 书况 UI
+- [ ] Phase 5 场馆房间：四房间 + 维持结算 + 50:1 兑灵感
+- [ ] Phase 6 迁移与纪念：老档迁移 + 开馆元老成就
+- [ ] 数值收支测算脚本（防躺平经济，Phase 1 前必跑）
 
 ### achievement-system-overhaul（成就系统整体优化升级）
 - [ ] 成就图标体系：为每个成就配专属图标（emoji/AI 小图），制定图标规范（风格/尺寸/稀有度区分）
@@ -148,14 +158,15 @@ anchors:
 - [ ] 典藏版被访客借阅时提供额外还书收益（智慧之光/氛围），体现终极产物价值
 - [ ] 评审并落地 `docs/plans/visitor-borrow-duration-and-reward-adjustment.md`：借阅时长随机化 + 按时长追加智慧之光收益
 
-### atmosphere-venue-map-design（场馆地图）
-- [ ] 改造 `addAtmosphere`：藏书厅 `atmosphere` 仍封顶 500，溢出自动转入 `venueAtmosphere`
-- [ ] state 新增 `venueAtmosphere` 与 `rooms`（茶室、温室、庭院、档案室），migration 兜底旧存档
-- [ ] 实现场馆地图 UI 与 4 房间解锁/维持功能，`settleVenueMaintenance()` 每日结算
-- [ ] 茶室接入访客羁绊事件，复用 `visitorMemory` 收集层
-- [ ] 庭院接入现实日历活动日框架，确定首批作家/纪念日清单
-- [ ] 实现自由氛围兑灵感入口（建议 50:1）
-- [ ] 调整顶栏/图书馆 UI，区分藏书厅进度条与自由氛围池
+### atmosphere-venue-map-design（场馆地图）——【已吸收，勿单独实施】
+> 2026-09-08 整体并入 [atmosphere-system-redesign-plan](atmosphere-system-redesign-plan.md)（决策 10 吸收合并），下列条目由该文档 Phase 5 承接：
+- [x] 改造 `addAtmosphere`：藏书厅 `atmosphere` 仍封顶 500，溢出自动转入 `venueAtmosphere` → 归重设计 Phase 1
+- [x] state 新增 `venueAtmosphere` 与 `rooms`（茶室、温室、庭院、档案室），migration 兜底旧存档 → 归 Phase 5/6
+- [x] 实现场馆地图 UI 与 4 房间解锁/维持功能，`settleVenueMaintenance()` 每日结算 → 归 Phase 5
+- [x] 茶室接入访客羁绊事件，复用 `visitorMemory` 收集层 → 归 Phase 5
+- [x] 庭院接入现实日历活动日框架，确定首批作家/纪念日清单 → 归 Phase 5
+- [x] 实现自由氛围兑灵感入口（建议 50:1）→ 归 Phase 5
+- [x] 调整顶栏/图书馆 UI，区分藏书厅进度条与自由氛围池 → 归 Phase 1
 
 ### book-damage-events-plan（书籍损毁事件）
 - [x] 选定首批 2–3 个 MVP 损毁来源（推荐鼠患、潮湿霉斑）——2026-09-07 落地鼠患+霉斑+火灾
