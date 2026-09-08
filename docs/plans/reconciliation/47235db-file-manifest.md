@@ -133,6 +133,8 @@ anchors:
   - { type: file, path: "temple/sign_pioneer_raw.png", weight: 0.1 }
   - { type: file, path: "visual/signboards/sign_opening.png", weight: 0.1 }
   - { type: file, path: "visual/signboards/sign_pioneer.png", weight: 0.1 }
+  - { type: file, path: "docs/plans/reconciliation/47235db-file-manifest.md", weight: 0.1 }
+  - { type: file, path: "docs/plans/reviews/recopy-system-revision-plan-review.md", weight: 0.1 }
 ---
 
 # 47235db 文件级对账清单（8.28 交互优化 + 典藏补全 + 待办导入）

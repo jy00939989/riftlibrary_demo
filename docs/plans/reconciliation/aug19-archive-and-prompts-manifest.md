@@ -44,6 +44,7 @@ anchors:
   - { type: file, path: "js/state/state.js", weight: 0.1 }
   - { type: file, path: "js/visitors.js", weight: 0.1 }
   - { type: file, path: "docs/plans/aug19-archive-and-prompts-manifest.md", weight: 0.1 }
+  - { type: file, path: "docs/plans/reconciliation/aug19-archive-and-prompts-manifest.md", weight: 0.1 }
 ---
 
 # aug19 archive and prompts manifest

@@ -4,6 +4,7 @@ importance: 2
 scheduledDate:
 anchors:
   - { type: file, path: "docs/plans/demo-mode-button.md", weight: 0.1 }
+  - { type: file, path: "docs/plans/reconciliation/demo-mode-button.md", weight: 0.1 }
 ---
 
 # 演示模式按钮 · 对账补录（demo-mode-button）

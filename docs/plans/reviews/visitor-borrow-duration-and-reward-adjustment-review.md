@@ -1,3 +1,11 @@
+---
+status: done
+importance: 2
+scheduledDate:
+anchors:
+  - { type: file, path: "docs/plans/visitor-borrow-duration-and-reward-adjustment-review.md", weight: 0.1 }
+  - { type: file, path: "docs/plans/reviews/visitor-borrow-duration-and-reward-adjustment-review.md", weight: 0.1 }
+---
 # 访客借书时长与收益调整 — 设计/数值评审
 
 > 评审对象：`visitor-borrow-duration-and-reward-adjustment.md`（提出 2026-08-31）

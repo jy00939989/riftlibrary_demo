@@ -4,6 +4,7 @@ importance: 3
 scheduledDate:
 anchors:
   - { type: file, path: "docs/plans/dlc-pack-inspiration-conversion.md", weight: 0.1 }
+  - { type: file, path: "docs/plans/reconciliation/dlc-pack-inspiration-conversion.md", weight: 0.1 }
 ---
 
 # 补充包改纯灵感兑换 · 对账补录（dlc-pack-inspiration-conversion）

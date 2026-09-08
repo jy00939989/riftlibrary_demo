@@ -102,6 +102,7 @@ anchors:
   - { type: file, path: "js/visitors.js", weight: 0.1 }
   - { type: file, path: "scripts/generate-book-pool.mjs", weight: 0.1 }
   - { type: file, path: "docs/plans/dlc-system-implementation-ledger.md", weight: 0.1 }
+  - { type: file, path: "docs/plans/reconciliation/dlc-system-implementation-ledger.md", weight: 0.1 }
 ---
 
 # dlc system implementation ledger

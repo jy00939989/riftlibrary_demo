@@ -137,6 +137,7 @@ anchors:
   - { type: file, path: "visual/plants/plant_15_r3E.png", weight: 0.1 }
   - { type: file, path: "visual/plants/plant_16_empty_pot.png", weight: 0.1 }
   - { type: file, path: "docs/plans/bf4a0a4-file-manifest.md", weight: 0.1 }
+  - { type: file, path: "docs/plans/reconciliation/bf4a0a4-file-manifest.md", weight: 0.1 }
 ---
 
 # bf4a0a4 file manifest
