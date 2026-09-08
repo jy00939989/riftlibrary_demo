@@ -9,6 +9,7 @@ anchors:
   - { type: file, path: "js/capacity.js", weight: 0.1 }
   - { type: file, path: "js/core/economy.js", weight: 0.1 }
   - { type: file, path: "js/core/book-progress.js", weight: 0.1 }
+  - { type: file, path: "scripts/simulate-atmosphere-economy.mjs", weight: 0.1 }
 ---
 
 # 氛围系统重设计（atmosphere-system-redesign）
