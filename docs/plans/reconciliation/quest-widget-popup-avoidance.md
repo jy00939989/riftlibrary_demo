@@ -7,6 +7,7 @@ anchors:
   - { type: file, path: "js/render/plants.js", weight: 0.1 }
   - { type: file, path: "js/render/shared/visitor-cards.js", weight: 0.1 }
   - { type: file, path: "docs/plans/quest-widget-popup-avoidance.md", weight: 0.1 }
+  - { type: file, path: "docs/plans/reconciliation/quest-widget-popup-avoidance.md", weight: 0.1 }
 ---
 
 # quest widget popup avoidance

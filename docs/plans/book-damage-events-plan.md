@@ -1,6 +1,7 @@
 ---
 anchors:
   - { type: file, path: "docs/plans/book-damage-events-plan.md", weight: 0.1 }
+  - { type: file, path: "js/core/disasters.js", weight: 0.1 }
 ---
 
 # 书籍损毁意外事件扩展计划（book-damage-events）

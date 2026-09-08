@@ -16,6 +16,8 @@ anchors:
   - { type: file, path: "js/render/visitors.js", weight: 0.1 }
   - { type: file, path: "js/visitors.js", weight: 0.1 }
   - { type: file, path: "docs/plans/balance-tweaks-ledger.md", weight: 0.1 }
+  - { type: file, path: "docs/plans/reconciliation/balance-tweaks-ledger.md", weight: 0.1 }
+  - { type: file, path: "data/books/book_001.js", weight: 0.1 }
 ---
 
 # balance tweaks ledger

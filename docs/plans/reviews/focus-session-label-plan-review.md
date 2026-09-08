@@ -1,3 +1,11 @@
+---
+status: done
+importance: 2
+scheduledDate:
+anchors:
+  - { type: file, path: "docs/plans/focus-session-label-plan-review.md", weight: 0.1 }
+  - { type: file, path: "docs/plans/reviews/focus-session-label-plan-review.md", weight: 0.1 }
+---
 # 专注后项目标注（Focus Session Label）— 评审
 
 > 评审对象：`rustling-painting-bumblebee.md`（草稿）+ `focus-session-label-plan.md`（定稿）

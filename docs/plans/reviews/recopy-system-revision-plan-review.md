@@ -1,3 +1,11 @@
+---
+status: done
+importance: 2
+scheduledDate:
+anchors:
+  - { type: file, path: "docs/plans/recopy-system-revision-plan-review.md", weight: 0.1 }
+  - { type: file, path: "docs/plans/reviews/recopy-system-revision-plan-review.md", weight: 0.1 }
+---
 # 重抄机制修订方案 · 架构师审阅
 
 > 审阅对象：`docs/plans/recopy-system-revision-plan.md`

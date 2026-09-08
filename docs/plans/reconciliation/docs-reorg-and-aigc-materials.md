@@ -28,6 +28,7 @@ anchors:
   - { type: file, path: "docs/tech-debt/plants-post-reward-and-abandon.md", weight: 0.1 }
   - { type: file, path: "scripts/extract-book-meta.mjs", weight: 0.1 }
   - { type: file, path: "scripts/generate-book-cover-prompts.mjs", weight: 0.1 }
+  - { type: file, path: "docs/plans/reconciliation/docs-reorg-and-aigc-materials.md", weight: 0.1 }
 ---
 
 # c750b43 剩余部分对账补录——docs 归档整理 + AIGC 材料 + 计划文档入库

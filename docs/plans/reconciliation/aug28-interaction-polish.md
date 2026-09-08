@@ -4,6 +4,7 @@ importance: 2
 scheduledDate:
 anchors:
   - { type: file, path: "docs/plans/aug28-interaction-polish.md", weight: 0.1 }
+  - { type: file, path: "docs/plans/reconciliation/aug28-interaction-polish.md", weight: 0.1 }
 ---
 
 # 8.28 交互优化四条 · 对账补录（aug28-interaction-polish）

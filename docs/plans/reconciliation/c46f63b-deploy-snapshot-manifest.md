@@ -117,6 +117,8 @@ anchors:
   - { type: file, path: "visual/signboards/sign_opening.png", weight: 0.1 }
   - { type: file, path: "visual/signboards/sign_pioneer.png", weight: 0.1 }
   - { type: file, path: "docs/plans/c46f63b-deploy-snapshot-manifest.md", weight: 0.1 }
+  - { type: file, path: "docs/plans/reconciliation/c46f63b-deploy-snapshot-manifest.md", weight: 0.1 }
+  - { type: file, path: "docs/plans/reviews/recopy-system-revision-plan-review.md", weight: 0.1 }
 ---
 
 # c46f63b deploy snapshot manifest
