@@ -69,6 +69,16 @@ anchors:
 - [ ] 受损书视觉联动 disasters.js damaged 状态（修复完成消失）
 - [ ] 移动端响应式验收（不溢出不堆叠）
 
+### visitor-book-review-notes（访客书评便签）
+- [ ] 决策触发方式：借某本书归还时必掉/概率掉专属便签（与现有 40% 通用便签掉率如何并存）
+- [ ] 决策内容形态：访客口吻的书评短句（带访客性格差异，如夏蝉引文、谷雨务实）+ 是否含小额数值奖励
+- [ ] 决策收集呈现：便签挂进墨墨日记/馆史档案，还是独立「读者来信」收藏页
+- [ ] 决策首批覆盖书目数量（建议从热门书 10-15 本起步，每本 2-3 条）
+- [ ] 数据层：`data/book_reviews.js` 定义 bookId × charId 的专属便签池
+- [ ] 触发逻辑：还书判定处（visitors.js 判定 2/3 附近）按 bookId+charId 查专属池优先掉落
+- [ ] i18n：便签文案 zh/en 词条
+- [ ] 与收藏系统的联动评估（能否算一类收藏品）
+
 ### backend-supabase-implementation-plan（后端接入）
 - [ ] 创建 Supabase 项目并把 `SUPABASE_URL` / `SUPABASE_ANON_KEY` 注入前端配置
 - [ ] 新建 `js/backend/client.js`、`auth.js`、`sync.js`、`analytics.js`、`api-proxy.js`
