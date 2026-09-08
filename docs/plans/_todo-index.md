@@ -103,6 +103,16 @@ anchors:
 - [ ] 与 atmosphere-venue-map-design（场馆修复地图）的关系梳理：吸收合并还是并行两套
 - [ ] 数值测算：改造后氛围收支曲线（来源收窄方案的基础上再叠加消耗口，防通胀也防通缩）
 
+### achievement-system-overhaul（成就系统整体优化升级）
+- [ ] 成就图标体系：为每个成就配专属图标（emoji/AI 小图），制定图标规范（风格/尺寸/稀有度区分）
+- [ ] 说明文案升级：解锁条件显性化（未解锁时显示进度 x/y 而非藏条件），分稀有度措辞
+- [ ] buff 体系扩展：在现有 speedFlat/streakMultiplier 基础上新增 buff 类型（金币/氛围/损毁减免/访客相关），成就能看「装备了什么效果」
+- [ ] 分类分组展示：按藏书/访客/专注/收集/灾难等分区陈列，进度总览（如 45/80）
+- [ ] 解锁反馈升级：从当前 toast 升级为弹窗/动画（与动画注册表联动）
+- [ ] 与收藏系统/称号体系联动评估（成就点能否兑换称号/装饰）
+- [ ] i18n 全量（现状成就文案中英覆盖度盘点补齐）
+- [ ] 数值审计：现有成就 buff 强度与新系统（灾难/氛围改造）的兼容性检查
+
 ### backend-supabase-implementation-plan（后端接入）
 - [ ] 创建 Supabase 项目并把 `SUPABASE_URL` / `SUPABASE_ANON_KEY` 注入前端配置
 - [ ] 新建 `js/backend/client.js`、`auth.js`、`sync.js`、`analytics.js`、`api-proxy.js`
