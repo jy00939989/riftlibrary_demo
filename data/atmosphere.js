@@ -102,6 +102,25 @@ export function getAtmosphereStage(atmosphereValue) {
   return ATMOSPHERE_STAGES[getStageLevel(atmosphereValue) - 1];
 }
 
+// ── 设施阶段门槛（D22）与升级 EXP（D19）──
+
+/** 最高阶段等级（STAGE_THRESHOLDS 是 2-5 阶门槛，1 阶无门槛） */
+export const MAX_STAGE_LEVEL = STAGE_THRESHOLDS.length + 1; // 5
+
+/** 设施升级给的一次性氛围：新等级 × 20（v4.3 仿真定版，占比 ~16% 防稀释核心玩法） */
+export const FACILITY_EXP_PER_LEVEL = 20;
+
+/** 设施升到 targetLevel 所需的氛围阶段：min(L-1, 5)——1 阶可升 Lv2（新手保护），5 阶可升 Lv6-7 */
+export function getFacilityRequiredStage(targetLevel) {
+  return Math.min(Math.max(targetLevel - 1, 1), MAX_STAGE_LEVEL);
+}
+
+/** 当前氛围值下的设施等级上限（各设施另有自身绝对上限，取两者较小） */
+export function getFacilityLevelCap(value) {
+  const stage = getStageLevel(value);
+  return stage >= MAX_STAGE_LEVEL ? 7 : stage + 1;
+}
+
 // 获取随机氛围描述
 export function getRandomDescription(stage) {
   const descs = stage.descriptions;

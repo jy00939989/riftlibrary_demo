@@ -6,6 +6,7 @@ import { getAchievementBonuses } from '../../achievements.js';
 import { getBorrowLevelPrice as _getBorrowLevelPrice, getFocusLevelPrice as _getFocusLevelPrice, getFocusSpeedMultiplier as _getFocusSpeedMultiplier } from '../economy.js';
 import { SIGNBOARDS } from '../../../data/signboards.js';
 import { MUSIC_ROOM_UNLOCK_PRICE } from '../../../data/music.js';
+import { FACILITY_EXP_PER_LEVEL, getFacilityLevelCap } from '../../../data/atmosphere.js';
 import { hasSignboard, getSignboardBuffSum } from './signboards.js';
 import { isNoMasteryBook } from '../book-eligibility.js';
 import { track } from '../../backend/analytics.js';
@@ -19,13 +20,16 @@ export function getBorrowLevelPrice() {
 }
 
 export function upgradeBorrowLevel() {
+  const lv = state.library.borrowLevel || 0;
+  if (lv >= 7) return false;
+  if (lv + 1 > getFacilityLevelCap(state.library.atmosphere)) return false; // D22 阶段门槛
   const price = getBorrowLevelPrice();
-  if (state.library.borrowLevel >= 7) return false;
   if (!spendCoins(price)) return false;
 
-  state.library.borrowLevel += 1;
-  addAtmosphere(15);
-  addHistory('purchase', `借阅区升至 Lv.${state.library.borrowLevel}`, `花费${price}智慧之光 · +15氛围`);
+  state.library.borrowLevel = lv + 1;
+  const exp = state.library.borrowLevel * FACILITY_EXP_PER_LEVEL; // D19 等级×20
+  addAtmosphere(exp);
+  addHistory('purchase', `借阅区升至 Lv.${state.library.borrowLevel}`, `花费${price}智慧之光 · +${exp}氛围`);
   saveState();
   track('purchase_borrow_level', { level: state.library.borrowLevel, price });
   return true;
@@ -63,13 +67,16 @@ export function getFocusLevelPrice() {
 }
 
 export function upgradeFocusLevel() {
+  const lv = state.library.focusLevel || 0;
+  if (lv >= 6) return false;
+  if (lv + 1 > getFacilityLevelCap(state.library.atmosphere)) return false; // D22 阶段门槛
   const price = getFocusLevelPrice();
-  if (state.library.focusLevel >= 6) return false;
   if (!spendCoins(price)) return false;
 
-  state.library.focusLevel += 1;
-  addAtmosphere(15);
-  addHistory('purchase', `缮写室升至 Lv.${state.library.focusLevel}`, `花费${price}智慧之光 · +15氛围`);
+  state.library.focusLevel = lv + 1;
+  const exp = state.library.focusLevel * FACILITY_EXP_PER_LEVEL; // D19 等级×20
+  addAtmosphere(exp);
+  addHistory('purchase', `缮写室升至 Lv.${state.library.focusLevel}`, `花费${price}智慧之光 · +${exp}氛围`);
   saveState();
   track('purchase_focus_level', { level: state.library.focusLevel, price });
   return true;

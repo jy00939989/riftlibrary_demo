@@ -22,6 +22,7 @@ import {
   t, getBorrowLevelName, getRestorationLevelName, getFocusRoomLevelName
 } from '../../i18n/terms.js';
 import { showNamingModal } from './naming-modal.js';
+import { getFacilityLevelCap, getFacilityRequiredStage } from '../../../data/atmosphere.js';
 
 export function renderLibraryUpgrades() {
   const section = el('div', 'parchment-bg rounded-2xl p-6 magic-glow');
@@ -34,6 +35,8 @@ export function renderLibraryUpgrades() {
   const lv = state.library.borrowLevel || 0;
   const price = getBorrowLevelPrice();
   const maxed = lv >= 7;
+  const gateCap = getFacilityLevelCap(state.library.atmosphere || 0);
+  const gateLocked = !maxed && lv + 1 > gateCap; // D22 阶段门槛
 
   const readingCard = el('div', 'bg-white rounded-xl p-4 border-2 border-magic-gold/30 flex gap-4 items-center');
   const imgNum = String(lv === 0 ? 1 : lv).padStart(2, '0');
@@ -68,7 +71,9 @@ export function renderLibraryUpgrades() {
       <p class="text-xs text-magic-blue mb-2">📖 ${t('borrowAreaDamageRate').replace('{damage}', (getDamageChance(lv) * 100).toFixed(1))}</p>
       ${maxed
         ? `<span class="text-sm text-magic-gold font-bold">${t('maxLevel')} ✨</span>`
-        : `<button class="upgrade-borrow-btn px-4 py-1.5 bg-magic-gold text-white rounded-lg text-sm font-bold hover:shadow-lg transition-all">${t('upgrade')} 💰${price.toLocaleString()}</button>`
+        : gateLocked
+          ? `<span class="text-xs text-ink-light">🔒 ${t('facilityStageGate').replace('{level}', lv + 1).replace('{stage}', getFacilityRequiredStage(lv + 1))}</span>`
+          : `<button class="upgrade-borrow-btn px-4 py-1.5 bg-magic-gold text-white rounded-lg text-sm font-bold hover:shadow-lg transition-all">${t('upgrade')} 💰${price.toLocaleString()}</button>`
       }
     </div>
   `;
@@ -95,6 +100,7 @@ export function renderLibraryUpgrades() {
   const flv = state.library.focusLevel || 0;
   const fprice = getFocusLevelPrice();
   const fmaxed = flv >= 6;
+  const fgateLocked = !fmaxed && flv + 1 > gateCap; // D22 阶段门槛
 
   const focusCard = el('div', 'bg-white rounded-xl p-4 border-2 border-magic-gold/30 flex gap-4 items-center');
 
@@ -127,7 +133,9 @@ export function renderLibraryUpgrades() {
       <p class="text-xs text-ink-light mb-2">${focusStats}</p>
       ${fmaxed
         ? `<span class="text-sm text-magic-gold font-bold">${t('maxLevel')} ✨</span>`
-        : `<button class="upgrade-focus-btn px-4 py-1.5 bg-magic-gold text-white rounded-lg text-sm font-bold hover:shadow-lg transition-all">${t('upgrade')} 💰${fprice.toLocaleString()}</button>`
+        : fgateLocked
+          ? `<span class="text-xs text-ink-light">🔒 ${t('facilityStageGate').replace('{level}', flv + 1).replace('{stage}', getFacilityRequiredStage(flv + 1))}</span>`
+          : `<button class="upgrade-focus-btn px-4 py-1.5 bg-magic-gold text-white rounded-lg text-sm font-bold hover:shadow-lg transition-all">${t('upgrade')} 💰${fprice.toLocaleString()}</button>`
       }
     </div>
   `;
@@ -231,6 +239,7 @@ export function renderLibraryUpgrades() {
   const restorationUnlocked = isRestorationUnlocked();
   const restorationLevel = getRestorationLevel();
   const restorationMaxed = restorationLevel >= 5;
+  const rgateLocked = restorationUnlocked && !restorationMaxed && restorationLevel + 1 > gateCap; // D22 阶段门槛
   const restorationUpgradePrice = getRestorationUpgradePrice();
   const restorationUnlockPrice = getRestorationUnlockPrice();
   const restorationImgNames = [
@@ -271,7 +280,9 @@ export function renderLibraryUpgrades() {
         ? `<button class="buy-restoration-btn px-4 py-1.5 bg-magic-gold text-white rounded-lg text-sm font-bold hover:shadow-lg transition-all">${t('unlock')} 💰${restorationUnlockPrice.toLocaleString()}</button>`
         : restorationMaxed
           ? `<span class="text-sm text-magic-gold font-bold">${t('maxLevel')} ✨</span>`
-          : `<button class="upgrade-restoration-btn px-4 py-1.5 bg-magic-gold text-white rounded-lg text-sm font-bold hover:shadow-lg transition-all">${t('upgrade')} 💰${restorationUpgradePrice.toLocaleString()}</button>`
+          : rgateLocked
+            ? `<span class="text-xs text-ink-light">🔒 ${t('facilityStageGate').replace('{level}', restorationLevel + 1).replace('{stage}', getFacilityRequiredStage(restorationLevel + 1))}</span>`
+            : `<button class="upgrade-restoration-btn px-4 py-1.5 bg-magic-gold text-white rounded-lg text-sm font-bold hover:shadow-lg transition-all">${t('upgrade')} 💰${restorationUpgradePrice.toLocaleString()}</button>`
       }
     </div>
   `;

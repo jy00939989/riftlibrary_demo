@@ -10,6 +10,7 @@ import { renderBookshelfPage, renderShopPage, renderVisitorsPage, updateStatusBa
 import { showBorrowAreaUpgrade } from '../render/tutorial-ui.js';
 import { showMomoBorrowReadyCard } from '../render/shared/visitor-cards.js';
 import { track } from '../backend/index.js';
+import { getFacilityLevelCap, getFacilityRequiredStage } from '../../data/atmosphere.js';
 
 export function handleBuyShelf() {
   const n = state.library.shelves.length;
@@ -31,6 +32,11 @@ export function handleBuyShelf() {
 }
 
 export function handleUpgradeBorrowLevel() {
+  const lv = state.library.borrowLevel || 0;
+  if (lv + 1 > getFacilityLevelCap(state.library.atmosphere)) {
+    alert(`氛围达到 ${getFacilityRequiredStage(lv + 1)} 阶后可升至 Lv.${lv + 1}`);
+    return;
+  }
   if (!upgradeBorrowLevel()) {
     alert('智慧之光不足');
     return;

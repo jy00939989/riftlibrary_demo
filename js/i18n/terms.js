@@ -802,6 +802,7 @@ const TERM_DATA = Object.freeze({
   limitedSignboardLabel: { zh: '兑换码获取', en: 'Redeem Code Only' },
   continue: { zh: '继续', en: 'Continue' },
   conditionsNotMet: { zh: '条件不足', en: 'Requirements not met' },
+  facilityStageGate: { zh: '升至 Lv.{level} 需氛围达 {stage} 阶', en: 'Lv.{level} requires Stage {stage} atmosphere' },
   requirements: { zh: '需要：氛围 ≥{atmo} · 拥有 ≥{books} 本书', en: 'Requires: Atmosphere ≥{atmo} · ≥{books} books' },
   openPortal: { zh: '开启传送门', en: 'Open Portal' },
   inPlanning: { zh: '规划中…', en: 'Coming soon…' },

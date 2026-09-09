@@ -1,6 +1,6 @@
 // 图书馆 & 收藏室页面渲染（子标签页：概况 / 成就柜 / 收藏室 / 布置 / 攻略 / 古籍修复室）
 import { state } from '../state.js';
-import { getAtmosphereStage, getRandomDescription, getStageProgress } from '../../data/atmosphere.js';
+import { getAtmosphereStage, getRandomDescription, getStageProgress, getFacilityLevelCap, getFacilityRequiredStage } from '../../data/atmosphere.js';
 import { getAtmosphereLevel } from '../storage.js';
 import { getFocusSpeedMultiplier, getSignboardBuffSum } from '../shop.js';
 import { getMasteredBookSpeedBonus } from '../core/shop/library-upgrades.js';
@@ -456,6 +456,7 @@ function renderRestorationTab(container) {
   const maxLevel = 5;
   const upgradePrice = getRestorationUpgradePrice();
   const repairBonus = Math.round(getRestorationRepairSpeedBonus() * 100);
+  const rgateLocked = level < maxLevel && level + 1 > getFacilityLevelCap(state.library.atmosphere || 0); // D22
   const levelCard = document.createElement('div');
   levelCard.className = 'bg-white/60 rounded-xl overflow-hidden border border-wood/20';
   levelCard.innerHTML = `
@@ -470,7 +471,9 @@ function renderRestorationTab(container) {
       <div class="flex items-center justify-between">
         <div class="text-xs text-ink-light">${t('restorationRepairSpeedDesc').replace('{bonus}', repairBonus)}</div>
         ${level < maxLevel
-          ? `<button class="upgrade-restoration-level-btn px-3 py-1.5 bg-magic-gold text-white text-xs font-bold rounded-lg hover:shadow-lg transition-all">
+          ? rgateLocked
+            ? `<span class="text-xs text-ink-light">🔒 ${t('facilityStageGate').replace('{level}', level + 1).replace('{stage}', getFacilityRequiredStage(level + 1))}</span>`
+            : `<button class="upgrade-restoration-level-btn px-3 py-1.5 bg-magic-gold text-white text-xs font-bold rounded-lg hover:shadow-lg transition-all">
               ${t('upgrade')} 💰${upgradePrice.toLocaleString()}
              </button>`
           : `<span class="text-xs text-magic-gold font-bold">${t('maxLevel')} ✨</span>`}

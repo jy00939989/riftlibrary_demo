@@ -1,8 +1,9 @@
 // 容量与手稿箱模块 —— 纯数据层，无业务模块依赖
 // 从 shop.js 拆分，解决 shop.js ↔ visitors.js 循环依赖
 import { state, saveState } from './state.js';
-import { spendCoins, addHistory } from './storage.js';
+import { spendCoins, addHistory, addAtmosphere } from './storage.js';
 import { createBookRecord } from './core/book-utils.js';
+import { FACILITY_EXP_PER_LEVEL, getFacilityLevelCap } from '../data/atmosphere.js';
 
 // 为了向后兼容，继续导出 createBookRecord
 export { createBookRecord } from './core/book-utils.js';
@@ -260,10 +261,13 @@ export function upgradeRestorationLevel() {
   if (!state.restorationUnlocked) return false;
   const level = getRestorationLevel();
   if (level >= MAX_RESTORATION_LEVEL) return false;
+  if (level + 1 > getFacilityLevelCap(state.library.atmosphere)) return false; // D22 阶段门槛
   const price = getRestorationUpgradePrice();
   if (price > 0 && !spendCoins(price)) return false;
   state.restorationLevel = level + 1;
-  addHistory('purchase', `📜 古籍修复室升至 Lv.${state.restorationLevel}`, `花费${price}智慧之光 · 修复速度 +5%`);
+  const exp = state.restorationLevel * FACILITY_EXP_PER_LEVEL; // D19 等级×20
+  addAtmosphere(exp);
+  addHistory('purchase', `📜 古籍修复室升至 Lv.${state.restorationLevel}`, `花费${price}智慧之光 · 修复速度 +5% · +${exp}氛围`);
   saveState();
   return true;
 }
