@@ -88,18 +88,74 @@ export function getStageInfo(value) {
   };
 }
 
-/** 阶段内进度（顶栏/概况进度条）：{ min, next|null, percent }；满级 percent = 100 */
-export function getStageProgress(value) {
-  const info = getStageInfo(value);
-  if (info.next === null) return { min: info.min, next: null, percent: 100 };
-  const range = info.next - info.min;
-  const ratio = range > 0 ? (value - info.min) / range : 1;
-  return { min: info.min, next: info.next, percent: Math.min(100, Math.max(0, Math.round(ratio * 100))) };
+/** 阶段内进度（顶栏/概况进度条）：{ min, next|null, percent }；满级 percent = 100。
+ *  可选传存储阶段字段（D24）：卡阶等待仪式时按存储阶段算，进度条满格 100%。 */
+export function getStageProgress(value, stageField) {
+  const level = resolveStageLevel(value, stageField);
+  const min = getStageThreshold(level) ?? 0;
+  const next = getStageThreshold(level + 1);
+  if (next === null) return { min, next: null, percent: 100 };
+  const range = next - min;
+  const ratio = range > 0 ? (value - min) / range : 1;
+  return { min, next, percent: Math.min(100, Math.max(0, Math.round(ratio * 100))) };
 }
 
-// 获取当前氛围阶段（含 descriptions 的完整阶段对象）
-export function getAtmosphereStage(atmosphereValue) {
-  return ATMOSPHERE_STAGES[getStageLevel(atmosphereValue) - 1];
+// 获取当前氛围阶段（含 descriptions 的完整阶段对象）；可选传存储阶段字段（D24）
+export function getAtmosphereStage(atmosphereValue, stageField) {
+  return ATMOSPHERE_STAGES[resolveStageLevel(atmosphereValue, stageField) - 1];
+}
+
+// ── 存储阶段字段解析（D24：阶段落库，老档回退阈值推导）──
+
+/** 解析图书馆当前阶段：优先存储字段 state.library.stage；老档未迁移时回退 getStageLevel(氛围) */
+export function resolveStageLevel(atmosphere, stageField) {
+  if (stageField >= 1 && stageField <= ATMOSPHERE_STAGES.length) return stageField;
+  return getStageLevel(atmosphere);
+}
+
+// ── 升阶设施需求（D24，图南 2026-09-09 定版「梯度爬坡」表）──
+// 与 D22 设施门槛交叉验证可达：所有需求等级都能在前一阶段内建成，无死锁。
+//   缮写室 Lv5 需 4 阶（4 阶上限正好 Lv5）；借阅区 Lv5 需 4 阶；修复室解锁仅需金币；
+//   修复室 Lv3 需 2 阶；留声阁解锁仅需金币。
+export const STAGE_UP_REQUIREMENTS = {
+  2: { focus: 1, borrow: 1 },                                               // 破败：缮写室≥1 + 借阅区≥1
+  3: { focus: 2, borrow: 3, restorationUnlocked: true },                    // 陈旧：+ 古籍修复室已解锁
+  4: { focus: 3, borrow: 4, restorationLevel: 2, musicRoomUnlocked: true }, // 温暖：+ 修复室≥2 + 留声阁已解锁
+  5: { focus: 5, borrow: 5, restorationLevel: 3, musicRoomUnlocked: true }, // 星辰：+ 修复室≥3
+};
+
+/** 升到 targetLevel 阶的设施需求表（无需求返回 null，如 1 阶） */
+export function getStageUpRequirements(targetLevel) {
+  return STAGE_UP_REQUIREMENTS[targetLevel] || null;
+}
+
+/**
+ * 升阶条件核对（纯函数）。
+ * @param targetLevel 目标阶段 2-5
+ * @param snapshot { focus, borrow, restorationLevel, restorationUnlocked, musicRoomUnlocked }
+ * @returns 未满足项数组 [{ key, need?, have? }]，空数组 = 条件齐备可升阶
+ */
+export function checkStageUpRequirements(targetLevel, snapshot) {
+  const req = STAGE_UP_REQUIREMENTS[targetLevel];
+  if (!req) return [];
+  const snap = snapshot || {};
+  const missing = [];
+  if (req.focus && (snap.focus || 0) < req.focus) {
+    missing.push({ key: 'focus', need: req.focus, have: snap.focus || 0 });
+  }
+  if (req.borrow && (snap.borrow || 0) < req.borrow) {
+    missing.push({ key: 'borrow', need: req.borrow, have: snap.borrow || 0 });
+  }
+  if (req.restorationLevel && (snap.restorationLevel || 0) < req.restorationLevel) {
+    missing.push({ key: 'restorationLevel', need: req.restorationLevel, have: snap.restorationLevel || 0 });
+  }
+  if (req.restorationUnlocked && !snap.restorationUnlocked) {
+    missing.push({ key: 'restorationUnlocked' });
+  }
+  if (req.musicRoomUnlocked && !snap.musicRoomUnlocked) {
+    missing.push({ key: 'musicRoomUnlocked' });
+  }
+  return missing;
 }
 
 // ── 设施阶段门槛（D22）与升级 EXP（D19）──
@@ -115,9 +171,10 @@ export function getFacilityRequiredStage(targetLevel) {
   return Math.min(Math.max(targetLevel - 1, 1), MAX_STAGE_LEVEL);
 }
 
-/** 当前氛围值下的设施等级上限（各设施另有自身绝对上限，取两者较小） */
-export function getFacilityLevelCap(value) {
-  const stage = getStageLevel(value);
+/** 当前氛围值下的设施等级上限（各设施另有自身绝对上限，取两者较小）。
+ *  可选传存储阶段字段（D24）：设施门跟「阶段」走，不跟纯氛围阈值走。 */
+export function getFacilityLevelCap(value, stageField) {
+  const stage = resolveStageLevel(value, stageField);
   return stage >= MAX_STAGE_LEVEL ? 7 : stage + 1;
 }
 

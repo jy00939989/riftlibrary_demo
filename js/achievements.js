@@ -4,7 +4,7 @@ import { BOOKS, CATEGORIES } from '../data/books.js';
 import { isVolumeBookId, getVolumeGroupByVolumeId } from '../data/volume_groups.js';
 import { load, save, STORAGE_KEYS } from './persistence.js';
 import { track } from './backend/analytics.js';
-import { getStageLevel } from '../data/atmosphere.js';
+import { resolveStageLevel } from '../data/atmosphere.js';
 
 // ========== 成就定义（30个） ==========
 
@@ -81,7 +81,7 @@ const ACHIEVEMENTS = [
   // ---- 图书馆重建 ----
   { id: 'L01', name: 'achName_L01', rarity: 'bronze', category: 'reconstruction',
     desc: 'achDesc_L01',
-    check: (s, t) => t === 'library' && getStageLevel(s.library.atmosphere) >= 2 },
+    check: (s, t) => t === 'library' && resolveStageLevel(s.library.atmosphere, s.library.stage) >= 2 },
   { id: 'L02', name: 'achName_L02', rarity: 'silver', category: 'reconstruction',
     desc: 'achDesc_L02',
     check: (s, t) => t === 'purchase_shelf' },
@@ -90,19 +90,19 @@ const ACHIEVEMENTS = [
     check: (s, t) => t === 'purchase_book' },
   { id: 'L03', name: 'achName_L03', rarity: 'silver', category: 'reconstruction',
     desc: 'achDesc_L03',
-    check: (s, t) => t === 'library' && getStageLevel(s.library.atmosphere) >= 3 },
+    check: (s, t) => t === 'library' && resolveStageLevel(s.library.atmosphere, s.library.stage) >= 3 },
   { id: 'L04', name: 'achName_L04', rarity: 'silver', category: 'reconstruction',
     desc: 'achDesc_L04',
     check: (s, t) => t === 'library' && s.library.borrowLevel >= 3 },
   { id: 'L05', name: 'achName_L05', rarity: 'gold', category: 'reconstruction',
     desc: 'achDesc_L05',
-    check: (s, t) => t === 'library' && getStageLevel(s.library.atmosphere) >= 4 },
+    check: (s, t) => t === 'library' && resolveStageLevel(s.library.atmosphere, s.library.stage) >= 4 },
   { id: 'L06', name: 'achName_L06', rarity: 'gold', category: 'reconstruction',
     desc: 'achDesc_L06',
     check: (s, t) => t === 'library' && s.library.borrowLevel >= 7 },
   { id: 'L07', name: 'achName_L07', rarity: 'platinum', category: 'reconstruction',
     desc: 'achDesc_L07',
-    check: (s, t) => t === 'library' && getStageLevel(s.library.atmosphere) >= 5 },
+    check: (s, t) => t === 'library' && resolveStageLevel(s.library.atmosphere, s.library.stage) >= 5 },
 
   // ---- 访客 ----
   { id: 'V03', name: 'achName_V03', rarity: 'bronze', category: 'visitors',

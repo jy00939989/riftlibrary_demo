@@ -7,6 +7,7 @@ import { BOOKS } from '../../data/books.js';
 import { VOLUME_GROUPS } from '../../data/volume_groups.js';
 import { DLC_PACKS } from '../../data/dlc_packs.js';
 import { PLANT_TYPES } from '../../data/plants.js';
+import { getStageLevel } from '../../data/atmosphere.js';
 
 // 规范空盆常量（铲除/凋谢/灾难后复用）
 export const EMPTY_PLANT = {
@@ -29,8 +30,17 @@ const MIGRATIONS = [
   { version: 1, up: migrateV1 },
   { version: 2, up: migrateV2 },
   { version: 3, up: migrateV3 },
-  { version: 4, up: migrateV4 }
+  { version: 4, up: migrateV4 },
+  { version: 5, up: migrateV5 }
 ];
+
+function migrateV5() {
+  // 2026-09-09 D24：升阶设施门槛——阶段改为存储字段。
+  // 老档不追溯设施：按已达氛围定阶（getStageLevel 阈值推导），后续升阶才校验设施需求。
+  if (state.library.stage === undefined) {
+    state.library.stage = getStageLevel(state.library.atmosphere || 0);
+  }
+}
 
 function migrateV4() {
   // 2026-08-30：纪念牌限量编号

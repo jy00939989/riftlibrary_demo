@@ -2,12 +2,19 @@
 // 经济系统纯函数：定价 / 概率 / 容量级
 
 import { VOLUME_GROUPS, VOLUME_REFRESH, VOLUME_GUARANTEE } from '../../data/volume_groups.js';
-import { getStageInfo } from '../../data/atmosphere.js';
+import { getStageThreshold, ATMOSPHERE_STAGES, resolveStageLevel } from '../../data/atmosphere.js';
 
-// ── 氛围阶段（阈值单源在 data/atmosphere.js，D17）──
-export function getAtmosphereLevel(atmosphere) {
-  const info = getStageInfo(atmosphere);
-  return { level: info.level, name: info.name, next: info.toNext };
+// ── 氛围阶段（阈值单源在 data/atmosphere.js，D17；阶段字段解析见 D24）──
+// stageField 为可选存储字段 state.library.stage：阶段落库后等级以它为准，
+// 氛围超阈值但等待升阶仪式时 levelInfo.next 钳为 0（UI 据此切换仪式/等待文案）。
+export function getAtmosphereLevel(atmosphere, stageField) {
+  const level = resolveStageLevel(atmosphere, stageField);
+  const nextThreshold = getStageThreshold(level + 1);
+  return {
+    level,
+    name: ATMOSPHERE_STAGES[level - 1].name,
+    next: nextThreshold === null ? 0 : Math.max(0, nextThreshold - atmosphere),
+  };
 }
 
 // ── 借阅区升级价格 ──

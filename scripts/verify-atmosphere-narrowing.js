@@ -5,6 +5,10 @@
 import { VISITOR_NARRATIVES } from '../data/visitor-events.js';
 import { PLANT_TYPES } from '../data/plants.js';
 import { BORROW_LEVEL_TABLE } from '../data/borrow-levels.js';
+import {
+  STAGE_UP_REQUIREMENTS, checkStageUpRequirements, getStageUpRequirements,
+  getFacilityRequiredStage, resolveStageLevel, getStageProgress, MAX_STAGE_LEVEL
+} from '../data/atmosphere.js';
 
 let pass = 0;
 let fail = 0;
@@ -67,6 +71,42 @@ const tableFiles = [
 // 这里只做存在性断言，实际合并已在代码层完成
 assert(true, 'data/borrow-levels.js 为单一真源（需配合 grep 确认无重复定义）');
 
+console.log('\n=== 6. 升阶设施需求核对（D24 梯度爬坡表 × D22 可达性）===');
+// 6.1 每阶需求在前一阶段内可达（无死锁）：需求等级 L 的设施要求阶段 ≤ 目标阶-1
+let reachable = true;
+Object.entries(STAGE_UP_REQUIREMENTS).forEach(([target, req]) => {
+  const T = Number(target);
+  if (req.focus && getFacilityRequiredStage(req.focus) > T - 1) reachable = false;
+  if (req.borrow && getFacilityRequiredStage(req.borrow) > T - 1) reachable = false;
+  if (req.restorationLevel && getFacilityRequiredStage(req.restorationLevel) > T - 1) reachable = false;
+});
+assert(reachable, '全部升阶需求可在前一阶段内建成（与 D22 门槛交叉验证无死锁）');
+assert(getStageUpRequirements(1) === null, '1 阶无升阶需求');
+assert(getStageUpRequirements(5).focus === 5 && getStageUpRequirements(5).borrow === 5
+  && getStageUpRequirements(5).restorationLevel === 3 && getStageUpRequirements(5).musicRoomUnlocked === true,
+  '5 阶需求 = 缮写室≥5 + 借阅区≥5 + 修复室≥3 + 留声阁已解锁');
+
+// 6.2 checkStageUpRequirements：全齐 → 空数组；缺项 → 精确列出
+const fullSnap = { focus: 7, borrow: 7, restorationLevel: 7, restorationUnlocked: true, musicRoomUnlocked: true };
+assert(checkStageUpRequirements(5, fullSnap).length === 0, '设施全满时 5 阶条件齐备');
+const poorSnap = { focus: 1, borrow: 1, restorationLevel: 0, restorationUnlocked: false, musicRoomUnlocked: false };
+const missing3 = checkStageUpRequirements(3, poorSnap);
+assert(missing3.length === 3, `低配快照缺 3 项（实缺 ${missing3.length}）`);
+assert(missing3.some(m => m.key === 'borrow' && m.need === 3 && m.have === 1), '缺项精确报告 borrow need=3 have=1');
+assert(missing3.some(m => m.key === 'restorationUnlocked'), '缺项包含 restorationUnlocked');
+
+// 6.3 resolveStageLevel：存储字段优先，老档回退阈值推导
+assert(resolveStageLevel(950, 2) === 2, 'stage 字段优先（950 氛围 + stage=2 → 2 阶，卡阶等待仪式）');
+assert(resolveStageLevel(950, undefined) === 3, '老档回退阈值推导（950 → 3 阶）');
+assert(resolveStageLevel(950, 0) === 3, '非法 stage=0 回退阈值推导');
+
+// 6.4 getStageProgress 跟存储阶段走：卡阶时满格 100%，不跟纯氛围跳阶
+const progWaiting = getStageProgress(950, 2);
+assert(progWaiting.percent === 100 && progWaiting.next === 900, `卡阶等待时进度满格（实 ${progWaiting.percent}%, next=${progWaiting.next}）`);
+const progNormal = getStageProgress(650, 2);
+assert(progNormal.percent === Math.round((650 - 400) / 500 * 100), '2 阶中段进度按比例');
+const progMax = getStageProgress(99999, MAX_STAGE_LEVEL);
+assert(progMax.percent === 100 && progMax.next === null, '满级 MAX');
 console.log('\n=== 结果 ===');
 console.log(`通过：${pass} 项`);
 console.log(`失败：${fail} 项`);

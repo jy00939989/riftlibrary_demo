@@ -33,7 +33,7 @@ export function handleBuyShelf() {
 
 export function handleUpgradeBorrowLevel() {
   const lv = state.library.borrowLevel || 0;
-  if (lv + 1 > getFacilityLevelCap(state.library.atmosphere)) {
+  if (lv + 1 > getFacilityLevelCap(state.library.atmosphere, state.library.stage)) {
     alert(`氛围达到 ${getFacilityRequiredStage(lv + 1)} 阶后可升至 Lv.${lv + 1}`);
     return;
   }

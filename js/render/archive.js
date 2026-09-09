@@ -440,7 +440,7 @@ function renderPlanesTab() {
             ` : ''}
             ${!unlocked && plane.unlock ? `
               <div class="text-xs text-ink-light/60 mt-1">
-                ${t('planeUnlockRequirements').replace('{atmo}', plane.unlock.atmo).replace('{books}', plane.unlock.books)}
+                ${t('planeUnlockRequirements').replace('{stage}', plane.unlock.stage).replace('{books}', plane.unlock.books)}
               </div>
             ` : ''}
           </div>

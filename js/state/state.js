@@ -75,6 +75,7 @@ export const state = {
   library: {
     name: '归墟图书馆',
     atmosphere: 0,
+    stage: 1, // D24：阶段落库（升阶需手动举行仪式）；老档由 migrateV5 按已达氛围定阶
     shelves: [[null, null, null, null, null]],
     borrowLevel: 0,
     focusLevel: 0,
