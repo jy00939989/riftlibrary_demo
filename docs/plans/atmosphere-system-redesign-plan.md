@@ -19,6 +19,7 @@ anchors:
   - { type: file, path: "js/render/common.js", weight: 0.1 }
   - { type: file, path: "js/render/library.js", weight: 0.1 }
   - { type: file, path: "index.html", weight: 0.1 }
+  - { type: file, path: "js/atmosphere.js", weight: 0.1 }
 ---
 
 # 氛围系统重设计（atmosphere-system-redesign）
