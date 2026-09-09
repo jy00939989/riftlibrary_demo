@@ -20,6 +20,11 @@ anchors:
   - { type: file, path: "js/render/library.js", weight: 0.1 }
   - { type: file, path: "index.html", weight: 0.1 }
   - { type: file, path: "js/atmosphere.js", weight: 0.1 }
+  - { type: file, path: "data/borrow-levels.js", weight: 0.1 }
+  - { type: file, path: "js/core/shop/library-upgrades.js", weight: 0.1 }
+  - { type: file, path: "js/core/shop-actions.js", weight: 0.1 }
+  - { type: file, path: "js/render/shop/library-upgrades.js", weight: 0.1 }
+  - { type: file, path: "scripts/verify-atmosphere-narrowing.js", weight: 0.1 }
 ---
 
 # 氛围系统重设计（atmosphere-system-redesign）
@@ -109,7 +114,7 @@ anchors:
 ## 六、实施阶段（v4 大瘦身）
 
 1. **Phase 1 换表**：阈值表 + addAtmosphere 去封顶 + 顶栏改进度条（**半日工作量**）✅ 2026-09-09 落地。实施实收编 **6 处**阈值实现（评审 P0-A 点名 3 处之外的增量）：`data/tiergoals.js` 馆长目标阶梯（改挂 STAGE_THRESHOLDS 推导，t5g4 改 5,600）、`js/audio.js tierForAtmo` BGM 三档（1-2 阶 ruined / 3-4 阶 cozy / 5 阶 stellar）、`js/achievements.js` L01/L03/L05/L07（改 getStageLevel>=N）、`js/storage.js updateBodyBackground` 背景分阶；i18n 文案同步（成就描述/t5g4/FAQ 删 500 上限句）；删除死模块 `js/atmosphere.js`（全库无引用，且依赖已删除的 stage.max）。顶栏与概况页进度条 = 阶段内进度（当前值/下一阶阈值，满级 MAX）。
-2. **Phase 2 设施**：金币门槛校验 + 升级给 EXP（等级×40）
+2. **Phase 2 设施**：金币门槛校验 + 升级给 EXP（等级×20）✅ 2026-09-09 落地（D22+ D19 + D18 一并完成）：门槛/EXP 助手入 data/atmosphere.js（`getFacilityLevelCap`/`getFacilityRequiredStage`/`FACILITY_EXP_PER_LEVEL=20`，修一处 max stage = 阈值数+1 的边界 bug）；三升级核心（借阅区/缮写室/修复室）加阶段门槛校验 + 升级发 等级×20 EXP（修复室原本不发，补上）；returnAtmo 表改 1-7 递增（D18，visitors.js 表驱动自动生效）；四处 UI 加 🔒 门控提示（商店三卡+修复室标签页+访客页 action 路径）；verify-atmosphere-narrowing 脚本第 3 节改断言 1-7 线性。
 3. **Phase 3 借还链**：wearCount + 乘性磨损 + 重抄清零 + 典藏回报 + 书况 UI
 4. **Phase 4 场馆房间**：阶段解锁 + 金币建造（venue 方案落地 + 金币消费口）
 5. Phase 1-3 可打包一次部署；Phase 4 独立

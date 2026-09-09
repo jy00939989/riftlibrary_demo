@@ -45,10 +45,12 @@ const allCoinsCorrect = rareRewards.every(r => r.coins === 60 || r.coins === 80)
 assert(allAtmoCorrect, '所有稀层事件 atmosphere 为 10 或 15');
 assert(allCoinsCorrect, '所有稀层事件 coins 为 60 或 80');
 
-console.log('\n=== 3. 借阅区 Lv7 还书氛围核对 ===');
+console.log('\n=== 3. 借阅区还书氛围核对（D18 递增 1-7，「来源收窄」已转型为产能台阶）===');
 const lv7 = BORROW_LEVEL_TABLE[7];
-assert(lv7.returnAtmo === 5, `Lv7 returnAtmo = ${lv7.returnAtmo}（期望 5）`);
+assert(lv7.returnAtmo === 7, `Lv7 returnAtmo = ${lv7.returnAtmo}（期望 7）`);
 assert(lv7.returnCoins === 60, `Lv7 returnCoins = ${lv7.returnCoins}（期望 60）`);
+const linear = BORROW_LEVEL_TABLE.slice(1).every((cfg, i) => cfg.returnAtmo === i + 1);
+assert(linear, 'returnAtmo 全表 1/2/3/4/5/6/7 线性递增');
 
 console.log('\n=== 4. 植物收获氛围核对 ===');
 assert(PLANT_TYPES.bird_of_paradise.harvestAtmosphere === 2, '鹤望兰 harvestAtmosphere = 2');
