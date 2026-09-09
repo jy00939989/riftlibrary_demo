@@ -2,6 +2,13 @@
 import { state } from '../state.js';
 import { BOOKS } from '../../data/books.js';
 import { t, getLocale } from '../i18n/terms.js';
+import { getStageInfo } from '../../data/atmosphere.js';
+
+// 顶栏氛围进度形态：当前值/下一阶阈值；满级只显示当前值（EXP 无封顶）
+function formatAtmosphere(value) {
+  const info = getStageInfo(value);
+  return info.next ? `${value}/${info.next}` : `${value}`;
+}
 
 // 由 app.js 在初始化时注入
 export let actions = {};
@@ -14,7 +21,7 @@ export function updateStatusBar() {
   const inspEl = document.getElementById('status-inspiration');
   const nameEl = document.getElementById('nav-library-name');
   if (coinsEl) coinsEl.textContent = state.coins.toLocaleString();
-  if (atmosEl) atmosEl.textContent = `${state.library.atmosphere}/500`;
+  if (atmosEl) atmosEl.textContent = formatAtmosphere(state.library.atmosphere);
   if (inspEl) inspEl.textContent = (state.inspiration || 0).toString();
   if (nameEl) nameEl.textContent = state.library.name;
 
@@ -23,7 +30,7 @@ export function updateStatusBar() {
   const atmosCardEl = document.getElementById('status-atmosphere-card');
   const inspCardEl = document.getElementById('status-inspiration-card');
   if (coinsCardEl) coinsCardEl.textContent = state.coins.toLocaleString();
-  if (atmosCardEl) atmosCardEl.textContent = `${state.library.atmosphere}/500`;
+  if (atmosCardEl) atmosCardEl.textContent = formatAtmosphere(state.library.atmosphere);
   if (inspCardEl) inspCardEl.textContent = (state.inspiration || 0).toString();
 }
 

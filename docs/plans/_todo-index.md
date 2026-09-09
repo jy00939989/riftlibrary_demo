@@ -101,7 +101,7 @@ anchors:
 - [x] 决策：阶段对设施设等级门槛，gate 含新手 1:2（D22）
 - [x] 三轮评审 D17-D23 全落地：三套 stage 阈值合并单源（P0-A 必改）、阈值形状重定 [400/900/2800/5600]、灵感按实测校正、金币消费口分层、霉菌概率上升接受
 - [x] Phase 0 测算脚本四轮迭代定版（scripts/simulate-atmosphere-economy.mjs：硬核166/核心202/休闲247 天首通）
-- [ ] Phase 1：三套阈值合并单源 getStageLevel() + 换 v4.3 表 + addAtmosphere 去封顶 + 顶栏进度条
+- [x] Phase 1：三套阈值合并单源 getStageLevel() + 换 v4.3 表 + addAtmosphere 去封顶 + 顶栏进度条（2026-09-09 落地；实际收编 6 处阈值：economy/collection/tiergoals/audio BGM 档/achievements L01-L07/storage 背景，删死模块 js/atmosphere.js）
 - [ ] Phase 2：设施等级门槛校验 + 升级给 EXP（等级×20）+ returnAtmo 表改递增
 - [ ] Phase 3：wearCount + 乘性磨损 + 重抄清零 + 典藏回报 + 书况 UI
 - [ ] Phase 4：场馆房间（阶段解锁图纸+金币建造，多档定价）+ 灵感持续 sink + 金币高频消耗品

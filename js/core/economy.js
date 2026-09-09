@@ -2,14 +2,12 @@
 // 经济系统纯函数：定价 / 概率 / 容量级
 
 import { VOLUME_GROUPS, VOLUME_REFRESH, VOLUME_GUARANTEE } from '../../data/volume_groups.js';
+import { getStageInfo } from '../../data/atmosphere.js';
 
-// ── 氛围阶段 ──
+// ── 氛围阶段（阈值单源在 data/atmosphere.js，D17）──
 export function getAtmosphereLevel(atmosphere) {
-  if (atmosphere <= 30) return { level: 1, name: '废墟' };
-  if (atmosphere <= 80) return { level: 2, name: '破败' };
-  if (atmosphere <= 160) return { level: 3, name: '陈旧' };
-  if (atmosphere <= 300) return { level: 4, name: '温暖' };
-  return { level: 5, name: '星辰' };
+  const info = getStageInfo(atmosphere);
+  return { level: info.level, name: info.name, next: info.toNext };
 }
 
 // ── 借阅区升级价格 ──

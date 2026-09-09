@@ -46,7 +46,7 @@ export function onStageCross(cb) { _onStageCross = cb; }
 
 export function addAtmosphere(points) {
   const prevLevel = getAtmosphereLevel().level;
-  state.library.atmosphere = Math.min(500, state.library.atmosphere + points);
+  state.library.atmosphere = state.library.atmosphere + points;
   const newLevel = getAtmosphereLevel().level;
   updateBodyBackground();
   refreshBGM();
@@ -63,26 +63,20 @@ export function addAtmosphere(points) {
   return { prevLevel, newLevel, crossed: [] };
 }
 
-// 根据氛围阶段动态切换 body 背景图
+// 根据氛围阶段动态切换 body 背景图（阶段等级单源在 data/atmosphere.js）
 export function updateBodyBackground() {
-  const v = state.library.atmosphere;
-  let bgNum = 1;
-  if (v > 300) bgNum = 5;
-  else if (v > 160) bgNum = 4;
-  else if (v > 80) bgNum = 3;
-  else if (v > 30) bgNum = 2;
+  const bgNum = getStageLevel(state.library.atmosphere);
 
   const bgUrl = `visual/background/library_bg_0${bgNum}_${['','abandoned','ruined','cozy','gorgeous','magnificent'][bgNum]}.jpg`;
   document.body.style.backgroundImage = `linear-gradient(rgba(44,36,25,0.88), rgba(44,36,25,0.88)), url('${bgUrl}')`;
 }
 
 import { getAtmosphereLevel as _getAtmosphereLevel } from './core/economy.js';
+import { getStageLevel } from '../data/atmosphere.js';
 
+// 绑定当前存档氛围值的阶段信息（纯函数版见 getAtmosphereLevelPure）
 export function getAtmosphereLevel() {
-  const v = state.library.atmosphere;
-  const base = _getAtmosphereLevel(v);
-  const maxes = { 1: 30, 2: 80, 3: 160, 4: 300, 5: 500 };
-  return { ...base, next: (maxes[base.level] || 500) - v };
+  return _getAtmosphereLevel(state.library.atmosphere);
 }
 
 export { _getAtmosphereLevel as getAtmosphereLevelPure };

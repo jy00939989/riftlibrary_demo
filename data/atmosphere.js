@@ -1,7 +1,12 @@
 // 氛围阶段描述文字库
+// ★ 单一事实源（D17，评审 P0-A，2026-09-09 Phase 1 换表）：氛围阶段阈值只此一份，
+//   economy.js / collection.js / tiergoals.js / storage.js / disasters.js 全部挂载本模块。
+// v4.3 仿真定版：硬核 166 天 / 核心 202 天 / 休闲 247 天首通；上线后用真实获取速率回测。
+export const STAGE_THRESHOLDS = [400, 900, 2800, 5600]; // 进入 2/3/4/5 阶的累计氛围门槛
+
 export const ATMOSPHERE_STAGES = [
   {
-    level: 1, name: '废墟', min: 0, max: 30,
+    level: 1, name: '废墟', min: 0,
     descriptions: [
       `你推开沉重的橡木门，灰尘在从破洞屋顶洒下的光柱中飞舞。曾经辉煌的大厅如今只剩断壁残垣，书架倒塌如墓碑，破损的书籍散落一地，像被遗忘的骸骨。空气中有霉味和某种古老魔法残留的气息——这里曾经有人守护，但那是很久很久以前的事了。`,
       `一只蜘蛛从断裂的横梁上垂下，在你眼前晃荡，仿佛在质疑你的到来。地板每走一步就发出呻吟，某处传来水滴落入积水的回声，叮、叮、叮。这是废墟的呼吸，是沉睡图书馆的心跳。`,
@@ -10,7 +15,7 @@ export const ATMOSPHERE_STAGES = [
     ]
   },
   {
-    level: 2, name: '破败', min: 30, max: 80,
+    level: 2, name: '破败', min: 400,
     descriptions: [
       `你费力地扶正第三排书架，它不再摇晃了。虽然漆面斑驳，但至少能站稳。你把自己整理出的书籍摆上，稀疏的书脊在巨大的架子上显得孤单，但已经是新的开始。烛光现在能照亮整个东厅了。`,
       `窗外的阳光依然从破洞照进来，但不再显得凄凉。你把倒塌的书架拆解，用木材修补了最大的那个破洞，风不再呼啸着穿过大厅。某只流浪猫发现了这里，它蜷缩在你修补好的窗台上打盹。`,
@@ -19,7 +24,7 @@ export const ATMOSPHERE_STAGES = [
     ]
   },
   {
-    level: 3, name: '陈旧', min: 80, max: 160,
+    level: 3, name: '陈旧', min: 900,
     descriptions: [
       `现在走进图书馆，首先注意到的不再是破败，而是安静。一种被妥善维护的、有尊严的安静。书架都站稳了，书籍整齐排列，虽然数量仍不多，但每本都干净、完整。这里开始像一个真正的图书馆了。`,
       `那个流浪诗人第二次来访时，停留的时间比上次长。"这里变了，"他说，眼睛扫过书架，"有了……气息。"你不知道他指的是什么，但当你独自坐在阅读角，你似乎懂了。那是被阅读、被珍视的气息。`,
@@ -28,7 +33,7 @@ export const ATMOSPHERE_STAGES = [
     ]
   },
   {
-    level: 4, name: '温暖', min: 160, max: 300,
+    level: 4, name: '温暖', min: 2800,
     descriptions: [
       `现在的图书馆有一种特别的温度，不是壁炉的温度，而是被无数人触碰过的温度。书脊上的烫金在灯光下闪闪发亮，地毯柔软干净，空气中是旧书特有的、令人安心的气味。访客们开始在这里停留，不只是借书，而是坐下阅读。`,
       `你有了自己的助手——那只曾经的流浪猫，现在它叫"墨水"，因为它总爱趴在未干的墨迹旁。图书馆里现在有几百本书了，你开始需要那本厚重的目录册来追踪它们的位置。秩序从混乱中诞生，这本身就是魔法。`,
@@ -37,7 +42,7 @@ export const ATMOSPHERE_STAGES = [
     ]
   },
   {
-    level: 5, name: '星辰', min: 300, max: 500,
+    level: 5, name: '星辰', min: 5600,
     descriptions: [
       `现在的图书馆是一座奇迹。高耸的书架直达穹顶，螺旋楼梯连接着不同楼层，每个角落都有阅读的空间。访客络绎不绝，却从不喧闹——这里有一种共识，一种对知识和安静的尊重。你站在大厅中央，感到某种圆满。`,
       `图书馆有了自己的节日：誊抄之夜，每年一次，所有人放下电子设备，用笔和纸抄写心爱的段落。烛光从窗户流淌出去，整座城镇都能看到。你守护的东西，终于有能力守护更多人了。`,
@@ -46,14 +51,55 @@ export const ATMOSPHERE_STAGES = [
   }
 ];
 
-// 获取当前氛围阶段
+// ── 统一阶段判定（所有调用方走这里，禁止再硬编码阈值）──
+
+/** 当前所处阶段等级 1-5 */
+export function getStageLevel(value) {
+  const v = value || 0;
+  let level = 1;
+  for (const t of STAGE_THRESHOLDS) { if (v >= t) level++; }
+  return level;
+}
+
+/** 进入某阶段所需的累计氛围（1 阶 = 0；超出最高阶返回 null） */
+export function getStageThreshold(level) {
+  if (level <= 1) return 0;
+  return STAGE_THRESHOLDS[level - 2] ?? null;
+}
+
+/** 当前值之上的下一阶门槛；已满级返回 null */
+export function getNextThreshold(value) {
+  const v = value || 0;
+  for (const t of STAGE_THRESHOLDS) { if (v < t) return t; }
+  return null;
+}
+
+/** 统一阶段信息：{ level, name, min, next(下一阶门槛|null), toNext(距下一阶点数,满级为 0) } */
+export function getStageInfo(value) {
+  const v = value || 0;
+  const level = getStageLevel(v);
+  const next = getNextThreshold(v);
+  return {
+    level,
+    name: ATMOSPHERE_STAGES[level - 1].name,
+    min: ATMOSPHERE_STAGES[level - 1].min,
+    next,
+    toNext: next === null ? 0 : next - v,
+  };
+}
+
+/** 阶段内进度（顶栏/概况进度条）：{ min, next|null, percent }；满级 percent = 100 */
+export function getStageProgress(value) {
+  const info = getStageInfo(value);
+  if (info.next === null) return { min: info.min, next: null, percent: 100 };
+  const range = info.next - info.min;
+  const ratio = range > 0 ? (value - info.min) / range : 1;
+  return { min: info.min, next: info.next, percent: Math.min(100, Math.max(0, Math.round(ratio * 100))) };
+}
+
+// 获取当前氛围阶段（含 descriptions 的完整阶段对象）
 export function getAtmosphereStage(atmosphereValue) {
-  for (const stage of ATMOSPHERE_STAGES) {
-    if (atmosphereValue >= stage.min && atmosphereValue <= stage.max) {
-      return stage;
-    }
-  }
-  return ATMOSPHERE_STAGES[0];
+  return ATMOSPHERE_STAGES[getStageLevel(atmosphereValue) - 1];
 }
 
 // 获取随机氛围描述
