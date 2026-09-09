@@ -4,6 +4,7 @@ import { BOOKS } from '../data/books.js';
 import { PLANES, canUnlockPlane } from '../data/planes.js';
 import { t, getAtmosphereStageName } from './i18n/terms.js';
 import { getVisitorStats } from './visitorMemory.js';
+import { getStageLevel } from '../data/atmosphere.js';
 
 const STORAGE_KEY = 'library_collection';
 
@@ -70,22 +71,14 @@ function getProgress() {
 
 // ========== 图书馆里程碑进度 ==========
 
-function getAtmosphereStageLevel(value) {
-  if (value <= 30) return 1;
-  if (value <= 80) return 2;
-  if (value <= 160) return 3;
-  if (value <= 300) return 4;
-  return 5;
-}
-
 function getMilestoneProgress() {
   const items = [];
 
   // 氛围阶段
   const atmo = state.library.atmosphere || 0;
-  const atmoStageLevel = getAtmosphereStageLevel(atmo);
+  const atmoStageLevel = getStageLevel(atmo);
   const atmoStageName = getAtmosphereStageName(atmoStageLevel);
-  items.push({ name: t('collectionMilestoneAtmosphere'), value: atmoStageName, hasValue: atmo > 30, icon: '✨' });
+  items.push({ name: t('collectionMilestoneAtmosphere'), value: atmoStageName, hasValue: atmo > 0, icon: '✨' });
 
   // 书架数量
   const shelfCount = state.library.shelves.length;

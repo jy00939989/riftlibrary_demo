@@ -1,6 +1,6 @@
 // 图书馆 & 收藏室页面渲染（子标签页：概况 / 成就柜 / 收藏室 / 布置 / 攻略 / 古籍修复室）
 import { state } from '../state.js';
-import { ATMOSPHERE_STAGES, getAtmosphereStage, getRandomDescription } from '../../data/atmosphere.js';
+import { getAtmosphereStage, getRandomDescription, getStageProgress } from '../../data/atmosphere.js';
 import { getAtmosphereLevel } from '../storage.js';
 import { getFocusSpeedMultiplier, getSignboardBuffSum } from '../shop.js';
 import { getMasteredBookSpeedBonus } from '../core/shop/library-upgrades.js';
@@ -54,8 +54,8 @@ export function renderLibraryPage() {
   const levelInfo = getAtmosphereLevel();
   const stage = getAtmosphereStage(state.library.atmosphere);
   const desc = getRandomDescription(stage);
-  const maxAtmo = 500;
-  const atmoPercent = Math.min(100, Math.round((state.library.atmosphere / maxAtmo) * 100));
+  // 阶段内进度（v4.3 换表：进度条 = 当前阶内的推进，不再以 500 为满）
+  const atmoProg = getStageProgress(state.library.atmosphere);
 
   container.innerHTML = `
     <div class="parchment-bg rounded-2xl magic-glow overflow-hidden">
@@ -104,7 +104,7 @@ export function renderLibraryPage() {
   const contentArea = document.getElementById('lib-content-area');
   if (contentArea) {
     switch (activeSubTab) {
-      case 'overview': renderOverview(contentArea, stage, levelInfo, desc, maxAtmo, atmoPercent); break;
+      case 'overview': renderOverview(contentArea, stage, levelInfo, desc, atmoProg); break;
       case 'achievements': renderAchievementsTab(contentArea); break;
       case 'collection': renderCollectionTab(contentArea); break;
       case 'restoration': renderRestorationTab(contentArea); break;
@@ -213,7 +213,7 @@ function renderTierGoals(stage) {
 
 // ========== 概况子标签 ==========
 
-function renderOverview(container, stage, levelInfo, desc, maxAtmo, atmoPercent) {
+function renderOverview(container, stage, levelInfo, desc, atmoProg) {
   const curAtmo = state.library.atmosphere;
   const stageName = getAtmosphereStageName(stage.level);
 
@@ -233,10 +233,8 @@ function renderOverview(container, stage, levelInfo, desc, maxAtmo, atmoPercent)
     speedAchFlat > 0 ? `<div class="flex justify-between gap-6"><span>${t('speedTooltipAchievement')}</span><span class="font-bold text-magic-blue">${pct(speedAchFlat)}</span></div>` : '',
     speedStreak > 0 ? `<div class="flex justify-between gap-6"><span>${t('speedTooltipStreak').replace('{days}', speedStreakDays)}</span><span class="font-bold text-magic-blue">${pct(speedStreak)}</span></div>` : '',
   ].filter(Boolean).join('');
-  const stageMin = stage.min;
-  const stageMax = stage.max;
-  const stageRange = stageMax - stageMin;
-  const stageProgress = Math.min(100, Math.round(((curAtmo - stageMin) / stageRange) * 100));
+  const stageMin = atmoProg.min;
+  const stageNext = atmoProg.next;
 
   container.innerHTML = `
     ${renderTierGoals(stage)}
@@ -257,10 +255,10 @@ function renderOverview(container, stage, levelInfo, desc, maxAtmo, atmoPercent)
       </div>
       <div class="max-w-md mx-auto mb-3">
         <div class="flex justify-between text-sm text-ink-light mb-1">
-          <span>0</span><span class="font-bold text-magic-blue">${state.library.atmosphere}/${maxAtmo}</span><span>${maxAtmo}</span>
+          <span>${stageMin}</span><span class="font-bold text-magic-blue">${curAtmo}${stageNext ? `/${stageNext}` : ''}</span><span>${stageNext ?? 'MAX'}</span>
         </div>
         <div class="h-3 bg-gray-200 rounded-full overflow-hidden">
-          <div class="h-full bg-gradient-to-r from-wood via-magic-gold to-magic-gold" style="width:${atmoPercent}%"></div>
+          <div class="h-full bg-gradient-to-r from-wood via-magic-gold to-magic-gold" style="width:${atmoProg.percent}%"></div>
         </div>
       </div>
       ${levelInfo.next > 0 ? `<p class="text-sm text-ink-light">${t('needMoreAtmosphere').replace('{n}', levelInfo.next)}</p>` : `<p class="text-sm text-magic-gold">${t('libraryFullyRestored')}</p>`}

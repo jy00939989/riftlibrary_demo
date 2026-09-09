@@ -10,6 +10,15 @@ anchors:
   - { type: file, path: "js/core/economy.js", weight: 0.1 }
   - { type: file, path: "js/core/book-progress.js", weight: 0.1 }
   - { type: file, path: "scripts/simulate-atmosphere-economy.mjs", weight: 0.1 }
+  - { type: file, path: "data/atmosphere.js", weight: 0.1 }
+  - { type: file, path: "data/tiergoals.js", weight: 0.1 }
+  - { type: file, path: "js/collection.js", weight: 0.1 }
+  - { type: file, path: "js/achievements.js", weight: 0.1 }
+  - { type: file, path: "js/audio.js", weight: 0.1 }
+  - { type: file, path: "js/i18n/terms.js", weight: 0.1 }
+  - { type: file, path: "js/render/common.js", weight: 0.1 }
+  - { type: file, path: "js/render/library.js", weight: 0.1 }
+  - { type: file, path: "index.html", weight: 0.1 }
 ---
 
 # 氛围系统重设计（atmosphere-system-redesign）
@@ -98,7 +107,7 @@ anchors:
 
 ## 六、实施阶段（v4 大瘦身）
 
-1. **Phase 1 换表**：阈值表 + addAtmosphere 去封顶 + 顶栏改进度条（**半日工作量**）
+1. **Phase 1 换表**：阈值表 + addAtmosphere 去封顶 + 顶栏改进度条（**半日工作量**）✅ 2026-09-09 落地。实施实收编 **6 处**阈值实现（评审 P0-A 点名 3 处之外的增量）：`data/tiergoals.js` 馆长目标阶梯（改挂 STAGE_THRESHOLDS 推导，t5g4 改 5,600）、`js/audio.js tierForAtmo` BGM 三档（1-2 阶 ruined / 3-4 阶 cozy / 5 阶 stellar）、`js/achievements.js` L01/L03/L05/L07（改 getStageLevel>=N）、`js/storage.js updateBodyBackground` 背景分阶；i18n 文案同步（成就描述/t5g4/FAQ 删 500 上限句）；删除死模块 `js/atmosphere.js`（全库无引用，且依赖已删除的 stage.max）。顶栏与概况页进度条 = 阶段内进度（当前值/下一阶阈值，满级 MAX）。
 2. **Phase 2 设施**：金币门槛校验 + 升级给 EXP（等级×40）
 3. **Phase 3 借还链**：wearCount + 乘性磨损 + 重抄清零 + 典藏回报 + 书况 UI
 4. **Phase 4 场馆房间**：阶段解锁 + 金币建造（venue 方案落地 + 金币消费口）

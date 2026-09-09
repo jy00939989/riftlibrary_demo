@@ -1,16 +1,25 @@
 // 馆长目标阶梯 —— 5个阶段，对应5个氛围层级
 // 纯数据模块，不引入 DOM 依赖。check() 均为 state 纯函数。
+// 阶段区间单源挂载 data/atmosphere.js（D17）：换阈值表只改一处。
+
+import { STAGE_THRESHOLDS } from './atmosphere.js';
 
 /**
- * 氛围阶段映射：
- *   1: 废墟残响 (0-29)
- *   2: 破败 (30-79)
- *   3: 陈旧 (80-159)
- *   4: 温暖 (160-299)
- *   5: 星辰之境 (300-500)
+ * 氛围阶段映射（v4.3 定版，随 STAGE_THRESHOLDS 自动更新）：
+ *   1: 废墟残响 (0-399)
+ *   2: 破败 (400-899)
+ *   3: 陈旧 (900-2799)
+ *   4: 温暖 (2800-5599)
+ *   5: 星辰之境 (5600+)
  *
  * 每阶 3-4 个子目标，覆盖专注/书籍/访客/设施/植物/位面/标志牌/成就 维度。
  */
+
+// 进入第 level 阶的累计氛围门槛（1 阶 = 0）
+const stageMinOf = (level) => (level <= 1 ? 0 : STAGE_THRESHOLDS[level - 2]);
+
+// 第 level 阶的上限（含）：最高阶为 Infinity（EXP 无封顶）
+const stageMaxOf = (level) => (level >= STAGE_THRESHOLDS.length + 1 ? Infinity : STAGE_THRESHOLDS[level - 1] - 1);
 
 // ---- 辅助 ----
 
@@ -49,8 +58,8 @@ export const TIER_GOALS = [
   {
     id: 'tier1',
     level: 1,
-    stageMin: 0,
-    stageMax: 29,
+    stageMin: stageMinOf(1),
+    stageMax: stageMaxOf(1),
     name: '推开馆门',
     emoji: '🚪',
     subtitle: '废墟中的第一道门',
@@ -68,8 +77,8 @@ export const TIER_GOALS = [
   {
     id: 'tier2',
     level: 2,
-    stageMin: 30,
-    stageMax: 79,
+    stageMin: stageMinOf(2),
+    stageMax: stageMaxOf(2),
     name: '烛火初明',
     emoji: '🕯️',
     subtitle: '第一簇烛光亮起',
@@ -87,8 +96,8 @@ export const TIER_GOALS = [
   {
     id: 'tier3',
     level: 3,
-    stageMin: 80,
-    stageMax: 159,
+    stageMin: stageMinOf(3),
+    stageMax: stageMaxOf(3),
     name: '典籍渐满',
     emoji: '📚',
     subtitle: '书香渐浓，秩序初成',
@@ -106,8 +115,8 @@ export const TIER_GOALS = [
   {
     id: 'tier4',
     level: 4,
-    stageMin: 160,
-    stageMax: 299,
+    stageMin: stageMinOf(4),
+    stageMax: stageMaxOf(4),
     name: '登堂入室',
     emoji: '🏛️',
     subtitle: '不只是建筑，而是庇护所',
@@ -125,8 +134,8 @@ export const TIER_GOALS = [
   {
     id: 'tier5',
     level: 5,
-    stageMin: 300,
-    stageMax: 500,
+    stageMin: stageMinOf(5),
+    stageMax: stageMaxOf(5),
     name: '星辰之境',
     emoji: '✨',
     subtitle: '奇迹在此栖息',
@@ -138,7 +147,7 @@ export const TIER_GOALS = [
       { id: 't5g1', icon: '📚', label: '完成 15 本书',       check: (s) => countCompletedBooks(s) >= 15 },
       { id: 't5g2', icon: '👥', label: '吸引全部 10 位访客', check: (s) => countUniqueVisitors(s) >= 10 },
       { id: 't5g3', icon: '🏆', label: '解锁 15 个成就',     check: (s) => countAchievements(s) >= 15 },
-      { id: 't5g4', icon: '⭐', label: '氛围达到 500',       check: (s) => (s.library && s.library.atmosphere >= 500) },
+      { id: 't5g4', icon: '⭐', label: '氛围达到 5600',       check: (s) => (s.library && s.library.atmosphere >= STAGE_THRESHOLDS[3]) },
     ]
   }
 ];

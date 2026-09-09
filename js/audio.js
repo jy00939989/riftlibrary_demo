@@ -3,6 +3,7 @@ import { state, saveState } from './state.js';
 import { initAmbient, setAmbientEnabled, isAmbientEnabled, playAmbient, stopAmbient } from './ambient.js';
 import { getSettings, setSettings, setSetting, initSettings } from './settings.js';
 import { TRACK_DEFS } from '../data/music.js';
+import { getStageLevel } from '../data/atmosphere.js';
 import { spendCoins } from './storage.js';
 
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
@@ -14,9 +15,11 @@ let fadingAudio = null; // 正在淡出中的旧音频，切换/关闭时必须�
 
 // ========== 工具 ==========
 
+// BGM 档位挂氛围阶段单源（D17）：1-2 阶 ruined / 3-4 阶 cozy / 5 阶 stellar
 function tierForAtmo(v) {
-  if (v > 300) return 'stellar';
-  if (v > 80) return 'cozy';
+  const lv = getStageLevel(v || 0);
+  if (lv >= 5) return 'stellar';
+  if (lv >= 3) return 'cozy';
   return 'ruined';
 }
 
