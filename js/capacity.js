@@ -261,7 +261,7 @@ export function upgradeRestorationLevel() {
   if (!state.restorationUnlocked) return false;
   const level = getRestorationLevel();
   if (level >= MAX_RESTORATION_LEVEL) return false;
-  if (level + 1 > getFacilityLevelCap(state.library.atmosphere)) return false; // D22 阶段门槛
+  if (level + 1 > getFacilityLevelCap(state.library.atmosphere, state.library.stage)) return false; // D22 阶段门槛
   const price = getRestorationUpgradePrice();
   if (price > 0 && !spendCoins(price)) return false;
   state.restorationLevel = level + 1;

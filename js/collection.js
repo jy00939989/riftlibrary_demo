@@ -4,7 +4,7 @@ import { BOOKS } from '../data/books.js';
 import { PLANES, canUnlockPlane } from '../data/planes.js';
 import { t, getAtmosphereStageName } from './i18n/terms.js';
 import { getVisitorStats } from './visitorMemory.js';
-import { getStageLevel } from '../data/atmosphere.js';
+import { resolveStageLevel } from '../data/atmosphere.js';
 
 const STORAGE_KEY = 'library_collection';
 
@@ -76,7 +76,7 @@ function getMilestoneProgress() {
 
   // 氛围阶段
   const atmo = state.library.atmosphere || 0;
-  const atmoStageLevel = getStageLevel(atmo);
+  const atmoStageLevel = resolveStageLevel(atmo, state.library.stage);
   const atmoStageName = getAtmosphereStageName(atmoStageLevel);
   items.push({ name: t('collectionMilestoneAtmosphere'), value: atmoStageName, hasValue: atmo > 0, icon: '✨' });
 

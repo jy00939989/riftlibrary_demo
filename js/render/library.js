@@ -1,7 +1,7 @@
 // 图书馆 & 收藏室页面渲染（子标签页：概况 / 成就柜 / 收藏室 / 布置 / 攻略 / 古籍修复室）
 import { state } from '../state.js';
-import { getAtmosphereStage, getRandomDescription, getStageProgress, getFacilityLevelCap, getFacilityRequiredStage } from '../../data/atmosphere.js';
-import { getAtmosphereLevel } from '../storage.js';
+import { getAtmosphereStage, getRandomDescription, getStageProgress, getFacilityLevelCap, getFacilityRequiredStage, getStageUpRequirements, getStageThreshold } from '../../data/atmosphere.js';
+import { getAtmosphereLevel, canHoldStageCeremony, holdStageCeremony, getStageUpSnapshot } from '../storage.js';
 import { getFocusSpeedMultiplier, getSignboardBuffSum } from '../shop.js';
 import { getMasteredBookSpeedBonus } from '../core/shop/library-upgrades.js';
 import { renderAchievements } from './achievements.js';
@@ -52,10 +52,11 @@ export function renderLibraryPage() {
   if (!container) return;
 
   const levelInfo = getAtmosphereLevel();
-  const stage = getAtmosphereStage(state.library.atmosphere);
+  const stage = getAtmosphereStage(state.library.atmosphere, state.library.stage);
   const desc = getRandomDescription(stage);
-  // 阶段内进度（v4.3 换表：进度条 = 当前阶内的推进，不再以 500 为满）
-  const atmoProg = getStageProgress(state.library.atmosphere);
+  // 阶段内进度（v4.3 换表：进度条 = 当前阶内的推进，不再以 500 为满；
+  // D24：进度跟存储阶段走，卡阶等待仪式时满格 100%）
+  const atmoProg = getStageProgress(state.library.atmosphere, state.library.stage);
 
   container.innerHTML = `
     <div class="parchment-bg rounded-2xl magic-glow overflow-hidden">
@@ -128,7 +129,9 @@ function getVolumeGroupTitle(group, unlocked) {
 // ========== 馆长目标阶梯渲染 ==========
 
 function renderTierGoals(stage) {
-  const curAtmo = state.library.atmosphere;
+  // D24：馆长目标阶梯跟「存储阶段」走——卡阶等待仪式时不提前显示下一阶目标。
+  // 各阶 stageMin 与阶段阈值一致，直接以当前阶门槛值代入 getTierStatus。
+  const curAtmo = stage.min;
 
   // 已完成阶 → 紧凑摘要（一行一行）
   const completedTiers = TIER_GOALS.filter(t => getTierStatus(t, curAtmo) === 'completed');
@@ -236,6 +239,19 @@ function renderOverview(container, stage, levelInfo, desc, atmoProg) {
   const stageMin = atmoProg.min;
   const stageNext = atmoProg.next;
 
+  // D24 升阶仪式：氛围达阈值 + 设施条件齐 → 出仪式按钮；氛围过线但条件未齐 → 需求清单
+  const ceremonyReady = canHoldStageCeremony();
+  const waitingReqs = !ceremonyReady && stageNext !== null && curAtmo >= stageNext;
+  const nextReqs = getStageUpRequirements(stage.level + 1);
+  const upSnap = getStageUpSnapshot();
+  const reqRows = nextReqs ? [
+    nextReqs.focus ? { label: `${t('tabScriptorium')} ≥ Lv.${nextReqs.focus}`, met: upSnap.focus >= nextReqs.focus } : null,
+    nextReqs.borrow ? { label: `${t('readingArea')} ≥ Lv.${nextReqs.borrow}`, met: upSnap.borrow >= nextReqs.borrow } : null,
+    nextReqs.restorationLevel ? { label: `${t('restorationRoom')} ≥ Lv.${nextReqs.restorationLevel}`, met: upSnap.restorationLevel >= nextReqs.restorationLevel } : null,
+    nextReqs.restorationUnlocked ? { label: `${t('restorationRoom')}·${t('unlocked')}`, met: upSnap.restorationUnlocked } : null,
+    nextReqs.musicRoomUnlocked ? { label: `${t('tabMusicRoom')}·${t('unlocked')}`, met: upSnap.musicRoomUnlocked } : null,
+  ].filter(Boolean) : [];
+
   container.innerHTML = `
     ${renderTierGoals(stage)}
 
@@ -261,7 +277,17 @@ function renderOverview(container, stage, levelInfo, desc, atmoProg) {
           <div class="h-full bg-gradient-to-r from-wood via-magic-gold to-magic-gold" style="width:${atmoProg.percent}%"></div>
         </div>
       </div>
-      ${levelInfo.next > 0 ? `<p class="text-sm text-ink-light">${t('needMoreAtmosphere').replace('{n}', levelInfo.next)}</p>` : `<p class="text-sm text-magic-gold">${t('libraryFullyRestored')}</p>`}
+      ${ceremonyReady ? `
+        <button id="stage-ceremony-btn" class="mt-2 px-6 py-2.5 rounded-full font-bold text-white bg-gradient-to-r from-magic-gold to-yellow-500 shadow-lg hover:shadow-xl transition-all animate-pulse">${t('stageCeremonyBtn')}</button>
+        <p class="text-xs text-ink-light mt-1.5">${t('stageCeremonyHint')}</p>`
+      : waitingReqs ? `
+        <div class="mt-2">
+          <p class="text-sm text-magic-gold font-bold mb-1">✨ ${t('stageUpWaiting')}</p>
+          <div class="flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs">
+            ${reqRows.map(r => `<span class="${r.met ? 'text-green-700' : 'text-ink-light'}">${r.met ? '✓' : '✗'} ${r.label}</span>`).join('')}
+          </div>
+        </div>`
+      : levelInfo.next > 0 ? `<p class="text-sm text-ink-light">${t('needMoreAtmosphere').replace('{n}', levelInfo.next)}</p>` : `<p class="text-sm text-magic-gold">${t('libraryFullyRestored')}</p>`}
     </div>
     <div class="bg-wood/5 border-2 border-wood/20 rounded-xl p-4 mb-6">
       <h3 class="font-bold mb-2 flex items-center gap-2"><span>📖</span> ${t('todayLibrary')}</h3>
@@ -285,6 +311,18 @@ function renderOverview(container, stage, levelInfo, desc, atmoProg) {
       </div>
     </div>
   `;
+
+  // 升阶仪式按钮（D24）：点击升阶 → onStageCross 链路播庆典（见证人/馆长目标），随后刷新页面
+  const ceremonyBtn = container.querySelector('#stage-ceremony-btn');
+  if (ceremonyBtn) {
+    ceremonyBtn.addEventListener('click', () => {
+      const result = holdStageCeremony();
+      if (result) {
+        updateStatusBar();
+        renderLibraryPage();
+      }
+    });
+  }
 }
 
 // ========== 成就柜子标签 ==========
@@ -456,7 +494,7 @@ function renderRestorationTab(container) {
   const maxLevel = 5;
   const upgradePrice = getRestorationUpgradePrice();
   const repairBonus = Math.round(getRestorationRepairSpeedBonus() * 100);
-  const rgateLocked = level < maxLevel && level + 1 > getFacilityLevelCap(state.library.atmosphere || 0); // D22
+  const rgateLocked = level < maxLevel && level + 1 > getFacilityLevelCap(state.library.atmosphere || 0, state.library.stage); // D22
   const levelCard = document.createElement('div');
   levelCard.className = 'bg-white/60 rounded-xl overflow-hidden border border-wood/20';
   levelCard.innerHTML = `

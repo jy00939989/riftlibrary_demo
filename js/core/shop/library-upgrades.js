@@ -22,7 +22,7 @@ export function getBorrowLevelPrice() {
 export function upgradeBorrowLevel() {
   const lv = state.library.borrowLevel || 0;
   if (lv >= 7) return false;
-  if (lv + 1 > getFacilityLevelCap(state.library.atmosphere)) return false; // D22 阶段门槛
+  if (lv + 1 > getFacilityLevelCap(state.library.atmosphere, state.library.stage)) return false; // D22 阶段门槛
   const price = getBorrowLevelPrice();
   if (!spendCoins(price)) return false;
 
@@ -69,7 +69,7 @@ export function getFocusLevelPrice() {
 export function upgradeFocusLevel() {
   const lv = state.library.focusLevel || 0;
   if (lv >= 6) return false;
-  if (lv + 1 > getFacilityLevelCap(state.library.atmosphere)) return false; // D22 阶段门槛
+  if (lv + 1 > getFacilityLevelCap(state.library.atmosphere, state.library.stage)) return false; // D22 阶段门槛
   const price = getFocusLevelPrice();
   if (!spendCoins(price)) return false;
 

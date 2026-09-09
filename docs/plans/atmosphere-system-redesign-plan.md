@@ -25,6 +25,10 @@ anchors:
   - { type: file, path: "js/core/shop-actions.js", weight: 0.1 }
   - { type: file, path: "js/render/shop/library-upgrades.js", weight: 0.1 }
   - { type: file, path: "scripts/verify-atmosphere-narrowing.js", weight: 0.1 }
+  - { type: file, path: "js/state/state.js", weight: 0.1 }
+  - { type: file, path: "js/state/migrations.js", weight: 0.1 }
+  - { type: file, path: "data/planes.js", weight: 0.1 }
+  - { type: file, path: "js/render/archive.js", weight: 0.1 }
 ---
 
 # 氛围系统重设计（atmosphere-system-redesign）
@@ -56,9 +60,9 @@ anchors:
 
 | # | 决策 | v4 形态 |
 |---|---|---|
-| 1 | 阶段与库存 | **EXP 只增不减**；阶段纯阈值自动升级；「只进不退」天然成立（EXP 没有退的机制） |
+| 1 | 阶段与库存 | **EXP 只增不减**；~~阶段纯阈值自动升级~~ → **D24 修订：阶段落库，氛围到阈值+设施条件齐后手动举行升阶仪式**；「只进不退」天然成立（EXP 没有退的机制） |
 | 2 | 双池制 | **作废**——EXP 无封顶无溢出 |
-| 3 | 升阶仪式制 | 简化为**自动升阶**；仪式感由升阶动画/新内容解锁承载，不做手动门 |
+| 3 | 升阶仪式制 | ~~简化为自动升阶~~ → **D24 复活手动仪式**：仪式感由玩家亲手点击升阶承载；氛围过线但设施未齐时卡阶等待（进度条满格+需求清单），条件齐备出现仪式按钮，点击升阶并播庆典（见证人/馆长目标奖励沿 onStageCross 链路） |
 | 4 | 设施固定氛围 | 设施升级**一次性 +氛围（EXP）**（等级×40，仿真定版）；每日涓流 EXP 仿真证伪节奏过快，**不采用** |
 | 5 | 设施范围 | MVP 三项：缮写室 / 借阅区 / 修复室（轨道在 capacity.js） |
 | 6 | 双消耗 | **作废**——升级只花金币（EXP 不花）；「占比随级爬升」无载体 |
@@ -67,6 +71,7 @@ anchors:
 | 9 | 单书借阅磨损 | 保留：还书损毁率乘性磨损 ×(1+0.6×steps/15)，**重抄清零** |
 | 10 | 自由池出口 | **作废**（自由池不存在）；场馆房间改为**阶段解锁+金币建造** |
 | 插单 | 典藏版借出回报 | 保留：还书 智慧之光 ×2、氛围 ×3 |
+| D24 | 升阶设施门槛（反向门，图南 2026-09-09 拍板「梯度爬坡」表） | 升阶需设施条件：**2 阶** 缮写室≥1+借阅区≥1｜**3 阶** 缮写室≥2+借阅区≥3+修复室已解锁｜**4 阶** 缮写室≥3+借阅区≥4+修复室≥2+留声阁已解锁｜**5 阶** 缮写室≥5+借阅区≥5+修复室≥3+留声阁已解锁。与 D22 交叉验证可达无死锁（缮写室/借阅区 Lv5 恰需 4 阶，5 阶需求全部可在 4 阶内建成）。阶段改存储字段 `state.library.stage`（migrateV5 老档按已达氛围定阶，不追溯设施）；位面门 pastoral 解锁同步改「需 3 阶」（原 atmo 80 旧表值） |
 
 衍生修订（图南 2026-09-08 裁定）：**火灾罚金改扣金币**（EXP 模型不掉经验，掉经验是最差惩罚）；**50:1 兑灵感删除**（EXP 换货币污染纯度，灵感由 DLC 售卖与既有 sink 承载）。
 
@@ -80,6 +85,7 @@ anchors:
 | 设施 EXP 一次性 | **等级 ×20**（D19） | 占比 35%→~16%，防「买设施比抄书快」稀释核心玩法 |
 | 设施金币成本 | 沿用 economy.js 公式 | 借阅区 500×1.5ⁿ（封顶 5700）/ 缮写室·修复室 400×1.45ⁿ（封顶 5000） |
 | 设施等级门槛 | **1 阶→Lv2 / 2 阶→Lv3 / 3 阶→Lv4 / 4 阶→Lv5 / 5 阶→Lv6-7**（D22 新手保护） | 阶段压住设施，设施 EXP 反哺阶段——正循环 |
+| 升阶设施需求 | **D24 梯度爬坡表**（见决策清单 D24 行） | 反向门：设施齐了才允许升阶；氛围 EXP 照攒不卡获取，只卡升阶时刻 |
 | 还书氛围 returnAtmo | **1/2/3/4/5/6/7 随等级递增**（D18） | 每次门槛解锁都有真实产能台阶；原「收窄」压制语义随 EXP 架构转型（图南批） |
 | 火灾罚金 | 200 金币 | EXP 不掉；损书照旧 |
 | 单书磨损 | 乘性 ×(1+0.6×steps/15)，满磨损 ×1.6，重抄清零 | 三调用点注入 wearCount（还书结算/书卡展示/升级弹窗） |
@@ -115,6 +121,7 @@ anchors:
 
 1. **Phase 1 换表**：阈值表 + addAtmosphere 去封顶 + 顶栏改进度条（**半日工作量**）✅ 2026-09-09 落地。实施实收编 **6 处**阈值实现（评审 P0-A 点名 3 处之外的增量）：`data/tiergoals.js` 馆长目标阶梯（改挂 STAGE_THRESHOLDS 推导，t5g4 改 5,600）、`js/audio.js tierForAtmo` BGM 三档（1-2 阶 ruined / 3-4 阶 cozy / 5 阶 stellar）、`js/achievements.js` L01/L03/L05/L07（改 getStageLevel>=N）、`js/storage.js updateBodyBackground` 背景分阶；i18n 文案同步（成就描述/t5g4/FAQ 删 500 上限句）；删除死模块 `js/atmosphere.js`（全库无引用，且依赖已删除的 stage.max）。顶栏与概况页进度条 = 阶段内进度（当前值/下一阶阈值，满级 MAX）。
 2. **Phase 2 设施**：金币门槛校验 + 升级给 EXP（等级×20）✅ 2026-09-09 落地（D22+ D19 + D18 一并完成）：门槛/EXP 助手入 data/atmosphere.js（`getFacilityLevelCap`/`getFacilityRequiredStage`/`FACILITY_EXP_PER_LEVEL=20`，修一处 max stage = 阈值数+1 的边界 bug）；三升级核心（借阅区/缮写室/修复室）加阶段门槛校验 + 升级发 等级×20 EXP（修复室原本不发，补上）；returnAtmo 表改 1-7 递增（D18，visitors.js 表驱动自动生效）；四处 UI 加 🔒 门控提示（商店三卡+修复室标签页+访客页 action 路径）；verify-atmosphere-narrowing 脚本第 3 节改断言 1-7 线性。
+   - **Phase 2.5 升阶设施门槛（D24）**✅ 2026-09-09 当日追加落地（推翻 v4 决策 1/3 的纯阈值自动升阶）：需求表 `STAGE_UP_REQUIREMENTS` 入 data/atmosphere.js（`checkStageUpRequirements` 纯函数 + `resolveStageLevel` 存储字段解析，全部阶段判定函数加可选 stageField 形参）；`state.library.stage` 落库（新档默认 1，migrateV5 老档按已达氛围定阶不追溯）；storage.js 加 `canHoldStageCeremony`/`holdStageCeremony`（升阶沿 onStageCross 链路复用见证人 toast+馆长目标奖励）；概况页进度条改跟存储阶段（卡阶满格 100%），氛围过线未齐显示 ✓/✗ 需求清单，齐备出「✨ 举行升阶仪式」按钮；背景/BGM/成就/收藏/设施上限全部改 `resolveStageLevel` 双参；位面门 pastoral 改 `unlock.stage: 3`（canUnlockPlane + 商店/档案馆两处 UI 文案同步）；verify 脚本加第 6 节（可达性×需求核对×回退解析×卡阶进度，30 项全过）。**遗留**：仿真脚本未建模仪式等待，v4.3 首通天数（166/202/247）将因设施金币门槛略拉长，待真实数据回测一并校准。
 3. **Phase 3 借还链**：wearCount + 乘性磨损 + 重抄清零 + 典藏回报 + 书况 UI
 4. **Phase 4 场馆房间**：阶段解锁 + 金币建造（venue 方案落地 + 金币消费口）
 5. Phase 1-3 可打包一次部署；Phase 4 独立

@@ -63,23 +63,65 @@ export function addAtmosphere(points) {
   return { prevLevel, newLevel, crossed: [] };
 }
 
-// 根据氛围阶段动态切换 body 背景图（阶段等级单源在 data/atmosphere.js）
+// 根据氛围阶段动态切换 body 背景图（阶段等级单源在 data/atmosphere.js；D24 起跟存储阶段字段走）
 export function updateBodyBackground() {
-  const bgNum = getStageLevel(state.library.atmosphere);
+  const bgNum = resolveStageLevel(state.library.atmosphere, state.library.stage);
 
   const bgUrl = `visual/background/library_bg_0${bgNum}_${['','abandoned','ruined','cozy','gorgeous','magnificent'][bgNum]}.jpg`;
   document.body.style.backgroundImage = `linear-gradient(rgba(44,36,25,0.88), rgba(44,36,25,0.88)), url('${bgUrl}')`;
 }
 
 import { getAtmosphereLevel as _getAtmosphereLevel } from './core/economy.js';
-import { getStageLevel } from '../data/atmosphere.js';
+import { resolveStageLevel, checkStageUpRequirements, getStageThreshold, MAX_STAGE_LEVEL } from '../data/atmosphere.js';
 
 // 绑定当前存档氛围值的阶段信息（纯函数版见 getAtmosphereLevelPure）
 export function getAtmosphereLevel() {
-  return _getAtmosphereLevel(state.library.atmosphere);
+  return _getAtmosphereLevel(state.library.atmosphere, state.library.stage);
 }
 
 export { _getAtmosphereLevel as getAtmosphereLevelPure };
+
+// ── 升阶仪式（D24：阶段落库，氛围到阈值+设施条件齐后手动举行仪式升阶）──
+
+/** 当前图书馆阶段（存储字段优先，老档回退阈值推导） */
+export function getLibraryStage() {
+  return resolveStageLevel(state.library.atmosphere, state.library.stage);
+}
+
+/** 升阶条件核对用的设施快照 */
+export function getStageUpSnapshot() {
+  return {
+    focus: state.library.focusLevel || 0,
+    borrow: state.library.borrowLevel || 0,
+    restorationLevel: state.restorationLevel || 0,
+    restorationUnlocked: !!state.restorationUnlocked,
+    musicRoomUnlocked: !!(state.musicRoom && state.musicRoom.unlocked),
+  };
+}
+
+/** 是否可举行升阶仪式：未满级 + 氛围达下一阶阈值 + 设施需求齐备 */
+export function canHoldStageCeremony() {
+  const stage = getLibraryStage();
+  if (stage >= MAX_STAGE_LEVEL) return false;
+  const threshold = getStageThreshold(stage + 1);
+  if ((state.library.atmosphere || 0) < threshold) return false;
+  return checkStageUpRequirements(stage + 1, getStageUpSnapshot()).length === 0;
+}
+
+/** 举行升阶仪式：阶段 +1，沿 onStageCross 链路触发升阶庆典（见证人 toast / 馆长目标奖励） */
+export function holdStageCeremony() {
+  if (!canHoldStageCeremony()) return null;
+  const prevLevel = getLibraryStage();
+  state.library.stage = prevLevel + 1;
+  updateBodyBackground();
+  refreshBGM();
+  saveState();
+
+  track('stage_ceremony', { prev_level: prevLevel, new_level: state.library.stage });
+
+  if (_onStageCross) _onStageCross([state.library.stage]);
+  return { prevLevel, newLevel: state.library.stage };
+}
 
 export function updateStreak() {
   const today = new Date().toDateString();

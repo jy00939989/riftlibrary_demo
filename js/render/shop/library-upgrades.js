@@ -22,7 +22,7 @@ import {
   t, getBorrowLevelName, getRestorationLevelName, getFocusRoomLevelName
 } from '../../i18n/terms.js';
 import { showNamingModal } from './naming-modal.js';
-import { getFacilityLevelCap, getFacilityRequiredStage } from '../../../data/atmosphere.js';
+import { getFacilityLevelCap, getFacilityRequiredStage, resolveStageLevel } from '../../../data/atmosphere.js';
 
 export function renderLibraryUpgrades() {
   const section = el('div', 'parchment-bg rounded-2xl p-6 magic-glow');
@@ -35,7 +35,7 @@ export function renderLibraryUpgrades() {
   const lv = state.library.borrowLevel || 0;
   const price = getBorrowLevelPrice();
   const maxed = lv >= 7;
-  const gateCap = getFacilityLevelCap(state.library.atmosphere || 0);
+  const gateCap = getFacilityLevelCap(state.library.atmosphere || 0, state.library.stage);
   const gateLocked = !maxed && lv + 1 > gateCap; // D22 阶段门槛
 
   const readingCard = el('div', 'bg-white rounded-xl p-4 border-2 border-magic-gold/30 flex gap-4 items-center');
@@ -164,7 +164,7 @@ export function renderLibraryUpgrades() {
     const portalKey = pastoral.unlock.shopUpgrade;
     const portalPurchased = state.library.planePortals && state.library.planePortals[portalKey];
     const canPurchase = canUnlockPlane('pastoral', state) && !portalPurchased;
-    const meetsReqs = (state.library.atmosphere || 0) >= pastoral.unlock.atmo
+    const meetsReqs = resolveStageLevel(state.library.atmosphere || 0, state.library.stage) >= pastoral.unlock.stage
       && Object.values(state.books || {}).filter(b => b && b.status !== 'locked').length >= pastoral.unlock.books;
 
     if (!portalPurchased || canPurchase) {
@@ -189,7 +189,7 @@ export function renderLibraryUpgrades() {
           <p class="text-xs text-ink-light mb-2">${pastoral.desc}</p>
           ${!meetsReqs
             ? `<p class="text-xs text-ink-light/60">${t('requirements')
-                .replace('{atmo}', pastoral.unlock.atmo)
+                .replace('{stage}', pastoral.unlock.stage)
                 .replace('{books}', pastoral.unlock.books)}</p>`
             : canPurchase
               ? `<button class="portal-purchase-btn px-4 py-1.5 bg-magic-gold text-white rounded-lg text-sm font-bold hover:shadow-lg transition-all">${t('openPortal')} 💰${price.toLocaleString()}</button>`

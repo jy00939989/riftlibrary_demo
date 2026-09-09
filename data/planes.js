@@ -1,5 +1,6 @@
 // 位面定义 —— 归墟图书馆连接的诸世界
-// 纯数据模块，不依赖任何其他模块
+// 纯数据模块；仅依赖纯数据层 data/atmosphere.js（阶段解析，D24）
+import { resolveStageLevel } from './atmosphere.js';
 
 export const PLANES = {
   astral: {
@@ -21,7 +22,7 @@ export const PLANES = {
     desc: '一个中世纪田园位面。麦浪翻涌的山谷中，村庄静静安睡——直到瘟疫降临，愚昧与知识展开了搏斗。',
     unlocked: false,
     unlock: {
-      atmo: 80,
+      stage: 3, // D24：原 atmo 80（旧表 3 阶中段）改为阶段门槛；新表 3 阶 = 陈旧
       books: 12,
       shopUpgrade: 'plane_portal_pastoral'
     },
@@ -74,14 +75,14 @@ export const ACTIVE_PLANES = ['astral', 'pastoral'];
 export function canUnlockPlane(planeId, state) {
   const plane = PLANES[planeId];
   if (!plane || plane.unlocked || !plane.unlock) return false;
-  const { atmo, books, shopUpgrade } = plane.unlock;
+  const { stage, books, shopUpgrade } = plane.unlock;
 
-  const atmoOk = (state.library.atmosphere || 0) >= atmo;
+  const stageOk = resolveStageLevel(state.library.atmosphere || 0, state.library.stage) >= stage;
   const booksOk = Object.values(state.books || {}).filter(
     b => b && b.status !== 'locked'
   ).length >= books;
   // shopUpgrade 为空表示无前置升级要求；非空则检查是否还未购买（避免重复购买）
   const upgradeOk = !shopUpgrade || !(state.library.planePortals && state.library.planePortals[shopUpgrade]);
 
-  return atmoOk && booksOk && upgradeOk;
+  return stageOk && booksOk && upgradeOk;
 }
