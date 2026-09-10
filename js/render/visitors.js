@@ -2,6 +2,7 @@
 import { state } from '../state.js';
 import { BOOKS } from '../../data/books.js';
 import { el, actions, getBookTitle } from './common.js';
+import { t } from '../i18n/terms.js';
 import { getBorrowLevelConfig, getVisitorCap, getVisitorDef, getDamageChance } from '../visitors.js';
 
 function getVisitorBookTitle(bookId, fallback) {
