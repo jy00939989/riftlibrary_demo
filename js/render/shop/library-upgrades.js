@@ -68,7 +68,7 @@ export function renderLibraryUpgrades() {
         <span class="text-xs bg-magic-gold/20 text-magic-gold px-2 py-0.5 rounded-full">Lv.${lv} · ${getBorrowLevelName(lv)}</span>
       </div>
       <p class="text-xs text-ink-light mb-2">${borrowStats}</p>
-      <p class="text-xs text-magic-blue mb-2">📖 ${t('borrowAreaDamageRate').replace('{damage}', (getDamageChance(lv) * 100).toFixed(1))}</p>
+      <p class="text-xs text-magic-blue mb-2">📖 ${t('borrowAreaDamageRate').replace('{damage}', (getDamageChance(lv, undefined, 0) * 100).toFixed(1))} · ${t('wearDamageNote')}</p>
       ${maxed
         ? `<span class="text-sm text-magic-gold font-bold">${t('maxLevel')} ✨</span>`
         : gateLocked

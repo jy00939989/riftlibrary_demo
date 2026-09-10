@@ -12,6 +12,7 @@ import { isNoMasteryBook } from '../core/book-eligibility.js';
 import { setFocusBook } from '../core/focus-session.js';
 import { unlockReCopy, toggleBookStar, markChapterRead } from '../core/book-progress.js';
 import { autoShelveCompletedManuscripts, swapShelfSlots } from '../core/library.js';
+import { getBookCondition, getDamageChance } from '../visitors.js';
 
 const SHELF_CAPACITY = 5;
 let currentFilter = 'all';
@@ -363,6 +364,21 @@ function applyFilters(books) {
   return result;
 }
 
+// 书况（Phase 3 借还链）：磨损档位 + 该书磨损加权后的还书损毁率
+function renderBookCondition(bookId) {
+  const bs = state.books[bookId];
+  if (!bs) return '';
+  const wear = bs.wearCount || 0;
+  const condKey = getBookCondition(wear);
+  const condClass = {
+    pristine: 'text-green-600', good: 'text-green-600',
+    worn: 'text-amber-600', fragile: 'text-orange-600', critical: 'text-red-500'
+  }[condKey];
+  const dmg = (getDamageChance(state.library.borrowLevel || 0, (state.signboards || []).includes('care_for_books'), wear) * 100).toFixed(1);
+  const wearNote = wear > 0 ? ` · ${t('wearDamageRate').replace('{rate}', dmg)}` : '';
+  return `<div class="text-[10px] mt-1 ${condClass}">📖 ${t('bookConditionLabel')}:${t('condition_' + condKey)}${wearNote}</div>`;
+}
+
 function renderBookCard(book) {
   const bookState = state.books[book.id];
   const effectiveWords = getEffectiveCopiedWords(bookState, book.totalWords);
@@ -409,6 +425,7 @@ function renderBookCard(book) {
       <div class="text-[10px] text-ink-light/60 mt-1">
         ${isCompleted ? `${t('completed')} ✓` : isCopying ? `${t('copying')} ${progress}%` : t('pendingTranscription')}
       </div>
+      ${isCompleted && !book.indestructible ? renderBookCondition(book.id) : ''}
       ${isCompleted && !bookState.reCopyUnlocked && !isNoMasteryBook(book.id)
         ? `<button class="re-copy-card-btn w-full mt-2 px-3 py-1.5 bg-purple-600/90 text-white rounded-lg text-[10px] font-bold hover:shadow-lg transition-all flex items-center justify-center gap-1">
              ${t('unlockReCopyCost').replace('{cost}', 1)}

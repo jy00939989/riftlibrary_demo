@@ -107,6 +107,30 @@ const progNormal = getStageProgress(650, 2);
 assert(progNormal.percent === Math.round((650 - 400) / 500 * 100), '2 阶中段进度按比例');
 const progMax = getStageProgress(99999, MAX_STAGE_LEVEL);
 assert(progMax.percent === 100 && progMax.next === null, '满级 MAX');
+
+console.log('\n=== 7. 借还链磨损（Phase 3：wearCount ×(1+0.6×wear/15) 封顶 ×1.6）===');
+const { getWearMultiplier, getBookCondition, WEAR_DAMAGE_CAP } = await import('../data/borrow-levels.js');
+assert(getWearMultiplier(0) === 1, '磨损 0 → 乘性 ×1.0');
+assert(Math.abs(getWearMultiplier(7) - 1.28) < 1e-9, '磨损 7 → ×1.28');
+assert(getWearMultiplier(15) === 1.6, '磨损 15 → ×1.6（恰好封顶）');
+assert(getWearMultiplier(999) === WEAR_DAMAGE_CAP, '磨损溢出仍封顶 ×1.6');
+assert(getBookCondition(0) === 'pristine' && getBookCondition(4) === 'good' && getBookCondition(9) === 'worn'
+  && getBookCondition(14) === 'fragile' && getBookCondition(15) === 'critical', '书况五档分界 0/4/9/14/15');
+// 损毁率组合公式 visitors.js:getDamageChance = base × getWearMultiplier(wear)（此处镜像 base 段核对）
+const dmgBase = (lv, sign) => {
+  const lvReduced = Math.max(0.005, 0.03 - (Math.max(1, lv) - 1) * 0.004);
+  return (sign ? Math.max(0.005, lvReduced - 0.01) : lvReduced) * 1; // × getWearMultiplier(0)=1
+};
+const dmgWithWear = (lv, sign, wear) => {
+  const lvReduced = Math.max(0.005, 0.03 - (Math.max(1, lv) - 1) * 0.004);
+  return (sign ? Math.max(0.005, lvReduced - 0.01) : lvReduced) * getWearMultiplier(wear);
+};
+assert(Math.abs(dmgBase(1, false) - 0.03) < 1e-9, '基础损毁率 3%（借阅区 Lv1 无磨损无标志牌）');
+assert(Math.abs(dmgWithWear(1, false, 15) - 0.048) < 1e-9, '满磨损损毁率 4.8%（3%×1.6）');
+assert(Math.abs(dmgWithWear(1, true, 15) - 0.032) < 1e-9, '标志牌+满磨损 = 2%×1.6 = 3.2%');
+assert(Math.abs(dmgWithWear(9, false, 15) - 0.008) < 1e-9, '借阅区高等级触下限 0.5%×1.6 = 0.8%（Lv7 实为 0.6% 未触下限）');
+const { createBookRecord } = await import('../js/core/book-utils.js');
+assert(createBookRecord().wearCount === 0, '新书籍记录 wearCount 默认 0（老档免迁移）');
 console.log('\n=== 结果 ===');
 console.log(`通过：${pass} 项`);
 console.log(`失败：${fail} 项`);
