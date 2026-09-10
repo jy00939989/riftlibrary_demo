@@ -72,6 +72,9 @@ export function completeBook(bookId) {
     bookState.status = 'completed';
   }
 
+  // Phase 3 借还链：重抄完成 = 抄写一部崭新副本，单书借阅磨损清零
+  bookState.wearCount = 0;
+
   if (bookState.reCopyUnlocked) {
     bookState.reCopyUnlocked = false;
   }

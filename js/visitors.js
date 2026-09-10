@@ -13,7 +13,7 @@ import { SHARED_POOL } from '../data/book_pool.js';
 import { VOLUME_GROUPS, getIncompleteVolumeGroups, isVolumeBookId } from '../data/volume_groups.js';
 import { PLANT_TYPES } from '../data/plants.js';
 import { track } from './backend/analytics.js';
-import { BORROW_LEVEL_TABLE } from '../data/borrow-levels.js';
+import { BORROW_LEVEL_TABLE, getWearMultiplier, getBookCondition } from '../data/borrow-levels.js';
 
 // 台风灾难参数：新植物保护期 + 触发概率 + 冷却时间
 const TYPHOON_PROBABILITY = 0.0005; // 每分钟判定概率
@@ -376,10 +376,17 @@ export function getBorrowLevelConfig() {
 }
 
 // 还书损毁概率：基础 3%，借阅区每级 -0.4%（下限 0.5%），「爱惜书籍」标志牌在等级减免后再 -1%
-export function getDamageChance(borrowLevel = state.library.borrowLevel || 0, hasCareSignboard = (state.signboards || []).includes('care_for_books')) {
+// Phase 3：第三参 wearCount 单书磨损乘性放大（公式与表在 data/borrow-levels.js，重抄清零见 book-progress.js）
+export function getDamageChance(borrowLevel = state.library.borrowLevel || 0, hasCareSignboard = (state.signboards || []).includes('care_for_books'), wearCount = 0) {
   const lvReduced = Math.max(0.005, 0.03 - (Math.max(1, borrowLevel) - 1) * 0.004);
-  return hasCareSignboard ? Math.max(0.005, lvReduced - 0.01) : lvReduced;
+  const base = hasCareSignboard ? Math.max(0.005, lvReduced - 0.01) : lvReduced;
+  return base * getWearMultiplier(wearCount);
 }
+export { getWearMultiplier, getBookCondition };
+
+// 典藏版（indestructible）借出回报倍数（插单决策：币×2 氛×3）
+export const COLLECTOR_RETURN_COIN_MULT = 2;
+export const COLLECTOR_RETURN_ATMO_MULT = 3;
 
 export function getVisitorCap() {
   return getBorrowLevelConfig().cap + getAuraVisitorCapBonus();
@@ -822,6 +829,12 @@ function attemptBorrow(visitor, completedBooks, now) {
   visitor.bookTitle = book.volumeTitle || book.title;
   visitor.borrowTime = now;
   visitor.dueTime = dueTime;
+
+  // 单书借阅磨损（Phase 3）：每被借出一次磨损 +1，乘性放大还书损毁率；典藏版不磨损
+  const bs = state.books[book.id];
+  if (bs && !book.indestructible) {
+    bs.wearCount = (bs.wearCount || 0) + 1;
+  }
   const borrowFavor = Math.round(3 * (1 + getBorrowLevelConfig().favorBonus / 100));
   visitor.favorability = (visitor.favorability || 0) + borrowFavor;
   addVisitorFavor(visitor.charId, borrowFavor);
@@ -1116,10 +1129,12 @@ export function collectReturn(visitorId) {
   const charId = visitor.charId;
   const def = VISITOR_DEFS[charId];
 
-  // 基础收益（按借阅区等级）
+  // 基础收益（按借阅区等级）；典藏版借出回报：智慧之光 ×2、氛围 ×3
   const retCfg = getBorrowLevelConfig();
-  addCoins(retCfg.returnCoins);
-  if (retCfg.returnAtmo > 0) addAtmosphere(retCfg.returnAtmo);
+  const returnedBookDef = bookId ? BOOKS[bookId] : null;
+  const isCollector = !!returnedBookDef?.indestructible;
+  const coinMult = isCollector ? COLLECTOR_RETURN_COIN_MULT : 1;
+  const atmoMult = isCollector ? COLLECTOR_RETURN_ATMO_MULT : 1;
 
   // 按借阅计划时长追加智慧之光（仅 coins，不加氛围）
   const plannedDurationMs = (visitor.dueTime && visitor.borrowTime)
@@ -1127,9 +1142,10 @@ export function collectReturn(visitorId) {
     : 0;
   const plannedDurationHours = Math.max(0, plannedDurationMs / (1000 * 60 * 60));
   const extraCoins = Math.floor(plannedDurationHours / 6) * 3;
-  if (extraCoins > 0) {
-    addCoins(extraCoins);
-  }
+  const finalCoins = Math.round((retCfg.returnCoins + extraCoins) * coinMult);
+  const finalAtmo = retCfg.returnAtmo * atmoMult;
+  addCoins(finalCoins);
+  if (finalAtmo > 0) addAtmosphere(finalAtmo);
 
   // 乔一一光环：还书好感度加成
   const favorBonus = getAuraReturnFavorBonus();
@@ -1152,8 +1168,9 @@ export function collectReturn(visitorId) {
   }
 
   const extraCoinsText = extraCoins > 0 ? ` (+${extraCoins}借阅时长)` : '';
+  const collectorText = isCollector ? ` · 📜典藏版回报×${COLLECTOR_RETURN_COIN_MULT}💰×${COLLECTOR_RETURN_ATMO_MULT}✨` : '';
   addHistory('visitor', `${visitor.emoji} ${visitor.name} 归还了《${bookTitle}》`,
-    `${retCfg.returnCoins + extraCoins}智慧之光${extraCoinsText} +${retCfg.returnAtmo}氛围 · 好感+${returnFavor}`);
+    `${finalCoins}智慧之光${extraCoinsText} +${finalAtmo}氛围${collectorText} · 好感+${returnFavor}`);
   if (!state.diaryFirsts.visitorReturn) {
     state.diaryFirsts.visitorReturn = true;
     addDiaryEntry('visitor_return', { emoji: visitor.emoji, name: visitor.name, bookTitle });
@@ -1175,12 +1192,12 @@ export function collectReturn(visitorId) {
   // 还书语录
   const quote = pickReturnQuote(charId, bookTitle, state.library.atmosphere);
 
-  // 判定 1：损毁（基础 3%，借阅区等级减免，「爱惜书籍」标志牌再减免），典藏版与修缮箱中的卷不会损坏
+  // 判定 1：损毁（基础 3%，借阅区等级减免，「爱惜书籍」标志牌再减免，单书磨损乘性放大），典藏版与修缮箱中的卷不会损坏
   let damaged = false;
   const book = bookId ? BOOKS[bookId] : null;
   const bs = bookId ? state.books[bookId] : null;
   const inRestoration = (state.restorationBox || []).includes(bookId);
-  const damageBaseChance = getDamageChance();
+  const damageBaseChance = getDamageChance(state.library.borrowLevel || 0, (state.signboards || []).includes('care_for_books'), bs?.wearCount || 0);
   if (Math.random() < damageBaseChance && bookId && bs && !book?.indestructible && !inRestoration) {
     bs.damaged = true;
     bs.repairWords = Math.round(bs.copiedWords * 0.15);
@@ -1212,8 +1229,9 @@ export function collectReturn(visitorId) {
   return {
     damaged, event: eventResult, narrative: narrativeResult, bookId, bookTitle, charId, wavePoem,
     visitorName: visitor.name, visitorEmoji: visitor.emoji,
-    coins: retCfg.returnCoins + extraCoins, atmosphere: retCfg.returnAtmo, favor: returnFavor,
+    coins: finalCoins, atmosphere: finalAtmo, favor: returnFavor,
     extraCoins,
+    collector: isCollector,
     quote
   };
 }

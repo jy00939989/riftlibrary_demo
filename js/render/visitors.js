@@ -101,7 +101,7 @@ export function renderVisitorsPage() {
     banner.innerHTML = `
       <img src="visual/library_readingarea/${READING_IMG_NAMES[blv - 1]}" alt="借阅区 · ${READING_LV_NAMES[blv]}" class="w-full h-48 object-cover">
       <div class="bg-ink/70 text-white text-center py-2 text-sm">
-        📚 借阅区 · ${READING_LV_NAMES[blv]} · 容纳${bcfg.cap}人 · 还书+${bcfg.returnCoins}💰 · 损毁率${(getDamageChance(blv) * 100).toFixed(1)}%
+        📚 借阅区 · ${READING_LV_NAMES[blv]} · 容纳${bcfg.cap}人 · 还书+${bcfg.returnCoins}💰 · 损毁率${(getDamageChance(blv, undefined, 0) * 100).toFixed(1)}%（${t('wearDamageNote')}）
       </div>
     `;
     container.appendChild(banner);
@@ -251,6 +251,9 @@ export function showVisitorEventModal(result, callback) {
     if (result.atmosphere > 0) rewardsHtml += `<span class="bg-magic-blue/10 px-2 py-1 rounded-full">✨ +${result.atmosphere}氛围</span>`;
     if (result.favor > 0) rewardsHtml += `<span class="bg-wood/10 px-2 py-1 rounded-full">💛 +${result.favor}好感</span>`;
     rewardsHtml += '</div>';
+  }
+  if (result.collector) {
+    rewardsHtml += `<div class="text-center mt-2 text-[11px] text-magic-gold font-bold">📜 ${t('collectorReturnBonus')}</div>`;
   }
 
   // 语录区

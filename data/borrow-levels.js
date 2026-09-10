@@ -11,3 +11,22 @@ export const BORROW_LEVEL_TABLE = [
   { cap:9, returnCoins:55, favorBonus:50, returnAtmo:6, spawnBonus:0.25 },  // Lv6 优雅
   { cap:10,returnCoins:60, favorBonus:60, returnAtmo:7, spawnBonus:0.30 }   // Lv7 圣所
 ];
+
+// ── 单书借阅磨损（Phase 3 借还链，纯函数可 node 直测）──
+// 每被借出一次 wearCount +1（典藏版除外），还书损毁率乘性放大 ×(1+0.6×wear/15)，封顶 ×1.6；重抄清零（book-progress.js）
+export const WEAR_DAMAGE_STEP = 0.6;
+export const WEAR_DAMAGE_CAP = 1.6;
+
+export function getWearMultiplier(wearCount = 0) {
+  return Math.min(WEAR_DAMAGE_CAP, 1 + WEAR_DAMAGE_STEP * Math.max(0, wearCount) / 15);
+}
+
+// 书况分级（书况 UI 五档）：崭新/良好/磨损/破旧/濒危
+export function getBookCondition(wearCount = 0) {
+  const w = Math.max(0, wearCount || 0);
+  if (w <= 0) return 'pristine';
+  if (w <= 4) return 'good';
+  if (w <= 9) return 'worn';
+  if (w <= 14) return 'fragile';
+  return 'critical';
+}
