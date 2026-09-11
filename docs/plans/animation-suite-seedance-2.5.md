@@ -232,3 +232,13 @@ visual/animations/
 - 馆生首书分支（`isFirstBookComplete`）：证书 → `book_complete_shelving`（2026-09-04 修订，原 emoji 飞书动画 `showBookShelvingAnimation` 在该流程中移除，函数保留待商店购买路径复用）
 - `showBookShelvingAnimation`：专注完成流程内不再调用；商店购买路径暂维持 CSS，日后需要再补独立 `shelving`
 - **「跳过重复动画」设置**（2026-09-04 新增）：🎼 面板底部开关，开启后已播过的动画 key（存 `riftlib_seen_animations`）不再播放，直接走 onDone 继续流程，不走 CSS 降级
+
+---
+
+## 落地记录（2026-09-11）
+
+**已入库素材（visual/animations/，manifest 已登记）**：`book_complete_shelving`（5s，9-04 已接入誊抄完成链）/ `borrow_lv0_1`（8.1s）/ `focus_lv0_1`（8.1s）/ `focus_lv1_2`（5.1s）/ `atmo_0_1`（5.1s）/ `visitor_first`（10.1s）。
+
+**清单外增补 2 键**（源自老 game-animations-plan 的 P0 节点，32 键清单未覆盖）：`atmo_0_1`=氛围首次跨阈（D24 升阶仪式 crossedStages 含 2 时前置播放）；`visitor_first`=首位访客抵达（focus-orchestrator 首访事件前置播放）。后续增补键请沿用 `<scene>_<from>_<to>` 命名并登记本表。
+
+**接入方式**：设施升级走 `tutorial-ui.js` showFocusRoomUpgrade/showBorrowAreaUpgrade 的 `focus_lv{N-1}_{N}` / `borrow_lv{N-1}_{N}` 键——清单外等级自动走 onFail 降级为原升级卡（零伤害）；`借阅区解锁.mp4`（5s 旧版）归档 `_archive/`，PV 移 `visual/promo/`（intro 引用路径已同步）。

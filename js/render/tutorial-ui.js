@@ -1,5 +1,6 @@
 // 引导 UI 渲染 —— 情境引导卡片 + 氛围升级弹窗
 import { state } from '../state.js';
+import { playVideoOverlay } from './shared/video-overlay.js';
 import { el } from './common.js';
 import { markTutorialSeen } from '../tutorial.js';
 import { t, getAtmosphereStageName, getFocusRoomLevelName, getBorrowLevelName, getRestorationLevelName } from '../i18n/terms.js';
@@ -245,13 +246,15 @@ export function showFocusRoomUpgrade(newLevel) {
   const narrative = t(`focusRoomNarrative${newLevel}`) || t('focusRoomNarrativeDefault');
   const speed = Math.round((1 + newLevel * 0.05) * 100);
 
-  showUpgradeCard({
+  // 设施升级动画（seedance 清单键 focus_lv{N-1}_{N}；清单外等级自动降级为卡片）
+  const showCard = () => showUpgradeCard({
     imageUrl,
     badge: t('scriptoriumUpgrade'),
     title: `${t('tabScriptorium')} · ${name}`,
     narrative,
     footer: `${t('tabScriptorium')} Lv.${newLevel} · ${t('transcribeSpeed').replace('{value}', speed)}`
   });
+  playVideoOverlay(`focus_lv${newLevel - 1}_${newLevel}`, { onDone: showCard, onFail: showCard });
 }
 
 // ========== 借阅区升级弹窗 ==========
@@ -271,13 +274,15 @@ export function showBorrowAreaUpgrade(newLevel) {
   const name = getBorrowLevelName(newLevel);
   const narrative = t(`borrowAreaNarrative${newLevel}`) || t('borrowAreaNarrativeDefault');
 
-  showUpgradeCard({
+  // 设施升级动画（seedance 清单键 borrow_lv{N-1}_{N}；清单外等级自动降级为卡片）
+  const showCard = () => showUpgradeCard({
     imageUrl,
     badge: t('readingAreaUpgrade'),
     title: `${t('readingArea')} · ${name}`,
     narrative,
     footer: `${t('readingArea')} Lv.${newLevel} · ${t('borrowAreaCapacityBoost')}`
   });
+  playVideoOverlay(`borrow_lv${newLevel - 1}_${newLevel}`, { onDone: showCard, onFail: showCard });
 }
 
 // ========== 古籍修复室升级弹窗 ==========

@@ -30,6 +30,7 @@ import { showIntro } from './intro.js';
 import { initAuth, initAccountEntry, track } from './backend/index.js';
 import { TIER_GOALS, isTierComplete, countTierGoalsComplete } from '../data/tiergoals.js';
 import { showTierCompletePopup } from './render/animations.js';
+import { playVideoOverlay } from './render/shared/video-overlay.js';
 import { showWitnessToast } from './render/shared/visitor-cards.js';
 import { showAchievementBatch } from './render/achievements.js';
 import { initMusicSelector } from './render/music-selector.js';
@@ -213,6 +214,17 @@ function init() {
   try {
     onStageCross((crossedStages) => {
       const stageNames = ['', '废墟', '破败', '陈旧', '温暖', '星辰'];
+      // 首个阶段跨越（含 2=首次阈值）播氛围过渡动画 atmo_0_1，再走原庆典链
+      if (crossedStages.includes(2)) {
+        playVideoOverlay('atmo_0_1', {
+          onDone: () => celebrateStageCross(crossedStages, stageNames),
+          onFail: () => celebrateStageCross(crossedStages, stageNames)
+        });
+      } else {
+        celebrateStageCross(crossedStages, stageNames);
+      }
+    });
+    function celebrateStageCross(crossedStages, stageNames) {
       crossedStages.forEach(stage => {
         const witnesses = getStageWitnesses(stage);
         if (witnesses.length > 0) {
@@ -238,7 +250,7 @@ function init() {
           saveState();
         }
       });
-    });
+    }
   } catch (err) {
     console.warn('[app] onStageCross callback error', err);
   }

@@ -74,7 +74,7 @@ export function showIntro(onComplete) {
     overlay.appendChild(skipBtn);
 
     videoEl = document.createElement('video');
-    videoEl.src = 'audio/异世界图书馆宣传PV.mp4';
+    videoEl.src = 'visual/promo/异世界图书馆宣传PV.mp4';
     videoEl.className = 'absolute inset-0 w-full h-full object-cover z-0';
     videoEl.playsInline = true;
     videoEl.addEventListener('ended', () => enterActivePhase());
