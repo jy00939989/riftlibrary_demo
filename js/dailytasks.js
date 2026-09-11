@@ -1,24 +1,26 @@
 // 今日馆务 —— 每日任务逻辑
 import { state, saveState } from './state.js';
 import { addCoins, addAtmosphere, addInspiration } from './storage.js';
+import { getTodayKey, onNewDay } from './core/day-boundary.js';
 
-function todayKey() {
-  return new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+function resetDailyTasks(today) {
+  state.dailyTasks = { date: today, focusDone: false, returnDone: false, waterDone: false, allClaimed: false };
+  saveState();
 }
 
-// 检查并重置每日任务
+// A1 日界统一：新的一天由 day-boundary 事件驱动重置（替代散点 UTC 比较）
+onNewDay(({ today }) => resetDailyTasks(today));
+
+// 检查并重置每日任务（惰性兜底保留：渲染/任务入口仍调用，同日零开销）
 export function ensureDailyTasks() {
-  const today = todayKey();
-  if (state.dailyTasks.date !== today) {
-    state.dailyTasks = { date: today, focusDone: false, returnDone: false, waterDone: false, allClaimed: false };
-    saveState();
-  }
+  const today = getTodayKey();
+  if (state.dailyTasks.date !== today) resetDailyTasks(today);
 }
 
 // 任务完成触发
 export function markTaskDone(task, stateCtx) {
   ensureDailyTasks();
-  const dt = stateCtx.dailyTasks || state.dailyTasks;
+  const dt = (stateCtx && stateCtx.dailyTasks) || state.dailyTasks;
 
   if (task === 'focus' && !dt.focusDone) {
     dt.focusDone = true;
@@ -56,5 +58,5 @@ export function claimAllDoneBonus(stateCtx) {
   return null;
 }
 
-// 获取当日字符串
-export { todayKey };
+// 获取当日字符串（= day-boundary 单一真源，导出兼容旧调用方）
+export { getTodayKey as todayKey };
