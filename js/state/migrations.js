@@ -34,8 +34,26 @@ const MIGRATIONS = [
   { version: 5, up: migrateV5 },
   { version: 6, up: migrateV6 },
   { version: 7, up: migrateV7 },
-  { version: 8, up: migrateV8 }
+  { version: 8, up: migrateV8 },
+  { version: 9, up: migrateV9 }
 ];
+
+function migrateV9() {
+  // 2026-09-11 借阅深化（borrow-demand-deepening-plan v3.1，A5 多 plan 同档共存）：
+  // 纯加法字段，与 cafe（v8）的 visitor 字段无顺序依赖。
+  // ① 在途访客 bookIds 数组化（bookId 兼容字段保留一个版本）
+  (state.visitors || []).forEach(v => {
+    if (v.bookIds === undefined) {
+      v.bookIds = v.bookId ? [v.bookId] : [];
+    }
+  });
+  // ② 寄读日结防重戳（挂 state.library，纯加法）
+  if (state.library && state.library.lastOffsiteDate === undefined) state.library.lastOffsiteDate = null;
+  // ③ 吐槽全馆日限计数
+  if (!state.complaintDaily || typeof state.complaintDaily !== 'object') {
+    state.complaintDaily = { date: '', count: 0 };
+  }
+}
 
 function migrateV8() {
   // 2026-09-11 咖啡角（cafe-corner-plan v3.1，A5 多 plan 同档共存）：

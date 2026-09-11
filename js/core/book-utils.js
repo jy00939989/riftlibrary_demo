@@ -13,6 +13,7 @@ const CANONICAL_BOOK_FIELDS = {
   repairWords: 0,
   repairProgress: 0,
   wearCount: 0,
+  borrowTimes: 0,
   readChapters: [],
   reCopyUnlocked: false
 };
