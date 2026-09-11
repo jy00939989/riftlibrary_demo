@@ -1,3 +1,11 @@
+---
+status: backlog
+importance: 2
+anchors:
+  - { type: file, path: "docs/plans/recopy-system-revision-plan.md", weight: 0.1 }
+  - { type: file, path: "js/volumes.js", weight: 0.1 }
+---
+
 # 重抄机制修订方案
 
 > 状态：待架构师 review

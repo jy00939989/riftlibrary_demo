@@ -2,6 +2,7 @@
 status: active
 importance: 2
 anchors:
+  - { type: file, path: "docs/plans/sink-ledger.md", weight: 0.1 }
   - { type: file, path: "docs/plans/borrow-demand-deepening-plan.md", weight: 0.3 }
   - { type: file, path: "docs/plans/cafe-corner-plan.md", weight: 0.3 }
 ---

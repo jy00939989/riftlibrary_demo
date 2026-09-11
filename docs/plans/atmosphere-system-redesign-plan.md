@@ -10,6 +10,7 @@ anchors:
   - { type: file, path: "js/core/economy.js", weight: 0.1 }
   - { type: file, path: "js/core/book-progress.js", weight: 0.1 }
   - { type: file, path: "scripts/simulate-atmosphere-economy.mjs", weight: 0.1 }
+  - { type: file, path: "scripts/test-d24-ceremony.mjs", weight: 0.1 }
   - { type: file, path: "data/atmosphere.js", weight: 0.1 }
   - { type: file, path: "data/tiergoals.js", weight: 0.1 }
   - { type: file, path: "js/collection.js", weight: 0.1 }
