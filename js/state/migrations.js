@@ -33,8 +33,30 @@ const MIGRATIONS = [
   { version: 4, up: migrateV4 },
   { version: 5, up: migrateV5 },
   { version: 6, up: migrateV6 },
-  { version: 7, up: migrateV7 }
+  { version: 7, up: migrateV7 },
+  { version: 8, up: migrateV8 }
 ];
+
+function migrateV8() {
+  // 2026-09-11 咖啡角（cafe-corner-plan v3.1，A5 多 plan 同档共存）：
+  // state.cafe 纯加法默认态，与 plants（v7）无顺序依赖。
+  // 借阅 plan 字段（bookIds/pendingBorrowBuff/lastOffsiteDate）落地时同档追加。
+  if (!state.cafe) {
+    state.cafe = {
+      unlocked: false,
+      level: 0,
+      stock: {},
+      totalServed: 0,
+      lastServeDay: null,
+      lastFeeDay: null,
+      dormant: false
+    };
+  }
+  if (typeof state.cafe !== 'object') state.cafe = { unlocked: false, level: 0, stock: {}, totalServed: 0, lastServeDay: null, lastFeeDay: null, dormant: false };
+  if (!state.cafe.stock || typeof state.cafe.stock !== 'object') state.cafe.stock = {};
+  if (state.cafe.totalServed === undefined) state.cafe.totalServed = 0;
+  if (state.cafe.dormant === undefined) state.cafe.dormant = false;
+}
 
 function migrateV7() {
   // 2026-09-11 温室花盆扩容（cafe-corner-plan §2.6 Phase 0）：单株 → 数组。

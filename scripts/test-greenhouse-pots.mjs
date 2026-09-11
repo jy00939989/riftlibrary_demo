@@ -57,7 +57,7 @@ state.plant = {
   waterAvailable: 1, lastCareTime: 12345, plantedAt: 12000, harvested: false
 };
 runMigrations();
-assert(state._schemaVersion === 7, 'schemaVersion 升到 7');
+assert(state._schemaVersion === 8, 'schemaVersion 升到最新（v7 plants + v8 cafe 同档）');
 assert(Array.isArray(state.plants) && state.plants.length === 1, 'plants 数组建立，1 盆');
 assert(state.plants[0].activeType === 'starlight_fern' && state.plants[0].level === 3
   && state.plants[0].growthProgress === 20 && state.plants[0].waterAvailable === 1,
