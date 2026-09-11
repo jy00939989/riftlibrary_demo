@@ -40,6 +40,8 @@ anchors:
   - { type: file, path: "js/app.js", weight: 0.1 }
   - { type: file, path: "visual/animations/_archive/borrow_lv0_1_v1_5s.mp4", weight: 0.1 }
   - { type: file, path: "visual/promo/异世界图书馆宣传PV.mp4", weight: 0.1 }
+  - { type: file, path: "visual/animations/atmo_2_3_480p.mp4", weight: 0.1 }
+  - { type: file, path: "visual/animations/focus_lv2_3_480p.mp4", weight: 0.1 }
 ---
 
 # 归墟图书馆 · Seedance 2.5 动画套案
@@ -102,7 +104,7 @@ anchors:
 | 11 | `borrow_lv6_7` | 借阅区 | 4:3 | Lv6→Lv7 圣所 | 穹顶星光倾泻，半透明光阶浮现，如临圣殿 |
 | 12 | ✅ `focus_lv0_1` | 缮写室 | 4:3 | 残破→Lv1 | 瓦砾退去，书桌扶正，烛火点亮 |
 | 13 | ✅ `focus_lv1_2` | 缮写室 | 4:3 | Lv1→Lv2 | 窗棂修复，天光洒入，文具有了新家 |
-| 14 | `focus_lv2_3` | 缮写室 | 4:3 | Lv2→Lv3 | 书架沿墙生长，墨水瓶盈满，纸堆整齐 |
+| 14 | ✅ `focus_lv2_3` | 缮写室 | 4:3 | Lv2→Lv3 | 书架沿墙生长，墨水瓶盈满，纸堆整齐 |
 | 15 | `focus_lv3_4` | 缮写室 | 4:3 | Lv3→Lv4 | 铜灯悬顶，绿罩台灯显现，暖意弥漫 |
 | 16 | `focus_lv4_5` | 缮写室 | 4:3 | Lv4→Lv5 | 挂钟开始走动，地球仪旋转，光影流转 |
 | 17 | `focus_lv5_6` | 缮写室 | 4:3 | Lv5→Lv6 圣殿 | 穹顶打开显星空，羽毛笔悬空自书，金辉如雨 |
@@ -251,6 +253,6 @@ visual/animations/
 
 **已入库素材（visual/animations/，manifest 已登记）**：`book_complete_shelving`（5s，9-04 已接入誊抄完成链）/ `borrow_lv0_1`（8.1s）/ `focus_lv0_1`（8.1s）/ `focus_lv1_2`（5.1s）/ `atmo_0_1`（5.1s）/ `visitor_first`（10.1s）。
 
-**清单外增补 2 键**（源自老 game-animations-plan 的 P0 节点，32 键清单未覆盖）：`atmo_0_1`=氛围首次跨阈（D24 升阶仪式 crossedStages 含 2 时前置播放）；`visitor_first`=首位访客抵达（focus-orchestrator 首访事件前置播放）。后续增补键请沿用 `<scene>_<from>_<to>` 命名并登记本表。
+**清单外增补 3 键**（`atmo_2_3` 2026-09-11 图南产，挂升阶仪式泛化键 `atmo_{prev}_{new}`，manifest 缺失自动降级）（源自老 game-animations-plan 的 P0 节点，32 键清单未覆盖）：`atmo_0_1`=氛围首次跨阈（首次升阶仪式前置播放）；`atmo_2_3`=第二次升阶（app.js 泛化键 atmo_{prev}_{new}）；`visitor_first`=首位访客抵达（focus-orchestrator 首访事件前置播放）。后续增补键请沿用 `<scene>_<from>_<to>` 命名并登记本表。
 
 **接入方式**：设施升级走 `tutorial-ui.js` showFocusRoomUpgrade/showBorrowAreaUpgrade 的 `focus_lv{N-1}_{N}` / `borrow_lv{N-1}_{N}` 键——清单外等级自动走 onFail 降级为原升级卡（零伤害）；`借阅区解锁.mp4`（5s 旧版）归档 `_archive/`，PV 移 `visual/promo/`（intro 引用路径已同步）。
