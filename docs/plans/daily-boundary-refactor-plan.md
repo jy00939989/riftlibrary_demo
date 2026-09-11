@@ -1,13 +1,19 @@
 ---
-status: backlog
+status: done
 importance: 3
 scheduledDate:
 anchors:
+  - { type: file, path: "docs/plans/daily-boundary-refactor-plan.md", weight: 0.1 }
+  - { type: file, path: "js/core/day-boundary.js", weight: 0.2 }
+  - { type: file, path: "scripts/test-day-boundary.mjs", weight: 0.1 }
   - { type: file, path: "js/app.js", weight: 0.2 }
-  - { type: file, path: "js/state/storage.js", weight: 0.2 }
-  - { type: file, path: "js/core/dailytasks.js", weight: 0.1 }
+  - { type: file, path: "js/storage.js", weight: 0.2 }
+  - { type: file, path: "js/dailytasks.js", weight: 0.1 }
   - { type: file, path: "js/diary.js", weight: 0.1 }
   - { type: file, path: "js/achievements.js", weight: 0.1 }
+  - { type: file, path: "js/actioncards.js", weight: 0.1 }
+  - { type: file, path: "js/state/state.js", weight: 0.1 }
+  - { type: file, path: "js/state/migrations.js", weight: 0.1 }
   - { type: file, path: "docs/plans/cafe-corner-plan.md", weight: 0.1 }
   - { type: file, path: "docs/plans/borrow-demand-deepening-plan.md", weight: 0.1 }
   - { type: file, path: "docs/plans/reviews/economy-subsystem-architecture-review.md", weight: 0.1 }
@@ -104,5 +110,28 @@ export function checkDayRollover(state) {
 
 ## 七、相关文件
 
-- 新建：`js/core/day-boundary.js`；改造：`js/app.js`、`js/state/storage.js`、`js/core/dailytasks.js`、`js/diary.js`、`js/achievements.js`、`js/state/state.js`/`migrations.js`
+- 新建：`js/core/day-boundary.js`；改造：`js/app.js`、`js/storage.js`、`js/dailytasks.js`、`js/diary.js`、`js/achievements.js`、`js/state/state.js`/`migrations.js`
 - 消费方：`cafe-corner-plan.md` §2.4.7（维持费）、`borrow-demand-deepening-plan.md` §4.1（寄读日结）
+
+---
+
+## 八、实施记录（2026-09-11 落地，7 commits）
+
+实施步骤 0-5 全执行：基线 24 项 → 全量 39 项全绿；`check:imports` 通过；grep 审计通过。
+
+**与本文档的偏离（均有测试锁死，均为有意决策）：**
+
+1. **streak 不挂 onNewDay**（§2.2 迁移表第一行 aspirational）。streak 语义是「连续**专注日**」，由专注完成驱动；挂活跃日边界后，只开 app 不专注的隔天会错误影响 streak——违反验收标准 1（零漂移）。实际处理：仅收敛日期原语（getTodayKey/getPrevDayKey），判定逻辑原样。测试 S6 有「onNewDay 不触碰 streak」断言。
+2. **每日任务日期 key 从 UTC 统一为本地日历日**（原 `toISOString().slice(0,10)`，北京时间早 8 点刷新 → 零点刷新）。这正是 A1 要消灭的「触发时刻错位」之一，属统一范围而非数值改动。
+3. **第五处散点**：`js/actioncards.js` ensureDailyReset（行动卡日限）不在 §一 清单里，grep 审计时发现，已同套路迁移。
+4. **死代码清除**：`focus.todayMinutes` 全仓库只写不读，migrateV1 的日期检查块随之删除。
+5. **路径勘误**：§一/§七 引用 `js/state/storage.js`、`js/core/dailytasks.js`，实际为 `js/storage.js`、`js/dailytasks.js`（frontmatter 锚点已按实际路径修正，原错误路径锚点等于没锚）。
+6. **惰性兜底全部保留**（ensureDailyTasks / ensureDailyReset / pickMomoComment 内部守卫）：事件未触达的直调链不炸，同日零开销。
+
+**落地后消费契约（cafe / 寄读动工时直接引用）：**
+
+```js
+import { onNewDay } from './core/day-boundary.js';
+// 维持费/寄读日结：onNewDay(({ prevDay, today }) => { ... })
+// 防重字段（lastFeeDay / lastOffsiteDate）照旧各自保留，多 plan 共存断言用
+```
