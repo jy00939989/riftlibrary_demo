@@ -2,6 +2,7 @@
 import { state, saveState } from './state.js';
 import { refreshBGM } from './audio.js';
 import { track } from './backend/analytics.js';
+import { getTodayKey, getPrevDayKey } from './core/day-boundary.js';
 
 export function addHistory(type, title, detail = '') {
   state.history.unshift({
@@ -123,11 +124,16 @@ export function holdStageCeremony() {
   return { prevLevel, newLevel: state.library.stage };
 }
 
-export function updateStreak() {
-  const today = new Date().toDateString();
+/**
+ * 连续专注 streak：语义是「连续专注日」，由专注完成驱动——
+ * 故意不挂 onNewDay（活跃日≠专注日，挂了反而行为漂移，S6 有锁死断言）。
+ * 日期原语收敛 day-boundary；now 可注入便于测试。
+ */
+export function updateStreak(now = Date.now()) {
+  const today = getTodayKey(now);
   if (state.focus.lastFocusDate === today) return;
 
-  const yesterday = new Date(Date.now() - 86400000).toDateString();
+  const yesterday = getPrevDayKey(now);
   if (state.focus.lastFocusDate === yesterday) {
     state.focus.streak += 1;
   } else if (state.focus.lastFocusDate !== today) {
