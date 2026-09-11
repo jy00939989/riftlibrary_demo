@@ -184,6 +184,9 @@ export const state = {
     allClaimed: false
   },
 
+  // 日界单一真源（A1）：最后活跃日本地日历 key，day-boundary 据此判跨日
+  lastSeenDay: new Date().toDateString(),
+
   // 位面任务进度
   quests: {
     pastoral: {

@@ -35,6 +35,7 @@ import { showAchievementBatch } from './render/achievements.js';
 import { initMusicSelector } from './render/music-selector.js';
 import { renderMomoSuggestion, resetMomoSuggestion } from './render/momo-suggestion.js';
 import { handleStartFocus, handleTogglePause, handleCompleteFocus, handleAbandonFocus } from './core/focus-actions.js';
+import { checkDayRollover } from './core/day-boundary.js';
 import { handleBuyShelf, handleUpgradeBorrowLevel } from './core/shop-actions.js';
 import { handleCollectReturn } from './core/visitor-actions.js';
 import { triggerQuestCheck } from './core/quest-trigger.js';
@@ -98,6 +99,10 @@ function init() {
   initState();
   ensureAllBooksInManuscriptBox();
   checkAutoUnlockPacks();
+
+  // 日界触发点①：初始化链（含登录回档）。迁移已播种 lastSeenDay，
+  // 跨日登录在此恰好触发一次 onNewDay；同日/新档为 null 不触发。
+  checkDayRollover(state);
 
   initAuth().catch(err => console.warn('[app] backend auth init failed', err));
 
@@ -255,6 +260,9 @@ function init() {
   }, state.introCompleted ? 500 : 5000);
 
   function tickVisitors() {
+    // 日界触发点②：app 持续开着过 0 点也能触发（60s 周期内检测本地跨日）
+    checkDayRollover(state, getNow());
+
     const now = getNow();
     tickVisitorBrowsing(now);
     tickPlaneVisitors(now);

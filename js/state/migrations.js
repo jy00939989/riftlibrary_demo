@@ -31,8 +31,15 @@ const MIGRATIONS = [
   { version: 2, up: migrateV2 },
   { version: 3, up: migrateV3 },
   { version: 4, up: migrateV4 },
-  { version: 5, up: migrateV5 }
+  { version: 5, up: migrateV5 },
+  { version: 6, up: migrateV6 }
 ];
+
+function migrateV6() {
+  // 2026-09-11 A1 日界统一：播种 lastSeenDay（纯加法，幂等）。
+  // 不补触发 onNewDay——存量「昨日回顾/任务重置」仍由各自惰性路径兜底，次日进新语义。
+  if (!state.lastSeenDay) state.lastSeenDay = new Date().toDateString();
+}
 
 function migrateV5() {
   // 2026-09-09 D24：升阶设施门槛——阶段改为存储字段。
@@ -151,13 +158,6 @@ function migrateV1() {
 
   // 专注记录 sessions（用于后期统计/可视化）
   if (!state.focus.sessions) state.focus.sessions = [];
-
-  // 检查日期
-  const today = new Date().toDateString();
-  if (state.focus.todayDate !== today) {
-    state.focus.todayMinutes = 0;
-    state.focus.todayDate = today;
-  }
 
   // 旧存档迁移：借阅区/缮写室等级
   if (state.library.borrowLevel === undefined) state.library.borrowLevel = 0;
