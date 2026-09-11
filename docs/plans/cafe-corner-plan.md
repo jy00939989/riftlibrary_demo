@@ -24,6 +24,11 @@ anchors:
   - { type: file, path: "js/render/shop/decorations.js", weight: 0.1 }
   - { type: file, path: "js/actioncards.js", weight: 0.1 }
   - { type: file, path: "js/render/momo-suggestion.js", weight: 0.1 }
+  - { type: file, path: "data/cafe.js", weight: 0.2 }
+  - { type: file, path: "js/core/cafe.js", weight: 0.2 }
+  - { type: file, path: "js/render/shop/cafe-panel.js", weight: 0.1 }
+  - { type: file, path: "js/render/visitors.js", weight: 0.1 }
+  - { type: file, path: "scripts/test-cafe.mjs", weight: 0.1 }
 ---
 
 # 咖啡角计划（cafe-corner-plan）v3.1
@@ -162,6 +167,8 @@ state.plants = [ { ...原 state.plant 结构 } ]  // 1→最多 4 盆，迁移�
 - 植物的浇水交互密度随盆数上升——4 盆为手感上限，超出需配「一键浇水」（v2 暂不做，记开放项）。
 
 > **✅ Phase 0 已落地（2026-09-11，commit e973fd1 + 977ed08）**：`state.plants` 数组（migrateV7 单株→数组，盆位 0=原单株零漂移），解锁价 800/1440/2592 对应 2/3/4 盆（`plants.js` MAX_POTS/getNextPotPrice/unlockPot）；全部单株函数 potIndex 参数化（默认 0 兼容旧调用）；访客事件改随机活盆语义（单盆玩家行为逐字不变）；浇水机会/凋谢逐盆循环；UI 盆位横向排列 + 解锁卡 + 商店逐盆状态卡。测试 `scripts/test-greenhouse-pots.mjs` 34 项全绿。**实施时补充决策**：行动卡 water_plant 改全活盆 +25（原单株 quirk 保留）；新植物批次（食材株）上线时 Lv3 食谱槽照 §2.5 填充。
+
+> **✅ 咖啡角本体已落地（2026-09-11，commit ed08554 + ab2718d）**：步骤 1-4 全执行。`data/cafe.js` 单一真源 + `js/core/cafe.js` 营业链路（cafeTick 挂 tickVisitorBrowsing 入口 borrowChance 之前，v3 D9 时序验收满足）+ `js/render/shop/cafe-panel.js` 面板 + 商店占位卡转正 + 访客 ☕ 标识 + migrateV8（A5 同档共存断言含 cafe/plants）。测试 `scripts/test-cafe.mjs` 51 项全绿（含 92-98% 数值对齐、维持费防重、休眠唤醒、补算封顶、失败信号 C 单调性解析断言）。**实施时补充决策**：①92-98% 断言容差 ±0.5pp——§2.3 表内 92% 为四舍五入展示值（星蕨特调实际 91.67%），售价 110 为评审定版不动；②在店时长取 3min（浏览均时 2.5min）；③onTimeSkip 原为死代码（无调用方），cafeOnTimeSkip 已挂入其中，时间跳跃检测将来接线上即生效；④招待好感只加 visitor.favorability 实时的，不累积 visitorFavors 聚合池（避免 visitors↔cafe 循环依赖）；⑤维持费不随时间跳跃补扣（活跃日 tick 口径，lastFeeDay 防重）。
 
 ### 2.7 与现有系统的关系
 
