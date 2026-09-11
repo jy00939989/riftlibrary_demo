@@ -44,6 +44,11 @@ anchors:
 - [ ] 如存在语音/音效台词，一并修订
 - [ ] 通读全部夏蝉文本，消除逻辑断裂与重复
 
+### copy-eta-minutes（誊抄室显示剩余分钟，2026-09-11 图南提）
+- [ ] 专注页当前书卡片显示「预计还需 N 分钟」（公式复用 timer.js:166 sessionEstimate 同款：elapsed×2×倍率口径）
+- [ ] N 按当前誊抄速率实时刷新（暂停时停走），超过 99 分钟显示「X 小时 Y 分」
+- [ ] 移动端不挤占进度条位置（放副标题行）
+
 ### game-animations-plan（游戏动画）——【已被 seedance 方案取代，全节关闭】
 > 2026-09-04 重建为 [animation-suite-seedance-2.5](animation-suite-seedance-2.5.md)（AI 视频路线替代 Lottie）。9-11 已有 6 键入库挂接：`book_complete_shelving`（誊抄完成）/ `borrow_lv0_1` / `focus_lv0_1` / `focus_lv1_2`（设施升级）/ `visitor_first`（首访）/ `atmo_0_1`（首次跨阈）。
 - [x] 确定首批 P0 动画清单：氛围升级、房间解锁、专注完成、书籍完成（→ seedance 清单 32+2 键）
@@ -57,6 +62,12 @@ anchors:
 ---
 
 ## 🟡 需先决策/设计
+
+### skill-tree-system（升级技能点系统，2026-09-11 图南想法待展开）
+- [ ] 开 brainstorm 定方向：技能点从哪来（升级/成就/收集）、花到哪（速率/经济/访客三线？）、与现有成就 buff 体系的关系（叠加还是收编）
+- [ ] 决策技能树形态：线性三系 vs 树状前置；重置成本（免费/金币/灵感）
+- [ ] 评估与 200% 速率封顶、展览厅 sink 批次的数值咬合（技能点若是新 sink，台账归口）
+- [ ] 出立项 plan 过 grill-me
 
 ### bookshelf-visual-optimization-plan（大书库视觉优化）
 - [ ] 决策视觉主方向：实景书架（层板书脊）vs 封面墙+场景背景
