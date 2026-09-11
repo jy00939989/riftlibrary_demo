@@ -19,6 +19,11 @@ anchors:
   - { type: file, path: "js/i18n/terms.js", weight: 0.1 }
   - { type: file, path: "js/core/focus-orchestrator.js", weight: 0.1 }
   - { type: file, path: "scripts/verify-atmosphere-narrowing.js", weight: 0.1 }
+  - { type: file, path: "scripts/test-greenhouse-pots.mjs", weight: 0.1 }
+  - { type: file, path: "js/render/plants.js", weight: 0.1 }
+  - { type: file, path: "js/render/shop/decorations.js", weight: 0.1 }
+  - { type: file, path: "js/actioncards.js", weight: 0.1 }
+  - { type: file, path: "js/render/momo-suggestion.js", weight: 0.1 }
 ---
 
 # 咖啡角计划（cafe-corner-plan）v3.1
@@ -155,6 +160,8 @@ state.plants = [ { ...原 state.plant 结构 } ]  // 1→最多 4 盆，迁移�
 - 浇水/施肥/收获逻辑逐株循环，单株数据结构不变。
 - 供给重估：4 盆 × 单盆 ~10 天 1 颗 ≈ **2.5 天/颗 → 日均 0.4 颗**；对照 v2 材料消耗（每份 2-3 颗，日均招待 1.5-3 次）——供给仍低于吞吐，但咖啡角 v2 定位已改为「高价值转换口」而非「高吞吐」：**库存可累积，有料才营业，营业即高价值**。新植物批次（图南已定方向：延长主线 1 株 + 食材株 2 株）上线后供给再翻几倍，吞吐随时间自然松弛。
 - 植物的浇水交互密度随盆数上升——4 盆为手感上限，超出需配「一键浇水」（v2 暂不做，记开放项）。
+
+> **✅ Phase 0 已落地（2026-09-11，commit e973fd1 + 977ed08）**：`state.plants` 数组（migrateV7 单株→数组，盆位 0=原单株零漂移），解锁价 800/1440/2592 对应 2/3/4 盆（`plants.js` MAX_POTS/getNextPotPrice/unlockPot）；全部单株函数 potIndex 参数化（默认 0 兼容旧调用）；访客事件改随机活盆语义（单盆玩家行为逐字不变）；浇水机会/凋谢逐盆循环；UI 盆位横向排列 + 解锁卡 + 商店逐盆状态卡。测试 `scripts/test-greenhouse-pots.mjs` 34 项全绿。**实施时补充决策**：行动卡 water_plant 改全活盆 +25（原单株 quirk 保留）；新植物批次（食材株）上线时 Lv3 食谱槽照 §2.5 填充。
 
 ### 2.7 与现有系统的关系
 
