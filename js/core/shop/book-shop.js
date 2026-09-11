@@ -8,6 +8,7 @@ import { isManuscriptBoxFull, addToManuscriptBox, createBookRecord } from '../..
 import { hasSignboard, getSignboardBuffSum } from './signboards.js';
 import { track } from '../../backend/analytics.js';
 import { isBookLockedByDlc } from './dlc-packs.js';
+import { isVolumeConsumed } from '../../../data/volume_groups.js';
 import {
   getRefreshWeight,
   getGuaranteedVolumeEntries,
@@ -25,7 +26,10 @@ function rand(min, max) {
 export function getAvailableBooks() {
   return SHARED_POOL.filter(b => {
     const bs = state.books[b.bookId];
-    return (!bs || bs.status === 'locked') && !isBookLockedByDlc(b.bookId);
+    if (bs && bs.status !== 'locked') return false;
+    // 已合成典藏版的卷组，其单卷不再作为商品出现
+    if (isVolumeConsumed(b.bookId, state.books)) return false;
+    return !isBookLockedByDlc(b.bookId);
   });
 }
 
@@ -165,6 +169,10 @@ export function purchaseBook(bookId, price) {
   const { actualPrice, auraDiscount, signboardDiscount, peizhouDiscount } = getBookActualPrice(bookId, price);
 
   if (state.books[bookId] && state.books[bookId].status !== 'locked') {
+    return { ok: false, reason: 'already_owned' };
+  }
+  // 已随典藏版合成消耗的单卷不可再购买（其状态是 locked，需单独拦截）
+  if (isVolumeConsumed(bookId, state.books)) {
     return { ok: false, reason: 'already_owned' };
   }
   if (state.coins < actualPrice) {

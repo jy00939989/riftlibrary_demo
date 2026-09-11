@@ -3,6 +3,7 @@ import { state } from '../../state.js';
 import { SHARED_POOL } from '../../../data/book_pool.js';
 import { el, getBookTitle } from '../common.js';
 import { getManuscriptSlots, getManuscriptBoxCount } from '../../capacity.js';
+import { isVolumeConsumed } from '../../../data/volume_groups.js';
 import { getActivePeizhouRec, getBookActualPrice } from '../../shop.js';
 import { getVisitorName } from '../../i18n/terms.js';
 import { t } from '../../i18n/terms.js';
@@ -28,7 +29,9 @@ export function renderBookSection(title, slots, isRotating) {
     const poolEntry = SHARED_POOL.find(b => b.bookId === slot.bookId);
     if (!poolEntry) return;
 
-    const owned = state.books[slot.bookId] && state.books[slot.bookId].status !== 'locked';
+    // 已拥有或已随典藏版合成消耗的单卷 → 展示为已拥有，不可再购买
+    const owned = (state.books[slot.bookId] && state.books[slot.bookId].status !== 'locked')
+      || isVolumeConsumed(slot.bookId, state.books);
     const mBoxFull = getManuscriptBoxCount() >= getManuscriptSlots();
 
     grid.appendChild(renderBookCard(slot, poolEntry, owned, isRotating, mBoxFull));

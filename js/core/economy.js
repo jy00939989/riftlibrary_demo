@@ -1,7 +1,7 @@
 // @pure — testable in Node without DOM
 // 经济系统纯函数：定价 / 概率 / 容量级
 
-import { VOLUME_GROUPS, VOLUME_REFRESH, VOLUME_GUARANTEE } from '../../data/volume_groups.js';
+import { VOLUME_GROUPS, VOLUME_REFRESH, VOLUME_GUARANTEE, isVolumeConsumed, isVolumeGroupCollected } from '../../data/volume_groups.js';
 import { getStageThreshold, ATMOSPHERE_STAGES, resolveStageLevel } from '../../data/atmosphere.js';
 
 // ── 氛围阶段（阈值单源在 data/atmosphere.js，D17；阶段字段解析见 D24）──
@@ -94,14 +94,17 @@ export function getPlanePortalPrice(planeId, planePortals = {}) {
 export function getAvailableBooks(booksData, sharedPool) {
   return sharedPool.filter(b => {
     const bs = booksData[b.bookId];
-    return !bs || bs.status === 'locked';
+    if (bs && bs.status !== 'locked') return false;
+    // 已合成典藏版的卷组，其单卷不再作为商品出现（locked 语义冲突见 volume_groups.js）
+    if (isVolumeConsumed(b.bookId, booksData)) return false;
+    return true;
   });
 }
 
 /**
  * 计算某条 pool 条目的刷新权重。
  * - 普通书：baseWeight
- * - 单卷：已拥有（无论是否损坏）→ 0；属于"已部分拥有"的组 → 动态偏置
+ * - 单卷：已拥有（无论是否损坏）→ 0；已随典藏版合成消耗 → 0；属于"已部分拥有"的组 → 动态偏置
  */
 export function getRefreshWeight(entry, booksData) {
   if (entry.type !== 'volume') return entry.baseWeight ?? 1.0;
@@ -109,6 +112,8 @@ export function getRefreshWeight(entry, booksData) {
   const volState = booksData[entry.bookId];
   // 已拥有（无论是否损坏）→ 不刷；损坏卷走修复室路径，不应再作为新商品出售
   if (volState && volState.status !== 'locked') return 0;
+  // 已合成典藏版 → 单卷永久退出商店
+  if (isVolumeConsumed(entry.bookId, booksData)) return 0;
 
   // 该组已拥有部分卷（但组未集齐）→ 动态轻偏置
   const group = VOLUME_GROUPS[entry.volumeGroupId];
@@ -136,6 +141,8 @@ export function getGuaranteedVolumeEntries(sharedPool, booksData) {
 
   const candidates = [];
   Object.values(VOLUME_GROUPS).forEach(group => {
+    // 已合成典藏版的卷组不再参与保底
+    if (isVolumeGroupCollected(group, booksData)) return;
     const ownedIds = group.volumeIds.filter(id => {
       const bs = booksData[id];
       return bs && bs.status !== 'locked';
