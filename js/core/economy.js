@@ -29,7 +29,7 @@ export function getFocusLevelPrice(focusLevel, auraDiscount) {
 }
 
 export function getFocusSpeedMultiplier(focusLevel, signboardSpeedBonus, achieveSpeedFlat, streakBonus) {
-  return Math.min(1.80, 1 + (focusLevel || 0) * 0.05 + (signboardSpeedBonus || 0) + (achieveSpeedFlat || 0) + (streakBonus || 0));
+  return Math.min(2.00, 1 + (focusLevel || 0) * 0.05 + (signboardSpeedBonus || 0) + (achieveSpeedFlat || 0) + (streakBonus || 0));
 }
 
 // ── 手稿箱 ──
