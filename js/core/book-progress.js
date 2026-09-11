@@ -104,6 +104,22 @@ export function completeBook(bookId) {
     }
   }
 
+  // 借阅深化 §5.2 赞叹闭环：首次完成 borrowTimes===0 的新书（从未外借过的崭新副本），
+  // 馆内带吐槽标记的访客赞叹 +5 好感并清标记——与吐槽 -1 构成净 +4 闭环
+  if (isFirstCompletion && (bookState.borrowTimes || 0) === 0) {
+    let praised = 0;
+    (state.visitors || []).forEach(v => {
+      if (v.complainedRecently) {
+        v.favorability = (v.favorability || 0) + 5;
+        v.complainedRecently = false;
+        praised += 1;
+      }
+    });
+    if (praised > 0) {
+      addHistory('visitor', `📣 馆内响起赞叹：新书《${book.title}》上架！`, `${praised} 位访客好感 +5`);
+    }
+  }
+
   saveState();
 
   return {

@@ -219,7 +219,7 @@ delete state.plants;
 delete state.cafe;
 state.plant = { activeType: 'magic_rose', level: 2, growthProgress: 5 };
 runMigrations();
-assert(state._schemaVersion === 8, 'schemaVersion 升到 8');
+assert(state._schemaVersion === 9, 'schemaVersion 升到 9');
 assert(Array.isArray(state.plants) && state.plants[0].activeType === 'magic_rose', 'v7 plants 正确');
 assert(state.cafe && state.cafe.unlocked === false && state.cafe.level === 0
   && state.cafe.stock && typeof state.cafe.stock === 'object'

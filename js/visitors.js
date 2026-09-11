@@ -13,7 +13,8 @@ import { SHARED_POOL } from '../data/book_pool.js';
 import { VOLUME_GROUPS, getIncompleteVolumeGroups, isVolumeBookId } from '../data/volume_groups.js';
 import { PLANT_TYPES } from '../data/plants.js';
 import { track } from './backend/analytics.js';
-import { BORROW_LEVEL_TABLE, getWearMultiplier, getBookCondition } from '../data/borrow-levels.js';
+import { BORROW_LEVEL_TABLE, getWearMultiplier, getBookCondition, getBorrowSlots } from '../data/borrow-levels.js';
+import { getTodayKey } from './core/day-boundary.js';
 import { cafeTick, cafeOnTimeSkip } from './core/cafe.js';
 
 // 台风灾难参数：新植物保护期 + 触发概率 + 冷却时间
@@ -810,7 +811,8 @@ function getCompletedBooks() {
     const bs = state.books[book.id];
     const inRestoration = (state.restorationBox || []).includes(book.id);
     return bs && bs.status === 'completed' && !bs.damaged && !inRestoration &&
-           !state.visitors.some(v => v.bookId === book.id && (v.status === 'borrowed' || v.status === 'due'));
+           !state.visitors.some(v => (v.status === 'borrowed' || v.status === 'due') &&
+             ((v.bookIds && v.bookIds.length ? v.bookIds : [v.bookId]).includes(book.id)));
   });
 }
 
@@ -826,41 +828,93 @@ function attemptBorrow(visitor, completedBooks, now) {
     }
   }
 
-  const book = pick(candidates);
-  if (!book) return;
+  // 多本借阅（borrow-demand-deepening §3.1）：按借阅区等级抽 K 本，无重复
+  const slots = getBorrowSlots(state.library.borrowLevel || 0);
+  const picked = [];
+  const pool = [...candidates];
+  while (picked.length < slots && pool.length > 0) {
+    const book = pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
+    picked.push(book);
+  }
+  if (picked.length === 0) return;
+  const book = picked[0];
 
-  const bookWords = book.totalWords || 28000;
-  // 还书时间：3小时 ~ 120小时（5天），每2500字=1小时，大部头拉出层次
-  const baseHours = Math.max(3, Math.min(120, Math.round(bookWords / 2500)));
-  const variance = 0.7 + Math.random() * 0.6; // ±30% 浮动
-  const borrowHours = Math.max(3, Math.min(120, Math.round(baseHours * variance)));
-  const dueTime = now + borrowHours * 3600000;
+  // 整单到期：取所借书各自时长最大值，一起到期（决策 2）
+  let maxDue = 0;
+  picked.forEach(b => {
+    const bookWords = b.totalWords || 28000;
+    // 还书时间：3小时 ~ 120小时（5天），每2500字=1小时，大部头拉出层次
+    const baseHours = Math.max(3, Math.min(120, Math.round(bookWords / 2500)));
+    const variance = 0.7 + Math.random() * 0.6; // ±30% 浮动
+    const borrowHours = Math.max(3, Math.min(120, Math.round(baseHours * variance)));
+    maxDue = Math.max(maxDue, now + borrowHours * 3600000);
+  });
 
   visitor.status = 'borrowed';
-  visitor.bookId = book.id;
+  visitor.bookIds = picked.map(b => b.id);
+  visitor.bookId = book.id; // 兼容字段保留一个版本
   visitor.bookTitle = book.volumeTitle || book.title;
   visitor.borrowTime = now;
-  visitor.dueTime = dueTime;
+  visitor.dueTime = maxDue;
   // 咖啡角进店增益：借到书即失效（§2.4.4）
   visitor.pendingBorrowBuff = 0;
 
-  // 单书借阅磨损（Phase 3）：每被借出一次磨损 +1，乘性放大还书损毁率；典藏版不磨损
-  const bs = state.books[book.id];
-  if (bs && !book.indestructible) {
-    bs.wearCount = (bs.wearCount || 0) + 1;
-  }
+  // 每本照常 wearCount+1（典藏版不磨损，Phase 3 链）；borrowTimes+1（馆内借阅口径）
+  picked.forEach(b => {
+    const bs = state.books[b.id];
+    if (bs && !b.indestructible) {
+      bs.wearCount = (bs.wearCount || 0) + 1;
+    }
+    if (bs) {
+      bs.borrowTimes = (bs.borrowTimes || 0) + 1;
+    }
+  });
+
+  // 老旧度吐槽（§5）：选书后判定，与抽本互不干扰
+  maybeComplainOldBooks(visitor, candidates);
+
   const borrowFavor = Math.round(3 * (1 + getBorrowLevelConfig().favorBonus / 100));
   visitor.favorability = (visitor.favorability || 0) + borrowFavor;
   addVisitorFavor(visitor.charId, borrowFavor);
 
-  const displayTitle = book.volumeTitle || book.title;
-  addHistory('visitor', `${visitor.emoji} ${visitor.name} 借走了《${displayTitle}》`,
-    `${borrowHours}小时后归还 · 好感+3`);
+  const titlesJoined = picked.map(b => `《${b.volumeTitle || b.title}》`).join('');
+  const wholeHours = Math.max(3, Math.round((maxDue - now) / 3600000));
+  addHistory('visitor', `${visitor.emoji} ${visitor.name} 借走了${titlesJoined}`,
+    `${wholeHours}小时后归还 · 好感+3${picked.length > 1 ? ` · 多本借阅 ×${picked.length}` : ''}`);
   if (!state.diaryFirsts.visitorBorrow) {
     state.diaryFirsts.visitorBorrow = true;
-    addDiaryEntry('visitor_borrow', { emoji: visitor.emoji, name: visitor.name, bookTitle: displayTitle });
+    addDiaryEntry('visitor_borrow', { emoji: visitor.emoji, name: visitor.name, bookTitle: titlesJoined });
   }
   saveState();
+}
+
+/**
+ * 新书吐槽（§5.2）：候选中 borrowTimes≥5 的老旧书占比 >60% 且藏书 ≥5 → 30% 概率吐槽。
+ * 护栏：同访客 24h 最多 1 次、全馆每日 3 次。好感 -1 + complainedRecently 标记
+ * （赞叹闭环：新书完成时馆内带标记访客 +5 并清标记，闭环净 +4）。
+ */
+function maybeComplainOldBooks(visitor, candidates) {
+  if (!candidates || candidates.length === 0) return;
+  const ownedCount = Object.values(state.books || {}).filter(b => b && b.status !== 'locked').length;
+  if (ownedCount < 5) return;
+  const oldCount = candidates.filter(b => (state.books[b.id]?.borrowTimes || 0) >= 5).length;
+  if (oldCount / candidates.length <= 0.6) return;
+
+  const now = getNow();
+  if (visitor.complainedAt && now - visitor.complainedAt < 24 * 3600 * 1000) return;
+  if (!state.complaintDaily || typeof state.complaintDaily !== 'object'
+    || state.complaintDaily.date !== getTodayKey()) {
+    state.complaintDaily = { date: getTodayKey(), count: 0 };
+  }
+  if (state.complaintDaily.count >= 3) return;
+  if (Math.random() >= 0.3) return;
+
+  visitor.favorability = Math.max(0, (visitor.favorability || 0) - 1);
+  visitor.complainedAt = now;
+  visitor.complainedRecently = true;
+  state.complaintDaily.count += 1;
+  addHistory('visitor', `${visitor.emoji} ${visitor.name} 小声嘀咕：怎么还是这些旧书`,
+    '好感 -1 · 完成一本从未外借的新书可让全馆赞叹');
 }
 
 // ========== 还书到期检查 ==========
@@ -1138,40 +1192,74 @@ export function collectReturn(visitorId) {
   const visitor = state.visitors[idx];
   if (visitor.status !== 'due') return null;
 
-  const bookId = visitor.bookId;
-  const bookTitle = visitor.bookTitle;
+  // 多本借阅（§3.2）：整单 bookIds；旧档在途单本由迁移 v9 兜底成数组
+  const bookIds = (visitor.bookIds && visitor.bookIds.length)
+    ? [...visitor.bookIds]
+    : (visitor.bookId ? [visitor.bookId] : []);
+  if (bookIds.length === 0) return null;
+
   const charId = visitor.charId;
   const def = VISITOR_DEFS[charId];
 
-  // 基础收益（按借阅区等级）；典藏版借出回报：智慧之光 ×2、氛围 ×3
+  // 基础收益配置（按借阅区等级）
   const retCfg = getBorrowLevelConfig();
-  const returnedBookDef = bookId ? BOOKS[bookId] : null;
-  const isCollector = !!returnedBookDef?.indestructible;
-  const coinMult = isCollector ? COLLECTOR_RETURN_COIN_MULT : 1;
-  const atmoMult = isCollector ? COLLECTOR_RETURN_ATMO_MULT : 1;
 
-  // 按借阅计划时长追加智慧之光（仅 coins，不加氛围）
+  // 借阅时长加成币：整单一次（§3.2）
   const plannedDurationMs = (visitor.dueTime && visitor.borrowTime)
     ? visitor.dueTime - visitor.borrowTime
     : 0;
   const plannedDurationHours = Math.max(0, plannedDurationMs / (1000 * 60 * 60));
   const extraCoins = Math.floor(plannedDurationHours / 6) * 3;
-  const finalCoins = Math.round((retCfg.returnCoins + extraCoins) * coinMult);
-  const finalAtmo = retCfg.returnAtmo * atmoMult;
-  addCoins(finalCoins);
-  if (finalAtmo > 0) addAtmosphere(finalAtmo);
+  if (extraCoins > 0) addCoins(extraCoins);
 
-  // 乔一一光环：还书好感度加成
+  // 逐本结算：首本全收益（含典藏倍率）；额外书 ×0.25 币、零氛围（评审 P0-B 通胀纪律）；
+  // 每本独立损毁 roll（各自 wearCount 加权，Phase 3 链）
+  const books = bookIds.map((bid, i) => {
+    const bDef = BOOKS[bid];
+    const bs = state.books[bid];
+    const isFirst = i === 0;
+    const isCollector = !!bDef?.indestructible;
+    const coinMult = isCollector ? COLLECTOR_RETURN_COIN_MULT : 1;
+    const atmoMult = isCollector ? COLLECTOR_RETURN_ATMO_MULT : 1;
+    const coins = Math.round(retCfg.returnCoins * (isFirst ? 1 : 0.25) * coinMult);
+    const atmo = isFirst ? retCfg.returnAtmo * atmoMult : 0;
+    addCoins(coins);
+    if (atmo > 0) addAtmosphere(atmo);
+
+    let damaged = false;
+    const inRestoration = (state.restorationBox || []).includes(bid);
+    const damageChance = getDamageChance(state.library.borrowLevel || 0, (state.signboards || []).includes('care_for_books'), bs?.wearCount || 0);
+    const title = bDef ? (bDef.volumeTitle || bDef.title) : bid;
+    if (Math.random() < damageChance && bs && !bDef?.indestructible && !inRestoration) {
+      bs.damaged = true;
+      bs.repairWords = Math.round(bs.copiedWords * 0.15);
+      bs.repairProgress = 0;
+      if (bs.repairWords > 0) {
+        bs.copiedWords = Math.max(0, bs.copiedWords - bs.repairWords);
+        if (bs.status === 'completed' && bDef && bs.copiedWords < bDef.totalWords) {
+          bs.status = 'copying';
+        }
+      }
+      addHistory('damage', `⚠️ 《${title}》在归还时发现损毁`, `损失${bs.repairWords.toLocaleString()}字，需专注修复`);
+      damaged = true;
+    }
+    return { bookId: bid, title, damaged, coins, atmosphere: atmo, collector: isCollector, first: isFirst };
+  });
+
+  const finalCoins = books.reduce((sum, b) => sum + b.coins, 0) + extraCoins;
+  const finalAtmo = books.reduce((sum, b) => sum + b.atmosphere, 0);
+  const damagedAny = books.some(b => b.damaged);
+
+  // 乔一一光环：还书好感度加成（整单一次）
   const favorBonus = getAuraReturnFavorBonus();
   const baseFavor = Math.round(5 * (1 + retCfg.favorBonus / 100));
   const returnFavor = Math.round(baseFavor * (1 + favorBonus));
   visitor.favorability = (visitor.favorability || 0) + returnFavor;
   addVisitorFavor(charId, returnFavor);
 
-  // 王小磊光环：每次还书获得诗笺
+  // 王小磊光环：每次还书获得诗笺（整单一次）
   let wavePoem = null;
   if (charId === 'wangxiaolei' || (getAuraPoemCollect() && charId !== 'wangxiaolei')) {
-    // 王小磊本人还书必然触发诗笺；其他访客还书时若王小磊在馆也可能触发
     if (charId === 'wangxiaolei' || Math.random() < 0.3) {
       const poem = pick(POEMS);
       if (!state.collection) state.collection = {};
@@ -1181,22 +1269,25 @@ export function collectReturn(visitorId) {
     }
   }
 
+  const titlesJoined = books.map(b => `《${b.title}》`).join('');
   const extraCoinsText = extraCoins > 0 ? ` (+${extraCoins}借阅时长)` : '';
-  const collectorText = isCollector ? ` · 📜典藏版回报×${COLLECTOR_RETURN_COIN_MULT}💰×${COLLECTOR_RETURN_ATMO_MULT}✨` : '';
-  addHistory('visitor', `${visitor.emoji} ${visitor.name} 归还了《${bookTitle}》`,
-    `${finalCoins}智慧之光${extraCoinsText} +${finalAtmo}氛围${collectorText} · 好感+${returnFavor}`);
+  const collectorText = books.some(b => b.collector) ? ` · 📜典藏版回报×${COLLECTOR_RETURN_COIN_MULT}💰×${COLLECTOR_RETURN_ATMO_MULT}✨` : '';
+  const multiText = books.length > 1 ? ` · 多本 ×${books.length}（首本全收益，额外书×0.25币零氛围）` : '';
+  addHistory('visitor', `${visitor.emoji} ${visitor.name} 归还了${titlesJoined}`,
+    `${finalCoins}智慧之光${extraCoinsText} +${finalAtmo}氛围${collectorText}${multiText} · 好感+${returnFavor}`);
   if (!state.diaryFirsts.visitorReturn) {
     state.diaryFirsts.visitorReturn = true;
-    addDiaryEntry('visitor_return', { emoji: visitor.emoji, name: visitor.name, bookTitle });
+    addDiaryEntry('visitor_return', { emoji: visitor.emoji, name: visitor.name, bookTitle: titlesJoined });
   }
 
-  // 记录借阅历史
+  // 记录借阅历史（整单一条，书名列全）
   state.borrowRecords.unshift({
     id: nextBorrowId(),
     charId,
     charName: visitor.name,
-    bookId,
-    bookTitle,
+    bookId: bookIds[0],
+    bookIds: [...bookIds],
+    bookTitle: titlesJoined,
     borrowTime: visitor.borrowTime,
     returnTime: getNow(),
     event: null,
@@ -1204,32 +1295,12 @@ export function collectReturn(visitorId) {
   });
 
   // 还书语录
-  const quote = pickReturnQuote(charId, bookTitle, state.library.atmosphere);
+  const quote = pickReturnQuote(charId, books[0].title, state.library.atmosphere);
 
-  // 判定 1：损毁（基础 3%，借阅区等级减免，「爱惜书籍」标志牌再减免，单书磨损乘性放大），典藏版与修缮箱中的卷不会损坏
-  let damaged = false;
-  const book = bookId ? BOOKS[bookId] : null;
-  const bs = bookId ? state.books[bookId] : null;
-  const inRestoration = (state.restorationBox || []).includes(bookId);
-  const damageBaseChance = getDamageChance(state.library.borrowLevel || 0, (state.signboards || []).includes('care_for_books'), bs?.wearCount || 0);
-  if (Math.random() < damageBaseChance && bookId && bs && !book?.indestructible && !inRestoration) {
-    bs.damaged = true;
-    bs.repairWords = Math.round(bs.copiedWords * 0.15);
-    bs.repairProgress = 0;
-    if (bs.repairWords > 0) {
-      bs.copiedWords = Math.max(0, bs.copiedWords - bs.repairWords);
-      if (bs.status === 'completed' && book && bs.copiedWords < book.totalWords) {
-        bs.status = 'copying';
-      }
-    }
-    addHistory('damage', `⚠️ 《${bookTitle}》在归还时发现损毁`, `损失${bs.repairWords.toLocaleString()}字，需专注修复`);
-    damaged = true;
-  }
-
-  // 判定 2：访客叙事事件（三层递进：常层→偶层→稀层→终局）
+  // 判定：访客叙事事件（三层递进，整单一次）
   const narrativeResult = triggerNarrative(charId);
 
-  // 判定 3：旧版角色事件（~60%，保留赠书/推销/诗笺等玩法效果）
+  // 判定：旧版角色事件（~60%，保留赠书/推销/诗笺等玩法效果，一次且仅一次）
   let eventResult = null;
   if (Math.random() < 0.6 && !visitor.eventTriggered) {
     eventResult = triggerEvent(charId, visitor);
@@ -1241,11 +1312,13 @@ export function collectReturn(visitorId) {
   saveState();
 
   return {
-    damaged, event: eventResult, narrative: narrativeResult, bookId, bookTitle, charId, wavePoem,
+    books, damaged: damagedAny,
+    event: eventResult, narrative: narrativeResult,
+    bookId: bookIds[0], bookTitle: titlesJoined, charId, wavePoem,
     visitorName: visitor.name, visitorEmoji: visitor.emoji,
     coins: finalCoins, atmosphere: finalAtmo, favor: returnFavor,
     extraCoins,
-    collector: isCollector,
+    collector: books[0]?.collector || false,
     quote
   };
 }

@@ -36,6 +36,7 @@ import { initMusicSelector } from './render/music-selector.js';
 import { renderMomoSuggestion, resetMomoSuggestion } from './render/momo-suggestion.js';
 import { handleStartFocus, handleTogglePause, handleCompleteFocus, handleAbandonFocus } from './core/focus-actions.js';
 import { checkDayRollover } from './core/day-boundary.js';
+import './core/offsite.js'; // 寄读日结：onNewDay 订阅副作用注册（borrow-demand-deepening §4）
 import { handleBuyShelf, handleUpgradeBorrowLevel } from './core/shop-actions.js';
 import { handleCollectReturn } from './core/visitor-actions.js';
 import { triggerQuestCheck } from './core/quest-trigger.js';

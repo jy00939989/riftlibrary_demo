@@ -30,3 +30,11 @@ export function getBookCondition(wearCount = 0) {
   if (w <= 14) return 'fragile';
   return 'critical';
 }
+
+// ── 多本借阅槽表（borrow-demand-deepening-plan 决策 1：Lv1-2→1，Lv3-4→2，Lv5-7→3）──
+// 索引 0 为占位（同 BORROW_LEVEL_TABLE）；Lv0 兜底 1，保持既有单本行为
+export const BORROW_SLOTS = [0, 1, 1, 2, 2, 3, 3, 3];
+
+export function getBorrowSlots(borrowLevel = 0) {
+  return BORROW_SLOTS[borrowLevel] || 1;
+}
