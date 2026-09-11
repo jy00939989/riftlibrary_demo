@@ -3,7 +3,7 @@ import { state, saveState } from '../state.js';
 import { updateStatusBar, showImagePreview } from './common.js';
 import { PLANT_TYPES, SEED_EXCHANGE } from '../../data/plants.js';
 import { SIGNBOARDS } from '../../data/signboards.js';
-import { canHarvest, harvestPlant, canExchangeSeed, exchangeSeed, getActivePlantDef, canWater, canFertilize, abandonPlant, getSeedExchanges, waterPlant, fertilizePlant } from '../plants.js';
+import { canHarvest, harvestPlant, canExchangeSeed, exchangeSeed, getActivePlantDef, canWater, canFertilize, abandonPlant, getSeedExchanges, waterPlant, fertilizePlant, unlockPot, canUnlockPot, getPotCount, getNextPotPrice, MAX_POTS } from '../plants.js';
 import { t } from '../i18n/terms.js';
 import { suppressGuideWidget } from './guidequests.js';
 
@@ -73,62 +73,105 @@ function renderPlantArea() {
   const section = document.createElement('div');
   section.className = 'bg-white/60 rounded-xl p-5 border-2 border-green-200';
 
-  const plant = state.plant;
   const header = document.createElement('h3');
   header.className = 'font-bold text-lg mb-3 flex items-center gap-2';
-  header.innerHTML = '🌱 盆栽';
-
+  header.innerHTML = `🌱 ${t('plantPotsTitle')} <span class="text-xs font-normal text-ink-light">${t('plantPotCount').replace('{n}', getPotCount()).replace('{max}', MAX_POTS)}</span>`;
   section.appendChild(header);
 
+  // 盆位横向排列（§2.6）；末尾跟解锁卡
+  const row = document.createElement('div');
+  row.className = 'flex gap-4 flex-wrap items-stretch';
+  (state.plants || []).forEach((plant, idx) => {
+    row.appendChild(renderPotCard(plant, idx));
+  });
+  row.appendChild(renderPotUnlockCard());
+  section.appendChild(row);
+  return section;
+}
+
+// 解锁新盆卡（虚线占位样式；满 4 盆显示上限注记）
+function renderPotUnlockCard() {
+  const card = document.createElement('div');
+  card.className = 'rounded-xl border-2 border-dashed flex flex-col items-center justify-center p-4 min-w-[180px] flex-1';
+
+  if (getPotCount() >= MAX_POTS) {
+    card.className += ' border-gray-300 text-gray-400';
+    card.innerHTML = `<span class="text-2xl">🪴</span><p class="text-xs mt-2">${t('plantPotMax')}</p>`;
+    return card;
+  }
+
+  const price = getNextPotPrice();
+  const canAfford = canUnlockPot();
+  card.className += canAfford ? ' border-green-300 text-green-700' : ' border-gray-300 text-gray-400';
+  card.innerHTML = `
+    <span class="text-2xl">🪴</span>
+    <p class="text-xs font-bold mt-2">${t('plantPotUnlock')}</p>
+    <p class="text-xs opacity-80">${t('plantPotCount').replace('{n}', getPotCount()).replace('{max}', MAX_POTS)}</p>
+  `;
+  const btn = document.createElement('button');
+  btn.className = `px-4 py-1.5 mt-3 rounded-lg text-sm font-bold transition-all ${canAfford ? 'bg-green-600 text-white hover:shadow-lg' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`;
+  btn.disabled = !canAfford;
+  btn.innerHTML = `💰${price.toLocaleString()}`;
+  btn.addEventListener('click', () => {
+    if (unlockPot()) {
+      renderDecorationPage();
+      if (typeof window.renderShopPage === 'function') window.renderShopPage();
+      updateStatusBar();
+    }
+  });
+  card.appendChild(btn);
+  return card;
+}
+
+// 单盆卡：空盆 → 引导提示；活盆 → 立绘/进度/操作（交互与单株时代一致，仅索引化）
+function renderPotCard(plant, potIndex) {
+  const card = document.createElement('div');
+  card.className = 'bg-white rounded-xl p-4 border-2 border-green-200 flex-1 min-w-[240px]';
+
   if (!plant.activeType || plant.level === 0) {
-    const empty = document.createElement('div');
-    empty.className = 'text-center py-8';
-    empty.innerHTML = `
-      <div class="mb-3 flex justify-center">
-        <img src="visual/plants/plant_16_empty_pot.png" alt="空花盆" class="w-24 h-24 object-contain opacity-80">
+    card.innerHTML = `
+      <div class="text-center py-4">
+        <div class="mb-2 flex justify-center">
+          <img src="visual/plants/plant_16_empty_pot.png" alt="${t('plantPotEmpty')}" class="w-16 h-16 object-contain opacity-70">
+        </div>
+        <p class="text-xs text-ink-light">${t('plantPotEmpty')}</p>
+        <p class="text-xs text-ink-light mt-1">前往 <span class="text-magic-gold font-bold">位面商店 → 馆内装潢</span> 购买植物</p>
       </div>
-      <p class="text-ink-light mb-2">盆栽空空如也</p>
-      <p class="text-xs text-ink-light">前往 <span class="text-magic-gold font-bold">位面商店 → 馆内装潢</span> 购买一盆植物吧</p>
     `;
-    section.appendChild(empty);
-    return section;
+    return card;
   }
 
   const def = PLANT_TYPES[plant.activeType];
-  if (!def) return section;
+  if (!def) return card;
 
   const progressPercent = Math.min(100, Math.round((plant.growthProgress / def.growthPerLevel) * 100));
   const levelName = def.levelNames[plant.level] || '';
-  const canHarvestNow = canHarvest();
-
-  const card = document.createElement('div');
-  card.className = 'flex gap-5 items-center flex-wrap';
+  const canHarvestNow = canHarvest(potIndex);
 
   const artWrap = document.createElement('div');
-  artWrap.className = 'flex-shrink-0';
+  artWrap.className = 'flex justify-center mb-2';
   artWrap.appendChild(renderPlantArt(def, plant.level));
-  card.appendChild(artWrap);
 
   const info = document.createElement('div');
-  info.className = 'flex-1 min-w-[200px]';
   info.innerHTML = `
-    <div class="flex items-center gap-2 mb-2">
-      <span class="font-bold text-lg">${t(def.nameKey)}</span>
+    <div class="flex items-center justify-center gap-2 mb-2 flex-wrap">
+      <span class="font-bold">${t(def.nameKey)}</span>
       <span class="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full">Lv.${plant.level} · ${levelName}</span>
     </div>
     <div class="h-3 bg-gray-200 rounded-full overflow-hidden mb-2">
       <div class="h-full bg-gradient-to-r from-green-400 to-green-600 transition-all" style="width:${progressPercent}%"></div>
     </div>
-    <p class="text-xs text-ink-light mb-3">成长进度 ${progressPercent}% · 可浇水 ${plant.waterAvailable} 次</p>
-    <div class="flex gap-2 flex-wrap" id="dec-plant-actions"></div>
+    <p class="text-xs text-ink-light mb-3 text-center">成长进度 ${progressPercent}% · 可浇水 ${plant.waterAvailable} 次</p>
+    <div class="flex gap-2 flex-wrap justify-center" id="dec-plant-actions-${potIndex}"></div>
     ${canHarvestNow
-      ? `<p class="text-xs text-yellow-600 mt-3">✨ 可以收获了！将以${Math.round(def.seedDropRate * 100)}%概率获得种子</p>`
-      : `<p class="text-xs text-ink-light mt-2">${plant.level < 5 ? `下一级施肥所需 💰${def.fertilizeCosts[plant.level + 1] || 0}` : '进度满即可收获'}</p>`
+      ? `<p class="text-xs text-yellow-600 mt-3 text-center">✨ 可以收获了！将以${Math.round(def.seedDropRate * 100)}%概率获得种子</p>`
+      : `<p class="text-xs text-ink-light mt-2 text-center">${plant.level < 5 ? `下一级施肥所需 💰${def.fertilizeCosts[plant.level + 1] || 0}` : '进度满即可收获'}</p>`
     }
   `;
+  card.appendChild(artWrap);
   card.appendChild(info);
 
-  const actions = info.querySelector('#dec-plant-actions');
+  const actions = info.querySelector(`#dec-plant-actions-${potIndex}`);
 
   // 收获按钮
   if (canHarvestNow) {
@@ -136,7 +179,7 @@ function renderPlantArea() {
     harvestBtn.className = 'px-4 py-2 bg-yellow-500 text-white rounded-lg text-sm font-bold hover:shadow-lg transition-all';
     harvestBtn.innerHTML = `🌾 收获 (氛围+${def.harvestAtmosphere} 💰+${def.harvestCoins})`;
     harvestBtn.addEventListener('click', () => {
-      const result = harvestPlant();
+      const result = harvestPlant(potIndex);
       if (result) showPlantHarvestPopup(def, result);
       updateStatusBar();
       if (typeof window.renderShopPage === 'function') window.renderShopPage();
@@ -145,13 +188,13 @@ function renderPlantArea() {
     actions.appendChild(harvestBtn);
   } else {
     // 浇水按钮
-    const canWaterNow = canWater();
+    const canWaterNow = canWater(potIndex);
     const waterBtn = document.createElement('button');
     waterBtn.className = `px-3 py-2 bg-blue-500 text-white rounded-lg text-sm font-bold hover:shadow-lg transition-all ${!canWaterNow ? 'opacity-50 cursor-not-allowed' : ''}`;
     waterBtn.disabled = !canWaterNow;
     waterBtn.innerHTML = `💧 浇水 (+${def.waterGrowth})`;
     waterBtn.addEventListener('click', () => {
-      const result = waterPlant();
+      const result = waterPlant(potIndex);
       if (result.ok && result.justMatured) showPlantMaturityToast(def);
       renderDecorationPage();
       if (typeof window.renderShopPage === 'function') window.renderShopPage();
@@ -160,13 +203,13 @@ function renderPlantArea() {
     actions.appendChild(waterBtn);
 
     // 施肥按钮
-    const canFertNow = canFertilize();
+    const canFertNow = canFertilize(potIndex);
     const fertBtn = document.createElement('button');
     fertBtn.className = `px-3 py-2 bg-amber-600 text-white rounded-lg text-sm font-bold hover:shadow-lg transition-all ${!canFertNow ? 'opacity-50 cursor-not-allowed' : ''}`;
     fertBtn.disabled = !canFertNow;
     fertBtn.innerHTML = `✨ 施肥 (+${def.fertilizeGrowth} 💰${def.fertilizeCosts[plant.level + 1] || 0})`;
     fertBtn.addEventListener('click', () => {
-      const result = fertilizePlant();
+      const result = fertilizePlant(potIndex);
       if (result.ok && result.justMatured) showPlantMaturityToast(def);
       renderDecorationPage();
       if (typeof window.renderShopPage === 'function') window.renderShopPage();
@@ -181,7 +224,7 @@ function renderPlantArea() {
   abandonBtn.innerHTML = `🗑️ ${t('plantAbandon')}`;
   abandonBtn.addEventListener('click', () => {
     if (confirm(t('plantAbandonConfirm').replace('{name}', t(def.nameKey)))) {
-      abandonPlant();
+      abandonPlant(potIndex);
       renderDecorationPage();
       if (typeof window.renderShopPage === 'function') window.renderShopPage();
       updateStatusBar();
@@ -189,8 +232,7 @@ function renderPlantArea() {
   });
   actions.appendChild(abandonBtn);
 
-  section.appendChild(card);
-  return section;
+  return card;
 }
 
 // ========== 种子库存 ==========
