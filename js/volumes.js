@@ -50,7 +50,10 @@ export function collectVolumeGroup(group) {
     copiedWords: collectedDef ? collectedDef.totalWords : 0
   });
 
-  // 单卷已完成使命，锁定避免继续出现在借阅候选池
+  // 单卷已完成使命，锁定避免继续出现在借阅候选池。
+  // 注意：locked 在商店语义里是"未拥有可购买"，因此商店侧靠
+  // isVolumeConsumed() 从典藏版记录反推"已消耗"来排除单卷（volume_groups.js），
+  // 两处语义不可混用。
   group.volumeIds.forEach(id => {
     state.books[id] = createBookRecord({ status: 'locked' });
   });

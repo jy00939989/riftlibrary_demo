@@ -158,6 +158,23 @@ export function getVolumeGroupByCollectedId(collectedId) {
 }
 
 /**
+ * 卷组是否已合成典藏版（纯函数，不读 state）。
+ * 这是"单卷已消耗"的判定真源：合成后单卷记录复用 status:'locked'
+ * （locked 在商店语义里是"未拥有可购买"），不能靠单卷自身状态区分，
+ * 必须从典藏版记录反推。已有老存档因此无需迁移。
+ */
+export function isVolumeGroupCollected(group, booksData) {
+  const bs = booksData && booksData[group.collectedBookId];
+  return !!bs && bs.status !== 'locked';
+}
+
+/** 单卷是否已随典藏版合成而消耗（不再作为商品/借阅候选） */
+export function isVolumeConsumed(volumeId, booksData) {
+  const group = getVolumeGroupByVolumeId(volumeId);
+  return group ? isVolumeGroupCollected(group, booksData) : false;
+}
+
+/**
  * 计算卷组的抄写进度（纯函数，不读 state）
  * completed：已抄写完成且未损坏（不含借出状态），用于卷追踪面板
  * booksData：{ [id]: bookState }
