@@ -79,7 +79,7 @@ export function renderVisitorsPage() {
   const container = document.getElementById('page-visitors');
   if (!container) return;
 
-  const browsing = state.visitors.filter(v => v.status === 'browsing');
+  const browsing = state.visitors.filter(v => v.status === 'browsing' || v.status === 'cafe');
   const borrowed = state.visitors.filter(v => v.status === 'borrowed');
   const due = state.visitors.filter(v => v.status === 'due');
 
@@ -150,6 +150,9 @@ export function renderVisitorsPage() {
       const auraHtml = def?.aura
         ? `<div class="text-xs text-magic-gold mt-0.5">✨ ${def.aura.name}：${def.aura.desc}</div>`
         : '';
+      const cafeHtml = v.status === 'cafe'
+        ? `<div class="text-xs text-amber-600 mt-0.5">☕ ${t('cafeSitting')}</div>`
+        : (v.pendingBorrowBuff ? `<div class="text-xs text-amber-600 mt-0.5">☕ ${t('cafeBuffActive').replace('{n}', Math.round(v.pendingBorrowBuff * 100))}</div>` : '');
       const favorHtml = renderFavorBar(v.charId, v.favorability || 0);
       const row = el('div', 'flex items-center gap-3 bg-white/60 rounded-lg p-3 mb-2');
       row.innerHTML = `${getVisitorPortrait(v.charId, v.emoji, 'sm')}
@@ -157,11 +160,12 @@ export function renderVisitorsPage() {
           <span class="font-bold">${v.name}</span>
           <span class="text-xs text-ink-light ml-2">${v.title || ''}</span>
           ${auraHtml}
+          ${cafeHtml}
           <div class="text-sm text-magic-blue mt-0.5 browsing-mood animate-ellipsis">${mood}</div>
           ${favorHtml}
         </div>
         <div class="text-xs text-ink-light/60 text-right">
-          <div class="text-magic-gold/50 text-[10px] mt-0.5">浏览中</div>
+          <div class="text-magic-gold/50 text-[10px] mt-0.5">${v.status === 'cafe' ? '☕ 咖啡角' : '浏览中'}</div>
         </div>`;
       section1.appendChild(row);
     });

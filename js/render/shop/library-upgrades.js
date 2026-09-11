@@ -23,6 +23,10 @@ import {
 } from '../../i18n/terms.js';
 import { showNamingModal } from './naming-modal.js';
 import { getFacilityLevelCap, getFacilityRequiredStage, resolveStageLevel } from '../../../data/atmosphere.js';
+import { isCafeBuilt, isCafeDormant, buildCafe } from '../../core/cafe.js';
+import { openCafePanel } from './cafe-panel.js';
+import { CAFE_BUILD_STAGE, CAFE_BUILD_PRICE } from '../../../data/cafe.js';
+import { getLibraryStage } from '../../storage.js';
 
 export function renderLibraryUpgrades() {
   const section = el('div', 'parchment-bg rounded-2xl p-6 magic-glow');
@@ -362,9 +366,52 @@ export function renderLibraryUpgrades() {
   }
   grid.appendChild(musicRoomCard);
 
+  // === 咖啡角（cafe-corner-plan v3.1 占位卡转正）===
+  const cafeBuilt = isCafeBuilt();
+  const cafeDormant = isCafeDormant();
+  const cafeCard = el('div', `bg-white rounded-xl p-4 border-2 flex gap-4 items-center ${cafeBuilt ? 'border-magic-gold/30' : 'border-gray-200'}`);
+  const stageOk = getLibraryStage() >= CAFE_BUILD_STAGE;
+  cafeCard.innerHTML = `
+    <div class="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-wood/10 flex items-center justify-center">
+      <span class="text-3xl">${cafeBuilt ? '☕' : '🔒'}</span>
+    </div>
+    <div class="flex-1">
+      <div class="flex items-center gap-2 mb-1">
+        <span class="font-bold">☕ ${t('coffeeCorner')}</span>
+        ${cafeBuilt
+          ? `<span class="text-xs bg-magic-gold/20 text-magic-gold px-2 py-0.5 rounded-full">Lv.${state.cafe.level}</span>
+             ${cafeDormant ? `<span class="text-xs bg-gray-300 text-gray-600 px-2 py-0.5 rounded-full">💤 ${t('cafeDormant')}</span>` : ''}`
+          : `<span class="text-xs bg-gray-200 text-gray-500 px-2 py-0.5 rounded-full">${t('locked')}</span>`}
+      </div>
+      <p class="text-xs text-ink-light mb-2">${cafeBuilt ? t('cafeShopCardDesc').replace('{n}', state.cafe.totalServed) : t('coffeeCornerDesc')}</p>
+      ${!cafeBuilt
+        ? (stageOk
+          ? `<button class="build-cafe-btn px-4 py-1.5 ${state.coins >= CAFE_BUILD_PRICE ? 'bg-magic-gold text-white hover:shadow-lg' : 'bg-gray-300 text-gray-500 cursor-not-allowed'} rounded-lg text-sm font-bold transition-all" ${state.coins < CAFE_BUILD_PRICE ? 'disabled' : ''}>${t('build')} 💰${CAFE_BUILD_PRICE.toLocaleString()}</button>`
+          : `<span class="text-xs text-ink-light">🔒 ${t('cafeBuildGate').replace('{stage}', CAFE_BUILD_STAGE)}</span>`)
+        : `<button class="enter-cafe-btn px-4 py-1.5 bg-magic-gold text-white rounded-lg text-sm font-bold hover:shadow-lg transition-all">${t('cafeEnter')}</button>`}
+    </div>
+  `;
+  const buildCafeBtn = cafeCard.querySelector('.build-cafe-btn');
+  if (buildCafeBtn && stageOk && state.coins >= CAFE_BUILD_PRICE) {
+    buildCafeBtn.addEventListener('click', () => {
+      if (buildCafe()) {
+        playSfx('buy_success');
+        updateStatusBar();
+        if (actions.renderShopPage) actions.renderShopPage();
+        openCafePanel();
+      } else {
+        window.showToast(`${t('insufficientCoins')} 💰`, 'error');
+      }
+    });
+  }
+  const enterCafeBtn = cafeCard.querySelector('.enter-cafe-btn');
+  if (enterCafeBtn) {
+    enterCafeBtn.addEventListener('click', () => openCafePanel());
+  }
+  grid.appendChild(cafeCard);
+
   // === Other placeholders ===
   const placeholders = [
-    { icon: '☕', nameKey: 'coffeeCorner', descKey: 'coffeeCornerDesc' },
     { icon: '🔬', nameKey: 'researchArea', descKey: 'researchAreaDesc' },
     { icon: '🚪', nameKey: 'planeVisiting', descKey: 'planeVisitingDesc' },
     { icon: '📨', nameKey: 'bookDrift', descKey: 'bookDriftDesc' },
