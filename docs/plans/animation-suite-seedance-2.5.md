@@ -38,6 +38,8 @@ anchors:
   - { type: file, path: "js/render/tutorial-ui.js", weight: 0.1 }
   - { type: file, path: "js/core/focus-orchestrator.js", weight: 0.1 }
   - { type: file, path: "js/app.js", weight: 0.1 }
+  - { type: file, path: "visual/animations/_archive/borrow_lv0_1_v1_5s.mp4", weight: 0.1 }
+  - { type: file, path: "visual/promo/异世界图书馆宣传PV.mp4", weight: 0.1 }
 ---
 
 # 归墟图书馆 · Seedance 2.5 动画套案

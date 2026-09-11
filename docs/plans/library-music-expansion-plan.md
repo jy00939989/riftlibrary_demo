@@ -1,6 +1,7 @@
 ---
 anchors:
   - { type: file, path: "audio/music/theme.mp3", weight: 0.1 }
+  - { type: file, path: "audio/湖边早春.mp3", weight: 0.1 } <!-- 历史路径：覆盖 8aca59b8，30 天窗口后删除本行 -->
   - { type: file, path: "audio/music/winter-reverie.mp3", weight: 0.1 }
   - { type: file, path: "audio/music/spring-reverie.mp3", weight: 0.1 }
   - { type: file, path: "audio/music/rhapsody-jazz.mp3", weight: 0.1 }
