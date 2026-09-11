@@ -28,5 +28,15 @@
     "file": "visual/animations/visitor_first_480p.mp4",
     "duration": 10,
     "loop": false
+  },
+  "atmo_2_3": {
+    "file": "visual/animations/atmo_2_3_480p.mp4",
+    "duration": 7,
+    "loop": false
+  },
+  "focus_lv2_3": {
+    "file": "visual/animations/focus_lv2_3_480p.mp4",
+    "duration": 7,
+    "loop": false
   }
 }

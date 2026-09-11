@@ -214,15 +214,15 @@ function init() {
   try {
     onStageCross((crossedStages) => {
       const stageNames = ['', '废墟', '破败', '陈旧', '温暖', '星辰'];
-      // 首个阶段跨越（含 2=首次阈值）播氛围过渡动画 atmo_0_1，再走原庆典链
-      if (crossedStages.includes(2)) {
-        playVideoOverlay('atmo_0_1', {
-          onDone: () => celebrateStageCross(crossedStages, stageNames),
-          onFail: () => celebrateStageCross(crossedStages, stageNames)
-        });
-      } else {
-        celebrateStageCross(crossedStages, stageNames);
-      }
+      // 升阶仪式播氛围过渡动画：键 atmo_{prev}_{new}（存储阶 prevLevel=1 的首次仪式对应
+      // 素材键 atmo_0_1——素材按展示层级 0 起编，存储 stage 1 起编，特此对齐）；清单外键自动降级
+      const newStage = crossedStages[crossedStages.length - 1];
+      const prevLevel = newStage - 1;
+      const animKey = prevLevel === 1 ? 'atmo_0_1' : `atmo_${prevLevel}_${newStage}`;
+      playVideoOverlay(animKey, {
+        onDone: () => celebrateStageCross(crossedStages, stageNames),
+        onFail: () => celebrateStageCross(crossedStages, stageNames)
+      });
     });
     function celebrateStageCross(crossedStages, stageNames) {
       crossedStages.forEach(stage => {
