@@ -1,6 +1,11 @@
 ---
 anchors:
-  - { type: file, path: "audio/湖边早春.mp3", weight: 0.1 }
+  - { type: file, path: "audio/music/theme.mp3", weight: 0.1 }
+  - { type: file, path: "audio/music/winter-reverie.mp3", weight: 0.1 }
+  - { type: file, path: "audio/music/spring-reverie.mp3", weight: 0.1 }
+  - { type: file, path: "audio/music/rhapsody-jazz.mp3", weight: 0.1 }
+  - { type: file, path: "audio/music/lakeside-spring.mp3", weight: 0.1 }
+  - { type: file, path: "audio/music/arthur-lakeside.mp3", weight: 0.1 }
   - { type: file, path: "data/music.js", weight: 0.1 }
   - { type: file, path: "docs/plans/library-music-expansion-plan.md", weight: 0.1 }
   - { type: file, path: "index.html", weight: 0.1 }
