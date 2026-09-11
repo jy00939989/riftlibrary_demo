@@ -38,14 +38,14 @@ export function getOffsiteEligibleBooks() {
 }
 
 /**
- * 活跃日寄读结算（v3.1 A1）：挂统一 onNewDay。
+ * 活跃日寄读结算（v3.1 A1）：由 onNewDay 驱动，也可直接调用（测试/调试）。
  * 每本 25% 概率寄出：+币（按书价浮动）、10% +1 灵感、wearCount+1、borrowTimes+1；
- * 当日 history 合并一条汇总；state.library.lastOffsiteDate 防重。
+ * 当日 history 合并一条汇总；lastOffsiteDate 防重（同日再调返回 0）。
  */
-onNewDay(({ today }) => {
+export function settleOffsite(today) {
   const lib = state.library;
-  if (!lib) return;
-  if (lib.lastOffsiteDate === today) return; // 防重（多触发点同档只结一次）
+  if (!lib) return 0;
+  if (lib.lastOffsiteDate === today) return 0; // 防重（多触发点同档只结一次）
   lib.lastOffsiteDate = today;
 
   const ownedCount = Object.values(state.books || {}).filter(b => b && b.status !== 'locked').length;
@@ -76,4 +76,7 @@ onNewDay(({ today }) => {
       `+${coinsTotal}智慧之光${inspirationGained > 0 ? ` · +${inspirationGained}灵感` : ''} · 书籍略有磨损（寄读隐性对价）`);
     saveState();
   }
-});
+  return circulated;
+}
+
+onNewDay(({ today }) => settleOffsite(today));
