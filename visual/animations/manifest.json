@@ -3,5 +3,30 @@
     "file": "visual/animations/book_complete_shelving_480p.mp4",
     "duration": 5,
     "loop": false
+  },
+  "borrow_lv0_1": {
+    "file": "visual/animations/borrow_lv0_1_480p.mp4",
+    "duration": 8,
+    "loop": false
+  },
+  "focus_lv0_1": {
+    "file": "visual/animations/focus_lv0_1_480p.mp4",
+    "duration": 8,
+    "loop": false
+  },
+  "focus_lv1_2": {
+    "file": "visual/animations/focus_lv1_2_480p.mp4",
+    "duration": 5,
+    "loop": false
+  },
+  "atmo_0_1": {
+    "file": "visual/animations/atmo_0_1_480p.mp4",
+    "duration": 5,
+    "loop": false
+  },
+  "visitor_first": {
+    "file": "visual/animations/visitor_first_480p.mp4",
+    "duration": 10,
+    "loop": false
   }
 }

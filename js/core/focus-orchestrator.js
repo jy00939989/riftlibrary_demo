@@ -147,7 +147,11 @@ export function runFocusOrchestration(result, isAuto) {
         const visitor = spawnVisitor();
         if (visitor) {
           playSfx('visitor_arrive');
-          showFirstVisitorEvent(visitor);
+          // 首位访客抵达动画（visitor_first；清单缺失/已看过/设置跳过时自动走原流程）
+          playVideoOverlay('visitor_first', {
+            onDone: () => showFirstVisitorEvent(visitor),
+            onFail: () => showFirstVisitorEvent(visitor)
+          });
         }
       } else if (state.tutorialFlags.firstVisitorEventDone) {
         const welcomeBonus = getSignboardBuffSum('spawn_chance');
