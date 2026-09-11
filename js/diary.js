@@ -3,6 +3,7 @@ import { state, saveState } from './state.js';
 import { BOOKS } from '../data/books.js';
 import { addCoins, addAtmosphere } from './storage.js';
 import { t } from './i18n/terms.js';
+import { getTodayKey, getPrevDayKey, onNewDay } from './core/day-boundary.js';
 
 // ========== 模板键池 ==========
 
@@ -217,19 +218,26 @@ function addRawEntry(text, type) {
   if (state.diaryLogs.length > 30) state.diaryLogs.length = 30;
 }
 
+// A1 日界统一：app 开着过 0 点（tick 日界检测）自动为刚结束的一天生成回顾；
+// 隔日登录的存量路径仍走 init 处的 tryGenerateDailySummary（两路同一份防重日期戳）
+onNewDay(({ prevDay, today }) => {
+  if (!prevDay || state.diaryLastSummaryDate === today) return;
+  generateDailySummaryFor(prevDay, today);
+});
+
 export function tryGenerateDailySummary() {
-  const now = new Date();
-  const today = now.toDateString();
+  const today = getTodayKey();
 
   if (!state.diaryLastSummaryDate) state.diaryLastSummaryDate = '';
   if (state.diaryLastSummaryDate === today) return;
 
-  const yesterday = new Date(now);
-  yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayStr = yesterday.toDateString();
+  generateDailySummaryFor(getPrevDayKey(), today);
+}
 
+/** 为指定日历日生成每日回顾（当日无记录则不产出、不写日期戳——与存量语义一致） */
+function generateDailySummaryFor(targetDayStr, today) {
   const yesterdayEntries = (state.history || []).filter(h => {
-    return new Date(h.time).toDateString() === yesterdayStr;
+    return new Date(h.time).toDateString() === targetDayStr;
   });
   if (yesterdayEntries.length === 0) return;
 
@@ -258,7 +266,7 @@ export function tryGenerateDailySummary() {
   if (focusCount === 0 && completedBooks.length === 0) return;
 
   // 组装文本
-  const dateStr = getDateStr(yesterday);
+  const dateStr = getDateStr(new Date(targetDayStr));
   const weather = getWeather();
   const opening = fill(t(pick(DAILY_OPENING_KEYS)), commonVars());
   const ending = fill(t(pick(ENDING_KEYS)), commonVars());
