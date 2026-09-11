@@ -1,5 +1,5 @@
 ---
-status: backlog
+status: done
 importance: 3
 scheduledDate:
 anchors:
@@ -18,6 +18,10 @@ anchors:
   - { type: file, path: "js/render/visitors.js", weight: 0.1 }
   - { type: file, path: "js/i18n/terms.js", weight: 0.1 }
   - { type: file, path: "scripts/verify-atmosphere-narrowing.js", weight: 0.1 }
+  - { type: file, path: "js/core/offsite.js", weight: 0.2 }
+  - { type: file, path: "js/core/book-progress.js", weight: 0.1 }
+  - { type: file, path: "scripts/test-borrow-deepening.mjs", weight: 0.1 }
+  - { type: file, path: "js/render/bookshelf.js", weight: 0.1 }
 ---
 
 # 借阅需求深化计划（borrow-demand-deepening-plan）v3.1
@@ -197,3 +201,18 @@ anchors:
 - `js/state/state.js` / `js/state/migrations.js`、`js/render/visitors.js`（多本 UI）
 - `js/i18n/terms.js`、`scripts/verify-atmosphere-narrowing.js`
 - 联合评审：`reviews/borrow-cafe-joint-review-v2.md`；架构评审：`reviews/economy-subsystem-architecture-review.md`；待补 sink 台账：`sink-ledger.md`（灵感/金币/专注线）；日界前置：`daily-boundary-refactor-plan.md`（A1，动工第 0 步前置）
+
+---
+
+## 十一、实施记录（2026-09-11 落地，4 commits bcd2f27→6bb49b3）
+
+实施步骤 0-5 全执行。测试 `scripts/test-borrow-deepening.mjs` **52 项全绿**（槽表/多本整单到期/×0.25 结算数学/寄读浮动上限/吐槽三护栏/赞叹闭环/A5 迁移共存）；cafe 51 / greenhouse 34 / day-boundary 39 无回归；check:imports 过；drift 0。
+
+**三机制落地形态**：
+- 多本借阅：`getBorrowSlots` 入 `data/borrow-levels.js`（Lv0 兜底 1 保持既有行为）；attemptBorrow 无重复抽 K 本、整单 dueTime 取最大、bookIds + bookId 兼容字段；collectReturn 逐本结算（首本全收益/额外 ×0.25 零氛围/时长加成整单一次/每本独立损毁 roll），12 钩子整单一次且仅一次
+- 寄读：`js/core/offsite.js` 挂 onNewDay（A1/A8），lastOffsiteDate 防重，浮动上限 `min(12,max(3,⌊n/8⌋))`，币 6-10 按书价浮动（SHARED_POOL 查价），10% 灵感，wear+借次 +1，history 合并一条，零氛围
+- 新书吐槽：borrowTimes≥5 占比 >60% 且藏书 ≥5 → 30%，-1 好感 + complainedRecently 标记；护栏同访客 24h/全馆日 3（日限走 day-boundary getTodayKey）；赞叹闭环在 completeBook（borrowTimes===0 新书 → 带标记访客 +5 清标记）
+
+**实施时补充决策**：① 寄读结算抽为导出函数 settleOffsite(today)，onNewDay 订阅与测试/调试共用入口；② 测试池排除典藏版（indestructible 不磨损，wearCount 断言专用）；③ 24h 护栏基线用真实 Date.now()（getNow 为实时时钟）；④ A5 同档断言覆盖 v7 plants / v8 cafe / v9 borrow 三 plan 字段无顺序依赖。
+
+**首月回测联合指标（v3 P0-2 记账要求）**：金币日获取量 + 结余增速、寄读金币占比（信号 B 阈值 40%）、吐槽：赞叹比（信号 C 阈值 3:1）、在途书量 vs 藏书量（信号 A）、repairWords 占专注比（D11 阈值 15%）——数据面已齐（history 类型齐全 + borrowRecords.bookIds），回测时从存档/history 提取。
