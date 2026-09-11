@@ -18,11 +18,12 @@ export function renderDecorationShop() {
   section.innerHTML = `<h2 class="font-display text-xl font-bold mb-4">🏺 ${t('decoration')}</h2>`;
 
   const grid = el('div', 'grid grid-cols-1 md:grid-cols-2 gap-3');
-  const plant = state.plant;
+  const pots = state.plants || [];
+  const hasEmptyPot = pots.some(p => !p.activeType || p.level === 0);
 
-  // === Plant Pot ===
-  if (!plant.activeType || plant.level === 0) {
-    // Empty pot — show purchasable plant types
+  // === Plant Pots ===
+  if (hasEmptyPot) {
+    // 有空盆 — 展示可购植物类型（plantSeed 默认落入第一个空盆）
     Object.values(PLANT_TYPES).forEach(pt => {
       const card = el('div', 'bg-white rounded-xl p-4 border-2 border-green-200 flex gap-4 items-center hover:shadow-lg transition-all cursor-pointer');
       const cost = pt.fertilizeCosts[1];
@@ -68,14 +69,16 @@ export function renderDecorationShop() {
       }
       grid.appendChild(card);
     });
-  } else {
-    // Planted — show current plant status
+  }
+
+  // 已种盆位各一张状态卡
+  pots.forEach((plant, idx) => {
+    if (!plant.activeType || plant.level === 0) return;
     const def = PLANT_TYPES[plant.activeType];
     if (def) {
-      const plantCard = renderActivePlantCard(def, plant);
-      grid.appendChild(plantCard);
+      grid.appendChild(renderActivePlantCard(def, plant, idx));
     }
-  }
+  });
 
   // === Signboards ===
   Object.values(SIGNBOARDS).forEach(sb => {
@@ -136,13 +139,13 @@ export function renderDecorationShop() {
   return section;
 }
 
-export function renderActivePlantCard(def, plant) {
+export function renderActivePlantCard(def, plant, potIndex = 0) {
   const card = el('div', 'bg-white rounded-xl p-4 border-2 border-green-300 flex gap-4 items-start');
   const progressPercent = Math.min(100, Math.round((plant.growthProgress / def.growthPerLevel) * 100));
   const levelName = def.levelNames[plant.level] || '';
-  const canHarvestNow = canHarvest();
-  const canWaterNow = canWater();
-  const canFertNow = canFertilize();
+  const canHarvestNow = canHarvest(potIndex);
+  const canWaterNow = canWater(potIndex);
+  const canFertNow = canFertilize(potIndex);
 
   const nextFertCost = def.fertilizeCosts[plant.level + 1] || def.fertilizeCosts[5] || 0;
   const footerText = plant.level < 5
@@ -192,7 +195,7 @@ export function renderActivePlantCard(def, plant) {
   abandonBtn.innerHTML = `🗑️ ${t('plantAbandon')}`;
   abandonBtn.addEventListener('click', () => {
     if (confirm(t('plantAbandonConfirm').replace('{name}', t(def.nameKey)))) {
-      abandonPlant();
+      abandonPlant(potIndex);
       updateStatusAndRefresh();
       if (typeof window.renderLibraryPage === 'function') window.renderLibraryPage();
     }
@@ -203,7 +206,7 @@ export function renderActivePlantCard(def, plant) {
   const waterBtn = card.querySelector('.water-btn');
   if (waterBtn && canWaterNow) {
     waterBtn.addEventListener('click', () => {
-      const result = waterPlant();
+      const result = waterPlant(potIndex);
       if (result.ok && result.justMatured) {
         showPlantMaturityToast(def);
       }
@@ -217,7 +220,7 @@ export function renderActivePlantCard(def, plant) {
   const fertBtn = card.querySelector('.fertilize-btn');
   if (fertBtn && canFertNow) {
     fertBtn.addEventListener('click', () => {
-      const result = fertilizePlant();
+      const result = fertilizePlant(potIndex);
       if (result.ok && result.justMatured) {
         showPlantMaturityToast(def);
       }
@@ -231,7 +234,7 @@ export function renderActivePlantCard(def, plant) {
   const harvestBtn = card.querySelector('.harvest-btn');
   if (harvestBtn) {
     harvestBtn.addEventListener('click', () => {
-      const result = harvestPlant();
+      const result = harvestPlant(potIndex);
       if (result) {
         showPlantHarvestPopup(def, result);
         updateStatusAndRefresh();
