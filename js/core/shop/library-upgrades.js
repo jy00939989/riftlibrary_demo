@@ -15,6 +15,10 @@ import { track } from '../../backend/analytics.js';
 const MASTERY_SPEED_BONUS_PER_BOOK = 0.001; // 每本 +0.1%
 const MASTERY_SPEED_BONUS_CAP = 0.20;       // 上限 +20%
 
+// 连击（连续专注日）速率加成封顶：30 天（2026-09-11 图南拍板——streak 线性无限撞旧 180% 顶，
+// 封顶后整体上限提到 200%，满 build 玩家恰好可达，streak 之后只剩每 7 天 50 币奖励）
+const STREAK_BONUS_CAP_DAYS = 30;
+
 export function getBorrowLevelPrice() {
   return _getBorrowLevelPrice(state.library.borrowLevel || 0);
 }
@@ -51,7 +55,7 @@ export function getMasteredBookSpeedBonus() {
 
 export function getFocusSpeedMultiplier() {
   const b = getAchievementBonuses();
-  const streakBonus = (state.focus.streak || 0) * b.streakMultiplier;
+  const streakBonus = Math.min(STREAK_BONUS_CAP_DAYS, state.focus.streak || 0) * b.streakMultiplier;
   const signboardBonus = getSignboardSpeedBonus();
   const masteryBonus = getMasteredBookSpeedBonus();
   return _getFocusSpeedMultiplier(

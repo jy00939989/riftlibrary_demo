@@ -77,7 +77,7 @@ const TERM_DATA = Object.freeze({
   speedTooltipMastery: { zh: '精通书籍', en: 'Mastered Books' },
   speedTooltipAchievement: { zh: '成就加成', en: 'Achievement Bonus' },
   speedTooltipStreak: { zh: '连续专注 {days} 天', en: '{days}-Day Streak' },
-  speedTooltipCap: { zh: '总计上限 180%', en: 'Capped at 180%' },
+  speedTooltipCap: { zh: '总计上限 200%（连击加成按 30 天封顶）', en: 'Capped at 200% (streak bonus capped at 30 days)' },
   speedTooltipAuraNote: { zh: '💡 部分访客光环在专注期间另有加成', en: '💡 Some visitor auras boost speed further during focus' },
   coinsGainLabel: { zh: '智慧之光获取', en: 'Wisdom Light Gain' },
   visitorFavorLabel: { zh: '访客好感', en: 'Visitor Favor' },
