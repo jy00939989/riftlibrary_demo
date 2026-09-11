@@ -110,8 +110,8 @@ export const state = {
   // 成就
   achievements: [],
 
-  // 植物盆栽
-  plant: {
+  // 植物盆栽（温室花盆扩容：单株 → 数组，最多 4 盆，盆位 0 为原单株）
+  plants: [{
     activeType: null,
     level: 0,
     growthProgress: 0,
@@ -119,7 +119,7 @@ export const state = {
     lastCareTime: 0,
     plantedAt: 0,
     harvested: false
-  },
+  }],
 
   // 种子收集
   seeds: {

@@ -17,9 +17,13 @@ const ACTIONS = [
     nameKey: 'actionWaterPlant',
     descKey: 'actionWaterPlantDesc',
     descParams: { value: 25 },
-    available(s) { return s.plant.waterAvailable > 0; },
+    available(s) { return (s.plants || []).some(p => p.activeType && p.waterAvailable > 0); },
     apply() {
-      state.plant.growthProgress = Math.min(100, (state.plant.growthProgress || 0) + 25);
+      (state.plants || []).forEach(p => {
+        if (p.activeType && p.level > 0) {
+          p.growthProgress = Math.min(100, (p.growthProgress || 0) + 25);
+        }
+      });
       addHistory('action', t('actionWaterPlantHistory'), t('actionPlantGrowthPlus').replace('{value}', 25));
     },
     dailyLimit: 2

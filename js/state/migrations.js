@@ -32,8 +32,25 @@ const MIGRATIONS = [
   { version: 3, up: migrateV3 },
   { version: 4, up: migrateV4 },
   { version: 5, up: migrateV5 },
-  { version: 6, up: migrateV6 }
+  { version: 6, up: migrateV6 },
+  { version: 7, up: migrateV7 }
 ];
+
+function migrateV7() {
+  // 2026-09-11 温室花盆扩容（cafe-corner-plan §2.6 Phase 0）：单株 → 数组。
+  // 纯加法 + 字段归一：老档 state.plant 包成 [原株]（盆位 0），随后删除旧字段。
+  if (!state.plants) {
+    const legacy = (state.plant && typeof state.plant === 'object') ? state.plant : {};
+    state.plants = [legacy];
+  }
+  if (!Array.isArray(state.plants) || state.plants.length === 0) {
+    state.plants = [{ ...EMPTY_PLANT }];
+  }
+  state.plants.forEach(p => {
+    Object.keys(EMPTY_PLANT).forEach(k => { if (p[k] === undefined) p[k] = EMPTY_PLANT[k]; });
+  });
+  delete state.plant;
+}
 
 function migrateV6() {
   // 2026-09-11 A1 日界统一：播种 lastSeenDay（纯加法，幂等）。
@@ -175,15 +192,7 @@ function migrateV1() {
   if (state.library.nameLocked === undefined) state.library.nameLocked = false;
   if (state.library.name === '星辉图书馆') state.library.name = '归墟图书馆';
 
-  // 新版迁移：植物/种子/标志牌
-  if (!state.plant) {
-    state.plant = { ...EMPTY_PLANT };
-  } else {
-    // 补全缺失字段
-    Object.keys(EMPTY_PLANT).forEach(key => {
-      if (state.plant[key] === undefined) state.plant[key] = EMPTY_PLANT[key];
-    });
-  }
+  // 新版迁移：植物/种子/标志牌（单株归一由 migrateV7 统一处理，此处不再维护 state.plant）
   if (!state.seeds) state.seeds = {};
   Object.values(PLANT_TYPES).forEach(def => {
     if (state.seeds[def.seedType] === undefined) state.seeds[def.seedType] = 0;
