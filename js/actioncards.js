@@ -3,6 +3,7 @@ import { state, saveState } from './state.js';
 import { addCoins, addAtmosphere, addHistory } from './storage.js';
 import { BOOKS } from '../data/books.js';
 import { t } from './i18n/terms.js';
+import { getTodayKey, onNewDay } from './core/day-boundary.js';
 
 function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
@@ -171,16 +172,21 @@ const ACTIONS = [
 
 // ========== Daily reset ==========
 
+function resetActionCardDaily(today) {
+  state.actionCardDaily = { date: today, count: 0, usedActions: {} };
+}
+
+// A1 日界统一：行动卡日限由 onNewDay 事件驱动重置（plan 迁移表漏列的第五处散点）
+onNewDay(({ today }) => resetActionCardDaily(today));
+
+// 惰性兜底保留（抽卡入口仍调用，同日零开销）
 function ensureDailyReset() {
-  const today = new Date().toDateString();
   if (!state.actionCardDaily) {
-    state.actionCardDaily = { date: '', count: 0, usedActions: {} };
+    resetActionCardDaily(getTodayKey());
+    return;
   }
-  if (state.actionCardDaily.date !== today) {
-    state.actionCardDaily.date = today;
-    state.actionCardDaily.count = 0;
-    state.actionCardDaily.usedActions = {};
-  }
+  const today = getTodayKey();
+  if (state.actionCardDaily.date !== today) resetActionCardDaily(today);
 }
 
 // ========== Draw ==========

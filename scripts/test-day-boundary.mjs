@@ -61,6 +61,7 @@ const storage = await import('../js/storage.js');
 const dailytasks = await import('../js/dailytasks.js');
 const achievements = await import('../js/achievements.js');
 const diary = await import('../js/diary.js');
+const actioncards = await import('../js/actioncards.js');
 
 let pass = 0, fail = 0;
 function assert(cond, msg) {
@@ -238,6 +239,14 @@ if (IS_BASELINE) {
   checkDayRollover(state, T2);
   assert(state.diaryLogs.length === 1 && state.diaryLogs[0].type === 'daily',
     'onNewDay 自动回顾昨日（开着过 0 点路径）');
+
+  // 行动卡日限：由日界事件重置（plan 迁移表漏列的第五处散点）
+  state.actionCardDaily = { date: dstr(D1), count: 3, usedActions: { hum_tune: 2 } };
+  state.lastSeenDay = dstr(D1);
+  checkDayRollover(state, T2);
+  assert(state.actionCardDaily.date === dstr(D2) && state.actionCardDaily.count === 0
+    && Object.keys(state.actionCardDaily.usedActions).length === 0,
+    'onNewDay 驱动行动卡日限重置');
 
   // 零漂移关键断言：日界事件不触碰 streak（streak 属「连续专注日」语义）
   resetFocus();
