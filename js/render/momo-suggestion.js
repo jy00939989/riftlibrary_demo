@@ -56,7 +56,7 @@ const MOMO_SUGGESTIONS = [
   // 6. 没有种植植物
   {
     id: 'no_plant',
-    condition: (s) => !s.plant || !s.plant.activeType,
+    condition: (s) => !s.plants || !s.plants.some(p => p.activeType),
     getText: () => t('momoSuggestionNoPlant'),
     emoji: '🪴',
   },

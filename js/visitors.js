@@ -507,21 +507,26 @@ export function isVisitorPresent(charId) {
 }
 
 /**
- * 谷雨照料植物事件
+ * 谷雨照料植物事件（多盆：随机挑一株未满级的活盆）
  * @returns {object|null} { type: 'water'|'fertilize'|'talk', plantId, value? }
  */
 export function tryTriggerGuyuPlantCare() {
   if (!isVisitorPresent('guyu')) return null;
-  if (!state.plant.activeType || state.plant.level === 0) return null;
 
-  const def = PLANT_TYPES[state.plant.activeType];
-  if (!def) return null;
-
-  // 已可收获则不照料
-  if (state.plant.level >= 5 && state.plant.growthProgress >= def.growthPerLevel) return null;
+  // 候选盆：活盆且未达可收获
+  const candidates = (state.plants || [])
+    .filter(p => p && p.activeType && p.level > 0)
+    .filter(p => {
+      const def = PLANT_TYPES[p.activeType];
+      return def && !(p.level >= 5 && p.growthProgress >= def.growthPerLevel);
+    });
+  if (candidates.length === 0) return null;
 
   const roll = Math.random();
   if (roll >= 0.05) return null;
+
+  const plant = candidates[Math.floor(Math.random() * candidates.length)];
+  const def = PLANT_TYPES[plant.activeType];
 
   const actions = ['water', 'fertilize', 'talk'];
   const action = actions[Math.floor(Math.random() * actions.length)];
@@ -529,8 +534,8 @@ export function tryTriggerGuyuPlantCare() {
   switch (action) {
     case 'water': {
       const growth = def.waterGrowth; // 不叠加光环
-      state.plant.growthProgress += growth;
-      state.plant.lastCareTime = getNow();
+      plant.growthProgress += growth;
+      plant.lastCareTime = getNow();
       // 注意：不调用 waterPlant()，避免消耗玩家浇水次数
       addHistory('plant', '🌾 谷雨帮植物浇了水', `${def.emoji} ${t(def.nameKey)} 成长 +${growth}`);
       saveState();
@@ -538,8 +543,8 @@ export function tryTriggerGuyuPlantCare() {
     }
     case 'fertilize': {
       const growth = def.fertilizeGrowth; // 不叠加光环
-      state.plant.growthProgress += growth;
-      state.plant.lastCareTime = getNow();
+      plant.growthProgress += growth;
+      plant.lastCareTime = getNow();
       addHistory('plant', '🌾 谷雨给植物施了肥', `${def.emoji} ${t(def.nameKey)} 成长 +${growth}`);
       saveState();
       return { type: 'fertilize', plantId: def.id, value: growth };
@@ -555,18 +560,21 @@ export function tryTriggerGuyuPlantCare() {
 }
 
 /**
- * 台风灾难事件
+ * 台风灾难事件（多盆：随机挑一株过了保护期的活盆）
  * @returns {object|null} { lost: boolean, downgraded: boolean, plantId, savedByGuyu: boolean }
  */
 export function tryTriggerTyphoonDisaster() {
-  if (!state.plant.activeType || state.plant.level === 0) return null;
-
   const now = getNow();
 
-  // 新植物保护期：种下后 N 小时内不触发台风
-  const plantedAt = state.plant.plantedAt || 0;
-  const hoursSincePlanted = (now - plantedAt) / (1000 * 60 * 60);
-  if (hoursSincePlanted < TYPHOON_NEW_PLANT_GRACE_HOURS) return null;
+  // 候选盆：活盆且已过新植物保护期
+  const candidates = (state.plants || [])
+    .filter(p => p && p.activeType && p.level > 0)
+    .filter(p => {
+      const plantedAt = p.plantedAt || 0;
+      const hoursSincePlanted = (now - plantedAt) / (1000 * 60 * 60);
+      return hoursSincePlanted >= TYPHOON_NEW_PLANT_GRACE_HOURS;
+    });
+  if (candidates.length === 0) return null;
 
   // 两次台风之间的冷却期
   const lastDisaster = state.lastTyphoonTime || 0;
@@ -575,8 +583,8 @@ export function tryTriggerTyphoonDisaster() {
 
   if (Math.random() >= TYPHOON_PROBABILITY) return null;
 
-  const def = PLANT_TYPES[state.plant.activeType];
-  if (!def) return null;
+  const plant = candidates[Math.floor(Math.random() * candidates.length)];
+  const def = PLANT_TYPES[plant.activeType];
 
   state.lastTyphoonTime = now;
 
@@ -584,16 +592,16 @@ export function tryTriggerTyphoonDisaster() {
   const savedByGuyu = isVisitorPresent('guyu') && Math.random() < 0.5;
 
   if (savedByGuyu) {
-    if (state.plant.level > 1) {
-      state.plant.level -= 1;
-      state.plant.growthProgress = 0;
+    if (plant.level > 1) {
+      plant.level -= 1;
+      plant.growthProgress = 0;
       addHistory('disaster', `🌪️ 台风过境，谷雨抢回了${t(def.nameKey)}`, '植物降了 1 级，但还活着');
     } else {
-      resetPlantToEmptyState();
+      resetPlantToEmptyState(plant);
       addHistory('disaster', `🌪️ 台风过境，谷雨没能拉住${t(def.nameKey)}`, '植物被刮走了');
     }
   } else {
-    resetPlantToEmptyState();
+    resetPlantToEmptyState(plant);
     addHistory('disaster', `🌪️ 台风过境，${t(def.nameKey)}被刮走了`, '盆栽已清空');
   }
 
@@ -603,8 +611,8 @@ export function tryTriggerTyphoonDisaster() {
   showTyphoonPopup(savedByGuyu, def);
 
   return {
-    lost: !savedByGuyu || state.plant.level === 0,
-    downgraded: savedByGuyu && state.plant.level > 0,
+    lost: !savedByGuyu || plant.level === 0,
+    downgraded: savedByGuyu && plant.level > 0,
     plantId: def.id,
     savedByGuyu
   };
@@ -642,14 +650,14 @@ function showTyphoonPopup(savedByGuyu, def) {
   overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
 }
 
-function resetPlantToEmptyState() {
-  state.plant.activeType = null;
-  state.plant.level = 0;
-  state.plant.growthProgress = 0;
-  state.plant.waterAvailable = 0;
-  state.plant.lastCareTime = 0;
-  state.plant.plantedAt = 0;
-  state.plant.harvested = false;
+function resetPlantToEmptyState(plant) {
+  plant.activeType = null;
+  plant.level = 0;
+  plant.growthProgress = 0;
+  plant.waterAvailable = 0;
+  plant.lastCareTime = 0;
+  plant.plantedAt = 0;
+  plant.harvested = false;
 }
 
 // ========== 内部工具 ==========
