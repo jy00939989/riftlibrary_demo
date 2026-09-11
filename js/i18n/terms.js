@@ -957,6 +957,11 @@ const TERM_DATA = Object.freeze({
   cafeShopCardDesc: { zh: '已招待 {n} 位访客 · 种子变现的第二出口', en: 'Served {n} visitors · a second outlet for seeds' },
   cafeSitting: { zh: '在咖啡角小坐', en: 'Relaxing at the café' },
   cafeBuffActive: { zh: '借书概率 +{n}%（咖啡角增益）', en: 'Borrow chance +{n}% (café buff)' },
+  // 借阅深化（borrow-demand-deepening-plan v3.1）
+  multiBorrowMain: { zh: '主借', en: 'Main' },
+  multiBorrowExtra: { zh: '附借', en: 'Extra' },
+  bookDamagedShort: { zh: '损毁', en: 'Damaged' },
+  wearCountN: { zh: '已外借 {n} 次', en: 'Lent {n}×' },
   seed: { zh: '种子', en: 'Seed' },
   exchanged: { zh: '已兑换', en: 'Exchanged' },
   exchange: { zh: '兑换', en: 'Exchange' },

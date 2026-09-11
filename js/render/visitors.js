@@ -188,7 +188,7 @@ export function renderVisitorsPage() {
             <span class="font-bold text-sm">${v.name}</span>
             <span class="text-xs text-magic-blue">⏰ ${tl.text}</span>
           </div>
-          <div class="text-xs text-ink-light truncate">《${getVisitorBookTitle(v.bookId, v.bookTitle)}》</div>
+          <div class="text-xs text-ink-light truncate">${(v.bookIds && v.bookIds.length ? v.bookIds : [v.bookId]).filter(Boolean).map(id => `《${getVisitorBookTitle(id, '')}》`).join('')}</div>
           <div class="mt-1.5 h-1.5 bg-wood/10 rounded-full overflow-hidden">
             <div class="h-full rounded-full transition-all duration-[2000ms] ${pct > 80 ? 'bg-magic-gold' : 'bg-magic-blue'}" style="width:${pct}%"></div>
           </div>
@@ -207,7 +207,7 @@ export function renderVisitorsPage() {
     due.forEach(v => {
       const row = el('div', 'flex items-center gap-3 bg-magic-gold/10 rounded-lg p-3 mb-2 border border-magic-gold/30 animate-pulse-glow');
       row.innerHTML = `<span class="text-2xl due-book-emoji">${v.emoji}</span>
-        <div class="flex-1"><span class="font-bold">${v.name}</span><span class="text-sm text-ink-light ml-2">《${getVisitorBookTitle(v.bookId, v.bookTitle)}》</span></div>`;
+        <div class="flex-1"><span class="font-bold">${v.name}</span><span class="text-sm text-ink-light ml-2">${(v.bookIds && v.bookIds.length ? v.bookIds : [v.bookId]).filter(Boolean).map(id => `《${getVisitorBookTitle(id, '')}》`).join('')}</span></div>`;
       const btn = el('button', 'px-4 py-2 bg-magic-gold text-white rounded-lg text-sm font-bold hover:shadow-lg transition-all');
       btn.textContent = '📥 收取';
       btn.addEventListener('click', () => {
@@ -264,20 +264,43 @@ export function showVisitorEventModal(result, callback) {
   // 语录区
   const quoteHtml = result.quote ? `<p class="text-ink-light italic leading-relaxed mt-3 text-sm">「${result.quote}」</p>` : '';
 
+  // 多本逐本小结（§3.3）：书名并列 + 每本币/损毁状态，首本高亮「主借」
+  const booksList = (result.books && result.books.length)
+    ? result.books
+    : [{ bookId: result.bookId, title: result.bookTitle, damaged: result.damaged, coins: Math.max(0, (result.coins || 0) - (result.extraCoins || 0)), atmosphere: result.atmosphere || 0, first: true }];
+  const titlesJoined = booksList.map(b => `《${getVisitorBookTitle(b.bookId, b.title)}》`).join('');
+  const perBookHtml = booksList.length > 1
+    ? `<div class="mt-3 space-y-1 text-left">${booksList.map((b, i) => `
+        <div class="flex items-center justify-between text-xs bg-white/50 rounded px-2 py-1.5">
+          <span>${i === 0
+            ? `<span class="text-magic-gold font-bold">${t('multiBorrowMain')}</span>`
+            : `<span class="text-ink-light">${t('multiBorrowExtra')}</span>`}
+            ${getVisitorBookTitle(b.bookId, b.title)}${b.damaged ? ` <span class="text-red-500 font-bold">⚠️${t('bookDamagedShort')}</span>` : ''}</span>
+          <span class="text-ink-light">💰+${b.coins}${b.atmosphere > 0 ? ` · ✨+${b.atmosphere}` : ''}</span>
+        </div>`).join('')}</div>`
+    : '';
+
   // 基础卡内容
   const charId = result.charId || '';
   const visitorEmoji = result.visitorEmoji || '👤';
   let contentHtml = `
     <div class="flex justify-center mb-2">${getVisitorPortrait(charId, visitorEmoji, 'lg')}</div>
-    <div class="font-bold text-ink">${result.visitorName || '访客'} 归还了《${getVisitorBookTitle(result.bookId, result.bookTitle) || '书'}》</div>
+    <div class="font-bold text-ink">${result.visitorName || '访客'} 归还了${titlesJoined || '书'}</div>
     ${quoteHtml}
     ${rewardsHtml}
+    ${perBookHtml}
   `;
 
-  // 损坏提示
-  if (result.damaged) {
+  // 损坏提示（逐本列出）
+  const damagedBooks = booksList.filter(b => b.damaged);
+  if (damagedBooks.length > 0) {
+    const dmgLines = damagedBooks.map(b => {
+      const bs = state.books[b.bookId];
+      const pct = Math.round((bs?.repairWords || 0) / ((bs?.repairWords || 0) + (bs?.copiedWords || 0) || 1) * 100);
+      return `⚠️ 《${getVisitorBookTitle(b.bookId, b.title)}》轻微损毁（约 ${pct}% 抄写进度）`;
+    }).join('<br>');
     contentHtml += `<div class="mt-3 p-2 bg-amber-50 rounded-lg text-xs text-amber-800 border border-amber-200">
-      ⚠️ 《${getVisitorBookTitle(result.bookId, result.bookTitle)}》在归还时发现轻微损毁，损失了约 ${Math.round((state.books[result.bookId]?.repairWords || 0) / (state.books[result.bookId]?.repairWords + state.books[result.bookId]?.copiedWords || 1) * 100)}%的抄写进度。<br>
+      ${dmgLines}<br>
       <span class="font-bold">🔧 不用担心！继续在缮写室专注誊抄就是在修复它，修书时速度还会 +5%。</span><br>
       <span class="text-amber-600">修复完成后墨墨会给你额外奖励 ✨</span>
     </div>`;

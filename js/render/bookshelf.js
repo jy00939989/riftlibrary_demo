@@ -375,7 +375,8 @@ function renderBookCondition(bookId) {
     worn: 'text-amber-600', fragile: 'text-orange-600', critical: 'text-red-500'
   }[condKey];
   const dmg = (getDamageChance(state.library.borrowLevel || 0, (state.signboards || []).includes('care_for_books'), wear) * 100).toFixed(1);
-  const wearNote = wear > 0 ? ` · ${t('wearDamageRate').replace('{rate}', dmg)}` : '';
+  // §4.3：wearCount 具体数字让玩家看见寄读的隐性账
+  const wearNote = wear > 0 ? ` · ${t('wearCountN').replace('{n}', wear)} · ${t('wearDamageRate').replace('{rate}', dmg)}` : '';
   return `<div class="text-[10px] mt-1 ${condClass}">📖 ${t('bookConditionLabel')}:${t('condition_' + condKey)}${wearNote}</div>`;
 }
 
