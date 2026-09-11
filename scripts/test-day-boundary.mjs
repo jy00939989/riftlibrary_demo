@@ -217,6 +217,7 @@ if (IS_BASELINE) {
   // 每日任务：由日界事件重置
   setMockDate(D2);
   resetDailyTasks(dstr(D1));
+  state.lastSeenDay = dstr(D1); // 每个用例前重设日界锚点（前序用例已推进它）
   checkDayRollover(state, T2);
   assert(state.dailyTasks.date === dstr(D2) && state.dailyTasks.focusDone === false,
     'onNewDay 驱动每日任务重置');
@@ -224,6 +225,7 @@ if (IS_BASELINE) {
   // 墨墨日限：由日界事件清零
   resetMomo();
   state.momoCommentUsedToday = { date: dstr(D1), comments: ['a', 'b'] };
+  state.lastSeenDay = dstr(D1);
   checkDayRollover(state, T2);
   assert(state.momoCommentUsedToday.date === dstr(D2) && state.momoCommentUsedToday.comments.length === 0,
     'onNewDay 驱动墨墨日限清零');
@@ -232,6 +234,7 @@ if (IS_BASELINE) {
   resetDiary();
   state.diaryLastSummaryDate = dstr(D1);
   state.history = [{ type: 'focus', title: '专注25分钟', detail: '共 1,234 字', time: new RealDate(D1).toISOString() }];
+  state.lastSeenDay = dstr(D1);
   checkDayRollover(state, T2);
   assert(state.diaryLogs.length === 1 && state.diaryLogs[0].type === 'daily',
     'onNewDay 自动回顾昨日（开着过 0 点路径）');
@@ -240,6 +243,7 @@ if (IS_BASELINE) {
   resetFocus();
   state.focus.streak = 3;
   state.focus.lastFocusDate = dstr(D1);
+  state.lastSeenDay = dstr(D1);
   checkDayRollover(state, T2);
   assert(state.focus.streak === 3 && state.focus.lastFocusDate === dstr(D1),
     'onNewDay 不改 streak/lastFocusDate（专注日语义由 updateStreak 独占）');

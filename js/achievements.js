@@ -5,6 +5,7 @@ import { isVolumeBookId, getVolumeGroupByVolumeId } from '../data/volume_groups.
 import { load, save, STORAGE_KEYS } from './persistence.js';
 import { track } from './backend/analytics.js';
 import { resolveStageLevel } from '../data/atmosphere.js';
+import { getTodayKey, onNewDay } from './core/day-boundary.js';
 
 // ========== 成就定义（30个） ==========
 
@@ -344,17 +345,20 @@ const MOMO_ACHIEVEMENT_COMMENTS = {
   ],
 };
 
+// A1 日界统一：新的一天清零墨墨点评日限
+onNewDay(({ today }) => {
+  state.momoCommentUsedToday = { date: today, comments: [] };
+});
+
 export function pickMomoComment(category) {
   const pool = MOMO_ACHIEVEMENT_COMMENTS[category];
   if (!pool) return '';
 
-  const today = new Date().toDateString();
-  if (!state.momoCommentUsedToday) {
+  // A1：日限清零由 onNewDay 订阅驱动；此处保留惰性兜底（同日零开销），
+  // 防止事件未触达的边角（如直接调用链绕过 day-boundary）。
+  const today = getTodayKey();
+  if (!state.momoCommentUsedToday || state.momoCommentUsedToday.date !== today) {
     state.momoCommentUsedToday = { date: today, comments: [] };
-  }
-  if (state.momoCommentUsedToday.date !== today) {
-    state.momoCommentUsedToday.date = today;
-    state.momoCommentUsedToday.comments = [];
   }
 
   const used = state.momoCommentUsedToday.comments;
