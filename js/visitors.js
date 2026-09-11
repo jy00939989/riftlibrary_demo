@@ -14,6 +14,7 @@ import { VOLUME_GROUPS, getIncompleteVolumeGroups, isVolumeBookId } from '../dat
 import { PLANT_TYPES } from '../data/plants.js';
 import { track } from './backend/analytics.js';
 import { BORROW_LEVEL_TABLE, getWearMultiplier, getBookCondition } from '../data/borrow-levels.js';
+import { cafeTick, cafeOnTimeSkip } from './core/cafe.js';
 
 // 台风灾难参数：新植物保护期 + 触发概率 + 冷却时间
 const TYPHOON_PROBABILITY = 0.0005; // 每分钟判定概率
@@ -778,6 +779,9 @@ export function getVisitorDef(charId) {
 // ========== 借书逻辑 ==========
 
 export function tickVisitorBrowsing(now) {
+  // 咖啡角 tick：在店返回/进店判定，挂在 borrowChance 判定之前（v3 D9，每个 browsing tick 独立）
+  cafeTick(now);
+
   const blvCfg = getBorrowLevelConfig();
   const cap = Math.max(blvCfg.cap, 1); // Lv0 保底 1 人容量
 
@@ -793,8 +797,8 @@ export function tickVisitorBrowsing(now) {
     const completedBooks = getCompletedBooks();
     if (completedBooks.length === 0) return;
 
-    // 浏览随机时长后尝试借书（简化：每次 tick 有 40% 概率借书 + 策展加成）
-    const borrowChance = 0.4 + getCurationBorrowBonus();
+    // 浏览随机时长后尝试借书（40% 基准 + 策展加成 + 咖啡角进店增益 A3 契约读取）
+    const borrowChance = 0.4 + getCurationBorrowBonus() + (visitor.pendingBorrowBuff || 0);
     if (Math.random() > borrowChance) return;
 
     attemptBorrow(visitor, completedBooks, now);
@@ -837,6 +841,8 @@ function attemptBorrow(visitor, completedBooks, now) {
   visitor.bookTitle = book.volumeTitle || book.title;
   visitor.borrowTime = now;
   visitor.dueTime = dueTime;
+  // 咖啡角进店增益：借到书即失效（§2.4.4）
+  visitor.pendingBorrowBuff = 0;
 
   // 单书借阅磨损（Phase 3）：每被借出一次磨损 +1，乘性放大还书损毁率；典藏版不磨损
   const bs = state.books[book.id];
@@ -1458,6 +1464,9 @@ export function onTimeSkip(hours, now) {
 
   // 对已在馆的访客推进借书
   tickVisitorBrowsing(now);
+
+  // 咖啡角时间跳跃补算（§2.4.6 D8：真实库存消耗 + 封顶）
+  cafeOnTimeSkip(hours, now);
 
   // 检查到期
   return checkDueVisitors(now);

@@ -187,6 +187,17 @@ export const state = {
   // 日界单一真源（A1）：最后活跃日本地日历 key，day-boundary 据此判跨日
   lastSeenDay: new Date().toDateString(),
 
+  // 咖啡角（cafe-corner-plan v3.1；lastFeeDay/lastServeDay 为本地日历 key 防重）
+  cafe: {
+    unlocked: false,
+    level: 0,
+    stock: {},
+    totalServed: 0,
+    lastServeDay: null,
+    lastFeeDay: null,
+    dormant: false
+  },
+
   // 位面任务进度
   quests: {
     pastoral: {
