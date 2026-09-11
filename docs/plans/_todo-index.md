@@ -44,14 +44,15 @@ anchors:
 - [ ] 如存在语音/音效台词，一并修订
 - [ ] 通读全部夏蝉文本，消除逻辑断裂与重复
 
-### game-animations-plan（游戏动画）
-- [ ] 确定首批 P0 动画清单：氛围升级、房间解锁、专注完成、书籍完成
-- [ ] 确定动画色调与风格（琥珀金、墨黑、暖白，parchment/wood）
-- [ ] 用 CSS/SVG/Lottie 制作 3 个 P0 原型并玩家测试
-- [ ] 实现统一动画注册表 `data/animations.js` 与触发入口
-- [ ] 动画播放不阻塞核心交互，支持跳过
-- [ ] 设置中增加“关闭动画/减少动画”可访问性选项
-- [ ] 资源总大小首期 < 1MB，移动端 60fps、低端设备降级静态效果
+### game-animations-plan（游戏动画）——【已被 seedance 方案取代，全节关闭】
+> 2026-09-04 重建为 [animation-suite-seedance-2.5](animation-suite-seedance-2.5.md)（AI 视频路线替代 Lottie）。9-11 已有 6 键入库挂接：`book_complete_shelving`（誊抄完成）/ `borrow_lv0_1` / `focus_lv0_1` / `focus_lv1_2`（设施升级）/ `visitor_first`（首访）/ `atmo_0_1`（首次跨阈）。
+- [x] 确定首批 P0 动画清单：氛围升级、房间解锁、专注完成、书籍完成（→ seedance 清单 32+2 键）
+- [x] 确定动画色调与风格（琥珀金、墨黑、暖白，parchment/wood）
+- [x] 原型验证（→ 路线变更：Seedance 视频直出，CSS/Lottie 原型不需要了）
+- [x] 统一注册表与触发入口（→ `visual/animations/manifest.json` + `playVideoOverlay`，三级降级链）
+- [x] 动画播放不阻塞核心交互，支持跳过（点按跳过 + 播完自动关）
+- [x] 设置「跳过重复动画」可访问性选项（skipSeenAnimations）
+- [x] 资源体积约束（→ 路线变更不再适用：480p 单条约 5MB；旧 <1MB 条作废）
 
 ---
 
@@ -105,8 +106,9 @@ anchors:
 - [x] Phase 1：三套阈值合并单源 getStageLevel() + 换 v4.3 表 + addAtmosphere 去封顶 + 顶栏进度条（2026-09-09 落地；实际收编 6 处阈值：economy/collection/tiergoals/audio BGM 档/achievements L01-L07/storage 背景，删死模块 js/atmosphere.js）
 - [x] Phase 2：设施等级门槛校验 + 升级给 EXP（等级×20）+ returnAtmo 表改递增（2026-09-09 落地，D18/D19/D22 一并完成）
 - [x] Phase 2.5：升阶设施门槛 + 手动升阶仪式（2026-09-09 当日追加，D24：需求表/条件核对/阶段落库迁移/概况页仪式按钮+卡阶需求清单/全调用点 resolveStageLevel 化；verify 30 项全过。遗留：仿真未建模仪式等待，首通天数将略拉长，待真实数据回测校准）
-- [ ] Phase 3：wearCount + 乘性磨损 + 重抄清零 + 典藏回报 + 书况 UI
-- [ ] Phase 4：场馆房间（阶段解锁图纸+金币建造，多档定价）+ 灵感持续 sink + 金币高频消耗品
+- [x] Phase 3：wearCount + 乘性磨损 + 重抄清零 + 典藏回报 + 书况 UI（2026-09-10 借还链落地 e3daffa，verify 40 项）
+- [x] Phase 4 第一批：温室花盆扩容 + 咖啡角 + 借阅深化（2026-09-11 三连落地：migrateV7-V9、data/cafe.js、core/cafe.js、core/offsite.js、多本借阅/寄读/吐槽；176 测试全绿）
+- [ ] Phase 4 剩余：展览厅立项（灵感持续 sink 责任归口）+ 金币高频消耗品
 - [ ] 上线埋点：氛围日获取量分布，首月真实数据回测阈值表
 
 ### achievement-system-overhaul（成就系统整体优化升级）
@@ -152,7 +154,7 @@ anchors:
 - [ ] 给后期增加可重复金币来源，如高等级访客赠礼事件或 Lv7 归还币提升
 - [ ] 新增 1–2 个灵感来源，或把首次重抄成本从 2 降到 1
 - [x] 典藏版被访客借阅时提供额外还书收益——v4 决策落地：还书 智慧之光 ×2、氛围 ×3
-- [ ] 评审并落地 `docs/plans/visitor-borrow-duration-and-reward-adjustment.md`：借阅时长随机化 + 按时长追加智慧之光收益
+- [x] 评审并落地 `docs/plans/visitor-borrow-duration-and-reward-adjustment.md`：借阅时长 ±30% 随机 + 按时长追加智慧之光（floor(h/6)×3，整单一次）已随 9-10 借还链落地
 
 ### atmosphere-venue-map-design（场馆地图）——【已吸收，勿单独实施】
 > 2026-09-08 整体并入 [atmosphere-system-redesign-plan](atmosphere-system-redesign-plan.md)（决策 10 吸收合并），下列条目由该文档 Phase 5 承接：
@@ -174,13 +176,14 @@ anchors:
 - [x] 实现 UI 提示当前损毁概率与借阅区等级关系——沙龙横幅/升级弹窗已有（d37776a）
 
 ### library-music-expansion-plan（音乐扩展）
-- [ ] 确认最终曲目清单：维瓦尔第《春/冬》、德沃夏克《自新大陆·第二乐章》，可选格什温/贝多芬/德彪西
-- [ ] 生成/采购 MP3，压缩到 128kbps、单首 < 3MB，按命名放入 `assets/audio/bgm/`
-- [ ] 在 BGM 配置中注册 track，绑定场景与 i18n key
+> 2026-09-11 部分落地：春/冬/格什温三首已入库 `audio/music/`（winter-reverie / spring-reverie / rhapsody-jazz）+ 湖边早春/亚瑟王（留声阁亚瑟王联动），均注册 TRACK_DEFS `tier:'any'` 中英曲名齐。
+- [ ] 确认最终曲目清单：德沃夏克《自新大陆·第二乐章》仍未入库（春/冬/格什温已落地）
+- [x] 生成/采购 MP3（→ 路径为 `audio/music/`，5 首衍生曲 + 主题曲已规范命名入库）
+- [x] 在 BGM 配置中注册 track，绑定 i18n key（TRACK_DEFS 6 条 any 档）
 - [ ] 实现场景切换：专注默认《春》、深夜/低氛围切换《冬》《自新大陆》
-- [ ] 扩展 `TRACK_DEFS` 支持 `tier: 'special'` 的“馆长的私人唱片”
-- [ ] 实现三种解锁方式：植物种子兑换、访客事件、书籍满级
-- [ ] 中英文曲名与作曲家说明文案补全，测试循环无卡顿
+- [x] 扩展 `TRACK_DEFS` 支持独立唱片（→ 以 `tier:'any'` 落地，购买即得；special 档位未做，等价目标已达成）
+- [x] 实现多种解锁方式（→ 金币购买 + requiresBook 前置（亚瑟王联动）已落地；种子兑换/访客事件未做）
+- [x] 中英文曲名文案（9-11 随 audio 整理同步）
 
 ### curator-office-organization-plan（馆长办公室整理）
 - [ ] 梳理现有 `js/render/office.js` 信息结构，输出新版线框
@@ -234,6 +237,27 @@ anchors:
 - [ ] 设计种子后期消费口：种子商店（标志牌/装饰/BGM/皮肤）、访客礼物、植物图鉴
 - [ ] 决策成熟植物被动 Buff（专注速度/微量氛围）与视觉装饰联动
 - [ ] 明确枯萎植物与正常植物废弃时是否有差异待遇
+
+---
+
+## ✅ 2026-09-11 落地批次（A1 日界重构 + Phase 4 动工序列全通）
+
+### daily-boundary-refactor（A1 日界统一重构，8 commits）
+- [x] 新建 `js/core/day-boundary.js` 单一真源（onNewDay/checkDayRollover，同日防双触发/离线冻结/订阅者隔离）
+- [x] 双触发点接入（init 链 + 60s tick）+ migrateV6 播种 lastSeenDay
+- [x] 五处日期散点收敛：每日任务/墨墨日限/日记回顾/行动卡日限挂 onNewDay，streak 仅收敛原语（语义=连续专注日，刻意不挂）
+- [x] 基线 24 项 → 全量 39 项测试全绿（test-day-boundary.mjs）
+
+### cafe-corner + greenhouse + borrow-demand-deepening（Phase 4 三连）
+- [x] 温室花盆扩容：state.plants 数组（v7），1→4 盆 800×1.8ⁿ，逐株隔离，34 项测试
+- [x] 咖啡角本体：data/cafe.js 单一真源 + 营业链路（维持费/休眠/补算封顶）+ 面板 UI，51 项测试
+- [x] 借阅深化：多本借阅/寄读日结/新书吐槽三机制（v9 迁移），52 项测试
+- [x] 誊抄速率 balance：整体封顶 180%→200%，连击加成 30 天封顶（图南拍板）
+
+### 杂项
+- [x] 玩家 bug 修复：合成典藏版后分卷不再刷出书店（locked 语义撞车，真源反推零迁移）
+- [x] audio 整理：根目录清零，6 动画键入库挂接（4 条 seedance 清单勾选），宣传PV 归 visual/promo/
+- [x] drift 8→0 + planner 总览卡显示层同步
 
 ---
 
