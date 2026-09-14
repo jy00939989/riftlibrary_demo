@@ -49,9 +49,9 @@ anchors:
 - [ ] 撤前一周数据观察：旧入口点击占比，>5% 则延期并强化引导
 
 ### copy-eta-minutes（誊抄室显示剩余分钟，2026-09-11 图南提）
-- [ ] 专注页当前书卡片显示「预计还需 N 分钟」（公式复用 timer.js:166 sessionEstimate 同款：elapsed×2×倍率口径）
-- [ ] N 按当前誊抄速率实时刷新（暂停时停走），超过 99 分钟显示「X 小时 Y 分」
-- [ ] 移动端不挤占进度条位置（放副标题行）
+- [x] 专注页进度条显示「⏳ 预计还需约 N 分钟」（2026-09-14 落地 df1d11f：纯函数 estimateRemainingMinutes 对齐 tick 实际结算 100字/分×倍率×冲刺1.2，墨墨首会10×；**有意偏离**原注的 sessionEstimate 120/分预览口径——与实际结算差 20%，时间估算须用真实结算公式）
+- [ ] N 按当前誊抄速率实时刷新（暂停时停走）——分钟级刷新已随 updateBookProgressDOM 落地，>99 分钟「X 小时 Y 分」格式未做（当前直显大分钟数）
+- [ ] 移动端不挤占进度条位置（放副标题行）——当前为 pct 行下方独立右对齐小字，未做移动端专门排布
 
 ### game-animations-plan（游戏动画）——【已被 seedance 方案取代，全节关闭】
 > 2026-09-04 重建为 [animation-suite-seedance-2.5](animation-suite-seedance-2.5.md)（AI 视频路线替代 Lottie）。9-11 已有 6 键入库挂接：`book_complete_shelving`（誊抄完成）/ `borrow_lv0_1` / `focus_lv0_1` / `focus_lv1_2`（设施升级）/ `visitor_first`（首访）/ `atmo_0_1`（首次跨阈）。
@@ -66,6 +66,13 @@ anchors:
 ---
 
 ## 🟡 需先决策/设计
+
+### settings-page-consolidation（设置项收编正经设置页，2026-09-14 图南提）
+> 现状锚点：灾难开关（`settingsDisasters`）与跳过动画开关（`skipSeenAnimations`）渲染在音乐面板 `js/render/music-selector.js`（顶栏 🎼 打开），玩家找不到（图南本人也找不到）；设置真源在 `js/settings.js`（disastersEnabled 默认 true，关闭仅停随机灾难、保留还书磨损）。
+- [ ] 决策入口形态：顶栏新增 ⚙️ 独立设置页，还是收进展览厅大厅导航（与 exhibition-legacy-entry-retire 同批做）
+- [ ] 把 disastersEnabled / skipSeenAnimations 从音乐面板迁出，音乐面板回归音乐/音效本职
+- [ ] 迁移期兼容：老玩家已养成的 🎼 路径留一个版本的重定向提示
+- [ ] 顺带决策：音效独立音量等其他设置项是否一并归位
 
 ### curator-goals-renewal-optimize（复兴之路系列任务优化，2026-09-11 图南提）
 > 现状锚点：TIER_GOALS 馆长目标阶梯（curatorGoalTitle「🏛️ 馆长目标 · 复兴之路」），阶段仪式时弹 tier 完成弹窗（tierPopupsShown 一次性）。
