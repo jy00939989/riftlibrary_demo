@@ -36,6 +36,34 @@ export function getWordsToNextCompletion(bookState, totalWords) {
   return totalWords - effective;
 }
 
+/**
+ * 估算当前书还需多少【现实】分钟抄完。
+ * 公式对齐 timer.js tick 的实际结算：wordsGained = round(elapsedSec/60) × 100 × focusMultiplier × (1+aura+curation)，冲刺 ×1.2。
+ * （首 5 分钟茶饮 110/分钟略快于估算，方向保守，忽略不计。）
+ * @param {object} p
+ * @param {number} p.totalWords        书总字数
+ * @param {number} p.effectiveWords    本周期已完成有效字数
+ * @param {number} [p.elapsedSeconds=0] 进行中会话的游戏内秒数（非进行中传 0）
+ * @param {number} [p.focusMultiplier=1] 专注倍率
+ * @param {number} [p.auraSpeed=0]     光环加速
+ * @param {number} [p.curationSpeed=0] 策展加速
+ * @param {boolean} [p.sprint=false]   90% 章节冲刺 ×1.2
+ * @param {number} [p.speedMultiplier=1] 会话倍率（墨墨首会 10×，只影响进行中会话的现实分钟）
+ * @returns {number|null} 剩余现实分钟（向上取整）；已完成返回 0；倍率非正返回 null
+ */
+export function estimateRemainingMinutes({ totalWords, effectiveWords, elapsedSeconds = 0, focusMultiplier = 1, auraSpeed = 0, curationSpeed = 0, sprint = false, speedMultiplier = 1 }) {
+  const wordsNeeded = (totalWords || 0) - (effectiveWords || 0);
+  if (wordsNeeded <= 0) return 0;
+  const fm = focusMultiplier == null ? 1 : focusMultiplier;
+  const rate = 100 * fm * (1 + (auraSpeed || 0) + (curationSpeed || 0)) * (sprint ? 1.2 : 1);
+  if (!(rate > 0)) return null;
+  const totalMin = Math.ceil(wordsNeeded / rate);
+  const doneMin = Math.round((elapsedSeconds || 0) / 60);
+  const remainGameMin = Math.max(0, totalMin - doneMin);
+  const speed = (speedMultiplier > 0 ? speedMultiplier : 1);
+  return Math.ceil(remainGameMin / speed);
+}
+
 export function getChapterInfo(book, bookState) {
   if (!book || !book.chapters || book.chapters.length === 0) return null;
 
