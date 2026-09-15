@@ -608,6 +608,18 @@ export function tryTriggerTyphoonDisaster() {
     addHistory('disaster', `🌪️ 台风过境，${t(def.nameKey)}被刮走了`, '盆栽已清空');
   }
 
+  // 玩家反馈「植物忽然不见了」：弹窗之外补持久通报位（温室页红卡）+ 墨墨日记叙事
+  const lost = !savedByGuyu || plant.level === 0;
+  state.plantLossAlert = {
+    kind: 'typhoon', plantType: def.id,
+    savedByGuyu, downgraded: savedByGuyu && !lost, time: now
+  };
+  addDiaryEntry('special_event', {
+    detail: lost
+      ? t('diaryPlantTyphoonLost').replace('{name}', t(def.nameKey))
+      : t('diaryPlantTyphoonSaved').replace('{name}', t(def.nameKey))
+  });
+
   saveState();
 
   // 灾难弹窗提示：避免玩家误以为植物/存档丢失
@@ -657,7 +669,6 @@ function resetPlantToEmptyState(plant) {
   plant.activeType = null;
   plant.level = 0;
   plant.growthProgress = 0;
-  plant.waterAvailable = 0;
   plant.lastCareTime = 0;
   plant.plantedAt = 0;
   plant.harvested = false;

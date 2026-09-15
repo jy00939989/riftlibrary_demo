@@ -57,22 +57,24 @@ state.plant = {
   waterAvailable: 1, lastCareTime: 12345, plantedAt: 12000, harvested: false
 };
 runMigrations();
-assert(state._schemaVersion === 10, 'schemaVersion 升到最新（v7-v10 同档）');
+assert(state._schemaVersion === 11, 'schemaVersion 升到最新（v7-v11 同档）');
 assert(Array.isArray(state.plants) && state.plants.length === 1, 'plants 数组建立，1 盆');
 assert(state.plants[0].activeType === 'starlight_fern' && state.plants[0].level === 3
-  && state.plants[0].growthProgress === 20 && state.plants[0].waterAvailable === 1,
+  && state.plants[0].growthProgress === 20,
   '原单株字段完整保留（盆位 0）');
+assert(state.plants[0].waterAvailable === undefined, 'per-pot waterAvailable 已由 v11 收编删除');
+assert(state.water === 1, '旧浇水次数并入全局池（1 次）');
 assert(state.plant === undefined, '旧 state.plant 字段已删除');
 runMigrations(); // 幂等
-assert(state.plants.length === 1 && state.plants[0].level === 3, '重复迁移幂等');
+assert(state.plants.length === 1 && state.plants[0].level === 3 && state.water === 1, '重复迁移幂等');
 
 // 缺字段归一：半残老档
 state._schemaVersion = 6;
 delete state.plants;
 state.plant = { activeType: 'magic_rose' }; // 缺 level 等字段
 runMigrations();
-assert(state.plants[0].level === 0 && state.plants[0].waterAvailable === 0
-  && state.plants[0].harvested === false, '半残单株字段归一补全');
+assert(state.plants[0].level === 0 && state.plants[0].harvested === false
+  && state.plants[0].waterAvailable === undefined, '半残单株字段归一补全、无旧浇水字段');
 
 // ═══ 2. 解锁价格曲线与上限 ═══
 console.log('\n=== 2. 盆位解锁（800×1.8ⁿ，上限 4）===');
@@ -107,15 +109,23 @@ assert(plants.plantSeed(typeB, 1) === true, '盆 1 种下 B');
 assert(state.plants[0].activeType === typeA && state.plants[1].activeType === typeB, '两盆各自独立');
 assert(plants.plantSeed(types[2] || typeA, 0) === false, '已占盆位拒绝再种');
 
-// 浇水机会逐盆发放
+// 浇水全局池：不管有没有种植物都累积，可分配给任意一盆
+state.water = 0;
 plants.addWaterOpportunity();
-assert(state.plants[0].waterAvailable === 1 && state.plants[1].waterAvailable === 1, '浇水机会逐盆发放');
+assert(state.water === 1, '浇水机会全局 +1（不再逐盆发放）');
 const defB = PLANT_TYPES[typeB];
 const growthB0 = state.plants[1].growthProgress;
 const r = plants.waterPlant(1);
 assert(r.ok && state.plants[1].growthProgress > growthB0, '浇水盆 1 成长增加');
-assert(state.plants[0].growthProgress === 0, '盆 0 不受影响（逐株隔离）');
-assert(state.plants[0].waterAvailable === 1 && state.plants[1].waterAvailable === 0, '浇水次数各扣各的');
+assert(state.plants[0].growthProgress === 0, '盆 0 不受影响');
+assert(state.water === 0, '全局池扣减（不再各扣各的）');
+// 空盆/无植物也累积
+state.plants[1].activeType = null;
+state.plants[1].level = 0;
+plants.addWaterOpportunity();
+assert(state.water === 1, '没有种植物也累积浇水次数');
+state.plants[1].activeType = typeB; // 恢复盆 1（后续收获/铲除分盆断言依赖）
+state.plants[1].level = 1;
 
 // 收获盆 0：盆 1 完好
 state.plants[0].level = 5;
@@ -149,7 +159,7 @@ state.plants = [
   { ...plants.EMPTY_PLANT, activeType: typeA, level: 2, lastCareTime: now, plantedAt: now },
   { ...plants.EMPTY_PLANT, activeType: typeB, level: 2, lastCareTime: now - 100 * 3600 * 1000, plantedAt: now - 100 * 3600 * 1000 },
 ];
-assert(plants.checkWither() === true, '有盆凋谢返回 true');
+assert(plants.checkWither().length === 1, '有盆凋谢返回凋谢数组（1 盆）');
 assert(state.plants[0].activeType === typeA, '按时照料的盆无恙');
 assert(state.plants[1].activeType === null, '72h 未照料盆凋谢清空');
 

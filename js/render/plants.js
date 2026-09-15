@@ -3,7 +3,7 @@ import { state, saveState } from '../state.js';
 import { updateStatusBar, showImagePreview } from './common.js';
 import { PLANT_TYPES, SEED_EXCHANGE } from '../../data/plants.js';
 import { SIGNBOARDS } from '../../data/signboards.js';
-import { canHarvest, harvestPlant, canExchangeSeed, exchangeSeed, getActivePlantDef, canWater, canFertilize, abandonPlant, getSeedExchanges, waterPlant, fertilizePlant, unlockPot, canUnlockPot, getPotCount, getNextPotPrice, MAX_POTS } from '../plants.js';
+import { canHarvest, harvestPlant, canExchangeSeed, exchangeSeed, getActivePlantDef, canWater, canFertilize, abandonPlant, getSeedExchanges, waterPlant, fertilizePlant, unlockPot, canUnlockPot, getPotCount, getNextPotPrice, MAX_POTS, getWaterCount } from '../plants.js';
 import { t } from '../i18n/terms.js';
 import { suppressGuideWidget } from './guidequests.js';
 
@@ -74,9 +74,15 @@ function renderPlantArea() {
   section.className = 'bg-white/60 rounded-xl p-5 border-2 border-green-200';
 
   const header = document.createElement('h3');
-  header.className = 'font-bold text-lg mb-3 flex items-center gap-2';
-  header.innerHTML = `🌱 ${t('plantPotsTitle')} <span class="text-xs font-normal text-ink-light">${t('plantPotCount').replace('{n}', getPotCount()).replace('{max}', MAX_POTS)}</span>`;
+  header.className = 'font-bold text-lg mb-3 flex items-center gap-2 flex-wrap';
+  header.innerHTML = `🌱 ${t('plantPotsTitle')} <span class="text-xs font-normal text-ink-light">${t('plantPotCount').replace('{n}', getPotCount()).replace('{max}', MAX_POTS)}</span>
+    <span class="text-xs font-normal text-magic-blue bg-magic-blue/10 px-2 py-0.5 rounded-full" title="${t('waterPoolHint')}">💧 ${t('waterPoolCount').replace('{n}', getWaterCount())}</span>`;
   section.appendChild(header);
+
+  // 植物消失通报（凋谢/台风）：醒目红卡，dismiss 后清零——不再让玩家「忽然发现植物不见了」
+  if (state.plantLossAlert) {
+    section.appendChild(renderPlantLossAlert(state.plantLossAlert));
+  }
 
   // 盆位横向排列（§2.6）；末尾跟解锁卡
   const row = document.createElement('div');
@@ -161,7 +167,7 @@ function renderPotCard(plant, potIndex) {
     <div class="h-3 bg-gray-200 rounded-full overflow-hidden mb-2">
       <div class="h-full bg-gradient-to-r from-green-400 to-green-600 transition-all" style="width:${progressPercent}%"></div>
     </div>
-    <p class="text-xs text-ink-light mb-3 text-center">成长进度 ${progressPercent}% · 可浇水 ${plant.waterAvailable} 次</p>
+    <p class="text-xs text-ink-light mb-3 text-center">成长进度 ${progressPercent}%</p>
     <div class="flex gap-2 flex-wrap justify-center" id="dec-plant-actions-${potIndex}"></div>
     ${canHarvestNow
       ? `<p class="text-xs text-yellow-600 mt-3 text-center">✨ 可以收获了！将以${Math.round(def.seedDropRate * 100)}%概率获得种子</p>`
@@ -454,6 +460,79 @@ export function showPlantHarvestPopup(def, result) {
   `;
   document.body.appendChild(overlay);
 
+  const close = () => {
+    overlay.style.opacity = '0';
+    overlay.style.transition = 'opacity 0.3s';
+    setTimeout(() => overlay.remove(), 300);
+  };
+  overlay.querySelector('button').addEventListener('click', close);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+}
+
+// ========== 植物消失通报（凋谢/台风） ==========
+
+/** 通报文案统一出口：温室红卡与 init 弹窗共用 */
+function getPlantLossAlertText(alert) {
+  if (alert.kind === 'wither') {
+    const names = (alert.plantTypes || [])
+      .map(id => PLANT_TYPES[id]).filter(Boolean)
+      .map(d => `${d.emoji}${t(d.nameKey)}`).join('、') || t('unknown');
+    return {
+      emoji: '🥀',
+      title: t('plantLossWitherTitle'),
+      desc: t('plantLossWitherDesc').replace('{names}', names)
+    };
+  }
+  const def = PLANT_TYPES[alert.plantType];
+  const name = def ? `${def.emoji}${t(def.nameKey)}` : t('unknown');
+  return {
+    emoji: alert.savedByGuyu ? '🌾' : '🌪️',
+    title: t('plantLossTyphoonTitle'),
+    desc: alert.savedByGuyu
+      ? t('plantLossTyphoonSavedDesc').replace('{name}', name)
+      : t('plantLossTyphoonLostDesc').replace('{name}', name)
+  };
+}
+
+// 温室页顶部持久通报卡（玩家点「知道了」清零）
+function renderPlantLossAlert(alert) {
+  const card = document.createElement('div');
+  const text = getPlantLossAlertText(alert);
+  card.className = 'mb-4 rounded-xl border-2 border-red-300 bg-red-50/80 p-4 flex items-start gap-3 animate-scale-in';
+  card.innerHTML = `
+    <span class="text-3xl flex-shrink-0">${text.emoji}</span>
+    <div class="flex-1 min-w-0">
+      <p class="font-bold text-red-800 text-sm mb-1">${text.title}</p>
+      <p class="text-xs text-red-700/90 leading-relaxed">${text.desc}</p>
+    </div>
+    <button class="plant-loss-dismiss flex-shrink-0 px-3 py-1.5 bg-red-200/80 hover:bg-red-200 text-red-800 rounded-lg text-xs font-bold transition-all">${t('gotIt')}</button>
+  `;
+  card.querySelector('.plant-loss-dismiss').addEventListener('click', () => {
+    state.plantLossAlert = null;
+    saveState();
+    renderDecorationPage();
+  });
+  return card;
+}
+
+// init 弹窗（凋谢路径：打开游戏立即告知，红卡兜底防漏看）
+export function showPlantLossPopup(alert) {
+  const text = getPlantLossAlertText(alert);
+  const existing = document.getElementById('plant-loss-popup');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'plant-loss-popup';
+  overlay.className = 'fixed inset-0 z-[250] flex items-center justify-center bg-ink/70 p-4';
+  overlay.innerHTML = `
+    <div class="parchment-bg rounded-2xl p-6 max-w-sm w-full text-center border-2 border-red-300 shadow-2xl animate-scale-in">
+      <div class="text-5xl mb-3">${text.emoji}</div>
+      <h3 class="font-display text-xl font-bold text-red-800 mb-2">${text.title}</h3>
+      <p class="text-sm text-ink-light leading-relaxed mb-5">${text.desc}</p>
+      <button class="px-6 py-2.5 bg-wood text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all">${t('gotIt')}</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
   const close = () => {
     overlay.style.opacity = '0';
     overlay.style.transition = 'opacity 0.3s';

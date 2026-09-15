@@ -115,11 +115,16 @@ export const state = {
     activeType: null,
     level: 0,
     growthProgress: 0,
-    waterAvailable: 0,
     lastCareTime: 0,
     plantedAt: 0,
     harvested: false
   }],
+
+  // 浇水次数全局池（2026-09-15 图南决策）：不挂单盆——有无植物都累积，可分配给任意一盆
+  water: 0,
+
+  // 植物消失通报（凋谢/台风）：温室页顶部红色通报卡，玩家点「知道了」清零
+  plantLossAlert: null,
 
   // 种子收集
   seeds: {

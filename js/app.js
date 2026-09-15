@@ -13,7 +13,7 @@ import { getLocale, setLocale } from './i18n/terms.js';
 import { addCoins, addHistory, updateStreak, addAtmosphere, updateBodyBackground, onStageCross } from './storage.js';
 import { renderFocusPage, renderBookshelfPage, renderLibraryPage,
   renderVisitorsPage, renderArchivePage, renderShopPage, setActions,
-  updateStatusBar, initBagEntry, renderGuideQuestWidget
+  updateStatusBar, initBagEntry, renderGuideQuestWidget, showPlantLossPopup
 } from './render/index.js';
 import { setCompleteCallback, syncTimer } from './timer.js';
 import { isNoMasteryBook } from './core/book-eligibility.js';
@@ -211,7 +211,11 @@ function init() {
   renderMomoSuggestion();
   updateStatusBar();
   updateBodyBackground();
-  checkWither();
+  // 凋谢立即弹窗告知（持久通报卡由温室页渲染兜底，防漏看）
+  const witheredDefs = checkWither();
+  if (witheredDefs.length > 0) {
+    showPlantLossPopup({ kind: 'wither', plantTypes: witheredDefs.map(d => d.id) });
+  }
 
   updateLoadingScreen(70, '正在点亮烛台...');
 
