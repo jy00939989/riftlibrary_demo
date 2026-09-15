@@ -480,6 +480,8 @@ function renderChapterList(book) {
 
   const isCompleted = bookState.status === 'completed';
   const needReCopy = isCompleted && !bookState.reCopyUnlocked && !isNoMasteryBook(book.id);
+  // 2026-09-15 图南拍板：典藏版/分卷书不参与重抄——已完成时「开始誊抄」是重抄的伪装入口，置灰并说明
+  const noMasteryCompleted = isCompleted && isNoMasteryBook(book.id);
 
   content.innerHTML = `
     <div class="flex items-center justify-between mb-4">
@@ -491,7 +493,10 @@ function renderChapterList(book) {
     ${needReCopy
       ? `<button id="re-copy-btn" class="w-full px-4 py-2 mb-4 bg-purple-600 text-white rounded-lg font-bold text-sm hover:shadow-lg transition-all">${t('reCopyCost').replace('{cost}', getReCopyCost())}</button>
          <div class="text-center text-xs text-ink-light mb-3">${t('currentInspiration').replace('{n}', state.inspiration || 0)}</div>`
-      : `<button id="start-copy-btn" class="w-full px-4 py-2 mb-4 bg-magic-gold text-white rounded-lg font-bold text-sm hover:shadow-lg transition-all">${t('startTranscribeThisBook')}</button>`
+      : noMasteryCompleted
+        ? `<button disabled class="w-full px-4 py-2 mb-2 bg-gray-200 text-gray-400 rounded-lg font-bold text-sm cursor-not-allowed">${t('recopyUnavailable')}</button>
+           <div class="text-center text-xs text-ink-light mb-3">${t('collectorNoRecopyHint')}</div>`
+        : `<button id="start-copy-btn" class="w-full px-4 py-2 mb-4 bg-magic-gold text-white rounded-lg font-bold text-sm hover:shadow-lg transition-all">${t('startTranscribeThisBook')}</button>`
     }
     <div class="space-y-2">
       ${book.chapters.map((ch, i) => {
