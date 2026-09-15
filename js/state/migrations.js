@@ -35,8 +35,36 @@ const MIGRATIONS = [
   { version: 6, up: migrateV6 },
   { version: 7, up: migrateV7 },
   { version: 8, up: migrateV8 },
-  { version: 9, up: migrateV9 }
+  { version: 9, up: migrateV9 },
+  { version: 10, up: migrateV10 }
 ];
+
+function migrateV10() {
+  // 2026-09-15 展览厅（exhibition-hall-plan v2，A5 纯加法）：
+  // 老档默认全破败（大厅未建）；与 v8 cafe / v9 borrow 无字段顺序依赖。
+  if (!state.exhibition || typeof state.exhibition !== 'object') {
+    state.exhibition = {
+      built: false,
+      level: 0,
+      rooms: { archive: 'ruined', signboards: 'ruined', achievements: 'ruined', collection: 'ruined', musicroom: 'ruined' },
+      grandOpeningShown: false,
+      lastEventId: null,
+      lastEventDay: null
+    };
+  }
+  const exh = state.exhibition;
+  if (typeof exh.built !== 'boolean') exh.built = false;
+  if (typeof exh.level !== 'number') exh.level = 0;
+  if (!exh.rooms || typeof exh.rooms !== 'object') {
+    exh.rooms = { archive: 'ruined', signboards: 'ruined', achievements: 'ruined', collection: 'ruined', musicroom: 'ruined' };
+  }
+  ['archive', 'signboards', 'achievements', 'collection', 'musicroom'].forEach(k => {
+    if (exh.rooms[k] !== 'open') exh.rooms[k] = 'ruined';
+  });
+  if (typeof exh.grandOpeningShown !== 'boolean') exh.grandOpeningShown = false;
+  if (exh.lastEventId === undefined) exh.lastEventId = null;
+  if (exh.lastEventDay === undefined) exh.lastEventDay = null;
+}
 
 function migrateV9() {
   // 2026-09-11 借阅深化（borrow-demand-deepening-plan v3.1，A5 多 plan 同档共存）：
