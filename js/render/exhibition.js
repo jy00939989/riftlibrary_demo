@@ -9,7 +9,6 @@ import { playSfx } from '../audio.js';
 import { updateStatusBar } from './common.js';
 import { showToast } from './shared/toast.js';
 import { getLibraryStage } from '../storage.js';
-import { getFacilityRequiredStage } from '../../data/atmosphere.js';
 import {
   isExhibitionBuilt, canBuildExhibitionHall, buildExhibitionHall,
   getHallUpgradePrice, getHallLevelCap, canUpgradeHall, upgradeHall,
@@ -116,7 +115,7 @@ function renderHall(container) {
       <div>
         ${level < cap
           ? `<button class="exh-upgrade-btn px-4 py-1.5 ${canUpgradeHall() ? 'bg-magic-gold text-white hover:shadow-lg' : 'bg-gray-300 text-gray-500 cursor-not-allowed'} rounded-lg text-sm font-bold transition-all" ${canUpgradeHall() ? '' : 'disabled'}>${t('exhUpgrade')} 💰${upgradePrice.toLocaleString()}</button>`
-          : `<span class="text-xs text-ink-light">🔒 ${t('facilityStageGate').replace('{level}', level + 1).replace('{stage}', getFacilityRequiredStage(level + 1))}</span>`}
+          : `<span class="text-xs text-magic-gold font-bold">${t('maxLevel')} ✨ ${t('exhHallFullCapacity')}</span>`}
       </div>
     </div>
   `;

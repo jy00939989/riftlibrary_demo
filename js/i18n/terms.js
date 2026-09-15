@@ -53,6 +53,7 @@ const TERM_DATA = Object.freeze({
   exhHallBuildDesc: { zh: '从一口破败大厅起步：大厅等级 = 房间容量，往上修大厅才能修里面的房间。', en: 'Start from a ruined hall: hall level = room capacity. Expand the hall to restore the rooms inside.' },
   exhBuildGate: { zh: '需图书馆 {stage} 阶', en: 'Requires Library Stage {stage}' },
   exhCapacityHint: { zh: '房间容量 Lv.{level} · 已开放 {current}/{total} 间', en: 'Room capacity Lv.{level} · {current}/{total} rooms open' },
+  exhHallFullCapacity: { zh: '五室全槽位', en: 'All five room slots' },
   exhUpgrade: { zh: '扩建大厅', en: 'Expand Hall' },
   exhEnter: { zh: '进入', en: 'Enter' },
   exhRuinedHint: { zh: '点击修复', en: 'Tap to restore' },
