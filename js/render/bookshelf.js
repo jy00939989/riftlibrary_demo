@@ -394,7 +394,7 @@ function renderBookCard(book) {
   const starIcon = bookState.starred ? '⭐' : '☆';
   const coverSrc = book.cover || null;
   const hasCover = !!coverSrc;
-  const cardDiv = el('div', `book-spine ${isCompleted ? 'completed' : isCopying ? 'copying' : 'unstarted'} flex flex-col`);
+  const cardDiv = el('div', `book-spine ${isCompleted ? 'completed' : isCopying ? 'copying' : 'unstarted'} flex flex-col${!isNoMasteryBook(book.id) && (bookState.masteryLevel || 0) >= 5 ? ' mastered' : ''}`);
 
   cardDiv.innerHTML = `
     <button class="star-btn absolute top-1.5 right-1.5 text-sm w-7 h-7 flex items-center justify-center rounded-full bg-white/60 hover:bg-white z-10 transition-all" data-book-id="${book.id}">${starIcon}</button>
