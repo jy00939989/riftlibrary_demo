@@ -6,7 +6,7 @@ import { PLANT_TYPES } from '../../../data/plants.js';
 import { SIGNBOARDS } from '../../../data/signboards.js';
 import {
   plantSeed, canFertilize, fertilizePlant, canWater, waterPlant,
-  canHarvest, harvestPlant, abandonPlant
+  canHarvest, harvestPlant, abandonPlant, getWaterCount
 } from '../../plants.js';
 import { showPlantMaturityToast, showPlantHarvestPopup, renderPlantArt } from '../plants.js';
 import { purchaseSignboard } from '../../shop.js';
@@ -166,7 +166,7 @@ export function renderActivePlantCard(def, plant, potIndex = 0) {
       <div class="h-full bg-gradient-to-r from-green-400 to-green-600 transition-all" style="width:${progressPercent}%"></div>
     </div>
     <div class="text-xs text-ink-light mb-2">
-      ${t('growthProgress').replace('{value}', progressPercent)} · ${t('waterAvailableCount').replace('{n}', plant.waterAvailable)}
+      ${t('growthProgress').replace('{value}', progressPercent)} · ${t('waterAvailableCount').replace('{n}', getWaterCount())}
     </div>
     <div class="flex gap-2 flex-wrap" id="shop-plant-actions">
       ${canHarvestNow

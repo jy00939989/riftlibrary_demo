@@ -11,6 +11,7 @@ import { hasSignboard } from './shop.js';
 import { SIGNBOARDS } from '../data/signboards.js';
 import { EMPTY_PLANT } from './state/migrations.js';
 import { getAuraPlantGrowth } from './visitors.js';
+import { addDiaryEntry } from './diary.js';
 import { t } from './i18n/terms.js';
 
 // 盆位上限（§2.6：浇水交互密度手感上限，超出需一键浇水——开放项）
@@ -103,7 +104,11 @@ function applyGrowth(baseGrowth) {
   return Math.round(baseGrowth * mult);
 }
 
-// 是否有可用浇水次数
+// 是否有可用浇水次数（2026-09-15 起全局池：state.water，可分配给任意一盆）
+export function getWaterCount() {
+  return state.water || 0;
+}
+
 export function canWater(potIndex = 0) {
   const plant = getPot(potIndex);
   if (!plant) return false;
@@ -112,17 +117,17 @@ export function canWater(potIndex = 0) {
   if (plant.level === 0) return false;
   if (plant.level >= 5 && plant.growthProgress >= def.growthPerLevel) return false;
   if (plant.harvested) return false;
-  return plant.waterAvailable > 0;
+  return (state.water || 0) > 0;
 }
 
-// 浇水：消耗一次机会，增加成长值
+// 浇水：消耗一次全局浇水次数，增加成长值
 export function waterPlant(potIndex = 0) {
   const plant = getPot(potIndex);
   const def = getActivePlantDef(potIndex);
   if (!plant || !def || !canWater(potIndex)) return { ok: false, justMatured: false };
 
   const wasHarvestable = canHarvest(potIndex);
-  plant.waterAvailable -= 1;
+  state.water = (state.water || 0) - 1;
 
   // 禁止烟火标志牌：浇水有几率暴击（×2 成长）
   let waterGrowth = def.waterGrowth;
@@ -263,10 +268,10 @@ function resetPlantToEmpty(plant) {
   });
 }
 
-// 检测72小时自然凋谢（逐盆；任一盆凋谢即重绘由调用方处理）
+// 检测72小时自然凋谢（逐盆；返回凋谢的植物 def 数组——调用方据此弹窗/通报）
 export function checkWither() {
   const now = getNow();
-  let withered = false;
+  const withered = [];
   (state.plants || []).forEach(plant => {
     if (!plant.activeType || plant.level === 0) return;
     const lastCare = plant.lastCareTime || plant.plantedAt;
@@ -275,10 +280,16 @@ export function checkWither() {
       const def = PLANT_TYPES[plant.activeType];
       addHistory('plant', `${def ? def.emoji + ' ' + t(def.nameKey) : '植物'}凋谢了`, '72小时未照料，植物枯萎');
       resetPlantToEmpty(plant);
-      withered = true;
+      withered.push(def || { id: plant.activeType, emoji: '🥀', nameKey: null });
     }
   });
-  if (withered) saveState();
+  if (withered.length) {
+    // 玩家反馈「植物忽然不见了」：凋谢路径补齐日记 + 持久通报位（温室页红卡，dismiss 清零）
+    const names = withered.map(d => (d.nameKey ? t(d.nameKey) : t('unknown'))).join('、');
+    addDiaryEntry('special_event', { detail: t('diaryPlantWither').replace('{names}', names) });
+    state.plantLossAlert = { kind: 'wither', plantTypes: withered.map(d => d.id), time: now };
+    saveState();
+  }
   return withered;
 }
 
@@ -295,7 +306,6 @@ export function plantSeed(plantType, potIndex = null) {
   plant.activeType = plantType;
   plant.level = 1;
   plant.growthProgress = 0;
-  plant.waterAvailable = 0;
   plant.lastCareTime = getNow();
   plant.plantedAt = getNow();
   plant.harvested = false;
@@ -305,18 +315,12 @@ export function plantSeed(plantType, potIndex = null) {
   return true;
 }
 
-// 添加浇水机会（由专注完成触发；逐盆发放，浇水密度随盆数上升 §2.6）
+// 添加浇水机会（由专注完成触发；2026-09-15 起全局池——不管有没有种植物都累积 +1，
+// 可之后分配给任意一盆；旧版「逐盆发放」由迁移 v11 收编为全局）
 export function addWaterOpportunity() {
-  let granted = false;
-  getActivePotIndices().forEach(idx => {
-    const plant = state.plants[idx];
-    if (!plant.harvested) {
-      plant.waterAvailable += 1;
-      granted = true;
-    }
-  });
-  if (granted) saveState();
-  return granted;
+  state.water = (state.water || 0) + 1;
+  saveState();
+  return true;
 }
 
 // ========== 种子兑换（数组版） ==========

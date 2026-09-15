@@ -17,7 +17,7 @@ const ACTIONS = [
     nameKey: 'actionWaterPlant',
     descKey: 'actionWaterPlantDesc',
     descParams: { value: 25 },
-    available(s) { return (s.plants || []).some(p => p.activeType && p.waterAvailable > 0); },
+    available(s) { return (s.water || 0) > 0 && (s.plants || []).some(p => p.activeType && p.level > 0); },
     apply() {
       (state.plants || []).forEach(p => {
         if (p.activeType && p.level > 0) {

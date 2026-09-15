@@ -250,7 +250,7 @@ delete state.complaintDaily;
 state.library.lastOffsiteDate = undefined;
 state.visitors = [{ id: 'old1', charId: 'peizhou', emoji: '📚', name: '老访客', status: 'borrowed', bookId: poolIds[0], bookIds: undefined, favorability: 0 }];
 runMigrations();
-assert(state._schemaVersion === 10, 'schemaVersion 升到 10');
+assert(state._schemaVersion === 11, 'schemaVersion 升到 11');
 assert(state.visitors[0].bookIds && state.visitors[0].bookIds.length === 1
   && state.visitors[0].bookIds[0] === poolIds[0], '在途单本访客迁移 bookIds 数组');
 assert(state.library.lastOffsiteDate === null, 'lastOffsiteDate 默认 null');

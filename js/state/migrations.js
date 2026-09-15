@@ -14,7 +14,6 @@ export const EMPTY_PLANT = {
   activeType: null,
   level: 0,
   growthProgress: 0,
-  waterAvailable: 0,
   lastCareTime: 0,
   plantedAt: 0,
   harvested: false
@@ -36,8 +35,21 @@ const MIGRATIONS = [
   { version: 7, up: migrateV7 },
   { version: 8, up: migrateV8 },
   { version: 9, up: migrateV9 },
-  { version: 10, up: migrateV10 }
+  { version: 10, up: migrateV10 },
+  { version: 11, up: migrateV11 }
 ];
+
+function migrateV11() {
+  // 2026-09-15 浇水全局池 + 植物消失通报（图南决策，纯加法 + 旧字段收编）：
+  // ① per-pot waterAvailable 并入全局 state.water 后删除旧字段（浇水次数不再挂单盆）。
+  //    注意：老档载入时 state.water 是模块默认值 0 而非 undefined，不能用 typeof 门控——
+  //    改为「有旧字段才加总」，字段删除后天然幂等。
+  // ② 植物消失通报位（凋谢/台风写、玩家 dismiss 清零）
+  const legacyWater = (state.plants || []).reduce((sum, p) => sum + ((p && p.waterAvailable) || 0), 0);
+  if (legacyWater > 0) state.water = (state.water || 0) + legacyWater;
+  (state.plants || []).forEach(p => { if (p && 'waterAvailable' in p) delete p.waterAvailable; });
+  if (state.plantLossAlert === undefined) state.plantLossAlert = null;
+}
 
 function migrateV10() {
   // 2026-09-15 展览厅（exhibition-hall-plan v2，A5 纯加法）：
