@@ -874,7 +874,7 @@ function attemptBorrow(visitor, completedBooks, now) {
   // 老旧度吐槽（§5）：选书后判定，与抽本互不干扰
   maybeComplainOldBooks(visitor, candidates);
 
-  const borrowFavor = Math.round(3 * (1 + getBorrowLevelConfig().favorBonus / 100) * getEventBorrowFavorMult());
+  const borrowFavor = Math.round(3 * (1 + getBorrowLevelConfig().favorBonus / 100) * getEventBorrowFavorMult(now));
   visitor.favorability = (visitor.favorability || 0) + borrowFavor;
   addVisitorFavor(visitor.charId, borrowFavor);
 
