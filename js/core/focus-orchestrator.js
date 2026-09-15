@@ -9,6 +9,7 @@ import { markTaskDone } from '../dailytasks.js';
 import { checkAchievements, getAchievementBonuses } from '../achievements.js';
 import { getAuraCoinsMultiplier, getAuraSpawnBonus, getBorrowSpawnBonus, spawnVisitor } from '../visitors.js';
 import { getCurationCoinsBonus } from '../curation.js';
+import { getEventFocusCoinsMult } from './exhibition.js';
 import { addDiaryEntry } from '../diary.js';
 import { hasSignboard, getSignboardBuffSum } from '../shop.js';
 import { canDrawActionCards, drawActionCards, applyAction } from '../actioncards.js';
@@ -46,11 +47,11 @@ export function runFocusOrchestration(result, isAuto) {
 
   const sess = state.currentSession;
 
-  // ── 金币加成计算（aura + curation + achievement）
+  // ── 金币加成计算（aura + curation + achievement + 活动日 focusCoinsMult 乘区）
   const auraCoinsMult = getAuraCoinsMultiplier();
   const curationCoins = getCurationCoinsBonus();
   const achieveBonuses = getAchievementBonuses();
-  const coinsEarned = Math.round(minutes * 0.8 * (1 + auraCoinsMult + curationCoins) * (1 + achieveBonuses.coinsBoost));
+  const coinsEarned = Math.round(minutes * 0.8 * (1 + auraCoinsMult + curationCoins) * (1 + achieveBonuses.coinsBoost) * getEventFocusCoinsMult());
   addCoins(coinsEarned);
 
   // ── 灵感：烛台加成

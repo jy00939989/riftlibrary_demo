@@ -16,6 +16,7 @@ import { track } from './backend/analytics.js';
 import { BORROW_LEVEL_TABLE, getWearMultiplier, getBookCondition, getBorrowSlots } from '../data/borrow-levels.js';
 import { getTodayKey } from './core/day-boundary.js';
 import { cafeTick, cafeOnTimeSkip } from './core/cafe.js';
+import { getEventBorrowFavorMult } from './core/exhibition.js';
 
 // 台风灾难参数：新植物保护期 + 触发概率 + 冷却时间
 const TYPHOON_PROBABILITY = 0.0005; // 每分钟判定概率
@@ -873,7 +874,7 @@ function attemptBorrow(visitor, completedBooks, now) {
   // 老旧度吐槽（§5）：选书后判定，与抽本互不干扰
   maybeComplainOldBooks(visitor, candidates);
 
-  const borrowFavor = Math.round(3 * (1 + getBorrowLevelConfig().favorBonus / 100));
+  const borrowFavor = Math.round(3 * (1 + getBorrowLevelConfig().favorBonus / 100) * getEventBorrowFavorMult());
   visitor.favorability = (visitor.favorability || 0) + borrowFavor;
   addVisitorFavor(visitor.charId, borrowFavor);
 
