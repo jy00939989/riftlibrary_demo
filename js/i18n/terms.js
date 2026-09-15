@@ -69,6 +69,7 @@ const TERM_DATA = Object.freeze({
   exhCondCollection: { zh: '访客纪念品 ≥{need} 件（当前 {have}）', en: 'Visitor mementos ≥{need} (now {have})' },
   exhCondMusicroom: { zh: '在位面商店建造留声阁后自动开放', en: 'Opens automatically once the Music Room is built in the Plane Shop' },
   exhBreadcrumb: { zh: '展览厅 · {room}', en: 'Exhibition Hall · {room}' },
+  exhRoomMystery: { zh: '未修复的展厅', en: 'Unrestored Gallery' },
   exhEventToday: { zh: '今日活动 · {name}（{effect}）', en: "Today's Event · {name} ({effect})" },
   exhEventEffectFavor: { zh: '借书好感 ×{mult}', en: 'Borrow favor ×{mult}' },
   exhEventEffectCoins: { zh: '专注金币 ×{mult}', en: 'Focus coins ×{mult}' },

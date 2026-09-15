@@ -245,18 +245,21 @@ function renderSpot(roomId) {
   return spot;
 }
 
-// 铭牌标签：叠在图自带的空白铭牌位上（房名 + 状态锁）
+// 铭牌标签：叠在图自带的空白铭牌位上；破败修复类房间藏名（❓ 未修复的展厅），修复瞬间亮真名（揭示感）
 function renderSpotTag(roomId) {
   const room = EXHIBITION_ROOMS[roomId];
   const spotDef = EXHIBITION_SPOTS[roomId];
   const status = getRoomStatus(roomId);
-  const locked = status === 'ruined';
+  const isMusicUnbuilt = roomId === 'musicroom' && status === 'ruined';
+  const mystery = status === 'ruined' && !isMusicUnbuilt;
 
   const tag = document.createElement('div');
   tag.className = `exh-tag ${status === 'open' ? 'open' : 'ruined'}`;
   tag.style.left = (spotDef.x + spotDef.w / 2) + '%';
   tag.style.top = (spotDef.y - 6.2) + '%';
-  tag.textContent = `${room.emoji} ${t(room.nameKey)}${locked ? ' 🔒' : ''}`;
+  tag.textContent = mystery
+    ? `❓ ${t('exhRoomMystery')} 🔒`
+    : `${room.emoji} ${t(room.nameKey)}${status === 'ruined' ? ' 🔒' : ''}`;
   return tag;
 }
 
@@ -278,10 +281,11 @@ function renderEntrance(roomId) {
     ${status === 'ruined' && !isMusicUnbuilt ? '<span class="absolute top-2 right-2 text-xs opacity-70">🔨</span>' : ''}
   `;
 
-  // 铭牌
+  // 铭牌（零美术兜底网格同规则：破败修复类房间藏名）
   const plaque = document.createElement('div');
   plaque.className = 'exh-plaque text-center py-2 px-1';
-  const nameHtml = `<div class="text-sm font-bold">${t(room.nameKey)}</div>`;
+  const showMystery = status === 'ruined' && !isMusicUnbuilt;
+  const nameHtml = `<div class="text-sm font-bold">${showMystery ? `❓ ${t('exhRoomMystery')}` : t(room.nameKey)}</div>`;
   if (status === 'open') {
     plaque.innerHTML = `${nameHtml}<div class="text-[11px] text-magic-gold font-bold">${t('exhEnter')} →</div>`;
   } else if (isMusicUnbuilt) {
