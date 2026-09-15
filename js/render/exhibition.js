@@ -133,13 +133,10 @@ function renderHall(container) {
   }
   wrapper.appendChild(head);
 
-  // ── 五房间入口（三态） ──
+  // ── 五房间热点舞台（底图 + SVG-free clip 热点；缺图兜底卡片网格） ──
   const floor = document.createElement('div');
-  floor.className = 'p-5 grid grid-cols-2 md:grid-cols-3 gap-4';
-  EXHIBITION_ROOM_IDS.forEach(roomId => {
-    floor.appendChild(renderEntrance(roomId));
-  });
   wrapper.appendChild(floor);
+  renderHallStage(floor, openCount);
 
   // ── 页脚：活动横幅位（活动日优先，整月横幅兜底）+ 旧入口收编提示 ──
   const foot = document.createElement('div');
@@ -165,6 +162,105 @@ function renderHall(container) {
   container.appendChild(wrapper);
 }
 
+// ========== 大厅舞台热点坐标（按 hall_lv5.jpg 2731×1536 实测百分比；图变时重测此处） ==========
+// 画面从左到右：卷宗门=档案室 / 荣誉墙=纪念牌墙 / 阶梯展台=成就柜 / 玻璃展柜=收藏品展柜 / 侧厅拱门=留声阁
+// 图上自带五块空白铭牌，exh-tag 叠加 localized 房名；arch=拱顶造型（border-radius 近似半圆拱）
+const EXHIBITION_SPOTS = {
+  archive:      { x: 7.6,  y: 33.0, w: 11.8, h: 35.0, arch: true  },
+  signboards:   { x: 25.8, y: 34.0, w: 12.4, h: 34.0, arch: false },
+  achievements: { x: 43.9, y: 34.0, w: 12.6, h: 35.5, arch: true  },
+  collection:   { x: 62.4, y: 35.5, w: 13.6, h: 33.0, arch: false },
+  musicroom:    { x: 81.0, y: 34.0, w: 12.2, h: 35.0, arch: true  },
+};
+
+// 底图分档：按已开放房间数选 hall_lvN.jpg；缺档自动向 lv5 回退（全部缺失回退 CSS 卡片构图）
+function loadHallImage(openCount, onOk, onFail) {
+  const start = Math.max(1, Math.min(5, openCount || 1));
+  const tryLoad = (k) => {
+    const img = new Image();
+    img.onload = () => onOk(`visual/exhibition/hall_lv${k}.jpg`);
+    img.onerror = () => { if (k < 5) tryLoad(k + 1); else onFail(); };
+    img.src = `visual/exhibition/hall_lv${k}.jpg`;
+  };
+  tryLoad(start);
+}
+
+function renderHallStage(container, openCount) {
+  container.innerHTML = '';
+  container.className = 'p-3';
+  loadHallImage(openCount, (src) => {
+    const stage = document.createElement('div');
+    stage.className = 'exh-stage';
+
+    const img = document.createElement('img');
+    img.src = src;
+    img.alt = t('tabExhibitionHall');
+    stage.appendChild(img);
+
+    EXHIBITION_ROOM_IDS.forEach(roomId => {
+      stage.appendChild(renderSpot(roomId));
+      stage.appendChild(renderSpotTag(roomId));
+    });
+
+    container.innerHTML = '';
+    container.appendChild(stage);
+  }, () => {
+    // 美术图缺失兜底：退回零美术债卡片网格
+    const floor = document.createElement('div');
+    floor.className = 'grid grid-cols-2 md:grid-cols-3 gap-4';
+    EXHIBITION_ROOM_IDS.forEach(roomId => floor.appendChild(renderEntrance(roomId)));
+    container.appendChild(floor);
+  });
+}
+
+// 单个热点：clip 形内叠「破败暗化层 + hover 发光层」，hover 微浮起；点击行为同旧入口卡
+function renderSpot(roomId) {
+  const room = EXHIBITION_ROOMS[roomId];
+  const spotDef = EXHIBITION_SPOTS[roomId];
+  const status = getRoomStatus(roomId);
+  const isMusicUnbuilt = roomId === 'musicroom' && status === 'ruined';
+
+  const spot = document.createElement('div');
+  spot.className = `exh-spot ${spotDef.arch ? 'arch' : ''} ${status === 'open' ? 'open' : 'ruined'}`;
+  spot.dataset.room = roomId;
+  spot.style.left = spotDef.x + '%';
+  spot.style.top = spotDef.y + '%';
+  spot.style.width = spotDef.w + '%';
+  spot.style.height = spotDef.h + '%';
+
+  const shape = document.createElement('div');
+  shape.className = 'exh-spot-shape';
+  shape.innerHTML = `<div class="exh-spot-dim"></div><div class="exh-spot-glow"></div>`;
+  spot.appendChild(shape);
+
+  spot.addEventListener('click', () => {
+    if (status === 'open') {
+      enterRoom(roomId);
+    } else if (isMusicUnbuilt) {
+      window.switchTab('shop');
+    } else {
+      openRepairPanel(roomId, spot);
+    }
+  });
+  return spot;
+}
+
+// 铭牌标签：叠在图自带的空白铭牌位上（房名 + 状态锁）
+function renderSpotTag(roomId) {
+  const room = EXHIBITION_ROOMS[roomId];
+  const spotDef = EXHIBITION_SPOTS[roomId];
+  const status = getRoomStatus(roomId);
+  const locked = status === 'ruined';
+
+  const tag = document.createElement('div');
+  tag.className = `exh-tag ${status === 'open' ? 'open' : 'ruined'}`;
+  tag.style.left = (spotDef.x + spotDef.w / 2) + '%';
+  tag.style.top = (spotDef.y - 6.2) + '%';
+  tag.textContent = `${room.emoji} ${t(room.nameKey)}${locked ? ' 🔒' : ''}`;
+  return tag;
+}
+
+// 零美术债兜底：大图缺失时的五入口卡片网格（保留旧视觉）
 function renderEntrance(roomId) {
   const room = EXHIBITION_ROOMS[roomId];
   const status = getRoomStatus(roomId);
