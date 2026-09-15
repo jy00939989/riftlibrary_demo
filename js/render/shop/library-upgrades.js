@@ -24,6 +24,7 @@ import {
 import { showNamingModal } from './naming-modal.js';
 import { getFacilityLevelCap, getFacilityRequiredStage, resolveStageLevel } from '../../../data/atmosphere.js';
 import { isCafeBuilt, isCafeDormant, buildCafe } from '../../core/cafe.js';
+import { checkAndShowGrandOpening } from '../exhibition.js';
 import { openCafePanel } from './cafe-panel.js';
 import { CAFE_BUILD_STAGE, CAFE_BUILD_PRICE } from '../../../data/cafe.js';
 import { getLibraryStage } from '../../storage.js';
@@ -356,6 +357,8 @@ export function renderLibraryUpgrades() {
       if (unlockMusicRoom()) {
         playSfx('buy_success');
         updateStatusBar();
+        // 展览厅：留声阁直通点亮，可能因此凑齐五室触发全馆开放庆典
+        checkAndShowGrandOpening();
         if (actions.renderShopPage) {
           actions.renderShopPage();
         }
