@@ -37,6 +37,7 @@ import { initMusicSelector } from './render/music-selector.js';
 import { renderMomoSuggestion, resetMomoSuggestion } from './render/momo-suggestion.js';
 import { handleStartFocus, handleTogglePause, handleCompleteFocus, handleAbandonFocus } from './core/focus-actions.js';
 import { checkDayRollover } from './core/day-boundary.js';
+import { checkEventDayDiary } from './core/exhibition.js';
 import './core/offsite.js'; // 寄读日结：onNewDay 订阅副作用注册（borrow-demand-deepening §4）
 import { handleBuyShelf, handleUpgradeBorrowLevel } from './core/shop-actions.js';
 import { handleCollectReturn } from './core/visitor-actions.js';
@@ -106,6 +107,9 @@ function init() {
   // 跨日登录在此恰好触发一次 onNewDay；同日/新档为 null 不触发。
   checkDayRollover(state);
 
+  // 展览厅活动日判定②：页面加载（onNewDay 订阅负责日界侧；落戳幂等，同日不双写）
+  try { checkEventDayDiary(); } catch (e) { console.warn('[app] event diary check failed', e); }
+
   initAuth().catch(err => console.warn('[app] backend auth init failed', err));
 
   setCompleteCallback(handleCompleteFocus);
@@ -132,7 +136,7 @@ function init() {
     state.currentSession.targetMinutes = 1;
   }
 
-  ['focus', 'bookshelf', 'library', 'visitors', 'archive', 'musicroom', 'shop'].forEach(tab => {
+  ['focus', 'bookshelf', 'library', 'visitors', 'exhibition', 'archive', 'musicroom', 'shop'].forEach(tab => {
     const btn = document.getElementById('tab-' + tab);
     if (btn) btn.addEventListener('click', () => switchTab(tab));
   });

@@ -13,6 +13,7 @@ import { VOLUME_GROUPS, getVolumeGroupProgress, isVolumeBookId } from '../../dat
 import { canCollectVolumeGroup, collectVolumeGroup } from '../volumes.js';
 import { storeInRestorationBox, removeFromRestorationBox, getRestorationBoxSlots, getRestorationBoxCount, getRestorationSlotPrice, expandRestorationBoxSlots, getRestorationLevel, getRestorationUpgradePrice, upgradeRestorationLevel, getRestorationRepairSpeedBonus, isRestorationUnlocked, getRestorationUnlockPrice } from '../capacity.js';
 import { updateStatusBar, getBookTitle } from './common.js';
+import { exhibitionBreadcrumbHTML, bindExhibitionBreadcrumb } from './exhibition.js';
 import { playSfx } from '../audio.js';
 import { checkAchievements, getAchievementBonuses } from '../achievements.js';
 import { showAchievementToast } from './achievements.js';
@@ -89,6 +90,7 @@ export function renderLibraryPage() {
       </div>
 
       <!-- 子标签内容区 -->
+      <div id="lib-exh-breadcrumb" class="px-6 pt-3"></div>
       <div id="lib-content-area" class="p-6"></div>
     </div>
   `;
@@ -112,6 +114,15 @@ export function renderLibraryPage() {
       case 'decoration': renderDecorationTab(contentArea); break;
       case 'guide': renderGuideTab(contentArea); break;
     }
+  }
+
+  // 展览厅面包屑（三个迁入子标签显示，plan §2.3）
+  const crumbSlot = container.querySelector('#lib-exh-breadcrumb');
+  if (crumbSlot) {
+    const roomMap = { achievements: 'achievements', collection: 'collection', decoration: 'signboards' };
+    const roomId = roomMap[activeSubTab];
+    crumbSlot.innerHTML = roomId ? exhibitionBreadcrumbHTML(roomId) : '';
+    bindExhibitionBreadcrumb(crumbSlot);
   }
 }
 

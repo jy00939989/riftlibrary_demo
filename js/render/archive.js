@@ -6,6 +6,7 @@ import { PLANES, canUnlockPlane } from '../../data/planes.js';
 import { getPlaneQuestState } from '../quests.js';
 import { renderPlaneDetail } from './plane.js';
 import { VISITOR_DEFS } from '../visitors.js';
+import { exhibitionBreadcrumbHTML, bindExhibitionBreadcrumb } from './exhibition.js';
 import { getVisitorMemory, getVisitorMemoryNewCount, markSeen, clearAllNew, getVisitorStats, getVisitorItemTitle, getVisitorItemText, retroCollectVisitorMemories } from '../visitorMemory.js';
 
 // 安全转义，防止动态文本经 innerHTML 注入
@@ -25,6 +26,12 @@ export function renderArchivePage() {
   const container = document.getElementById('page-archive');
   if (!container) return;
   container.innerHTML = '';
+
+  // 展览厅面包屑（迁入页 header 一行，plan §2.3）
+  const crumb = document.createElement('div');
+  crumb.innerHTML = exhibitionBreadcrumbHTML('archive');
+  container.appendChild(crumb);
+  bindExhibitionBreadcrumb(crumb);
 
   // 子标签导航
   const newCount = getVisitorMemoryNewCount();

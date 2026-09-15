@@ -1627,3 +1627,41 @@ body {
   .scene-visitor-figure .scene-visitor-emoji { font-size: 1.2rem; }
   .scene-visitor-figure .scene-visitor-name { font-size: 0.48rem; }
 }
+
+/* ========== 展览厅（exhibition-hall-plan §2.2 三态 + 修复光扫过渡） ========== */
+.exh-entrance { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+.exh-entrance:hover { transform: translateY(-2px); }
+.exh-entrance .exh-door {
+  background: linear-gradient(180deg, rgba(139,105,20,0.12), rgba(139,105,20,0.32));
+  border-radius: 0.65rem 0.65rem 0 0;
+}
+.exh-entrance.open .exh-door {
+  background: radial-gradient(ellipse at 50% 30%, rgba(201,162,39,0.32), rgba(139,105,20,0.22) 75%);
+  box-shadow: inset 0 0 24px rgba(201,162,39,0.22);
+}
+.exh-entrance.ruined .exh-door { filter: grayscale(0.9) brightness(0.55); }
+.exh-entrance.ruined:hover .exh-door { filter: grayscale(0.65) brightness(0.72); }
+.exh-entrance.open .exh-plaque { text-shadow: 0 0 12px rgba(201,162,39,0.45); }
+/* 修复「蜕变」：光扫 + 灰度褪去（~1.2s，CSS 足矣本厅不入 seedance 清单） */
+.exh-entrance.resto-flash { position: relative; overflow: hidden; }
+.exh-entrance.resto-flash::after {
+  content: ''; position: absolute; top: 0; bottom: 0; width: 40%; left: -50%;
+  background: linear-gradient(105deg, transparent, rgba(245,230,200,0.85), transparent);
+  animation: exhLightSweep 1.1s ease-in-out forwards;
+  pointer-events: none;
+}
+@keyframes exhLightSweep { to { left: 130%; } }
+.exh-door.resto-reveal { animation: exhReveal 1.2s ease forwards; }
+@keyframes exhReveal {
+  from { filter: grayscale(0.9) brightness(0.55); }
+  to { filter: grayscale(0) brightness(1); }
+}
+.exh-event-banner {
+  background: linear-gradient(90deg, rgba(201,162,39,0.16), rgba(201,162,39,0.3), rgba(201,162,39,0.16));
+  border: 1px solid rgba(201,162,39,0.4);
+}
+.exh-month-banner {
+  background: rgba(74,124,155,0.1);
+  border: 1px solid rgba(74,124,155,0.28);
+  color: #4a7c9b;
+}

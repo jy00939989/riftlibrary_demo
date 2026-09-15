@@ -13,6 +13,7 @@ import {
   getCurrentAmbientId, isAmbientEnabled, setAmbientEnabled
 } from '../ambient.js';
 import { isDlcPackUnlocked, getDlcPack } from '../shop.js';
+import { exhibitionBreadcrumbHTML, bindExhibitionBreadcrumb } from './exhibition.js';
 
 function getTrackDisplayName(track) {
   const key = 'musicTrack_' + track.id;
@@ -25,6 +26,12 @@ export function renderMusicRoomPage() {
   if (!container) return;
 
   container.innerHTML = '';
+
+  // 展览厅面包屑（迁入页 header 一行，plan §2.3）
+  const crumb = document.createElement('div');
+  crumb.innerHTML = exhibitionBreadcrumbHTML('musicroom');
+  container.appendChild(crumb);
+  bindExhibitionBreadcrumb(crumb);
 
   // 未解锁：引导去商店
   if (!state.musicRoom?.unlocked) {

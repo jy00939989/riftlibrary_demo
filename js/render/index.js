@@ -6,6 +6,7 @@ export { renderBookshelfPage, showMasteryDetail } from './bookshelf.js';
 export { renderVisitorsPage, showVisitorEventModal } from './visitors.js';
 export { renderLibraryPage } from './library.js';
 export { renderArchivePage } from './archive.js';
+export { renderExhibitionPage } from './exhibition.js';
 export { renderMusicRoomPage } from './music-room.js';
 export { renderShopPage } from './shop.js';
 export { showUnlockAnimation, showBookCompleteAnimation, showBookShelvingAnimation, showDiaryLevelUpPopup } from './animations.js';
