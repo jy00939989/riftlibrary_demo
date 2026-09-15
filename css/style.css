@@ -1665,3 +1665,13 @@ body {
   border: 1px solid rgba(74,124,155,0.28);
   color: #4a7c9b;
 }
+
+/* ========== 熟练度 Lv5 典藏金光（书架卡，承诺兑现 2026-09-15） ========== */
+.book-spine.mastered {
+  border: 1.5px solid rgba(201,162,39,0.65);
+  animation: masterGoldPulse 2.6s ease-in-out infinite;
+}
+@keyframes masterGoldPulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(201,162,39,0.30), inset 0 0 6px rgba(201,162,39,0.12); }
+  50%      { box-shadow: 0 0 22px rgba(201,162,39,0.60), inset 0 0 14px rgba(201,162,39,0.25); }
+}
