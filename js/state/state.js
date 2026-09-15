@@ -255,7 +255,18 @@ export const state = {
   },
 
   // 卷组吐槽冷却
-  quipCooldown: { recent: [], groupVisits: {} }
+  quipCooldown: { recent: [], groupVisits: {} },
+
+  // 展览厅（exhibition-hall-plan v2）：大厅分级设施（等级=房间容量，Lv5=5 槽）+ 五房间三态
+  // rooms 仅两档：'ruined' | 'open'（本版不设施工时长）；档案室在大厅建成时即开放
+  exhibition: {
+    built: false,
+    level: 0,
+    rooms: { archive: 'ruined', signboards: 'ruined', achievements: 'ruined', collection: 'ruined', musicroom: 'ruined' },
+    grandOpeningShown: false,
+    lastEventId: null,
+    lastEventDay: null
+  }
 };
 
 // 默认书籍状态（新增/变更书籍时同步更新此处）
