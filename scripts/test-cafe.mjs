@@ -219,7 +219,10 @@ delete state.plants;
 delete state.cafe;
 state.plant = { activeType: 'magic_rose', level: 2, growthProgress: 5 };
 runMigrations();
-assert(state._schemaVersion === 9, 'schemaVersion 升到 9');
+assert(state._schemaVersion === 10, 'schemaVersion 升到 10');
+assert(state.exhibition && state.exhibition.built === false && state.exhibition.level === 0
+  && state.exhibition.rooms && state.exhibition.rooms.archive === 'ruined',
+  'v10 exhibition 同档默认态（A5）');
 assert(Array.isArray(state.plants) && state.plants[0].activeType === 'magic_rose', 'v7 plants 正确');
 assert(state.cafe && state.cafe.unlocked === false && state.cafe.level === 0
   && state.cafe.stock && typeof state.cafe.stock === 'object'
