@@ -8,6 +8,7 @@ import { VOLUME_GROUPS } from '../../data/volume_groups.js';
 import { DLC_PACKS } from '../../data/dlc_packs.js';
 import { PLANT_TYPES } from '../../data/plants.js';
 import { getStageLevel } from '../../data/atmosphere.js';
+import { isNoMasteryBook } from '../core/book-eligibility.js';
 
 // 规范空盆常量（铲除/凋谢/灾难后复用）
 export const EMPTY_PLANT = {
@@ -36,8 +37,20 @@ const MIGRATIONS = [
   { version: 8, up: migrateV8 },
   { version: 9, up: migrateV9 },
   { version: 10, up: migrateV10 },
-  { version: 11, up: migrateV11 }
+  { version: 11, up: migrateV11 },
+  { version: 12, up: migrateV12 }
 ];
+
+function migrateV12() {
+  // 2026-09-15 图南拍板：熟练度一次完成即满——老档首通停在 Lv2 的追溯升满 Lv5
+  //（典藏内容/金光/master 增益一次完成即全解锁；noMastery 书不参与，不动）。
+  // 幂等：masteryLevel >= 5 直接跳过。
+  Object.entries(state.books || {}).forEach(([bookId, bs]) => {
+    if (!bs || !bs.masteryLevel || bs.masteryLevel >= 5) return;
+    if (isNoMasteryBook(bookId)) return;
+    bs.masteryLevel = 5;
+  });
+}
 
 function migrateV11() {
   // 2026-09-15 浇水全局池 + 植物消失通报（图南决策，纯加法 + 旧字段收编）：

@@ -197,7 +197,7 @@ console.log('\n=== 10. 迁移 v10 ===');
 state._schemaVersion = 9;
 delete state.exhibition;
 runMigrations();
-assert(state._schemaVersion === 11, 'schemaVersion 9 → 11');
+assert(state._schemaVersion === 12, 'schemaVersion 9 → 12');
 assert(state.exhibition && state.exhibition.built === false && state.exhibition.level === 0, 'exhibition 默认态');
 assert(Object.keys(state.exhibition.rooms).length === 5 && state.exhibition.rooms.musicroom === 'ruined', '五房间全破败');
 runMigrations();

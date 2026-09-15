@@ -62,10 +62,9 @@ export function completeBook(bookId) {
 
   bookState.copyCount = prevCopyCount + 1;
   if (!isNoMasteryBook(bookId)) {
-    // 普通书简化为两次抄写周期：
-    // - 首次完成 → Lv2（解锁上架信息 + 作者生平）
-    // - 第二次重抄 → Lv5（解锁轶事、书评、典藏封面与 master 增益）
-    bookState.masteryLevel = isFirstCompletion ? 2 : 5;
+    // 2026-09-15 图南拍板：取消两档熟练度——一次完成即满熟练（典藏内容/金光/master 增益全解锁）；
+    // 重抄仍在（磨损清零/半氛围），但不再承载解锁。noMastery 书（分卷/典藏版）始终不参与。
+    bookState.masteryLevel = 5;
   }
 
   if (isFirstCompletion) {
@@ -186,6 +185,8 @@ export function unlockReCopy(bookId) {
   if (!bs) return { ok: false, reason: 'book_not_found' };
   if (bs.reCopyUnlocked) return { ok: false, reason: 'already_unlocked' };
   if (bs.status !== 'completed') return { ok: false, reason: 'book_not_completed' };
+  // 典藏版/分卷书不参与重抄（2026-09-15 图南拍板）：UI 置灰之外核心层再设一道闸
+  if (isNoMasteryBook(bookId)) return { ok: false, reason: 'no_mastery_book' };
 
   const cost = 1;
   if (!spendInspiration(cost)) {

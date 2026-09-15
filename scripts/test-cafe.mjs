@@ -219,7 +219,7 @@ delete state.plants;
 delete state.cafe;
 state.plant = { activeType: 'magic_rose', level: 2, growthProgress: 5 };
 runMigrations();
-assert(state._schemaVersion === 11, 'schemaVersion 升到 11');
+assert(state._schemaVersion === 12, 'schemaVersion 升到 12');
 assert(state.exhibition && state.exhibition.built === false && state.exhibition.level === 0
   && state.exhibition.rooms && state.exhibition.rooms.archive === 'ruined',
   'v10 exhibition 同档默认态（A5）');
