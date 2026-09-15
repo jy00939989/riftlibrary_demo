@@ -7,7 +7,6 @@
 // visitors（attemptBorrow）与 focus-orchestrator（结算）只读 getEvent*Mult 乘区。
 import { state, saveState } from '../state.js';
 import { spendCoins, addHistory } from '../storage.js';
-import { getFacilityLevelCap } from '../../data/atmosphere.js';
 import { getLibraryStage } from '../storage.js';
 import { getEventsOnDate, getEventEffectMults, getMonthBanner } from '../../data/event_calendar.js';
 import { getTodayKey, onNewDay } from './day-boundary.js';
@@ -86,9 +85,13 @@ export function getHallUpgradePrice() {
   return Math.round(EXHIBITION_UPGRADE_BASE * Math.pow(EXHIBITION_UPGRADE_GROWTH, state.exhibition.level - 1));
 }
 
-/** 大厅等级上限 = min(5, 设施帽 stage+1)（复用 getFacilityLevelCap，同咖啡角口径） */
+/**
+ * 大厅等级上限（2026-09-15 图南拍板改金币单轨）：恒为 Lv5，不复用设施阶段帽。
+ * 理由：getFacilityLevelCap 是氛围产出设施的 EXP 纪律工具（D19/D22），大厅零氛围产出，
+ * 阶段帽属误伤；扩容 pacing 由金币曲线 ×1.6 与房间收集条件双轨承担。
+ */
 export function getHallLevelCap() {
-  return Math.min(EXHIBITION_MAX_LEVEL, getFacilityLevelCap(state.library.atmosphere || 0, state.library.stage));
+  return EXHIBITION_MAX_LEVEL;
 }
 
 export function canUpgradeHall() {

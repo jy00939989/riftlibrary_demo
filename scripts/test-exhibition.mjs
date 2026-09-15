@@ -75,9 +75,10 @@ assert(state.exhibition.rooms.archive === 'open', '档案室随馆而生（建�
 assert(!exh.buildExhibitionHall(), '已建不可重复建造');
 
 // ═══ 2. 升级曲线与设施帽（1000×1.6ⁿ，cap=min(5,stage+1)）═══
-console.log('\n=== 2. 升级曲线与设施帽 ===');
-freshExh({ stage: 4, coins: 99999 }); // 4 阶设施帽 = 5，可走完整条曲线
+console.log('\n=== 2. 升级曲线与金币单轨（2026-09-15 起不设阶段帽）===');
+freshExh({ stage: 2, coins: 99999 }); // 2 阶刚够建造，扩容不再看阶段
 exh.buildExhibitionHall();
+assert(exh.getHallLevelCap() === 5, '帽恒为 Lv5（金币单轨）');
 assert(exh.getHallUpgradePrice() === 1000, 'Lv1→2 = 1000');
 exh.upgradeHall();
 assert(exh.getHallUpgradePrice() === 1600, 'Lv2→3 = 1600');
@@ -87,12 +88,8 @@ exh.upgradeHall();
 assert(exh.getHallUpgradePrice() === 4096, 'Lv4→5 = 4096');
 exh.upgradeHall();
 assert(state.exhibition.level === 5 && !exh.canUpgradeHall(), '升满 Lv5（5 槽全开放）不可再升');
-freshExh({ stage: 2, coins: 99999 });
-exh.buildExhibitionHall();
-exh.upgradeHall(); exh.upgradeHall();
-assert(exh.getHallLevelCap() === 3 && !exh.canUpgradeHall(), '2 阶设施帽 = 3，Lv3 后锁');
 freshExh({ stage: 1, coins: 99999 });
-assert(!exh.canBuildExhibitionHall(), '1 阶不可建造（重申）');
+assert(!exh.canBuildExhibitionHall(), '1 阶不可建造（重申：阶段只卡建造门槛）');
 
 // ═══ 3. 容量轨（大厅等级 = 房间容量）═══
 console.log('\n=== 3. 容量轨 ===');
