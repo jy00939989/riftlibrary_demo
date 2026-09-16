@@ -5,7 +5,7 @@ import { state, saveState } from './state.js';
 import { spendCoins, addCoins, addAtmosphere, addHistory, addInspiration } from './storage.js';
 import { markTaskDone } from './dailytasks.js';
 import { PLANT_TYPES, SEED_EXCHANGE } from '../data/plants.js';
-import { isBookCapacityFull, isManuscriptBoxFull, addToManuscriptBox } from './capacity.js';
+import { isBookCapacityFull, isManuscriptBoxFull, addToManuscriptBox, getManuscriptSlots, getManuscriptBoxCount } from './capacity.js';
 import { createBookRecord } from './core/book-utils.js';
 import { hasSignboard } from './shop.js';
 import { SIGNBOARDS } from '../data/signboards.js';
@@ -331,11 +331,22 @@ export function getSeedExchangeItem(seedType, index) {
   return list[index];
 }
 
+// book 类奖励的目标书：单书 rewardBookId / 卷书 rewardBookIds 均支持
+function rewardBookIdsOf(item) {
+  if (Array.isArray(item.rewardBookIds)) return item.rewardBookIds;
+  return item.rewardBookId ? [item.rewardBookId] : [];
+}
+
 function isOneTimeExchanged(item) {
   if (item.repeatable !== false) return false;
   if (item.type === 'book') {
-    const bs = state.books[item.rewardBookId];
-    return bs && bs.status !== 'locked';
+    // 多卷书：全部已拥有才算换过（异常半拥有态允许补齐）
+    const ids = rewardBookIdsOf(item);
+    if (ids.length === 0) return false;
+    return ids.every(id => {
+      const bs = state.books[id];
+      return bs && bs.status !== 'locked';
+    });
   }
   if (item.type === 'seed') {
     // 一次性 seed 兑换：只要目标种子已解锁/有库存即视为已换过
@@ -350,7 +361,12 @@ export function canExchangeSeed(seedType, index) {
   if ((state.seeds[seedType] || 0) < item.required) return false;
   if (isOneTimeExchanged(item)) return false;
   if (item.type === 'book') {
-    if (isManuscriptBoxFull()) return false;
+    // 按未拥有的奖励书数量要求手稿箱空位
+    const needed = rewardBookIdsOf(item).filter(id => {
+      const bs = state.books[id];
+      return !bs || bs.status === 'locked';
+    }).length || 1;
+    if (getManuscriptSlots() - getManuscriptBoxCount() < needed) return false;
   }
   return true;
 }
@@ -363,8 +379,13 @@ export function exchangeSeed(seedType, index) {
 
   switch (item.type) {
     case 'book': {
-      state.books[item.rewardBookId] = createBookRecord();
-      addToManuscriptBox(item.rewardBookId);
+      // 逐卷发放：已拥有的跳过（半拥有异常态补齐），全卷进手稿箱
+      for (const bid of rewardBookIdsOf(item)) {
+        const bs = state.books[bid];
+        if (bs && bs.status !== 'locked') continue;
+        state.books[bid] = createBookRecord();
+        addToManuscriptBox(bid);
+      }
       addHistory('plant', `种子兑换《${t(item.rewardTitleKey)}》`, `消耗${item.required}颗种子`);
       break;
     }

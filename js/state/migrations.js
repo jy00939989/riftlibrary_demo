@@ -9,6 +9,8 @@ import { DLC_PACKS } from '../../data/dlc_packs.js';
 import { PLANT_TYPES } from '../../data/plants.js';
 import { getStageLevel } from '../../data/atmosphere.js';
 import { isNoMasteryBook } from '../core/book-eligibility.js';
+import { createBookRecord } from '../core/book-utils.js';
+import { addToManuscriptBox } from '../capacity.js';
 
 // 规范空盆常量（铲除/凋谢/灾难后复用）
 export const EMPTY_PLANT = {
@@ -38,7 +40,8 @@ const MIGRATIONS = [
   { version: 9, up: migrateV9 },
   { version: 10, up: migrateV10 },
   { version: 11, up: migrateV11 },
-  { version: 12, up: migrateV12 }
+  { version: 12, up: migrateV12 },
+  { version: 13, up: migrateV13 }
 ];
 
 function migrateV12() {
@@ -49,6 +52,30 @@ function migrateV12() {
     if (!bs || !bs.masteryLevel || bs.masteryLevel >= 5) return;
     if (isNoMasteryBook(bookId)) return;
     bs.masteryLevel = 5;
+  });
+}
+
+function migrateV13() {
+  // 2026-09-16 秘密花园种子兑换修复：旧配置错把卷书奖励写成典藏版 book_034
+  //（0 章不可抄），且典藏版在架会让 isVolumeConsumed 永久吞掉两卷——兑换者反向 soft-lock。
+  // 修复：已中招存档典藏版回锁 + 补发两卷（正常合成路径的存档 vols 已拥有，不受影响）。
+  const col = state.books && state.books['book_034'];
+  if (!col || col.status === 'locked') return;
+  const missing = ['book_034_vol1', 'book_034_vol2'].filter(id => {
+    const bs = state.books[id];
+    return !bs || bs.status === 'locked';
+  });
+  if (missing.length === 0) return;
+  col.status = 'locked';
+  col.copiedWords = 0;
+  col.copyCount = 0;
+  col.masteryLevel = 0;
+  col.damaged = false;
+  col.repairWords = 0;
+  col.repairProgress = 0;
+  missing.forEach(id => {
+    state.books[id] = createBookRecord();
+    addToManuscriptBox(id);
   });
 }
 
