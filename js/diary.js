@@ -138,6 +138,19 @@ function commonVars() {
   };
 }
 
+// ========== 日志页码 ==========
+// 页码必须是单调递增计数器，不能用 diaryLogs.length 推导：
+// 日志只保留最近 30 条（addDiaryEntry 截断），length 封顶 30 后页码会永远卡在 31。
+// 旧档迁移：已满 30 条的老档页码曾卡在 31，从 31 起步续增；未满档按当前条数续增。
+function nextDiaryPageNumber() {
+  if (typeof state.diaryLogCounter !== 'number' || state.diaryLogCounter < 1) {
+    const len = state.diaryLogs ? state.diaryLogs.length : 0;
+    state.diaryLogCounter = len >= 30 ? 31 : len;
+  }
+  state.diaryLogCounter += 1;
+  return state.diaryLogCounter;
+}
+
 // ========== 日志生成 ==========
 
 export function generateDiaryEntry(type, vars = {}) {
@@ -167,7 +180,7 @@ export function generateDiaryEntry(type, vars = {}) {
   const weather = getWeather();
   const date = getDateStr();
 
-  const logNumber = (state.diaryLogs ? state.diaryLogs.length : 0) + 1;
+  const logNumber = nextDiaryPageNumber();
   const header = fill(t('diaryLogHeader'), { ...commonVars(), page: logNumber });
   const labelSuffix = vars.label ? fill(t('diaryFocusLabelSuffix'), { label: vars.label }) : '';
   const log = `${header}\n${date}\n${weather}\n\n${opening}${labelSuffix}\n${middle}\n\n${ending}`;
@@ -187,6 +200,8 @@ export function addDiaryEntry(type, vars = {}) {
   });
   // 保留最近 30 条
   if (state.diaryLogs.length > 30) state.diaryLogs.length = 30;
+  // 页码计数器随日志一起落库，避免刷新后回退重用页码
+  saveState();
 
   // 检测装帧升级
   const levelUp = checkDiaryLevelUp();
@@ -270,7 +285,7 @@ function generateDailySummaryFor(targetDayStr, today) {
   const weather = getWeather();
   const opening = fill(t(pick(DAILY_OPENING_KEYS)), commonVars());
   const ending = fill(t(pick(ENDING_KEYS)), commonVars());
-  const logNumber = (state.diaryLogs ? state.diaryLogs.length : 0) + 1;
+  const logNumber = nextDiaryPageNumber();
 
   const header = fill(t('diaryLogHeader'), { ...commonVars(), page: logNumber });
   let body = `${header}\n${dateStr}\n${weather}\n\n${opening}\n`;
