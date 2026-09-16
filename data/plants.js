@@ -114,7 +114,9 @@ export const SEED_EXCHANGE = {
     { type: 'seed', required: 4, seedType: 'starlight_fern', count: 1, rewardTitleKey: 'seedExchange.magicRose.seed', repeatable: false }
   ],
   starlight_fern: [
-    { type: 'book', required: 5, rewardBookId: 'book_034', rewardTitleKey: 'seedExchange.starlightFern.book', repeatable: false },
+    // 秘密花园是种子兑换限定（与绿野仙踪/爱丽丝同纪律，不进商店池）；
+    // 卷书一次性发全卷，两卷誊抄完在修复室合成典藏版（正常合成路径）
+    { type: 'book', required: 5, rewardBookIds: ['book_034_vol1', 'book_034_vol2'], rewardTitleKey: 'seedExchange.starlightFern.book', repeatable: false },
     { type: 'coins', required: 3, value: 120, repeatable: true },
     { type: 'atmosphere', required: 2, value: 12, repeatable: true },
     { type: 'inspiration', required: 5, value: 2, repeatable: true }

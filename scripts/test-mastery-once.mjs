@@ -98,7 +98,7 @@ state.books.book_030_vol1.status = 'completed';
 state.books.book_030_vol1.masteryLevel = 2; // noMastery 书的残留值不动
 state._schemaVersion = 11;
 runMigrations();
-assert(state._schemaVersion === 12, 'schemaVersion 11 → 12');
+assert(state._schemaVersion === 13, 'schemaVersion 11 → 13');
 assert(state.books.book_001.masteryLevel === 5, '老档普通书 Lv2 追溯升满 Lv5');
 assert(state.books.book_030_vol1.masteryLevel === 2, 'noMastery 书不追溯');
 runMigrations();
