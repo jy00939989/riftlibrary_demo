@@ -1,4 +1,13 @@
+---
+status: done
+anchors:
+  - { type: file, path: "docs/plans/reviews/main-quest-chapter-system-plan-review.md", weight: 0.1 }
+  - { type: file, path: "docs/plans/main-quest-chapter-system-plan.md", weight: 0.1 }
+---
+
 # 复兴之路·主线章节系统 架构与机制评审
+
+> 处置：D1-D10 已全落计划 v2（`1b5c29b`），修订对照见计划 §9。
 
 > 评审对象：`docs/plans/main-quest-chapter-system-plan.md`（2026-09-16 立项，status: review）
 > 评审维度：**架构 + 机制**。前置：本会话已审 atmosphere v4 / borrow / cafe / sink-ledger；本 plan 与 v4 氛围标度、sink-ledger 治理直接相关。
