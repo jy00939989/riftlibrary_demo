@@ -240,9 +240,13 @@ export function startBgm(trackId) {
   next.loop = true;
   next.volume = currentAudio ? 0 : getMusicVolume();
   next.onerror = () => {
-    // BGM 加载失败：重置状态，避免卡在当前曲目
-    currentAudio = null;
-    currentTrackId = null;
+    // 仅当出错的是当前轨才清状态：淡出/静音收尾时旧音频 src 置空也会触发 error，
+    // 且 error 是异步任务——触发时 currentAudio 已指向新曲目，
+    // 无条件清空会把正在播的新轨道变成无主音频（静音都关不掉，重开又叠一首）
+    if (currentAudio === next) {
+      currentAudio = null;
+      currentTrackId = null;
+    }
   };
 
   if (currentAudio) {
