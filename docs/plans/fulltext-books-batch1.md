@@ -1,3 +1,13 @@
+---
+status: in-progress
+importance: 3
+anchors:
+  - { type: file, path: "docs/plans/fulltext-books-batch1.md", weight: 0.1 }
+  - { type: file, path: "data/books/book_026.js", weight: 0.1 }
+  - { type: file, path: "scripts/backfill-book-words.mjs", weight: 0.1 }
+  - { type: file, path: "scripts/audit-book-word-counts.mjs", weight: 0.1 }
+---
+
 # 全文入库「实时对应」批次一：图书馆指南 / 东京梦华录 / 诗经
 
 > 2026-09-16 立项。目标：三本书正文全文入库，誊抄进度的每个字都对应页面上真有的字。

@@ -1,3 +1,8 @@
+---
+anchors:
+  - { type: file, path: "docs/updates/2026-09-week2-deploy-prep.md", weight: 0.1 }
+---
+
 # 2026-09-07 ~ 09-11 发版周报 · 周日预告稿 + 周一 deploy 准备
 
 > 用途：周日（9-13）社区预告发布，周一（9-14）推 deploy。本文档 = 玩家向更新总结 + 预告稿 + deploy checklist。
