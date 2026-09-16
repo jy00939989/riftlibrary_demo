@@ -102,6 +102,12 @@ export function playAmbient(id, immediate = false) {
   const audio = new Audio(encodeURI(def.file));
   audio.loop = true;
   audio.volume = immediate ? getAmbientVolume() : 0;
+  // 供 audio.js 的本地调试探针读取（仅 localhost 使用）
+  if (typeof window !== 'undefined') {
+    window.__riftAmbientDebug = () => currentAudio
+      ? { tag: 'ambient:' + currentId, src: (currentAudio.src || '').split('/').pop(), paused: currentAudio.paused, volume: currentAudio.volume, time: Math.round(currentAudio.currentTime || 0) }
+      : null;
+  }
   audio.onerror = () => {
     // 环境音加载失败：静默处理，避免阻塞 UI
     currentAudio = null;
