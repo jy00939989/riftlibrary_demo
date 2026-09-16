@@ -2,6 +2,7 @@
 layout: breakdown
 anchors:
   - { type: file, path: "docs/plans/_todo-index.md", weight: 0.1 }
+  - { type: file, path: "docs/updates/2026-09-week2-deploy-prep.md", weight: 0.1 }
 ---
 
 # 归墟图书馆 · 待办总览
