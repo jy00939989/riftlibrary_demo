@@ -14,6 +14,7 @@ anchors:
   - { type: file, path: "js/capacity.js", weight: 0.1 }
   - { type: file, path: "scripts/test-cafe.mjs", weight: 0.1 }
   - { type: file, path: "scripts/test-plant-care.mjs", weight: 0.1 }
+  - { type: file, path: "scripts/test-seed-exchange-books.mjs", weight: 0.1 }
   - { type: file, path: "data/plants.js", weight: 0.1 }
   - { type: file, path: "data/atmosphere.js", weight: 0.1 }
   - { type: file, path: "js/state/state.js", weight: 0.1 }
