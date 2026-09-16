@@ -13,6 +13,54 @@ let currentTrackId = null;
 let fadeTimer = null;
 let fadingAudio = null; // 正在淡出中的旧音频，切换/关闭时必须强制清理
 
+// ========== 本地调试探针（仅 localhost 挂载，生产零影响） ==========
+// 排查「点静音 BGM 还在播」：登记所有由本模块创建的 Audio，
+// 复现时在控制台跑 window.__riftAudioDebug() 看是谁在响；__riftAudioPanic() 立即全部掐掉。
+
+const audioProbe = [];
+
+function isLocalDev() {
+  try {
+    return typeof location !== 'undefined' &&
+      (location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  } catch (e) { return false; }
+}
+
+function probeRegister(el, tag) {
+  if (audioProbe.length < 200) audioProbe.push({ el, tag });
+}
+
+function probeSnap(el, tag) {
+  return {
+    tag,
+    src: (el.src || '').split('/').pop(),
+    paused: el.paused,
+    volume: el.volume,
+    time: Math.round(el.currentTime || 0)
+  };
+}
+
+function installProbe() {
+  if (!isLocalDev() || typeof window === 'undefined' || window.__riftAudioDebug) return;
+  window.__riftAudioDebug = () => ({
+    settings: getSettings(),
+    currentTrackId,
+    manualTrack: state.musicManualTrack || null,
+    fadeTimerActive: !!fadeTimer,
+    current: currentAudio ? probeSnap(currentAudio, 'bgm-current') : null,
+    fading: fadingAudio ? probeSnap(fadingAudio, 'bgm-fading') : null,
+    ambient: typeof window.__riftAmbientDebug === 'function' ? window.__riftAmbientDebug() : null,
+    all: audioProbe.map(p => probeSnap(p.el, p.tag))
+  });
+  window.__riftAudioPanic = () => {
+    const alive = audioProbe.filter(p => p.el && !p.el.paused);
+    alive.forEach(p => { try { p.el.pause(); p.el.src = ''; } catch (e) {} });
+    if (currentAudio) { try { currentAudio.pause(); currentAudio.src = ''; } catch (e) {} currentAudio = null; }
+    currentTrackId = null;
+    return alive.map(p => `${p.tag}:${(p.el.src || '').split('/').pop()}`);
+  };
+}
+
 // ========== 工具 ==========
 
 // BGM 档位挂氛围阶段单源（D17）：1-2 阶 ruined / 3-4 阶 cozy / 5 阶 stellar
@@ -132,6 +180,7 @@ export function setMusicVolume(value) {
 }
 
 export function initAudio() {
+  installProbe();
   updateToggleIcon();
   initAmbient();
   // 若设置里音乐为关，确保没有残留播放（比如用户在加载完成前点击了页面）
@@ -187,6 +236,7 @@ export function startBgm(trackId) {
   currentTrackId = actualDef.id;
   const src = encodeURI(actualDef.file);
   const next = new Audio(src);
+  probeRegister(next, 'bgm:' + actualDef.id);
   next.loop = true;
   next.volume = currentAudio ? 0 : getMusicVolume();
   next.onerror = () => {
@@ -390,6 +440,7 @@ export function initSfx() {
     try {
       const audio = new Audio(encodeURI(src));
       audio.preload = 'auto';
+      probeRegister(audio, 'sfx:' + name);
       sfxCache[name] = audio;
     } catch (e) {
       // 音效加载失败不阻塞
