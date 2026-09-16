@@ -109,9 +109,12 @@ export function playAmbient(id, immediate = false) {
       : null;
   }
   audio.onerror = () => {
-    // 环境音加载失败：静默处理，避免阻塞 UI
-    currentAudio = null;
-    currentId = null;
+    // 仅当出错的是当前在播实例才清状态（同 audio.js：清理旧实例 src 置空触发异步 error，
+    // 无条件清空会误杀正在播的新实例）
+    if (currentAudio === audio) {
+      currentAudio = null;
+      currentId = null;
+    }
   };
 
   currentAudio = audio;
