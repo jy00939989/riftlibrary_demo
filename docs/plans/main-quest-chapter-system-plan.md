@@ -7,10 +7,10 @@ anchors:
   - { type: file, path: "js/core/quest-progress.js", weight: 0.1 }
 ---
 
-# 复兴之路重做 · 详细实施计划（主线章节系统）v2
+# 复兴之路重做 · 详细实施计划（主线章节系统）v3
 
 > 2026-09-16 立项。设计决策见 `curator-goals-renewal-plan.md`（grill-me 九问锁定，不再 reopen）。
-> **v2 = 架构评审修订版**（`docs/plans/reviews/main-quest-chapter-system-plan-review.md`，D1-D10 全落，见文末修订记录）。
+> **v2 = 架构评审修订版**（D1-D10，见 §9）；**v3 = 机制数值复审修订版**（`reviews/main-quest-chapter-system-plan-review-v2.md`，D11-D17，见 §10）。
 > 现行实现（将被替换）：`data/tiergoals.js` TIER_GOALS + `js/render/library.js:renderTierGoals` + `app.js:celebrateStageCross` tier 弹窗段。
 > 预估 6 个里程碑、**24 个行为小节**、约 120 条 i18n 新键。
 
@@ -58,7 +58,12 @@ export const QUEST_CHAPTERS = [
 export const getQuestTerm = (ch, suffix) => t('questCh' + ch.id.slice(2) + suffix);
 ```
 
-判定型小节复用现有纯函数：`countUniqueVisitors`（自 tiergoals.js 迁入或 import）、`getStageLevel/getStageThreshold`（data/atmosphere.js，**D5：禁硬编码 900/5600**）。
+判定型小节复用/新建纯函数（与 questline.js 同批迁入或新建，M1 单测锁定）：
+- `countUniqueVisitors(state)` —— 自 tiergoals.js 迁入（Set 去重，数种类）
+- `getMaxVisitorReturnCount(state)` —— **新建**（D16）：按 charId 聚合 `borrowRecords` 的归还频次取最大值——ch3s3「同一位访客累计归还≥3」用，**不能**复用 countUniqueVisitors（它只数种类不数次数）
+- `getCompletedBookCount(state)` —— **新建**（D15）：`copyCount > 0` 的书数单一真源，ch2/4/5/7 四章「完成 N 本书」门槛统一引用（口径对齐 guidequests.js:140）
+- `getStageLevel/getStageThreshold`（data/atmosphere.js，**D5：禁硬编码 900/5600**）
+- 访客好感等级阈值引用 `FAVOR_THRESHOLDS` 单一真源（visitors.js，**D13：勿硬编码「熟识」数字**）
 
 ## 2. 进度层：`js/core/quest-progress.js`（新，D7 修订：effects 返回 + 不内联副作用）
 
@@ -139,19 +144,21 @@ export function activateQuestline()              // guidequests.js allCompleted 
 
 协调层参考实现：`js/core/quest-progress.js` 导出 `drainQuestEffects(effects)` 由 `focus-orchestrator`/埋点调用方执行派发（toast/popup/diary/save），保持 core 纯逻辑可单测。
 
-## 6. 七章节内容草案（24 节；D1 修订后 6+1 个判定型小节用 check 表达；数值待评审把关）
+## 6. 七章节内容草案（24 节；落地日区间 D12；数值待评审把关）
 
-| 章 | 门槛 gate | 小节 | 节奖/章奖 |
-|---|---|---|---|
-| **ch1 推开馆门** 🚪 | 完成新手引导 | ① focus_start×1 ② focus_complete×1 ③ manuscript_open×1 | 20💰 / 铭牌+回忆页+50💰5✨ |
-| **ch2 烛火初明** 🕯️ | 誊抄完成 2 本书 | ① visitor_arrive×1 ② shop_buy_book×1 ③ borrow_level_up×1 | 30💰 / 章奖 80💰10✨ |
-| **ch3 典籍渐满** 📚 | 累计专注 120 分钟 | ① plant_care×3 ② `check: countUniqueVisitors>=3`（event visitor_return）③ `check: 同一位访客累计归还>=3`（event visitor_return，借 borrowRecords 角色频次，D10 启用）④ signboard_buy×1 | 30💰 / 章奖 80💰15✨ |
-| **ch4 登堂入室** 🏛️ | 完成 6 本书 + `atmosphere >= getStageThreshold(3)`（D5） | ① plane_unlock×1 ② repair_complete×1 ③ `check: 任一访客好感达「熟识」`（event visitor_favor，阈值引用访客好感等级表单一真源） | 40💰 / 章奖 120💰20✨ |
-| **ch5 星辰之境** ✨ | 完成 10 本书 + 举行过 4 阶仪式 | ① `check: getStageLevel(atmosphere) >= 4`（event focus_complete，D5）② `check: countUniqueVisitors>=8`（event visitor_arrive）③ achievement×10 | 50💰 / 章奖 150💰25✨ |
-| **ch6 位面行者** 🌌 | 建成展览厅 + 解锁 2 位面 | ① exh_room_open×1 ② record_buy×1 ③ souvenir×5 ④ disaster_resolve×1 | 50💰 / 章奖 150💰30✨ |
-| **ch7 星辰守护者** 👑 | 完成 20 本书 + `atmosphere >= getStageThreshold(5)`（D5） | ① `check: countUniqueVisitors>=10`（event visitor_arrive）② souvenir×15 ③ `check: ctx.stage === 5`（event ceremony，D4 内联埋点） | 80💰 / 章奖 300💰50✨+终章证书 |
+**节奏定位（D12 明文承认）**：章节系统是**叙事骨架**不是节奏填充——ch4→ch5（~30d→~75d）的空窗由 ch6（设施/币驱动，预计 ~40-90d 落地，前置核对：展览厅 stage2+800💰、田园位面 stage3+12本+传送门升级，均 stage4 前可达）填补；ch5→ch7（~90d→~166d）的 76 天窗由玩法系统（咖啡角/借阅深化/展览厅收集/温室）承载。若实测该窗成为留存杀手，启动预案 D12(b)：新增中段章（门槛 `souvenir>=15 + disaster_resolve>=3` 类自然落段信号）。
 
-**faucet 台账（D6）**：已在 `sink-ledger.md` 登记——金币线「章节系统 +930💰（章奖）+~1060💰（节奖），全游一次性」；灵感线「+150✨（章奖），全游一次性」。量级小，不 overturn 基线但记账。
+| 章 | 门槛 gate | 小节 | 节奖/章奖 | 目标落地日 |
+|---|---|---|---|---|
+| **ch1 推开馆门** 🚪 | 完成新手引导 | ① focus_start×1 ② focus_complete×1 ③ manuscript_open×1 | 20💰 / 铭牌+回忆页+50💰5✨ | 0-2d |
+| **ch2 烛火初明** 🕯️ | `getCompletedBookCount >= 2`（D15） | ① visitor_arrive×1 ② shop_buy_book×1 ③ borrow_level_up×1 | 30💰 / 章奖 80💰10✨ | 3-5d |
+| **ch3 典籍渐满** 📚 | 累计专注 120 分钟 | ① plant_care×3 ② `check: countUniqueVisitors>=5`（D14 去重，event visitor_return）③ `check: getMaxVisitorReturnCount>=3`（D16 按角色频次，event visitor_return）④ signboard_buy×1 | 30💰 / 章奖 80💰15✨ | 5-10d |
+| **ch4 登堂入室** 🏛️ | `getCompletedBookCount>=6` + `atmosphere >= getStageThreshold(3)`（D5/D15） | ① plane_unlock×1 ② repair_complete×1 ③ `check: 任一访客好感达「熟识」`（event visitor_favor，**D13 引用 FAVOR_THRESHOLDS**；可能是本章最慢小节，预估 30-60d） | 40💰 / 章奖 120💰20✨ | ~22-30d |
+| **ch5 星辰之境** ✨ | `getCompletedBookCount>=10` + `getStageLevel(atmosphere) >= 4`（**D11：自动推导，不挂手动仪式——防主线软锁**） | ① `check: focus.totalMinutes>=600`（D14 独立指标，event focus_complete）② ceremony×1（**D11：仪式降为叙事小节**，event ceremony）③ `check: countUniqueVisitors>=8`（event visitor_arrive）④ achievement×10 | 50💰 / 章奖 150💰25✨ | ~75-90d |
+| **ch6 位面行者** 🌌 | 建成展览厅 + 解锁 2 位面（设施/币驱动，非时间绑定） | ① exh_room_open×1 ② record_buy×1 ③ souvenir×5 ④ disaster_resolve×1 | 50💰 / 章奖 150💰30✨ | ~40-90d（填 ch4→ch5 窗） |
+| **ch7 星辰守护者** 👑 | `getCompletedBookCount>=20`（D17：全书 71 本占 28%，若 v4 仿真抄书速率轴实测偏慢降至 15）+ `atmosphere >= getStageThreshold(5)`（D5） | ① `check: countUniqueVisitors>=10`（event visitor_arrive）② souvenir×15 ③ `check: ctx.stage === 5`（event ceremony，D4 内联埋点） | 80💰 / 章奖 300💰50✨+终章证书 | ~166-200d |
+
+**faucet 台账（D6）**：已在 `sink-ledger.md` 登记——金币线「章节系统 +930💰（章奖）+~1,030💰（节奖，24 节），全游一次性」；灵感线「+150✨（章奖），全游一次性」。量级小，不 overturn 基线但记账。
 
 ## 7. 里程碑与验收
 
@@ -187,3 +194,15 @@ export function activateQuestline()              // guidequests.js allCompleted 
 | D8 迁移对 check 型小节也判 check(s) | §4 |
 | D9 迁移版本取末版+1（v13 已被秘密花园占用） | §4 |
 | D10 删 streaks 死字段；ch1 激活前计数；ch3s3 启用「同一位访客累计归还」 | §2/§6 |
+
+## 10. 修订记录 v3（2026-09-16 机制数值复审 D11-D17）
+
+| 决策 | 级别 | 落点 |
+|---|---|---|
+| D11 ch5 门槛改 `getStageLevel>=4` 自动推导；仪式降为 ch5 小节 | 🔴 P0 | §6 ch5——原「举行过 4 阶仪式」是手动动作，挂章门槛会让没点按钮的玩家永久漏章（主线软锁） |
+| D12 显式每章落地日；ch6 前置核对（展览厅 stage2+800/田园位面 stage3+12本，stage4 前可达 ~40-90d 填窗）；明文承认 ch5→ch7 窗由玩法系统承载；留存杀手预案 D12(b) | ⚠️ P1 | §6 节奏定位段+落地日列 |
+| D13 ch4s3「熟识」引用 FAVOR_THRESHOLDS；标注可能最慢小节（30-60d） | ⚠️ P1 | §1/§6 |
+| D14 去重无效小节：ch3s2 改 >=5；ch5s1 改 focus.totalMinutes>=600 独立指标 | ◽ P2 | §6 |
+| D15 新建 `getCompletedBookCount` 单一真源，四章统一 | ◽ P2 | §1/§6 |
+| D16 ch3s3 新建 `getMaxVisitorReturnCount`（按 charId 频次，非 Set 去重） | ◽ P2 | §1/§6 |
+| D17 ch7 20 本（28%/71）保留，仿真偏慢降 15 | ◽ P2 | §6 |
