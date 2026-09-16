@@ -280,6 +280,10 @@ export function toggleMusic() {
   const currentlyAnyOn = settings.musicEnabled || settings.sfxEnabled || settings.ambientEnabled;
   const nowOn = !currentlyAnyOn;
 
+  // 先停音频、后落设置：若后续 UI 更新抛错，也不会出现「设置已关（守卫永久拦路）
+  // 但音频句柄没被清（没有任何路径能再停它）」的幽灵播放
+  if (!nowOn) stopAllAudio();
+
   setSettings({
     musicEnabled: nowOn,
     sfxEnabled: nowOn,
@@ -296,19 +300,20 @@ export function toggleMusic() {
     // 恢复环境音
     const ambientId = state.ambientSounds?.current;
     if (ambientId) playAmbient(ambientId);
-  } else {
-    // 停止 BGM
-    clearInterval(fadeTimer);
-    fadeTimer = null;
-    if (fadingAudio) {
-      try { fadingAudio.pause(); fadingAudio.src = ''; } catch (e) {}
-      fadingAudio = null;
-    }
-    if (currentAudio) { currentAudio.pause(); currentAudio.src = ''; currentAudio = null; }
-    currentTrackId = null;
-    // 停止环境音
-    stopAmbient();
   }
+}
+
+/** 停掉一切在跑的音频（BGM 当前轨 + 淡出残留 + 环境音），不碰设置 */
+function stopAllAudio() {
+  clearInterval(fadeTimer);
+  fadeTimer = null;
+  if (fadingAudio) {
+    try { fadingAudio.pause(); fadingAudio.src = ''; } catch (e) {}
+    fadingAudio = null;
+  }
+  if (currentAudio) { currentAudio.pause(); currentAudio.src = ''; currentAudio = null; }
+  currentTrackId = null;
+  stopAmbient();
 }
 
 export function pauseMusic() {
