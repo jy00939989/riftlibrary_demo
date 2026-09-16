@@ -76,12 +76,13 @@ anchors:
 - [ ] 顺带决策：音效独立音量等其他设置项是否一并归位
 
 ### curator-goals-renewal-optimize（复兴之路重做 · 主线章节系统，2026-09-16 九问锁定）
-> 方案：`docs/plans/curator-goals-renewal-plan.md`（grill-me 全锁：主线章节定位/章-节混合/行为驱动+复合门/双层奖励/7 章 22-28 节/轻量进度表/解耦双庆典/引导独立/幂等全量映射）。现行锚点：TIER_GOALS（curatorGoalTitle「🏛️ 馆长目标 · 复兴之路」），阶段仪式时弹 tier 完成弹窗（tierPopupsShown 一次性）。
+> 设计决策：`docs/plans/curator-goals-renewal-plan.md`（grill-me 全锁）。详细实施计划：`docs/plans/main-quest-chapter-system-plan.md`（**待架构评审**，7 章 23 节全草案/18 事件埋点清单/v13 迁移/双层奖励/解耦庆祝）。现行锚点：TIER_GOALS（curatorGoalTitle「🏛️ 馆长目标 · 复兴之路」），阶段仪式时弹 tier 完成弹窗（tierPopupsShown 一次性）。
 - [x] ~~诊断现状：复兴之路各 tier 完成率/卡点~~ **痛点四连（被动/节奏/奖励/边界）2026-09-16 图南确认，重做非修补**
 - [x] ~~决策优化方向~~ **grill-me 九问锁定，见方案文档锁定决策表**
-- [ ] 出详细实施 plan（数据层 questline.js / 进度层 questProgress / 埋点清单 / 迁移 / 渲染 / 验收）过架构评审
+- [x] ~~出详细实施 plan~~ **main-quest-chapter-system-plan.md 已落（2026-09-16），待架构评审**
+- [ ] 架构评审实施计划（重点把关：章门数值节奏 / events 计数与判定分离口径 / 迁移追补边界）
 - [ ] 评估与展览厅成就柜的咬合（章完成=铭牌+回忆页陈列，已在决策 5 锁定，实施时对接成就柜数据结构）
-- [ ] 七章节内容生产（每章 flavor/节文案 zh/en + 埋点事件契约）
+- [ ] M1-M6 实施（数据层→迁移→埋点→文案→渲染庆祝→全量回归）
 
 ### skill-tree-system（升级技能点系统，2026-09-11 图南想法待展开）
 - [ ] 开 brainstorm 定方向：技能点从哪来（升级/成就/收集）、花到哪（速率/经济/访客三线？）、与现有成就 buff 体系的关系（叠加还是收编）
