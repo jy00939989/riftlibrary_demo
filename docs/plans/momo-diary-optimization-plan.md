@@ -4,6 +4,7 @@ importance: 4
 scheduledDate:
 anchors:
   - { type: file, path: "docs/plans/momo-diary-optimization-plan.md", weight: 0.1 }
+  - { type: file, path: "scripts/test-diary-page-counter.mjs", weight: 0.1 }
 ---
 
 # 墨墨日志优化计划（momo-diary-optimization）
@@ -95,3 +96,7 @@ anchors:
 - `js/collection.js` — 收藏进度数据
 - `js/visitorMemory.js` / `js/visitors.js` — 访客记忆数据
 - `js/i18n/terms.js` — 新增文案键
+
+## 对账注记（2026-09-16）
+
+- **日志页码卡死 31 修复**（`7f8bafd`）：页码原为 diaryLogs.length+1，日志只保留 30 条、length 封顶后页码永锁 31；改单调递增计数器 state.diaryLogCounter 并随日志落库，旧档满 30 条者从 31 起步续增。回归测试 `scripts/test-diary-page-counter.mjs`（12 断言）锚定本文档

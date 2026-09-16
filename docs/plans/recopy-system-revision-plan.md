@@ -4,6 +4,9 @@ importance: 2
 anchors:
   - { type: file, path: "docs/plans/recopy-system-revision-plan.md", weight: 0.1 }
   - { type: file, path: "js/volumes.js", weight: 0.1 }
+  - { type: file, path: "js/render/bookshelf.js", weight: 0.1 }
+  - { type: file, path: "scripts/test-mastery-once.mjs", weight: 0.1 }
+  - { type: file, path: "scripts/compensation-code-insert.sql", weight: 0.1 }
 ---
 
 # 重抄机制修订方案
@@ -102,3 +105,9 @@ anchors:
 2. 是否需要在 UI 中明确提示「精通加成」来源？
 3. 分卷单卷是否直接标记为 `noMastery` 写入数据文件，还是保持运行时判断？
 4. 普通书重抄 1 次即 master 后，是否保留「copyCount」用于统计/称号，还是 copyCount 也直接封顶？
+
+## 对账注记（2026-09-16）
+
+- **熟练度一次成典藏**（`4d6c55c`，2026-09-15 图南拍板）：取消两档制，首通即 Lv5 全解锁（典藏内容/金光/master 增益），重抄回归磨损清零+半氛围本职；老档 Lv2 由迁移 v12 追溯升满；典藏版/分卷书重抄入口置灰 + unlockReCopy 核心层设闸——本文档「重抄」语义以该提交为准
+- **金光特效兑现 + 补偿**（`627c15c`）：熟练度 Lv5 书架卡实装金色呼吸光晕（masterGoldPulse）；附玩家补偿兑换码 SQL（GIFT-ZJS6-BM8E-VZQE-YVQB）——图南已于 2026-09-16 在 Supabase 执行
+- **图书馆指南移出 noMastery**（`c24faab`，2026-09-16）：全文入库后升第一类书可重抄，旧档 masteryLevel 追平；「典藏版/分卷书不参与重抄」的 09-15 决策范围不变

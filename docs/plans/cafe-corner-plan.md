@@ -12,6 +12,8 @@ anchors:
   - { type: file, path: "js/visitors.js", weight: 0.1 }
   - { type: file, path: "js/plants.js", weight: 0.1 }
   - { type: file, path: "js/capacity.js", weight: 0.1 }
+  - { type: file, path: "scripts/test-cafe.mjs", weight: 0.1 }
+  - { type: file, path: "scripts/test-plant-care.mjs", weight: 0.1 }
   - { type: file, path: "data/plants.js", weight: 0.1 }
   - { type: file, path: "data/atmosphere.js", weight: 0.1 }
   - { type: file, path: "js/state/state.js", weight: 0.1 }
@@ -247,3 +249,8 @@ browsing tick +1~2/分钟级 + 还书 +5~ + 咖啡角 +4~14/次 × 1.5-3 次 ≈
 - `js/state/state.js` / `js/state/migrations.js`、`data/cafe.js`（新建）、`data/atmosphere.js`（门槛函数复用）
 - `js/i18n/terms.js`、`scripts/verify-atmosphere-narrowing.js`
 - 联合评审：`reviews/borrow-cafe-joint-review-v2.md`；架构评审：`reviews/economy-subsystem-architecture-review.md`；待补 sink 台账：`sink-ledger.md`（好感/金币线）；日界前置：`daily-boundary-refactor-plan.md`（A1，动工第 0 步前置）
+
+## 对账注记（2026-09-16）
+
+- **植物照料改版 · 浇水全局池**（`3db1351`，2026-09-15/16 玩家反馈驱动）：浇水次数改全局累积（state.water，有无植物都累积、可分配给任意一盆），v11 收编旧 per-pot 字段；植物消失三重告知（凋谢弹窗/温室持久红卡/墨墨日记）；行动卡改全局池判定。温室/咖啡角共用植物线，锚定本文档
+- **台风模拟改全局池建模**（`45a037f` 半侧）：plant-typhoon-sim 同步全局池口径（成熟后余量留池不浪费）

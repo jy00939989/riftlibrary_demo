@@ -7,6 +7,19 @@ anchors:
   - { type: file, path: "js/collection.js", weight: 0.1 }
   - { type: file, path: "js/render/archive.js", weight: 0.1 }
   - { type: file, path: "data/signboards.js", weight: 0.1 }
+  - { type: file, path: "js/core/exhibition.js", weight: 0.1 }
+  - { type: file, path: "data/event_calendar.js", weight: 0.1 }
+  - { type: file, path: "js/render/exhibition.js", weight: 0.1 }
+  - { type: file, path: "js/render/exh-calibrate.js", weight: 0.1 }
+  - { type: file, path: "js/render/index.js", weight: 0.1 }
+  - { type: file, path: "js/render/music-room.js", weight: 0.1 }
+  - { type: file, path: "js/render/navigation.js", weight: 0.1 }
+  - { type: file, path: "css/style.css", weight: 0.1 }
+  - { type: file, path: "visual/exhibition/hall_lv1.jpg", weight: 0.1 }
+  - { type: file, path: "visual/exhibition/hall_lv5.jpg", weight: 0.1 }
+  - { type: file, path: "scripts/convert-hall-image.py", weight: 0.1 }
+  - { type: file, path: "docs/prompts/ui-assets-prompt.md", weight: 0.1 }
+  - { type: file, path: "scripts/test-exhibition.mjs", weight: 0.1 }
 ---
 
 # 展览厅计划（exhibition-hall-plan）v2
@@ -150,3 +163,12 @@ anchors:
 - 数据：`data/event_calendar.js`（新建）、`data/signboards.js`（读）
 - 消费方（后续批次）：sink-ledger.md 灵感线/好感线；animation-suite（如评审要修复仪式感入 seedance）
 - 遗留决策：**活动日历首批锚点清单**（图南圈定，§4.1）
+
+## 对账注记（2026-09-16）
+
+2026-09-15/16 展览厅落地链全部完成并锚定本文档：
+- 数据层/核心层/UI 落地/60 项测试四连（`3670140` `a13366b` `522a5e6` `4ac74ed`），五迁入页面（music-room/archive/library 等）带面包屑
+- 大厅分级状态图提示词 v1→v3 三轮迭代（`b4de621` `a006624` `901c3d5`，空洞门框语言定稿）+ plan 回刷（`a7aee4d`）
+- hall_lv1/lv5 底图落盘接入（`2acb5bf` `45a037f`，6MB PNG→820KB JPG，按开放房间数选图缺档回退）
+- 破败展厅铭牌藏名（`3bf415d`）+ 大厅扩容金币单轨（`420d257`，废除阶段设施帽）
+- 本地热点校准工具 + hall 转图脚本（`4c090ea`，Alt+点击/拖拽复制 EXHIBITION_SPOTS 行）

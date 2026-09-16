@@ -10,6 +10,7 @@ anchors:
   - { type: file, path: "js/i18n/terms.js", weight: 0.1 }
   - { type: file, path: "js/render/music-selector.js", weight: 0.1 }
   - { type: file, path: "docs/plans/reconciliation/audio-logic-reshape.md", weight: 0.1 }
+  - { type: file, path: "scripts/test-audio-onerror-guard.mjs", weight: 0.1 }
 ---
 
 # 音频逻辑重塑 · 对账补录（audio-logic-reshape）
@@ -52,3 +53,9 @@ anchors:
 
 - `js/audio.js`、`js/app.js`、`js/ambient.js`、`js/render/music-selector.js`、`js/i18n/terms.js`
 - 对账提交：`c750b43`（2026-08-11）
+
+## 对账注记（2026-09-16）
+
+- **幽灵 BGM 根因修复**（`1eaf2dc`）：`audio.js`/`ambient.js` 的 onerror 原无条件清空当前轨——旧音频 `src=''` 清理会**异步**触发 error，把正在播的新曲目清成无主音频（静音关不掉、重开叠播）；加 `currentAudio === next` 守卫。排查期上过 localhost 音频探针（`85becf6`，`__riftAudioDebug()`/`__riftAudioPanic()`，仅本地、生产零影响），定位后保留备查
+- **静音顺序硬化**（`7ed7bab`）：toggleMusic 改先停音频后落设置，堵「UI 抛错→设置已关但句柄未清」窄缝
+- 回归测试 `scripts/test-audio-onerror-guard.mjs`（9 断言）锚定本文档
