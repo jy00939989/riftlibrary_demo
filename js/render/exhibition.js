@@ -204,6 +204,12 @@ function renderHallStage(container, openCount) {
 
     container.innerHTML = '';
     container.appendChild(stage);
+
+    // 本地开发挂载热点校准工具（Alt+点击/拖拽取坐标复制），生产零影响
+    if (typeof location !== 'undefined' &&
+        (location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+      import('./exh-calibrate.js').then(m => m.attach(stage)).catch(() => {});
+    }
   }, () => {
     // 美术图缺失兜底：退回零美术债卡片网格
     const floor = document.createElement('div');
