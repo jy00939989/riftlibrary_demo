@@ -20,8 +20,9 @@ export const meta = {
   anecdotesEn: 'Momo wrote this guide on your very first night. It used a quill carved from one of its own fallen feathers, and ink mixed from half-burnt ashes in the fireplace and water—Momo calls it "ruin ink," and the words written with it carry a special warmth.',
   reviews: '墨墨：「这是我写过最短的书。但馆长，它可能是我写过最重要的一本。因为读完它，你就知道——你不是一个人在守护这个地方。」',
   reviewsEn: 'Momo: "This is the shortest book I have ever written. But Curator, it may be the most important one. Because once you finish it, you will know—you are not alone in guarding this place."',
-  collectorCover: '🦉',
-  noMastery: true
+  collectorCover: '🦉'
+  // noMastery 已移除（2026-09-16）：指南全文入库后升为第一类书——可花灵感重抄、参与熟练度；
+  // 「典藏版/分卷书不参与重抄」的 09-15 决策只管收藏版本，向导书不在其列
 };
 
 export const chapters = [
