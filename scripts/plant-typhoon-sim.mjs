@@ -24,15 +24,17 @@ function simulateOne(setup) {
   const focusIntervalMin = MINUTES_PER_DAY / focusPerDay;
   const playMinutesPerDay = playSessionHoursPerDay * 60;
 
+  // 2026-09-15 浇水改版：全局池 state.water——有无植物都累积、可分配给任意一盆。
+  // 盆栽成熟（可收获）后 canWater 为 false，剩余浇水次数留池不浪费（给下一株用）。
   let plant = {
     activeType: PLANT_DEF.id,
     level: 1,
     growthProgress: 0,
-    waterAvailable: startWaterStock || 0,
     lastCareTime: 0,
     plantedAt: 0,
     harvested: false
   };
+  let waterStock = startWaterStock || 0;
 
   let lastTyphoonTime = -typhoonCooldownMin;
   let minutesPassed = 0;
@@ -64,14 +66,14 @@ function simulateOne(setup) {
       }
     }
 
-    // 专注完成，获得浇水机会
+    // 专注完成，全局浇水池 +waterPerFocus（不管当前盆栽能不能吃水都累积）
     if (isPlaying && minutesPassed >= nextFocusAt) {
-      plant.waterAvailable += waterPerFocus;
+      waterStock += waterPerFocus;
       nextFocusAt += focusIntervalMin;
     }
 
-    // 使用浇水机会
-    while (plant.waterAvailable > 0) {
+    // 从全局池分配浇水；盆栽已可收获（canWater=false）则停手，余量留池
+    while (waterStock > 0) {
       if (plant.level >= 5 && plant.growthProgress >= PLANT_DEF.growthPerLevel) {
         return {
           survived: true,
@@ -83,7 +85,7 @@ function simulateOne(setup) {
         };
       }
 
-      plant.waterAvailable--;
+      waterStock--;
       plant.growthProgress += PLANT_DEF.waterGrowth;
       plant.lastCareTime = minutesPassed;
       waters++;
@@ -214,6 +216,7 @@ runScenario('普通玩家：每天 3 次专注 / 48h 保护期 + 概率 0.0005',
 });
 
 console.log('注：');
-console.log('1. 假设玩家一获得浇水机会就立即使用。');
+console.log('1. 假设玩家一有可用浇水次数就浇当前盆栽；盆栽成熟后余量留全局池（可给下一株）。');
 console.log('2. 不考虑谷雨抢救（50% 概率），若考虑则死亡率约为上述数值的一半。');
 console.log('3. 当前代码中台风检查在游戏标签页打开时每分钟执行一次。');
+console.log('4. 未建模：禁止烟火浇水暴击 / 谷雨光环成长加成 / 72h 未照料自然凋谢。');
