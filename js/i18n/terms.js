@@ -321,6 +321,7 @@ const TERM_DATA = Object.freeze({
 
   // ========== 章节/阅读弹窗 ==========
   masteryLevelLabel: { zh: '✦ 熟练度 Lv{level} · 已抄 {count} 次', en: '✦ Mastery Lv{level} · Copied {count} times' },
+  noMasteryCompletedLabel: { zh: '✦ 馆藏定本 · 不参与熟练度', en: '✦ Fixed Edition · No Mastery' },
   reCopyCost: { zh: '🔮 花费灵感重抄 · {cost} 💡', en: '🔮 Spend Inspiration to Recopy · {cost} 💡' },
   unlockReCopyCost: { zh: '🔮 解锁重抄 · {cost} 灵感', en: '🔮 Unlock Recopy · {cost} Inspiration' },
   reCopyUnlockedToast: { zh: '已解锁重抄，可前往缮写室再次誊抄', en: 'Recopy unlocked. Visit the Scriptorium to copy again.' },

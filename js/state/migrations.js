@@ -523,6 +523,12 @@ function migrateBookProgressFromCopiedWords() {
     if (!book.noMastery && bs.copyCount > 0 && bs.masteryLevel > bs.copyCount) {
       bs.masteryLevel = Math.min(5, bs.copyCount);
     }
+
+    // 曾为 noMastery 后升为第一类的书（如图书馆指南 2026-09-16 移除 noMastery）：
+    // 旧档 copyCount>0 但 masteryLevel 停在 0，按 min(5, copyCount) 追平，避免「Lv0 · 已抄 N 次」
+    if (!book.noMastery && (bs.copyCount || 0) > 0 && !bs.masteryLevel) {
+      bs.masteryLevel = Math.min(5, bs.copyCount);
+    }
   });
 }
 

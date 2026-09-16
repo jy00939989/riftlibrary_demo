@@ -489,7 +489,11 @@ function renderChapterList(book) {
       <button class="text-2xl text-ink-light hover:text-ink close-modal">✕</button>
     </div>
     <div class="text-sm text-ink-light mb-1">${book.author} · ${getCategoryLabel(book.category)} · ${t('wordsCount').replace('{n}', book.totalWords.toLocaleString())}</div>
-    ${isCompleted ? `<div class="text-xs text-magic-gold mb-2">${t('masteryLevelLabel').replace('{level}', bookState.masteryLevel).replace('{count}', bookState.copyCount)}</div>` : ''}
+    ${isCompleted
+      ? (isNoMasteryBook(book.id)
+        ? `<div class="text-xs text-magic-gold mb-2">${t('noMasteryCompletedLabel')}</div>`
+        : `<div class="text-xs text-magic-gold mb-2">${t('masteryLevelLabel').replace('{level}', bookState.masteryLevel).replace('{count}', bookState.copyCount)}</div>`)
+      : ''}
     ${needReCopy
       ? `<button id="re-copy-btn" class="w-full px-4 py-2 mb-4 bg-purple-600 text-white rounded-lg font-bold text-sm hover:shadow-lg transition-all">${t('reCopyCost').replace('{cost}', getReCopyCost())}</button>
          <div class="text-center text-xs text-ink-light mb-3">${t('currentInspiration').replace('{n}', state.inspiration || 0)}</div>`
