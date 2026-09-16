@@ -1,12 +1,6 @@
----
-anchors:
-  - { type: file, path: "docs/tech-debt/plants-post-reward-and-abandon.md", weight: 0.1 }
-  - { type: file, path: "scripts/test-seed-exchange-books.mjs", weight: 0.1 }
----
-
 # 植物系统：后期动力缺失 + 缺少废弃按钮
 
-> 对账注记（2026-09-16）：秘密花园双源 bug 修复（`db7e41a`）——卷书误进商店池+兑换错发 0 章典藏版致 soft-lock，商店池摘除/兑换改发全卷/迁移 v13 救援；回归测试 test-seed-exchange-books.mjs 锚定本文档。
+> 对账注记（2026-09-16）：秘密花园双源 bug 修复（`db7e41a`）——卷书误进商店池+兑换错发 0 章典藏版致 soft-lock，商店池摘除/兑换改发全卷/迁移 v13 救援；回归测试 test-seed-exchange-books.mjs 锚定在 cafe-corner-plan.md（drift 索引只收 plan 类文档的锚点，tech-debt 锚点不生效）。
 
 > 类型：设计债 + 交互债  
 > 记录日期：2026-08-10  
