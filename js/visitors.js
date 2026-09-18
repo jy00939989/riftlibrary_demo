@@ -1224,7 +1224,7 @@ export function collectReturn(visitorId) {
   const extraCoins = Math.floor(plannedDurationHours / 6) * 3;
   if (extraCoins > 0) addCoins(extraCoins);
 
-  // 逐本结算：首本全收益（含典藏倍率）；额外书 ×0.25 币、零氛围（评审 P0-B 通胀纪律）；
+  // 逐本结算：首本全收益（含典藏倍率）；额外书 ×0.6 币、零氛围（图南 2026-09-18：0.25→0.6；零氛围为评审 P0-B 通胀纪律，不动）；
   // 每本独立损毁 roll（各自 wearCount 加权，Phase 3 链）
   const books = bookIds.map((bid, i) => {
     const bDef = BOOKS[bid];
@@ -1233,7 +1233,7 @@ export function collectReturn(visitorId) {
     const isCollector = !!bDef?.indestructible;
     const coinMult = isCollector ? COLLECTOR_RETURN_COIN_MULT : 1;
     const atmoMult = isCollector ? COLLECTOR_RETURN_ATMO_MULT : 1;
-    const coins = Math.round(retCfg.returnCoins * (isFirst ? 1 : 0.25) * coinMult);
+    const coins = Math.round(retCfg.returnCoins * (isFirst ? 1 : 0.6) * coinMult);
     const atmo = isFirst ? retCfg.returnAtmo * atmoMult : 0;
     addCoins(coins);
     if (atmo > 0) addAtmosphere(atmo);
@@ -1284,7 +1284,7 @@ export function collectReturn(visitorId) {
   const titlesJoined = books.map(b => `《${b.title}》`).join('');
   const extraCoinsText = extraCoins > 0 ? ` (+${extraCoins}借阅时长)` : '';
   const collectorText = books.some(b => b.collector) ? ` · 📜典藏版回报×${COLLECTOR_RETURN_COIN_MULT}💰×${COLLECTOR_RETURN_ATMO_MULT}✨` : '';
-  const multiText = books.length > 1 ? ` · 多本 ×${books.length}（首本全收益，额外书×0.25币零氛围）` : '';
+  const multiText = books.length > 1 ? ` · 多本 ×${books.length}（首本全收益，额外书×0.6币零氛围）` : '';
   addHistory('visitor', `${visitor.emoji} ${visitor.name} 归还了${titlesJoined}`,
     `${finalCoins}智慧之光${extraCoinsText} +${finalAtmo}氛围${collectorText}${multiText} · 好感+${returnFavor}`);
   if (!state.diaryFirsts.visitorReturn) {

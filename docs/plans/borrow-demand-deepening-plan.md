@@ -7,7 +7,7 @@ anchors:
   - { type: file, path: "docs/plans/reviews/borrow-demand-deepening-plan-review.md", weight: 0.1 }
   - { type: file, path: "docs/plans/reviews/borrow-cafe-joint-review-v2.md", weight: 0.1 }
   - { type: file, path: "docs/plans/reviews/economy-subsystem-architecture-review.md", weight: 0.1 }
-  - { type: file, path: "docs/plans/daily-boundary-refactor-plan.md", weight: 0.1 }
+  - { type: file, path: "docs/archive/plans/daily-boundary-refactor-plan.md", weight: 0.1 }
   - { type: file, path: "js/visitors.js", weight: 0.1 }
   - { type: file, path: "js/core/focus-orchestrator.js", weight: 0.1 }
   - { type: file, path: "js/core/book-utils.js", weight: 0.1 }
@@ -216,3 +216,9 @@ anchors:
 **实施时补充决策**：① 寄读结算抽为导出函数 settleOffsite(today)，onNewDay 订阅与测试/调试共用入口；② 测试池排除典藏版（indestructible 不磨损，wearCount 断言专用）；③ 24h 护栏基线用真实 Date.now()（getNow 为实时时钟）；④ A5 同档断言覆盖 v7 plants / v8 cafe / v9 borrow 三 plan 字段无顺序依赖。
 
 **首月回测联合指标（v3 P0-2 记账要求）**：金币日获取量 + 结余增速、寄读金币占比（信号 B 阈值 40%）、吐槽：赞叹比（信号 C 阈值 3:1）、在途书量 vs 藏书量（信号 A）、repairWords 占专注比（D11 阈值 15%）——数据面已齐（history 类型齐全 + borrowRecords.bookIds），回测时从存档/history 提取。
+
+## 对账注记（2026-09-18）
+
+- **额外书金币 ×0.25 → ×0.6**（图南拍板：附带借阅奖励太少）。落点：`js/visitors.js:1236` 结算倍率 + `:1287` 历史文案；测试断言同步（`test-borrow-deepening.mjs` §3，52 项仍全绿）。
+- 零氛围纪律（评审 P0-B，额外书零氛围）**不动**——本次只调金币。
+- 影响：本文「首月回测联合指标」的金币 faucet 增量预估（原 +25~43%）随倍率 ×2.4 作废上调；sink-ledger 金币线已挂同日「倍率修订注记」，首月回测超阈值按台账回调信号处置（必要时再降倍率）。
