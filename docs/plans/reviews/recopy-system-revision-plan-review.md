@@ -8,7 +8,7 @@ anchors:
 ---
 # 重抄机制修订方案 · 架构师审阅
 
-> 审阅对象：`docs/plans/recopy-system-revision-plan.md`
+> 审阅对象：`docs/archive/plans/recopy-system-revision-plan.md`
 > 审阅时间：2026-08-27
 > 结论：**有条件通过（CONCERNS）** — 方向正确，但需补齐 4 处细节后再实施。
 

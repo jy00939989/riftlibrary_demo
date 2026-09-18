@@ -142,7 +142,7 @@ AIGC:
 - `data/visitor-events.js`：10 位访客叙事树，共 1100+ 行
   - 每位访客：常层 14 条 + 偶层 5 条 + 稀层 1 条 + 终局 1 条 + 终局后常层 4 条 + 终局后偶层 3 条
 - `js/visitors.js`：还书语录、氛围见证文案
-- `docs/guides/visitor-voice-guide.md`：10 人文字风格手册
+- `docs/archive/guides/visitor-voice-guide.md`：10 人文字风格手册
 
 ---
 

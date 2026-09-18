@@ -4,7 +4,7 @@ anchors:
   - { type: file, path: "docs/aigc/competition-shanghai-aigc-2026/02-gameplay-description.md", weight: 0.1 }
   - { type: file, path: "docs/aigc/competition-shanghai-aigc-2026/03-ai-usage-declaration.md", weight: 0.1 }
   - { type: file, path: "docs/aigc/competition-shanghai-aigc-2026/04-submission-checklist.md", weight: 0.1 }
-  - { type: file, path: "docs/guides/backend-faq.md", weight: 0.1 }
+  - { type: file, path: "docs/archive/guides/backend-faq.md", weight: 0.1 }
   - { type: file, path: "js/backend/account-ui.js", weight: 0.1 }
   - { type: file, path: "js/backend/auth.js", weight: 0.1 }
   - { type: file, path: "js/backend/config.local.js", weight: 0.1 }

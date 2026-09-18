@@ -10,6 +10,7 @@ anchors:
 # 复兴之路重做：主线章节系统（curator-goals-renewal）
 
 > 2026-09-16 图南 grill-me 九问全锁。前身待办：`_todo-index.md` curator-goals-renewal-optimize（2026-09-11 图南提）。
+> **分工注记（2026-09-18）**：本文=战略层（方向与九问锁定）；实施细节以 `main-quest-chapter-system-plan.md` v3 为准（两者互挂，不 reopen）。
 > 现行实现：`data/tiergoals.js` TIER_GOALS 五阶纯计数目标，挂氛围阶段，完成弹窗搭 D24 升阶仪式（tierPopupsShown 去重），奖励一次性金币+氛围。
 
 ## 锁定决策（grill-me 2026-09-16）
