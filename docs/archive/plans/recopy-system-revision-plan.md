@@ -2,7 +2,7 @@
 status: backlog
 importance: 2
 anchors:
-  - { type: file, path: "docs/plans/recopy-system-revision-plan.md", weight: 0.1 }
+  - { type: file, path: "docs/archive/plans/recopy-system-revision-plan.md", weight: 0.1 }
   - { type: file, path: "js/volumes.js", weight: 0.1 }
   - { type: file, path: "js/render/bookshelf.js", weight: 0.1 }
   - { type: file, path: "scripts/test-mastery-once.mjs", weight: 0.1 }

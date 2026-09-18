@@ -2,7 +2,7 @@
 status: in-progress
 importance: 3
 anchors:
-  - { type: file, path: "docs/plans/fulltext-books-batch1.md", weight: 0.1 }
+  - { type: file, path: "docs/writing/fulltext-books-batch1.md", weight: 0.1 }
   - { type: file, path: "data/books/book_026.js", weight: 0.1 }
   - { type: file, path: "scripts/backfill-book-words.mjs", weight: 0.1 }
   - { type: file, path: "scripts/audit-book-word-counts.mjs", weight: 0.1 }

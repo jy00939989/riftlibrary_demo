@@ -1,6 +1,6 @@
 # 访客借书时长与收益调整方案
 
-> 状态：待数值评审  
+> 状态：**已归档（2026-09-18）——本文已被 `docs/plans/borrow-demand-deepening-plan.md` v2/v3 吸收**（借阅经济整体重写：多本借阅/整单时长加成/寄读），时长 ±30% 随机与 floor(h/6)×3 时长加成已随 9-10 借还链落地。留存备查，不再评审。
 > 提出时间：2026-08-31  
 > 相关文件：`js/visitors.js`、`js/core/shop/library-upgrades.js`、`data/borrow-levels.js`
 

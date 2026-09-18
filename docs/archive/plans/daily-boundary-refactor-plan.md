@@ -3,7 +3,7 @@ status: done
 importance: 3
 scheduledDate:
 anchors:
-  - { type: file, path: "docs/plans/daily-boundary-refactor-plan.md", weight: 0.1 }
+  - { type: file, path: "docs/archive/plans/daily-boundary-refactor-plan.md", weight: 0.1 }
   - { type: file, path: "js/core/day-boundary.js", weight: 0.2 }
   - { type: file, path: "scripts/test-day-boundary.mjs", weight: 0.1 }
   - { type: file, path: "js/app.js", weight: 0.2 }

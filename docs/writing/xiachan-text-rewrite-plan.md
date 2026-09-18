@@ -3,7 +3,7 @@ status: backlog
 importance: 4
 scheduledDate:
 anchors:
-  - { type: file, path: "docs/plans/xiachan-text-rewrite-plan.md", weight: 0.1 }
+  - { type: file, path: "docs/writing/xiachan-text-rewrite-plan.md", weight: 0.1 }
 ---
 
 # 夏蝉文字重写计划
