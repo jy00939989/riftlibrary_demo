@@ -7,7 +7,7 @@ anchors:
   - { type: file, path: "docs/plans/reviews/cafe-corner-plan-review.md", weight: 0.1 }
   - { type: file, path: "docs/plans/reviews/borrow-cafe-joint-review-v2.md", weight: 0.1 }
   - { type: file, path: "docs/plans/reviews/economy-subsystem-architecture-review.md", weight: 0.1 }
-  - { type: file, path: "docs/plans/daily-boundary-refactor-plan.md", weight: 0.1 }
+  - { type: file, path: "docs/archive/plans/daily-boundary-refactor-plan.md", weight: 0.1 }
   - { type: file, path: "js/render/shop/library-upgrades.js", weight: 0.1 }
   - { type: file, path: "js/visitors.js", weight: 0.1 }
   - { type: file, path: "js/plants.js", weight: 0.1 }

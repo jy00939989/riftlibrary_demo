@@ -28,7 +28,7 @@ anchors:
 - [x] 在读者沙龙页面/借阅区升级弹窗提示当前损毁概率
 - [ ] 考虑在成就或访客叙事中引用该机制
 
-### public-domain-linear-copy-plan（公版书线性誊抄）
+### public-domain-linear-copy-plan（公版书线性誊抄） 【文档已移档 writing/，2026-09-18】
 - [ ] 在书籍 meta 中新增 `copyMode: 'linear'` / `'chapter'` 与 `isPublicDomain` 标记
 - [ ] 把 1–2 本公版书（建议《菜根谭》《道德经》）改写成 `segments` 数组
 - [ ] 在 `js/core/book-utils.js` 新增 `getCurrentSegment(book, bookState)` 按字数定位段落
@@ -37,7 +37,7 @@ anchors:
 - [ ] 旧存档 `copiedWords` 按 `% totalWords` 重新定位，确保兼容
 - [ ] 决定段落切分规则：固定 100 字还是按自然句/条目切分
 
-### xiachan-text-rewrite-plan（夏蝉文案重写）
+### xiachan-text-rewrite-plan（夏蝉文案重写） 【文档已移档 writing/，2026-09-18】
 - [ ] 重写夏蝉初次登场/缮写室对话，统一“安静、神秘、知书达理”语气
 - [ ] 重写夏蝉的常层/偶层/稀层/终局事件文案
 - [ ] 补全与至少 1 本书、1 个访客事件的联动文案
@@ -54,8 +54,8 @@ anchors:
 - [ ] N 按当前誊抄速率实时刷新（暂停时停走）——分钟级刷新已随 updateBookProgressDOM 落地，>99 分钟「X 小时 Y 分」格式未做（当前直显大分钟数）
 - [ ] 移动端不挤占进度条位置（放副标题行）——当前为 pct 行下方独立右对齐小字，未做移动端专门排布
 
-### game-animations-plan（游戏动画）——【已被 seedance 方案取代，全节关闭】
-> 2026-09-04 重建为 [animation-suite-seedance-2.5](animation-suite-seedance-2.5.md)（AI 视频路线替代 Lottie）。9-11 已有 6 键入库挂接：`book_complete_shelving`（誊抄完成）/ `borrow_lv0_1` / `focus_lv0_1` / `focus_lv1_2`（设施升级）/ `visitor_first`（首访）/ `atmo_0_1`（首次跨阈）。
+### animation-suite-seedance-2.5（游戏动画 · 唯一活档）——【2026-09-18 合并老 game-animations-plan，见其归档注记】
+> 2026-09-04 自老 game-animations-plan 重建（AI 视频路线替代 Lottie）；2026-09-18 反向吸收老 plan 残余（8 节点覆盖度→§2.5，验收标准→§8.5），老 plan 归档 `archive/plans/`。9-11 已有 6 键入库挂接：`book_complete_shelving`（誊抄完成）/ `borrow_lv0_1` / `focus_lv0_1` / `focus_lv1_2`（设施升级）/ `visitor_first`（首访）/ `atmo_0_1`（首次跨阈）。已知缺口：成就解锁无键（§2.5）、商店购买路径仍 CSS（§7 留口）。
 - [x] 确定首批 P0 动画清单：氛围升级、房间解锁、专注完成、书籍完成（→ seedance 清单 32+2 键）
 - [x] 确定动画色调与风格（琥珀金、墨黑、暖白，parchment/wood）
 - [x] 原型验证（→ 路线变更：Seedance 视频直出，CSS/Lottie 原型不需要了）
@@ -186,7 +186,7 @@ anchors:
 - [ ] 给后期增加可重复金币来源，如高等级访客赠礼事件或 Lv7 归还币提升
 - [ ] 新增 1–2 个灵感来源，或把首次重抄成本从 2 降到 1
 - [x] 典藏版被访客借阅时提供额外还书收益——v4 决策落地：还书 智慧之光 ×2、氛围 ×3
-- [x] 评审并落地 `docs/plans/visitor-borrow-duration-and-reward-adjustment.md`：借阅时长 ±30% 随机 + 按时长追加智慧之光（floor(h/6)×3，整单一次）已随 9-10 借还链落地
+- [x] 评审并落地 `docs/archive/plans/visitor-borrow-duration-and-reward-adjustment.md`：借阅时长 ±30% 随机 + 按时长追加智慧之光（floor(h/6)×3，整单一次）已随 9-10 借还链落地
 
 ### atmosphere-venue-map-design（场馆地图）——【已吸收，勿单独实施】
 > 2026-09-08 整体并入 [atmosphere-system-redesign-plan](atmosphere-system-redesign-plan.md)（决策 10 吸收合并），下列条目由该文档 Phase 5 承接：
@@ -291,7 +291,7 @@ anchors:
 
 ## ✅ 2026-09-11 落地批次（A1 日界重构 + Phase 4 动工序列全通）
 
-### daily-boundary-refactor（A1 日界统一重构，8 commits）
+### daily-boundary-refactor（A1 日界统一重构，8 commits） 【计划已归档 archive/plans/，2026-09-18】
 - [x] 新建 `js/core/day-boundary.js` 单一真源（onNewDay/checkDayRollover，同日防双触发/离线冻结/订阅者隔离）
 - [x] 双触发点接入（init 链 + 60s tick）+ migrateV6 播种 lastSeenDay
 - [x] 五处日期散点收敛：每日任务/墨墨日限/日记回顾/行动卡日限挂 onNewDay，streak 仅收敛原语（语义=连续专注日，刻意不挂）
@@ -317,7 +317,7 @@ anchors:
 - [x] 按 review 决策重渲染触发机制与 actions 注入方式
 - [x] `migrations.js` 版本门控 runner 长期可用
 
-### recopy-system-revision-plan（重抄系统修订）
+### recopy-system-revision-plan（重抄系统修订） 【计划已归档 archive/plans/，2026-09-18】
 - [ ] 修正 import 路径：`saveState` 来自 `js/state/save.js`，`createBookRecord` 来自 `js/core/book-utils.js`
 - [ ] 决定 i18n 策略：推荐 `nameKey` + `t()`，否则收窄英文验收范围
 - [ ] `SEED_EXCHANGE` 数组化，每项加 `type` 与 `repeatable`；dispatch 加 `default` 分支

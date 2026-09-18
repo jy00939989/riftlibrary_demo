@@ -45,3 +45,6 @@ temp/
 
 # 挂牌素材打样原始图（正式图在 visual/signboards/）
 temple/
+
+# 本地服务运行日志
+service-logs/
