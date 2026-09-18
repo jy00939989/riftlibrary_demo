@@ -83,7 +83,8 @@ docs/
 ## 移档纪律（2026-09-18 整理后补充）
 
 1. **用 `git mv`** 保留历史；移动后立即全文 grep 旧路径，修引用者（锚点、`_todo-index.md`、相关 plan 正文）
-2. 文档 frontmatter 里的**自指锚点路径**随手更新到新位置
+2. **`git mv` 之后的任何内容修改必须重新 `git add`**——staged rename 只携带移动时刻的内容，后续编辑不随 `git commit` 入库（2026-09-18 踩实：六个文件的注记/锚点修正漏进提交，补了第二笔）
+3. 文档 frontmatter 里的**自指锚点路径**随手更新到新位置
 3. 被移 plan 在 `_todo-index.md` 的节标题挂「已归档/已移档 + 日期」标记
 4. `reconciliation/` 下的历史 manifest 快照**不追改**——它们是时点记录
 5. `archive/guides/` 三件套（术语表/访客声音/后端 FAQ）仍被活跃引用，移档时引用改指 archive 路径，**不要**因为进了 archive 就当死档
