@@ -1,53 +1,19 @@
 ---
+status: in-progress
+importance: 4
+scheduledDate:
 anchors:
-  - { type: file, path: "2_1787733598204_0.png", weight: 0.1 }
-  - { type: file, path: "audio/music/ruined-library-variation.mp3", weight: 0.1 }
-  - { type: file, path: "audio/music/ruined-library.mp3", weight: 0.1 }
-  - { type: file, path: "audio/music/starlight-library-variation.mp3", weight: 0.1 }
-  - { type: file, path: "audio/music/starlight-library.mp3", weight: 0.1 }
-  - { type: file, path: "audio/music/town-stroll-variation.mp3", weight: 0.1 }
-  - { type: file, path: "audio/music/town-stroll.mp3", weight: 0.1 }
   - { type: file, path: "docs/plans/animation-suite-seedance-2.5.md", weight: 0.1 }
-  - { type: file, path: "js/core/focus-orchestrator.js", weight: 0.1 }
-  - { type: file, path: "js/i18n/terms.js", weight: 0.1 }
-  - { type: file, path: "js/persistence.js", weight: 0.1 }
+  - { type: file, path: "js/render/shared/video-overlay.js", weight: 0.2 }
+  - { type: file, path: "visual/animations/manifest.json", weight: 0.2 }
   - { type: file, path: "js/render/animations.js", weight: 0.1 }
-  - { type: file, path: "js/render/index.js", weight: 0.1 }
-  - { type: file, path: "js/render/shared/video-overlay.js", weight: 0.1 }
-  - { type: file, path: "js/settings.js", weight: 0.1 }
-  - { type: file, path: "temp/book-meta-list.json", weight: 0.1 }
-  - { type: file, path: "temp/verify_book_031.mjs", weight: 0.1 }
-  - { type: file, path: "temple/GPT Image 2_1787733598204_0.png", weight: 0.1 }
-  - { type: file, path: "temple/sign_grand_opening_256x256.png", weight: 0.1 }
-  - { type: file, path: "temple/sign_grand_opening_512x512.png", weight: 0.1 }
-  - { type: file, path: "temple/sign_grand_opening_cropped.png", weight: 0.1 }
-  - { type: file, path: "temple/sign_grand_opening_raw.png", weight: 0.1 }
-  - { type: file, path: "temple/sign_pioneer_256x256.png", weight: 0.1 }
-  - { type: file, path: "temple/sign_pioneer_512x512.png", weight: 0.1 }
-  - { type: file, path: "temple/sign_pioneer_cropped.png", weight: 0.1 }
-  - { type: file, path: "temple/sign_pioneer_raw.png", weight: 0.1 }
-  - { type: file, path: "visual/animations/book_complete_shelving_480p.mp4", weight: 0.1 }
-  - { type: file, path: "visual/animations/manifest.json", weight: 0.1 }
-  - { type: file, path: "visual/animations/book_complete_shelving_480p.mp4", weight: 0.1 }
-  - { type: file, path: "visual/animations/borrow_lv0_1_480p.mp4", weight: 0.1 }
-  - { type: file, path: "visual/animations/focus_lv0_1_480p.mp4", weight: 0.1 }
-  - { type: file, path: "visual/animations/focus_lv1_2_480p.mp4", weight: 0.1 }
-  - { type: file, path: "visual/animations/atmo_0_1_480p.mp4", weight: 0.1 }
-  - { type: file, path: "visual/animations/visitor_first_480p.mp4", weight: 0.1 }
-  - { type: file, path: "js/intro.js", weight: 0.1 }
-  - { type: file, path: "js/render/tutorial-ui.js", weight: 0.1 }
-  - { type: file, path: "js/core/focus-orchestrator.js", weight: 0.1 }
-  - { type: file, path: "js/app.js", weight: 0.1 }
-  - { type: file, path: "visual/animations/_archive/borrow_lv0_1_v1_5s.mp4", weight: 0.1 }
-  - { type: file, path: "visual/promo/异世界图书馆宣传PV.mp4", weight: 0.1 }
-  - { type: file, path: "visual/animations/atmo_2_3_480p.mp4", weight: 0.1 }
-  - { type: file, path: "visual/animations/focus_lv2_3_480p.mp4", weight: 0.1 }
 ---
 
-# 归墟图书馆 · Seedance 2.5 动画套案
+# 归墟图书馆 · 动画计划（animation-suite / Seedance 2.5 视频套案）
 
 > 2026-09-04 与图南共同头脑风暴锁定。开场动画不在本次范围（太长太贵）。
 > 目标：用 Seedance 2.5 图生视频替换/新增全部关键动画，统一归墟美学。
+> **合并注记（2026-09-18）**：老 `game-animations-plan.md`（Lottie/CSS 路线，已被本文取代）归档，其「8 节点覆盖度表」与「验收标准」的可用残余折入本文 §2.5 / §8.5；其 Lottie-first 技术路线正式作废（现实路线 = 视频 + CSS 降级链）。
 
 ## 0. 决策记录
 
@@ -135,6 +101,21 @@ anchors:
 | 32 | `arthur_synthesis` | 6s | 4:3 | 修复室内景 | 四本古卷悬浮环绕中心旋转，金色光带缠绕合一，光芒凝聚成厚重大书缓缓落下，封面剑纹亮起 |
 
 （清单编号到 32：第一批 23 条 + 第二批 7 条 + 第三批 2 条）
+
+## 2.5 覆盖度对照（2026-09-18 并入老 game-animations-plan 的 8 节点表）
+
+> 老 plan 的节点清单是好用的完备性检查表，逐个对到现状：✓=已覆盖（含降级兜底）／◐=半覆盖／✗=缺口。
+
+| 老 plan 节点（原优先级） | 现状 | 覆盖键 / 缺口 |
+|---|---|---|
+| 氛围升级（P0） | ✓ | `atmo_{prev}_{new}` 泛化键（`atmo_0_1`/`atmo_2_3` 已入库，manifest 缺失自动降级） |
+| 房间解锁（P0） | ✓ | 设施升级 18 条（`borrow_lv*`/`focus_lv*`/`resto_*`），清单外等级走 onFail 降级升级卡（零伤害） |
+| 专注完成（P0） | ✓ | `book_complete_shelving`（5s 两段式，誊抄完成链；重抄 copyCount>1 不播直接出卡） |
+| 书籍完成（P0） | ✓ | 同上（原 `copy_complete` 已并入，`copyCount===1` 才播） |
+| 书籍上架（P1） | ◐ | 已并入完成动画；**商店购买路径仍 CSS**——日后需要再补独立 `shelving` 键（§7 已留口） |
+| 访客抵达（P1） | ✓ | `visitor_first`（清单外增补键，focus-orchestrator 首访事件前置播放） |
+| 植物成长（P1） | 清单在库 | `plant_bloom`（32 键清单第 30 条，未生成） |
+| 成就解锁（P1） | ✗ **缺口** | 32 键无成就键——待补 `achievement_unlock` 或维持 CSS 徽章动画（旧验收标准已满足「有动画」，降级链兜底） |
 
 ## 3. 技术接入方案
 
@@ -256,3 +237,15 @@ visual/animations/
 **清单外增补 3 键**（`atmo_2_3` 2026-09-11 图南产，挂升阶仪式泛化键 `atmo_{prev}_{new}`，manifest 缺失自动降级）（源自老 game-animations-plan 的 P0 节点，32 键清单未覆盖）：`atmo_0_1`=氛围首次跨阈（首次升阶仪式前置播放）；`atmo_2_3`=第二次升阶（app.js 泛化键 atmo_{prev}_{new}）；`visitor_first`=首位访客抵达（focus-orchestrator 首访事件前置播放）。后续增补键请沿用 `<scene>_<from>_<to>` 命名并登记本表。
 
 **接入方式**：设施升级走 `tutorial-ui.js` showFocusRoomUpgrade/showBorrowAreaUpgrade 的 `focus_lv{N-1}_{N}` / `borrow_lv{N-1}_{N}` 键——清单外等级自动走 onFail 降级为原升级卡（零伤害）；`借阅区解锁.mp4`（5s 旧版）归档 `_archive/`，PV 移 `visual/promo/`（intro 引用路径已同步）。
+
+## 8.5 验收标准对照（2026-09-18 并入老 game-animations-plan）
+
+| 老 plan 验收项 | 现状 |
+|---|---|
+| P0 四节点（氛围升级/房间解锁/专注完成/书籍完成）有动画 | ✓ 见 §2.5 覆盖度（6 键已入库挂接） |
+| 播放不阻塞核心交互（可跳过） | ✓ `video-overlay` 点击跳过 + onSkip 契约，后台 loop 型（gramophone）不阻塞 |
+| 「关闭/减少动画」设置项 | ✓ 🎼 面板「跳过重复动画」开关（`riftlib_seen_animations`，2026-09-04 新增） |
+| 移动端流畅、低端可降级 | ✓ 480p + manifest 缺失/404/加载 error 全链回退 CSS（§3 降级链） |
+| 动画资源总大小 <1MB（首期） | ◐ 首期 6 条 480p 已入库，未专项核算——下批生成前顺手核一遍 |
+
+老 plan 的 Lottie/SVG 资产规范（<100KB/个、assets/animations/ 目录）随路线作废一并废止；若未来离线/包体需求回摆轻量路线，从 git 历史翻 2026-09-18 归档版取用。
