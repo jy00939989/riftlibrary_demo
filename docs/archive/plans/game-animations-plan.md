@@ -1,9 +1,19 @@
 ---
-status: backlog
+status: done
 importance: 4
 scheduledDate:
 anchors:
-  - { type: file, path: "docs/plans/game-animations-plan.md", weight: 0.1 }
+  - { type: file, path: "docs/archive/plans/game-animations-plan.md", weight: 0.1 }
+---
+
+# 游戏动画制作与导入计划
+
+> **已归档（2026-09-18）——本文已被 `docs/plans/animation-suite-seedance-2.5.md` 取代并合并**：
+> ① 技术路线：Lottie/CSS-first 正式作废，现实路线 = Seedance 2.5 视频 + CSS 降级链；
+> ② 本文「8 节点覆盖度表」折入继任者 §2.5（含缺口标记：成就解锁无键）；「验收标准」折入 §8.5（全部已落地或已降级兜底）；
+> ③ 如需回摆轻量路线，从 git 历史翻本文 2026-09-18 归档版。
+> 原文内容如下，保留备查。
+
 ---
 
 # 游戏动画制作与导入计划
