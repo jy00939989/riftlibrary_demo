@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // 借阅深化（borrow-demand-deepening-plan v3.1）测试
-// 覆盖：借书槽表/多本借阅与整单到期/整单结算 ×0.25 数学/寄读浮动上限与日结/
+// 覆盖：借书槽表/多本借阅与整单到期/整单结算 ×0.6 数学/寄读浮动上限与日结/
 //       吐槽护栏/赞叹闭环/多 plan 同档迁移共存（A5）
 // 用法：node scripts/test-borrow-deepening.mjs
 
@@ -133,7 +133,7 @@ visitors.tickVisitorBrowsing(T0);
 restoreRoll();
 assert(state.visitors[0].bookIds.length === 1, 'Lv1 仍单本（零漂移）');
 
-// ═══ 3. 整单结算 ×0.25 数学（§3.2）═══
+// ═══ 3. 整单结算 ×0.6 数学（§3.2；图南 2026-09-18：额外书 0.25→0.6）═══
 console.log('\n=== 3. 整单结算 ===');
 resetLibrary(5); // returnCoins 50 · returnAtmo 5
 state.visitors = [mkVisitor('c1')];
@@ -151,8 +151,8 @@ const ret = visitors.collectReturn(vc.id);
 restoreRoll();
 assert(ret && ret.books.length === 3, '整单 3 本结算');
 assert(ret.books[0].coins === 50 && ret.books[0].atmosphere === 5, '首本全收益 50💰+5✨');
-assert(ret.books[1].coins === Math.round(50 * 0.25) && ret.books[1].atmosphere === 0, '额外书 ×0.25 币零氛围');
-assert(ret.coins === 50 + 2 * Math.round(50 * 0.25) + 6, '整单币 = 首本 + 2×额外 + 时长加成 6');
+assert(ret.books[1].coins === Math.round(50 * 0.6) && ret.books[1].atmosphere === 0, '额外书 ×0.6 币零氛围');
+assert(ret.coins === 50 + 2 * Math.round(50 * 0.6) + 6, '整单币 = 首本 + 2×额外 + 时长加成 6');
 assert(ret.atmosphere === 5, '整单氛围仅首本');
 assert(state.library.atmosphere === atmoBefore + 5, '氛围仅 +5（额外书零氛围）');
 assert(ret.extraCoins === 6, '时长加成整单一次');
