@@ -9,6 +9,7 @@ import { showAchievementBatch } from '../render/achievements.js';
 import { triggerQuestCheck } from './quest-trigger.js';
 import { track } from '../backend/index.js';
 import { showMomoIntro } from '../render/shared/momo-intro.js';
+import { maybeTriggerInkSpill } from './disasters.js';
 
 export function handleStartFocus() {
   ensureAudioContext();
@@ -86,5 +87,6 @@ export function handleAbandonFocus() {
       target_minutes: sess.targetMinutes
     });
     abandonFocus();
+    maybeTriggerInkSpill(); // 墨水打翻：放弃专注的低概率叙事负反馈（book-damage-events 批次二）
   }
 }

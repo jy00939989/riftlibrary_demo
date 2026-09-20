@@ -144,6 +144,7 @@ export function applyRepairProgress(bookId, wordsGained) {
     bookState.damaged = false;
     bookState.repairProgress = 0;
     bookState.repairWords = 0;
+    bookState.wormLevel = 0; // 修复即驱虫（book-damage-events 批次二）
 
     if (book.totalWords > 0 && bookState.copiedWords > 0 && (bookState.copiedWords % book.totalWords) === 0) {
       bookState.status = 'completed';
