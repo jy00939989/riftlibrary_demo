@@ -25,13 +25,13 @@ function getTrackDisplayName(track) {
 // 现由展览厅热点内嵌调用；容器记忆保证页内交互（购买/切换）后重渲染不丢位置。
 let currentContainer = null;
 export function renderMusicRoomPage(container = null) {
-  const target = container || currentContainer || document.getElementById('exhibition-musicroom-slot');
-  if (!target) return;
-  currentContainer = target;
-  const isInline = target.id === 'exhibition-musicroom-slot';
+  // 参数复用：外部指定 > 记忆容器 > 展览厅插槽（不得另起 const 同名，ES 严格模式直接 SyntaxError）
+  container = container || currentContainer || document.getElementById('exhibition-musicroom-slot');
+  if (!container) return;
+  currentContainer = container;
+  const isInline = container.id === 'exhibition-musicroom-slot';
 
-  target.innerHTML = '';
-  const container = target;
+  container.innerHTML = '';
 
   // 内嵌模式的收起条（展览厅热点展开后用）
   if (isInline) {
