@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// 熟练度一次成典藏（2026-09-15 图南拍板）测试
-// 覆盖：首通即 Lv5（取消两档）/重抄不再承载解锁/noMastery 书（分卷/典藏）不参与/
-//       unlockReCopy 核心层闸（UI 置灰之外的防御）/迁移 v12 老档追溯升满
+// 熟练度两次抄写（2026-09-20 图南重新拍板，推翻 9-15「一次成典藏」）测试
+// 覆盖：首通=Lv2 上架档（誊抄完成并上架）/重抄 1 次=Lv5 典藏（轶事/书评/典藏封面/金光/增益）/
+//       noMastery 书（分卷/典藏）不参与/unlockReCopy 核心层闸/迁移 v14 撤销 v12 的追溯升满
 // 用法：node scripts/test-mastery-once.mjs
 
 // ── 环境 mock（必须在动态 import 之前装好）──
@@ -63,15 +63,15 @@ function freshBooks() {
   state.diaryLogs = [];
 }
 
-// ═══ 1. 首通即满熟练（一次成典藏）═══
-console.log('\n=== 1. 一次成典藏 ===');
+// ═══ 1. 两次抄写：首通上架档 → 重抄成典藏 ═══
+console.log('\n=== 1. 两次抄写 ===');
 freshBooks();
 const r1 = completeBook('book_001');
-assert(r1 && r1.isFirstCompletion && r1.masteryLevel === 5, '首次完成 → 熟练度直接 Lv5');
-assert(state.books.book_001.masteryLevel === 5 && state.books.book_001.copyCount === 1, '落库 Lv5 · copyCount 1');
-// 重抄仍在：第二次完成不降级、不重复承载解锁
+assert(r1 && r1.isFirstCompletion && r1.masteryLevel === 2, '首次完成 → Lv2 上架档（非典藏）');
+assert(state.books.book_001.masteryLevel === 2 && state.books.book_001.copyCount === 1, '落库 Lv2 · copyCount 1');
+// 重抄承载典藏解锁：第二次完成 → Lv5
 const r2 = completeBook('book_001');
-assert(r2 && !r2.isFirstCompletion && r2.masteryLevel === 5 && state.books.book_001.copyCount === 2, '重抄完成 copyCount 2 · 保持 Lv5');
+assert(r2 && !r2.isFirstCompletion && r2.masteryLevel === 5 && state.books.book_001.copyCount === 2, '重抄 1 次完成 → Lv5 典藏');
 
 // ═══ 2. noMastery 书不参与 ═══
 console.log('\n=== 2. 分卷/典藏不参与 ===');
@@ -89,27 +89,28 @@ const u = unlockReCopy('book_001');
 assert(u.ok && state.books.book_001.reCopyUnlocked === true && state.inspiration === 9, '普通书正常解锁（-1 灵感）');
 
 // ═══ 4. 迁移 v12：老档追溯升满 ═══
-console.log('\n=== 4. 迁移 v12 ===');
+console.log('\n=== 4. 迁移 v14 撤销追溯 ===');
 freshBooks();
 state.books.book_001.status = 'completed';
 state.books.book_001.copyCount = 1;
 state.books.book_001.masteryLevel = 2; // 老档首通停留档
+state.books.book_002 = { ...state.books.book_001, copyCount: 2, masteryLevel: 5 }; // 真典藏（重抄过）
 state.books.book_030_vol1.status = 'completed';
 state.books.book_030_vol1.masteryLevel = 2; // noMastery 书的残留值不动
 state._schemaVersion = 11;
 runMigrations();
-assert(state._schemaVersion === 13, 'schemaVersion 11 → 13');
-assert(state.books.book_001.masteryLevel === 5, '老档普通书 Lv2 追溯升满 Lv5');
+assert(state._schemaVersion === 14, 'schemaVersion 11 → 14');
+assert(state.books.book_001.masteryLevel === 2, 'v12 升满 → v14 撤销：首通书回落 Lv2');
+assert(state.books.book_002 && state.books.book_002.masteryLevel === 5, '真典藏（copyCount≥2）保持 Lv5 不回退');
 assert(state.books.book_030_vol1.masteryLevel === 2, 'noMastery 书不追溯');
 runMigrations();
-assert(state.books.book_001.masteryLevel === 5, '重复迁移幂等');
+assert(state.books.book_001.masteryLevel === 2, '重复迁移幂等');
 
-// ── 日记模板档位回归（2026-09-20）：熟练度恒 5 后，档位必须按 copyCount 分 ──
-// 旧 tierMap 按 mastery 分档 → 首通（mastery 恒 5）必抽中「第三遍」文案（图南 8080 实测逮获）
+// ── 日记模板档位回归（2026-09-20）：档位按 copyCount 分（旧 tierMap 按 mastery 分 → 首通误报「第三遍」，图南 8080 实测逮获）──
 const { generateDiaryEntry } = await import('../js/diary.js');
-const s1 = Array.from({ length: 40 }, () => generateDiaryEntry('book_complete', { title: '传习录', copyCount: 1, mastery: 5 }));
+const s1 = Array.from({ length: 40 }, () => generateDiaryEntry('book_complete', { title: '传习录', copyCount: 1, mastery: 2 }));
 assert(s1.every(s => !s.includes('第三遍') && !s.includes('第四遍') && !s.includes('第五遍')), '首通日记不再出现「第三/四/五遍」文案');
-const s3 = Array.from({ length: 40 }, () => generateDiaryEntry('book_complete', { title: '传习录', copyCount: 3, mastery: 5 }));
+const s3 = Array.from({ length: 40 }, () => generateDiaryEntry('book_complete', { title: '传习录', copyCount: 3, mastery: 5 })); // 第三次誊抄必已典藏
 assert(s3.every(s => s.includes('第三遍')), '第三次誊抄日记稳定命中第三遍档');
 
 console.log(`\n${pass} 通过, ${fail} 失败`);

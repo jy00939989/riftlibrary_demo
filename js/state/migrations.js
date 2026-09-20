@@ -41,7 +41,8 @@ const MIGRATIONS = [
   { version: 10, up: migrateV10 },
   { version: 11, up: migrateV11 },
   { version: 12, up: migrateV12 },
-  { version: 13, up: migrateV13 }
+  { version: 13, up: migrateV13 },
+  { version: 14, up: migrateV14 }
 ];
 
 function migrateV12() {
@@ -53,6 +54,19 @@ function migrateV12() {
     if (isNoMasteryBook(bookId)) return;
     bs.masteryLevel = 5;
   });
+}
+
+function migrateV14() {
+  // 2026-09-20 图南重新拍板「两次抄写」：首通=上架档 Lv2，重抄 1 次才成典藏 Lv5（推翻 9-15 一次成典藏）。
+  // 撤销 v12 的追溯升满副作用：凡 copyCount===1 且 masteryLevel===5 的普通书 → 回落 Lv2（尚未典藏）；
+  // copyCount>=2 的书是真典藏，保持 Lv5。幂等：重复执行无副作用。
+  for (const [bookId, bs] of Object.entries(state.books || {})) {
+    if (!bs) continue;
+    if (isNoMasteryBook(bookId)) continue;
+    if ((bs.copyCount || 0) === 1 && bs.masteryLevel === 5) {
+      bs.masteryLevel = 2;
+    }
+  }
 }
 
 function migrateV13() {

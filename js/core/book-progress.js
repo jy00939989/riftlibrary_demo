@@ -62,9 +62,10 @@ export function completeBook(bookId) {
 
   bookState.copyCount = prevCopyCount + 1;
   if (!isNoMasteryBook(bookId)) {
-    // 2026-09-15 图南拍板：取消两档熟练度——一次完成即满熟练（典藏内容/金光/master 增益全解锁）；
-    // 重抄仍在（磨损清零/半氛围），但不再承载解锁。noMastery 书（分卷/典藏版）始终不参与。
-    bookState.masteryLevel = 5;
+    // 普通书两次抄写周期（2026-09-20 图南重新拍板，推翻 9-15「一次成典藏」）：
+    // - 首次完成 → Lv2（书籍上架 + 作者小传）
+    // - 花费 1 灵感重抄完成 → Lv5（典藏：轶事/书评/典藏封面/金光/master 增益全解锁）
+    bookState.masteryLevel = isFirstCompletion ? 2 : 5;
   }
 
   if (isFirstCompletion) {

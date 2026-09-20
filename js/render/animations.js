@@ -174,7 +174,7 @@ function showBookCompleteCard(bookTitle, bookEmoji, copyCount, callback, book, n
 
   const masteryRewards = ['',
     '📖 书籍上架 · 可供访客借阅',
-    `📝 解锁作者小传：${book ? getBookAuthorBio(book).slice(0, 40) + '…' : '待发现'}`,
+    '📖 书籍上架 · 可供借阅　📝 解锁作者小传',
     `💬 解锁创作轶闻：${book ? getBookAnecdotes(book).slice(0, 40) + '…' : '待发现'}`,
     `🏅 解锁名家书评：${book ? getBookReviews(book).slice(0, 40) + '…' : '待发现'}`,
     `🌟 解锁典藏封面 · 金光特效${book?.collectorCover ? ' · ' + book.collectorCover : ''}`
@@ -186,7 +186,7 @@ function showBookCompleteCard(bookTitle, bookEmoji, copyCount, callback, book, n
   let rewardHtml = '';
   if (newLevel && newLevel >= 5) {
     rewardHtml = `<div class="bg-magic-gold/10 border border-magic-gold/30 rounded-lg p-3 mb-3 text-sm text-ink">
-      <span class="text-xs text-magic-gold font-bold">🔓 首通即典藏 · 全部解锁</span>
+      <span class="text-xs text-magic-gold font-bold">🔓 典藏达成 · 全部解锁</span>
       <div class="text-left text-xs mt-1 space-y-0.5 text-ink-light">
         ${masteryBundleShort.map(l => `<div>${l}</div>`).join('')}
       </div>
