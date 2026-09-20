@@ -14,7 +14,6 @@ import {
   getCurrentAmbientId, isAmbientEnabled, setAmbientEnabled
 } from '../ambient.js';
 import { isDlcPackUnlocked, getDlcPack } from '../shop.js';
-import { exhibitionBreadcrumbHTML, bindExhibitionBreadcrumb } from './exhibition.js';
 
 function getTrackDisplayName(track) {
   const key = 'musicTrack_' + track.id;
@@ -22,17 +21,25 @@ function getTrackDisplayName(track) {
   return localized === key ? track.name : localized;
 }
 
-export function renderMusicRoomPage() {
-  const container = document.getElementById('page-musicroom');
-  if (!container) return;
+// 渲染目标容器：顶栏独立页时代已结束（2026-09-20 图南拍板并入展览厅），
+// 现由展览厅热点内嵌调用；容器记忆保证页内交互（购买/切换）后重渲染不丢位置。
+let currentContainer = null;
+export function renderMusicRoomPage(container = null) {
+  const target = container || currentContainer || document.getElementById('exhibition-musicroom-slot');
+  if (!target) return;
+  currentContainer = target;
+  const isInline = target.id === 'exhibition-musicroom-slot';
 
-  container.innerHTML = '';
+  target.innerHTML = '';
+  const container = target;
 
-  // 展览厅面包屑（迁入页 header 一行，plan §2.3）
-  const crumb = document.createElement('div');
-  crumb.innerHTML = exhibitionBreadcrumbHTML('musicroom');
-  container.appendChild(crumb);
-  bindExhibitionBreadcrumb(crumb);
+  // 内嵌模式的收起条（展览厅热点展开后用）
+  if (isInline) {
+    const collapse = el('button', 'w-full mb-4 px-3 py-1.5 rounded-lg bg-wood/10 text-ink-light text-xs font-bold hover:bg-wood/20 transition-all');
+    collapse.textContent = '▲ 收起唱片架';
+    collapse.addEventListener('click', () => { target.innerHTML = ''; });
+    container.appendChild(collapse);
+  }
 
   // 未解锁：引导去商店
   if (!state.musicRoom?.unlocked) {
