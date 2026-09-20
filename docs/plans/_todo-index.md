@@ -59,6 +59,9 @@ anchors:
   - { type: file, path: "visual/exhibition/hall_lv2.jpg", weight: 0.1 }
   - { type: file, path: "visual/exhibition/hall_lv3.jpg", weight: 0.1 }
   - { type: file, path: "visual/exhibition/hall_lv4.jpg", weight: 0.1 }
+  - { type: file, path: "visual/exhibition/展览厅lv2.png", weight: 0.1 }
+  - { type: file, path: "visual/exhibition/展览厅lv3.png", weight: 0.1 }
+  - { type: file, path: "visual/exhibition/展览厅lv4.png", weight: 0.1 }
   # 移档前旧路径（drift 提交记的是当时路径，串匹配不解析 rename）
   - { type: file, path: "docs/plans/game-animations-plan.md", weight: 0.1 }
   - { type: file, path: "docs/plans/xiachan-text-rewrite-plan.md", weight: 0.1 }
