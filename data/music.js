@@ -19,3 +19,19 @@ export const TRACK_DEFS = [
   { id: 'lakespring', name: '湖边早春',     emoji: '🌅', tier: 'any',     price: 400, file: 'audio/music/lakeside-spring.mp3' },
   { id: 'arthur',   name: '湖边临终的亚瑟王', emoji: '🛶', tier: 'any',    price: 800, file: 'audio/music/arthur-lakeside.mp3', requiresBook: 'book_031' }
 ];
+
+// ── 活动日折扣价（2026-09-20 音乐节日，图南拍板：半价、单日、留音阁两架通用）──
+// 纯函数，Node 可测；结算与展示共用本函数保证单一口径。0 元档（档位解锁）不受折扣影响。
+import { getEventEffectMults } from './event_calendar.js';
+
+/**
+ * 计算留音阁某商品的折后价。
+ * @returns {{ price:number, original:number, onSale:boolean }} price=实付价，original=原价，onSale=是否命中折扣日
+ */
+export function getMusicSalePrice(basePrice, date = new Date()) {
+  const original = Number(basePrice) || 0;
+  if (original <= 0) return { price: 0, original: 0, onSale: false };
+  const mult = getEventEffectMults(date).shopDiscount ?? 1;
+  if (mult >= 1) return { price: original, original, onSale: false };
+  return { price: Math.max(1, Math.round(original * mult)), original, onSale: true };
+}

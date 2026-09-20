@@ -16,6 +16,7 @@ import {
   getRoomStatus, getOpenRoomCount, getRepairSnapshot, canRepairRoom, repairRoom,
   checkGrandOpening, getTodayEvents, getCurrentMonthBanner
 } from '../core/exhibition.js';
+import { fmtZhe, fmtOff } from '../../data/event_calendar.js';
 
 // ========== 公共件：房间页面包屑（迁入页 header 一行，plan §2.3 工程注记） ==========
 
@@ -145,7 +146,11 @@ function renderHall(container) {
     const ev = events[0];
     const effectDesc = ev.effect?.borrowFavorMult
       ? t('exhEventEffectFavor').replace('{mult}', ev.effect.borrowFavorMult)
-      : t('exhEventEffectCoins').replace('{mult}', ev.effect?.focusCoinsMult || 1);
+      : ev.effect?.shopDiscount
+        ? t('exhEventEffectSale')
+            .replace('{pct}', fmtZhe(ev.effect.shopDiscount))
+            .replace('{off}', fmtOff(ev.effect.shopDiscount))
+        : t('exhEventEffectCoins').replace('{mult}', ev.effect?.focusCoinsMult || 1);
     foot.innerHTML += `
       <div class="exh-event-banner rounded-xl px-4 py-3 text-center text-sm font-bold">
         🎉 ${t('exhEventToday').replace('{name}', t(ev.nameKey)).replace('{effect}', effectDesc)}

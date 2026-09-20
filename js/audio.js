@@ -2,7 +2,7 @@
 import { state, saveState } from './state.js';
 import { initAmbient, setAmbientEnabled, isAmbientEnabled, playAmbient, stopAmbient } from './ambient.js';
 import { getSettings, setSettings, setSetting, initSettings } from './settings.js';
-import { TRACK_DEFS } from '../data/music.js';
+import { TRACK_DEFS, getMusicSalePrice } from '../data/music.js';
 import { resolveStageLevel } from '../data/atmosphere.js';
 import { spendCoins } from './storage.js';
 
@@ -116,18 +116,19 @@ function isBookCompleted(bookId) {
   return !!bs && bs.status === 'completed';
 }
 
-/** 购买唱片，返回 { ok, reason? } */
+/** 购买唱片，返回 { ok, reason?, paid?, original? }（音乐节日半价日按折后价结算，getMusicSalePrice 单一口径） */
 export function purchaseTrack(trackId) {
   const def = TRACK_DEFS.find(t => t.id === trackId);
   if (!def) return { ok: false, reason: 'not_found' };
   if (isTrackPurchased(trackId)) return { ok: false, reason: 'already_owned' };
   const purchaseState = getTrackPurchaseState(def);
   if (purchaseState.status !== 'purchasable') return { ok: false, reason: purchaseState.reason || 'locked' };
-  if (!spendCoins(def.price)) return { ok: false, reason: 'no_coins' };
+  const sale = getMusicSalePrice(def.price);
+  if (!spendCoins(sale.price)) return { ok: false, reason: 'no_coins' };
   if (!state.musicRoom) state.musicRoom = { unlocked: false, tracks: [] };
   state.musicRoom.tracks.push(trackId);
   saveState();
-  return { ok: true };
+  return { ok: true, paid: sale.price, original: sale.original };
 }
 
 /** 获取曲目定义 */
