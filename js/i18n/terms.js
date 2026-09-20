@@ -963,6 +963,7 @@ const TERM_DATA = Object.freeze({
   musicTrack_lakespring: { zh: '湖边早春', en: 'Early Spring by the Lake' },
   musicTrack_arthur: { zh: '湖边临终的亚瑟王', en: 'Arthur by the Dying Lake' },
   tabMusicRoom: { zh: '留声阁', en: 'Phonograph Hall' },
+  musicRoomBuyConfirm: { zh: '花费 {price} 智慧之光开启留声阁？它将成为展览厅的一部分。', en: 'Open the Music Room for {price} Wisdom Light? It will become part of the Exhibition Hall.' },
   musicRoomLocked: { zh: '留声阁尚未解锁', en: 'The Phonograph Room is locked' },
   musicRoomLockedDesc: { zh: '这里将陈列馆主收藏的全部唱片。解锁后，你可以随时回到这里聆听每一首乐曲。', en: 'A gallery for the curator\'s record collection. Unlock it to replay every tune anytime.' },
   musicRoomCollected: { zh: '已收藏 {n}/{total} 张唱片', en: 'Collection: {n}/{total} records' },
