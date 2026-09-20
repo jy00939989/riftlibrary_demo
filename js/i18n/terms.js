@@ -97,6 +97,16 @@ const TERM_DATA = Object.freeze({
   evtQianzhongshuBirthday: { zh: '钱钟书诞辰', en: "Qian Zhongshu's Birthday" },
   evtAustenBirthday: { zh: '简·奥斯汀诞辰', en: "Jane Austen's Birthday" },
   evtBookSuzhouMonth: { zh: '书香苏州 · 百步芳草 四季书香（苏州市全民阅读系列活动月）', en: 'Reading Suzhou · citywide reading month' },
+  // 音乐节日（2026-09-20 图南拍板：留音阁全场半价日）
+  evtMozartBirthday: { zh: '莫扎特诞辰', en: "Mozart's Birthday" },
+  evtVivaldiBirthday: { zh: '维瓦尔第诞辰', en: "Vivaldi's Birthday" },
+  evtBachBirthday: { zh: '巴赫诞辰', en: "Bach's Birthday" },
+  evtJazzDay: { zh: '国际爵士乐日', en: 'International Jazz Day' },
+  evtIntlMusicDay: { zh: '国际音乐日', en: 'International Music Day' },
+  evtBeethovenBirthday: { zh: '贝多芬诞辰', en: "Beethoven's Birthday" },
+  musicSaleBanner: { zh: '🎶 今日{events}——留音阁全场 {pct} 折，两架通用！', en: '🎶 Today: {events} — everything in the Music Room is {off}% off!' },
+  musicSaleTag: { zh: '{pct}折', en: '-{off}%' },
+  exhEventEffectSale: { zh: '留音阁 {pct} 折', en: 'Music Room {off}% off' },
 
   // ========== 馆长办公室子标签 ==========
   subtabOverview: { zh: '概况', en: 'Overview' },

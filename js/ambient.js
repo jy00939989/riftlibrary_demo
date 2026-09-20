@@ -4,6 +4,7 @@ import { spendCoins } from './storage.js';
 import { t } from './i18n/terms.js';
 import { getSettings, setSetting } from './settings.js';
 import { isDlcPackUnlocked } from './shop.js';
+import { getMusicSalePrice } from '../data/music.js';
 
 export const AMBIENT_DEFS = [
   { id: 'victorian_study', name: t('ambientName_victorian_study'), emoji: '🕯️', price: 500, file: 'audio/ambient/victorian_study.mp3' },
@@ -51,7 +52,7 @@ export function getUnlockedAmbientIds() {
   return (state.ambientSounds?.unlocked) || [];
 }
 
-/** 购买环境音 */
+/** 购买环境音（音乐节日半价日按折后价结算，与唱片同一口径 getMusicSalePrice） */
 export function buyAmbient(id) {
   const def = AMBIENT_DEFS.find(d => d.id === id);
   if (!def) return { ok: false, reason: 'not_found' };
@@ -60,14 +61,15 @@ export function buyAmbient(id) {
   if (def.dlcPackId && !isDlcPackUnlocked(def.dlcPackId)) {
     return { ok: false, reason: 'dlc_locked', dlcPackId: def.dlcPackId };
   }
-  if (!spendCoins(def.price)) return { ok: false, reason: 'no_coins' };
+  const sale = getMusicSalePrice(def.price);
+  if (!spendCoins(sale.price)) return { ok: false, reason: 'no_coins' };
 
   if (!state.ambientSounds) {
     state.ambientSounds = { unlocked: [], current: null };
   }
   state.ambientSounds.unlocked.push(id);
   saveState();
-  return { ok: true, def };
+  return { ok: true, def, paid: sale.price, original: sale.original };
 }
 
 /** 选择并播放指定环境音，传 null 则停止 */

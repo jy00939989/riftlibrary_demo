@@ -2,7 +2,8 @@
 import { state } from '../state.js';
 import { el, updateStatusBar } from './common.js';
 import { t } from '../i18n/terms.js';
-import { MUSIC_ROOM_UNLOCK_PRICE } from '../../data/music.js';
+import { MUSIC_ROOM_UNLOCK_PRICE, getMusicSalePrice } from '../../data/music.js';
+import { getEventsOnDate, getEventEffectMults, fmtZhe, fmtOff } from '../../data/event_calendar.js';
 import { playSfx } from '../audio.js';
 import {
   getAllTrackDefs, getCurrentTrackId, isBgmPlaying,
@@ -65,6 +66,19 @@ export function renderMusicRoomPage() {
   `;
   container.appendChild(header);
 
+  // 音乐节日横幅（2026-09-20 半价日活动，单日等值；命中即两架同折）
+  const musicEvents = getEventsOnDate(new Date()).filter(e => e.type === 'music');
+  if (musicEvents.length > 0) {
+    const mult = getEventEffectMults(new Date()).shopDiscount;
+    const names = musicEvents.map(e => t(e.nameKey)).join(' · ');
+    const banner = el('div', 'rounded-xl px-4 py-3 mb-5 text-center text-sm font-bold border-2 border-magic-gold/60 bg-magic-gold/10 text-magic-gold');
+    banner.innerHTML = t('musicSaleBanner')
+      .replace('{events}', ' ' + names)
+      .replace('{pct}', fmtZhe(mult))
+      .replace('{off}', fmtOff(mult));
+    container.appendChild(banner);
+  }
+
   // 正在播放栏
   const currentTrack = tracks.find(tr => tr.id === currentId);
   const nowBar = el('div', 'parchment-bg rounded-2xl p-4 magic-glow mb-6 flex items-center gap-4');
@@ -102,8 +116,16 @@ export function renderMusicRoomPage() {
       else if (isCurrent) badge = `<span class="text-ink-light text-xs font-bold flex-shrink-0">⏸ ${t('paused')}</span>`;
     } else if (track.purchasable) {
       card.className += ' border-magic-blue/40 bg-white/50 hover:border-magic-blue';
-      subText = `${t('clickToBuy')} 💰${track.purchasePrice.toLocaleString()}`;
-      badge = `<span class="text-magic-blue text-xs font-bold flex-shrink-0">💰${track.purchasePrice.toLocaleString()}</span>`;
+      const sale = getMusicSalePrice(track.purchasePrice);
+      if (sale.onSale) {
+        const mult = getEventEffectMults(new Date()).shopDiscount;
+        const tag = t('musicSaleTag').replace('{pct}', fmtZhe(mult)).replace('{off}', fmtOff(mult));
+        subText = `${t('clickToBuy')} <s class="opacity-60">💰${sale.original.toLocaleString()}</s> 💰${sale.price.toLocaleString()}`;
+        badge = `<span class="text-magic-gold text-xs font-bold flex-shrink-0">🏷${tag} 💰${sale.price.toLocaleString()}</span>`;
+      } else {
+        subText = `${t('clickToBuy')} 💰${track.purchasePrice.toLocaleString()}`;
+        badge = `<span class="text-magic-blue text-xs font-bold flex-shrink-0">💰${track.purchasePrice.toLocaleString()}</span>`;
+      }
     } else {
       card.className += ' border-wood/10 bg-stone-100/50 opacity-50';
       subText = track.lockedReason === 'requiresBook' ? t('trackRequiresBook') : t('unlockAtNextStage');
@@ -185,8 +207,16 @@ export function renderMusicRoomPage() {
       badge = '<span class="text-lg flex-shrink-0">🔒</span>';
     } else {
       card.className += ' border-magic-blue/40 bg-white/50 hover:border-magic-blue';
-      subText = `${t('clickToBuy')} 💰${a.price.toLocaleString()}`;
-      badge = `<span class="text-magic-blue text-xs font-bold flex-shrink-0">💰${a.price.toLocaleString()}</span>`;
+      const sale = getMusicSalePrice(a.price);
+      if (sale.onSale) {
+        const mult = getEventEffectMults(new Date()).shopDiscount;
+        const tag = t('musicSaleTag').replace('{pct}', fmtZhe(mult)).replace('{off}', fmtOff(mult));
+        subText = `${t('clickToBuy')} <s class="opacity-60">💰${sale.original.toLocaleString()}</s> 💰${sale.price.toLocaleString()}`;
+        badge = `<span class="text-magic-gold text-xs font-bold flex-shrink-0">🏷${tag} 💰${sale.price.toLocaleString()}</span>`;
+      } else {
+        subText = `${t('clickToBuy')} 💰${a.price.toLocaleString()}`;
+        badge = `<span class="text-magic-blue text-xs font-bold flex-shrink-0">💰${a.price.toLocaleString()}</span>`;
+      }
     }
 
     card.innerHTML = `
