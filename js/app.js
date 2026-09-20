@@ -297,8 +297,8 @@ function init() {
       if (typeof window.renderDecorationPage === 'function') window.renderDecorationPage();
     }
 
-    // 书籍灾难事件（鼠患/霉斑/火灾，可在设置关闭）
-    const bookDisasters = tryTriggerBookDisasters();
+    // 书籍灾难事件（鼠患/霉斑/火灾/蛀虫/积灰/窃书/台风波及，可在设置关闭）
+    const bookDisasters = tryTriggerBookDisasters(disaster);
     if (bookDisasters.length) {
       if (typeof renderLibraryPage === 'function') renderLibraryPage();
       if (typeof renderBookshelfPage === 'function') renderBookshelfPage();

@@ -52,6 +52,9 @@ anchors:
   - { type: file, path: "package.json", weight: 0.1 }
   - { type: file, path: "scripts/check-imports.mjs", weight: 0.1 }
   - { type: file, path: "scripts/test-music-festival-sale.mjs", weight: 0.1 }
+  - { type: file, path: "js/core/disasters.js", weight: 0.1 }
+  - { type: file, path: "data/signboards.js", weight: 0.1 }
+  - { type: file, path: "scripts/test-disasters-batch2.mjs", weight: 0.1 }
   # 移档前旧路径（drift 提交记的是当时路径，串匹配不解析 rename）
   - { type: file, path: "docs/plans/game-animations-plan.md", weight: 0.1 }
   - { type: file, path: "docs/plans/xiachan-text-rewrite-plan.md", weight: 0.1 }
@@ -237,15 +240,6 @@ anchors:
 - [x] 庭院接入现实日历活动日框架，确定首批作家/纪念日清单 → 归 Phase 5
 - [x] 实现自由氛围兑灵感入口（建议 50:1）→ 归 Phase 5
 - [x] 调整顶栏/图书馆 UI，区分藏书厅进度条与自由氛围池 → 归 Phase 1
-
-### book-damage-events-plan（书籍损毁事件）
-- [x] 选定首批 2–3 个 MVP 损毁来源（推荐鼠患、潮湿霉斑）——2026-09-07 落地鼠患+霉斑+火灾
-- [x] 在 `data/signboards.js` 新增对应预防类标志牌（猫馆长、除湿炭包等）——三牌入库：猫馆长/除湿炭包/防火标识
-- [x] 在 tick/每日首次登录/还书时触发事件，计算概率后应用有界损失——tickVisitors 60s 入口，冷却制
-- [x] 保证典藏版、修复中书籍免疫，单次损失不超过 30%
-- [x] 每条损毁事件写入墨墨日志，配叙事文案——弹窗+馆史+日记三处
-- [x] 设置里增加“灾难事件”开关，照顾休闲玩家——🎼 面板总开关，默认开
-- [x] 实现 UI 提示当前损毁概率与借阅区等级关系——沙龙横幅/升级弹窗已有（d37776a）
 
 ### library-music-expansion-plan（音乐扩展）
 > 2026-09-11 部分落地：春/冬/格什温三首已入库 `audio/music/`（winter-reverie / spring-reverie / rhapsody-jazz）+ 湖边早春/亚瑟王（留声阁亚瑟王联动），均注册 TRACK_DEFS `tier:'any'` 中英曲名齐。

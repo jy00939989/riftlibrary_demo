@@ -115,5 +115,25 @@ export const SIGNBOARDS = {
     price: 1500,
     page: 'bookshelf',
     buff: { type: 'disaster_defense', target: 'fire', value: 0.88, desc: '火灾概率 -88%' }
+  },
+  camphor_bookmark: {
+    id: 'camphor_bookmark',
+    name: '樟木书签',
+    emoji: '🪵',
+    icon: '🪵',
+    description: '一片薄薄的樟木，夹在书页间散发出冷冷的清香。蛀虫闻了直摇头，纷纷搬家。',
+    price: 700,
+    page: 'bookshelf',
+    buff: { type: 'disaster_defense', target: 'worm', value: 0.70, desc: '蛀虫概率 -70%' }
+  },
+  sealed_window: {
+    id: 'sealed_window',
+    name: '密封窗棂',
+    emoji: '🪟',
+    icon: '🪟',
+    description: '谷雨亲手糊的窗纸，又加了一道木栓。台风天，雨点在窗外发脾气，书里一片干燥。',
+    price: 800,
+    page: 'bookshelf',
+    buff: { type: 'disaster_defense', target: 'typhoon_books', value: 0.80, desc: '台风波及书籍概率 -80%' }
   }
 };

@@ -818,11 +818,13 @@ export function tickVisitorBrowsing(now) {
   });
 }
 
-function getCompletedBooks() {
+export function getCompletedBooks() {
   return Object.values(BOOKS).filter(book => {
     const bs = state.books[book.id];
     const inRestoration = (state.restorationBox || []).includes(book.id);
+    // 积灰/失窃中的书暂不可借（book-damage-events 批次二）
     return bs && bs.status === 'completed' && !bs.damaged && !inRestoration &&
+           !bs.dustyAt && !bs.stolenAt &&
            !state.visitors.some(v => (v.status === 'borrowed' || v.status === 'due') &&
              ((v.bookIds && v.bookIds.length ? v.bookIds : [v.bookId]).includes(book.id)));
   });
@@ -879,6 +881,9 @@ function attemptBorrow(visitor, completedBooks, now) {
     }
     if (bs) {
       bs.borrowTimes = (bs.borrowTimes || 0) + 1;
+      // 蛀虫计时重置（借阅=通风，book-damage-events 批次二）
+      bs.lastBorrowedAt = now;
+      if (bs.wormLevel) bs.wormLevel = 0;
     }
   });
 

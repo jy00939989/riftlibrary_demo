@@ -4,6 +4,7 @@ import { BOOKS, CATEGORIES } from '../../data/books.js';
 import { t } from '../i18n/terms.js';
 import { el, actions, updateStatusBar, getBookTitle, getChapterTitle, getChapterPreview, getChapterContent, getBookAuthorBio, getBookAnecdotes, getBookReviews } from './common.js';
 import { playSfx } from '../audio.js';
+import { cleanBookDust } from '../core/disasters.js';
 import { checkTaskCompletion } from '../quests.js';
 import { getManuscriptSlots, getManuscriptBoxCount, getManuscriptSlotPrice, expandManuscriptSlots, getBookCapacity, getOwnedBookCount } from '../capacity.js';
 import { calcCurationEffects } from '../curation.js';
@@ -427,6 +428,15 @@ function renderBookCard(book) {
         ${isCompleted ? `${t('completed')} ✓` : isCopying ? `${t('copying')} ${progress}%` : t('pendingTranscription')}
       </div>
       ${isCompleted && !book.indestructible ? renderBookCondition(book.id) : ''}
+      ${isCompleted && bookState.dustyAt ? `
+        <div class="mt-2 rounded-lg bg-stone-100 border border-stone-300 px-2 py-1.5 text-center">
+          <div class="text-[10px] text-stone-500 font-bold mb-1">🌫️ ${t('dustyBadge')}</div>
+          <button class="dust-clean-btn w-full px-2 py-1 bg-wood/80 text-white rounded text-[10px] font-bold hover:shadow transition-all">${t('dustCleanBtn')}</button>
+        </div>` : ''}
+      ${isCompleted && bookState.stolenAt ? `
+        <div class="mt-2 rounded-lg bg-ink/80 px-2 py-1.5 text-center">
+          <div class="text-[10px] text-amber-200 font-bold">🥷 ${t('stolenBadge').replace('{days}', Math.max(0, Math.ceil((bookState.stolenReturnAt - Date.now()) / 86400000)))}</div>
+        </div>` : ''}
       ${isCompleted && !bookState.reCopyUnlocked && !isNoMasteryBook(book.id)
         ? `<button class="re-copy-card-btn w-full mt-2 px-3 py-1.5 bg-purple-600/90 text-white rounded-lg text-[10px] font-bold hover:shadow-lg transition-all flex items-center justify-center gap-1">
              ${t('unlockReCopyCost').replace('{cost}', 1)}
@@ -449,6 +459,19 @@ function renderBookCard(book) {
     reCopyCardBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       if (tryUnlockReCopy(book)) {
+        renderBookshelfPage();
+      }
+    });
+  }
+
+  // 掸灰（book-damage-events 批次二：积灰书恢复可借）
+  const dustCleanBtn = cardDiv.querySelector('.dust-clean-btn');
+  if (dustCleanBtn) {
+    dustCleanBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (cleanBookDust(book.id)) {
+        playSfx('button_click');
+        if (window.showToast) window.showToast(t('dustCleanedToast'), 'success');
         renderBookshelfPage();
       }
     });
