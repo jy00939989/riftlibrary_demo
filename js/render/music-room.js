@@ -14,6 +14,7 @@ import {
   getCurrentAmbientId, isAmbientEnabled, setAmbientEnabled
 } from '../ambient.js';
 import { isDlcPackUnlocked, getDlcPack } from '../shop.js';
+import { unlockMusicRoom } from '../core/shop/library-upgrades.js';
 
 function getTrackDisplayName(track) {
   const key = 'musicTrack_' + track.id;
@@ -52,8 +53,15 @@ export function renderMusicRoomPage(container = null) {
         ${t('gotoShopUnlock').replace('{price}', MUSIC_ROOM_UNLOCK_PRICE.toLocaleString())}
       </button>
     `;
+    // 2026-09-20：商店卡已删除，原地直接购买（ Exhibition hall 内嵌语境）
     lockedCard.querySelector('.goto-shop-music-room-btn').addEventListener('click', () => {
-      if (window.switchTab) window.switchTab('shop');
+      if (unlockMusicRoom()) {
+        playSfx('buy_success');
+        updateStatusBar();
+        renderMusicRoomPage();
+      } else if (window.showToast) {
+        window.showToast(`${t('insufficientCoins')} 💰`, 'error');
+      }
     });
     container.appendChild(lockedCard);
     return;

@@ -18,6 +18,8 @@ import {
 } from '../core/exhibition.js';
 import { fmtZhe, fmtOff } from '../../data/event_calendar.js';
 import { renderMusicRoomPage } from './music-room.js'; // 留声阁并入大厅（2026-09-20）：直接模块引用，无环（music-room 不再回引 exhibition）
+import { unlockMusicRoom } from '../core/shop/library-upgrades.js';
+import { MUSIC_ROOM_UNLOCK_PRICE } from '../../data/music.js';
 
 // ========== 公共件：房间页面包屑（迁入页 header 一行，plan §2.3 工程注记） ==========
 
@@ -249,7 +251,17 @@ function renderSpot(roomId) {
     if (status === 'open') {
       enterRoom(roomId);
     } else if (isMusicUnbuilt) {
-      window.switchTab('shop');
+      // 留声阁购买入口已并入大厅（商店卡删除）：原地确认购买，不再跳商店
+      if (window.confirm(t('musicRoomBuyConfirm').replace('{price}', MUSIC_ROOM_UNLOCK_PRICE.toLocaleString()))) {
+        if (unlockMusicRoom()) {
+          playSfx('buy_success');
+          updateStatusBar();
+          checkAndShowGrandOpening();
+          renderExhibitionPage();
+        } else {
+          showToast(`${t('insufficientCoins')} 💰`, 'error');
+        }
+      }
     } else {
       openRepairPanel(roomId, spot);
     }
@@ -313,7 +325,17 @@ function renderEntrance(roomId) {
     if (status === 'open') {
       enterRoom(roomId);
     } else if (isMusicUnbuilt) {
-      window.switchTab('shop');
+      // 留声阁购买入口已并入大厅（商店卡删除）：原地确认购买，不再跳商店
+      if (window.confirm(t('musicRoomBuyConfirm').replace('{price}', MUSIC_ROOM_UNLOCK_PRICE.toLocaleString()))) {
+        if (unlockMusicRoom()) {
+          playSfx('buy_success');
+          updateStatusBar();
+          checkAndShowGrandOpening();
+          renderExhibitionPage();
+        } else {
+          showToast(`${t('insufficientCoins')} 💰`, 'error');
+        }
+      }
     } else {
       openRepairPanel(roomId, entrance);
     }
