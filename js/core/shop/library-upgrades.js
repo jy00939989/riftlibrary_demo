@@ -48,7 +48,7 @@ export function getMasteredBookSpeedBonus() {
   let count = 0;
   Object.entries(state.books || {}).forEach(([bookId, bs]) => {
     if (!bs || isNoMasteryBook(bookId)) return;
-    if ((bs.masteryLevel || 0) >= 5) count++;
+    if ((bs.masteryLevel || 0) >= 2) count++; // 2=典藏
   });
   return Math.min(MASTERY_SPEED_BONUS_CAP, count * MASTERY_SPEED_BONUS_PER_BOOK);
 }

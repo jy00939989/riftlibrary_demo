@@ -111,7 +111,7 @@ state.plants = [{ ...livePot(typeA), waterAvailable: 2 }, { ...emptyPot(), water
 state.water = 0; // 模块默认值：老档载入后就是这个状态
 delete state.plantLossAlert;
 runMigrations();
-assert(state._schemaVersion === 14, 'schemaVersion 10 → 13');
+assert(state._schemaVersion === 15, 'schemaVersion 10 → 13');
 assert(state.water === 3, '旧 per-pot 浇水次数并入全局池（2+1）');
 assert(state.plants.every(p => p.waterAvailable === undefined), '旧字段删除');
 assert(state.plantLossAlert === null, '通报位补默认');

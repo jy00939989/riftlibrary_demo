@@ -71,10 +71,10 @@ const ACHIEVEMENTS = [
     check: (s, t) => t === 'book' && countCategoryBooks(s, '哲学') >= 3 },
   { id: 'B07', name: 'achName_B07', rarity: 'gold', category: 'collection',
     desc: 'achDesc_B07',
-    check: (s, t) => t === 'book' && countMasteryLevel(s, 3) >= 5 },
+    check: (s, t) => t === 'book' && countMasteryLevel(s, 1) >= 5 }, // 1=在架：5 本完成上架
   { id: 'B08', name: 'achName_B08', rarity: 'platinum', category: 'collection',
     desc: 'achDesc_B08',
-    check: (s, t) => t === 'book' && countMasteryLevel(s, 5) >= 3 },
+    check: (s, t) => t === 'book' && countMasteryLevel(s, 2) >= 3 }, // 2=典藏：3 本成为典藏
   { id: 'B09', name: 'achName_B09', rarity: 'gold', category: 'collection',
     desc: 'achDesc_B09',
     check: (s, t) => t === 'volume_collect' },
