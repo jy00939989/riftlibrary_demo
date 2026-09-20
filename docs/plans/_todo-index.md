@@ -23,6 +23,35 @@ anchors:
   - { type: file, path: "docs/marketing/2026-08-28-update-preview.md", weight: 0.1 }
   - { type: file, path: "visual/exhibition/展览厅lv1.png", weight: 0.1 }
   - { type: file, path: "visual/exhibition/展览厅lv5.png", weight: 0.1 }
+  # god-module-split 时代文件（原锚随 2026-09-20 plans/ 残留档删除失效，经本清单中转）
+  - { type: file, path: "data/momo-reviews.js", weight: 0.1 }
+  - { type: file, path: "js/core/focus-actions.js", weight: 0.1 }
+  - { type: file, path: "js/core/visitor-actions.js", weight: 0.1 }
+  - { type: file, path: "js/core/library.js", weight: 0.1 }
+  - { type: file, path: "js/tutorial.js", weight: 0.1 }
+  - { type: file, path: "js/render/shared/action-cards.js", weight: 0.1 }
+  - { type: file, path: "js/render/shared/crash-recovery.js", weight: 0.1 }
+  - { type: file, path: "js/render/shared/loading-screen.js", weight: 0.1 }
+  - { type: file, path: "js/render/shared/momo-intro.js", weight: 0.1 }
+  - { type: file, path: "js/render/shared/toast.js", weight: 0.1 }
+  - { type: file, path: "js/render/shop/utils.js", weight: 0.1 }
+  - { type: file, path: "js/render/shop/book-section.js", weight: 0.1 }
+  - { type: file, path: "js/render/shop/countdown.js", weight: 0.1 }
+  - { type: file, path: "js/render/shop/naming-modal.js", weight: 0.1 }
+  - { type: file, path: "js/render/shop/purchase-modal.js", weight: 0.1 }
+  - { type: file, path: "js/render/focus/aura-indicator.js", weight: 0.1 }
+  - { type: file, path: "js/render/focus/book-selector.js", weight: 0.1 }
+  - { type: file, path: "js/render/focus/completion-card.js", weight: 0.1 }
+  - { type: file, path: "js/render/focus/controls.js", weight: 0.1 }
+  - { type: file, path: "js/render/focus/copy-preview.js", weight: 0.1 }
+  - { type: file, path: "js/render/focus/daily-tasks.js", weight: 0.1 }
+  - { type: file, path: "js/render/focus/mode-selector.js", weight: 0.1 }
+  - { type: file, path: "js/render/focus/page.js", weight: 0.1 }
+  - { type: file, path: "js/render/focus/quest-indicator.js", weight: 0.1 }
+  - { type: file, path: "js/render/focus/timer-display.js", weight: 0.1 }
+  - { type: file, path: "package.json", weight: 0.1 }
+  - { type: file, path: "scripts/check-imports.mjs", weight: 0.1 }
+  - { type: file, path: "scripts/test-music-festival-sale.mjs", weight: 0.1 }
   # 移档前旧路径（drift 提交记的是当时路径，串匹配不解析 rename）
   - { type: file, path: "docs/plans/game-animations-plan.md", weight: 0.1 }
   - { type: file, path: "docs/plans/xiachan-text-rewrite-plan.md", weight: 0.1 }
