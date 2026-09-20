@@ -7,6 +7,26 @@ anchors:
   - { type: file, path: "js/render/shared/video-overlay.js", weight: 0.2 }
   - { type: file, path: "visual/animations/manifest.json", weight: 0.2 }
   - { type: file, path: "js/render/animations.js", weight: 0.1 }
+  # —— 2026-09-20 drift 对账补锚（音频/动画入库与挂接链，union 增量勿删）——
+  - { type: file, path: "audio/music/ruined-library.mp3", weight: 0.1 }
+  - { type: file, path: "audio/music/ruined-library-variation.mp3", weight: 0.1 }
+  - { type: file, path: "audio/music/starlight-library.mp3", weight: 0.1 }
+  - { type: file, path: "audio/music/starlight-library-variation.mp3", weight: 0.1 }
+  - { type: file, path: "audio/music/town-stroll.mp3", weight: 0.1 }
+  - { type: file, path: "audio/music/town-stroll-variation.mp3", weight: 0.1 }
+  - { type: file, path: "visual/animations/book_complete_shelving_480p.mp4", weight: 0.1 }
+  - { type: file, path: "visual/animations/borrow_lv0_1_480p.mp4", weight: 0.1 }
+  - { type: file, path: "visual/animations/focus_lv0_1_480p.mp4", weight: 0.1 }
+  - { type: file, path: "visual/animations/focus_lv1_2_480p.mp4", weight: 0.1 }
+  - { type: file, path: "visual/animations/focus_lv2_3_480p.mp4", weight: 0.1 }
+  - { type: file, path: "visual/animations/atmo_0_1_480p.mp4", weight: 0.1 }
+  - { type: file, path: "visual/animations/atmo_2_3_480p.mp4", weight: 0.1 }
+  - { type: file, path: "visual/animations/visitor_first_480p.mp4", weight: 0.1 }
+  - { type: file, path: "js/intro.js", weight: 0.1 }
+  - { type: file, path: "js/persistence.js", weight: 0.1 }
+  - { type: file, path: "js/settings.js", weight: 0.1 }
+  - { type: file, path: "visual/animations/_archive/borrow_lv0_1_v1_5s.mp4", weight: 0.1 }
+  - { type: file, path: "visual/promo/异世界图书馆宣传PV.mp4", weight: 0.1 }
 ---
 
 # 归墟图书馆 · 动画计划（animation-suite / Seedance 2.5 视频套案）

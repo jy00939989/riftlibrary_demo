@@ -1,4 +1,10 @@
-# 田园瘟疫纪事·位面重建方案（pastoral-plane-rebuild-plan）v2
+---
+anchors:
+  - { type: file, path: "docs/plans/pastoral-plane-rebuild-plan.md", weight: 0.1 }
+  - { type: file, path: "docs/plans/reviews/pastoral-plane-rebuild-plan-review.md", weight: 0.1 }
+---
+
+# 田园瘟疫纪事·位面重建方案（pastoral-plane-rebuild-plan）v2.1
 
 > 状态：v2.1——2026-09-18 六专科评审全面修订为 v2 后，同日 game-designer 追评（`reviews/pastoral-plane-rebuild-plan-review.md`）D1-D8 全折入；待图南终审后入 planner
 > 关联待办：`plane1-overhaul`（第一位面整体建设重启）
@@ -42,7 +48,7 @@
 | 层 | 文件 | 核实事实 | 处置 |
 |---|---|---|---|
 | 数据 | `data/planes.js` | 结构可用 | schema v2.1 基础 |
-| 内容 | `data/quests/pastoral_tasks.js` | 2057 行 ≈100 任务，含 ~150 氛围隐藏 faucet | 移 `docs/archive/data/`；**逐角色重写底稿**；faucet 移除登记 sink-ledger |
+| 内容 | `data/quests/pastoral_tasks.js` | 2057 行 ≈100 任务，含 **62 点氛围隐藏 faucet（57 任务）**；原估 ~150 系 2.4× 高估，实测数以此为准（§九/ sink-ledger §三） | 移 `docs/archive/data/`；**逐角色重写底稿**；faucet 移除登记 sink-ledger |
 | 系统 | `js/quests.js` | 队列/幕推进骨架可留；**`:42` 硬编码 plane id** | 重构基底 |
 | 存档 | `js/state/state.js:207` | **运行时键是 `state.quests`，不是 `state.planes`**（全库零命中） | flags 落 `state.quests.<planeId>.flags`，**不改名**（保接口、降迁移面） |
 | 迁移 | `js/state/migrations.js` | 当前 v13 → 新迁移 v14；**现行代码会 delete 旧字段**（:373 `plagueProgress` 先例） | v14 旧字段只读不删，违背即评审打回 |

@@ -3,6 +3,31 @@ layout: breakdown
 anchors:
   - { type: file, path: "docs/plans/_todo-index.md", weight: 0.1 }
   - { type: file, path: "docs/updates/2026-09-week2-deploy-prep.md", weight: 0.1 }
+  # —— 2026-09-20 drift 对账中转锚点（9-18 docs 大整理后归档/移档文档经本清单中转，union 增量勿删）——
+  - { type: file, path: "scripts/test-day-boundary.mjs", weight: 0.1 }
+  - { type: file, path: "js/core/day-boundary.js", weight: 0.1 }
+  - { type: file, path: "scripts/test-mastery-once.mjs", weight: 0.1 }
+  - { type: file, path: "scripts/compensation-code-insert.sql", weight: 0.1 }
+  - { type: file, path: "js/volumes.js", weight: 0.1 }
+  - { type: file, path: "scripts/backfill-book-words.mjs", weight: 0.1 }
+  - { type: file, path: "scripts/audit-book-word-counts.mjs", weight: 0.1 }
+  - { type: file, path: "docs/archive/plans/daily-boundary-refactor-plan.md", weight: 0.1 }
+  - { type: file, path: "docs/writing/fulltext-books-batch1.md", weight: 0.1 }
+  - { type: file, path: "docs/writing/xiachan-text-rewrite-plan.md", weight: 0.1 }
+  - { type: file, path: "docs/writing/public-domain-linear-copy-plan.md", weight: 0.1 }
+  - { type: file, path: "docs/archive/plans/focus-session-label-plan.md", weight: 0.1 }
+  - { type: file, path: "docs/archive/plans/game-animations-plan.md", weight: 0.1 }
+  - { type: file, path: "docs/archive/plans/recopy-system-revision-plan.md", weight: 0.1 }
+  - { type: file, path: "docs/archive/plans/visitor-borrow-duration-and-reward-adjustment.md", weight: 0.1 }
+  - { type: file, path: "docs/archive/plans/visitor-borrow-duration-and-reward-adjustment-review.md", weight: 0.1 }
+  - { type: file, path: "docs/marketing/2026-08-28-update-preview.md", weight: 0.1 }
+  - { type: file, path: "visual/exhibition/展览厅lv1.png", weight: 0.1 }
+  - { type: file, path: "visual/exhibition/展览厅lv5.png", weight: 0.1 }
+  # 移档前旧路径（drift 提交记的是当时路径，串匹配不解析 rename）
+  - { type: file, path: "docs/plans/game-animations-plan.md", weight: 0.1 }
+  - { type: file, path: "docs/plans/xiachan-text-rewrite-plan.md", weight: 0.1 }
+  - { type: file, path: "docs/plans/fulltext-books-batch1.md", weight: 0.1 }
+  - { type: file, path: "docs/plans/daily-boundary-refactor-plan.md", weight: 0.1 }
 ---
 
 # 归墟图书馆 · 待办总览
@@ -286,6 +311,44 @@ anchors:
 - [ ] 决策频率纪律：防连出冷却、防长缺保底、与 disastersEnabled 总开关的关系
 - [ ] 文案 zh/en 词条，墨墨口吻校准
 - [ ] 过 grill-me 后出实施 plan
+
+---
+
+## 🔵 2026-09-20 会话待办（克克四项建议，图南圈定）
+
+### v21-cleanup-drift-reconcile（v2.1 尾巴擦净 + drift 对账，2026-09-20）
+> 现状锚点：田园位面重建方案 v2.1 落盘 `docs/plans/pastoral-plane-rebuild-plan.md`（含评审对账注记）；9-18 收尾留三条尾巴；9-16 sync:state 曾报 drift_items_found=36（但该值窗口不稳定，权威面板是 GET /api/drift）。
+- [ ] 位面 plan 版本号三处统一（v2/v2.1 混用 → 统一 v2.1）
+- [ ] §二旧数「~150 氛围 faucet」改为真数 62（57 任务）
+- [ ] sink-ledger 里 ×0.25 旧引用改为 ×0.6（借阅倍率 25%→60% 已改，9-18）
+- [ ] 查 GET /api/drift 权威面板；若仍挂榜，按 commit 逐条补锚点至 plan 文档 frontmatter（union 语义，勿 replace）
+
+### pastoral-v21-read-and-phase0（田园位面 v2.1 细读 → 入 planner → Phase 0，2026-09-20）
+> 现状锚点：`docs/plans/pastoral-plane-rebuild-plan.md` v2.1 待图南细读；`_todo-index.md` §plane1-overhaul 未打勾；文档已推 Gitee。
+- [ ] 图南细读 v2.1（可先要克克的「细读指南」：决策点清单 + 评审折入摘要）
+- [ ] 细读后 todo-index §plane1-overhaul 打勾 + 阶段入 planner
+- [ ] Phase 0 开第一工单：修 atmo bug + 新建 test-plane-baseline.mjs + 聚合器
+
+### fulltext-books-m2-m3（M2 东京梦华录 / M3 诗经全文入库，2026-09-20）
+> 现状锚点：方案 `docs/plans/fulltext-books-batch1.md`（c68637d）图南已批 D1-D4 按推荐；M1 图书馆指南已完成（1c0a67c），照 M1 路径执行即可。
+- [ ] M2《东京梦华录》全文入库（分卷结构 + 双语词条 + 测试）
+- [ ] M3《诗经》全文入库（同上）
+- [ ] 跑全套测试脚本确认无回归（check:imports + 手工 test-*.mjs）
+
+### drift-guide-for-tunan（田园 v2.1 细读指南，2026-09-20）
+> 给上面第二项铺路：v2.1 全文很长（结局机检表 R1-R5 27 组合、acts.gate、flags 三态、M1-M6 迁移矩阵、内容预算 87 篇），直接细读门槛高。
+- [ ] 克克通读 v2.1，产出一页「图南细读指南」：需图南拍板的决策点清单 + 六专科评审折入摘要 + 损失模型签署边界回顾
+- [ ] 指南挂 `docs/plans/reviews/` 或 pastoral plan 附录，评审记录互挂注记
+
+### ✅ music-festival-sale（音乐节日半价日，2026-09-20 落地）
+> 图南四问拍板：巴赫 3/21 + 莫扎特 1/27 + 贝多芬 12/16 + 维瓦尔第 3/4 + 国际音乐日 10/1 + 国际爵士乐日 4/30；**半价、单日等值**（守 grill #3 区间纪律）。留音阁唱片架 + 环境音架两架通用；0 元档不参与。
+- [x] `data/event_calendar.js`：6 个 type:'music' 节日 + `effect.shopDiscount` 乘区（getEventEffectMults 扩三乘区，多日连乘预留）；12/16 与奥斯汀并存各算各的
+- [x] `data/music.js`：`getMusicSalePrice(base, date)` 纯函数单一口径（结算与展示共用），负价/0 价防御
+- [x] 结算接入：`js/audio.js purchaseTrack` + `js/ambient.js buyAmbient` 按折后价扣款
+- [x] 展示：`js/render/music-room.js` 音乐节日横幅 + 两架划线原价/折后价/折扣标；`js/render/exhibition.js` 大厅横幅第三分支（music 日不再误显「专注金币 ×1」）
+- [x] i18n 6 节日名 + musicSaleBanner/musicSaleTag/exhEventEffectSale 中英词条
+- [x] `scripts/test-music-festival-sale.mjs` 54 项 + check:imports ✓ + 全套 13 脚本绿（d24 的 Supabase 告警是固有本地回退）
+- [ ] 体验项：12/16 大厅横幅只显示 events[0]（既有单横幅限制，奥斯汀优先）；音乐日想换全文案可后续加循环展示
 
 ---
 
