@@ -5,7 +5,7 @@
 > `js/visitors.js` `getDamageChance()`（现 visitors.js:379）：基础 3%，借阅区每级 -0.4%（下限 0.5%），「爱惜书籍」标志牌在等级减免后再 -1%。数值与本文件建议公式完全一致。
 > 待实现清单：1 ✓ 2 ✓（先等级后标志牌，与本文件期望一致）3 ✓（`borrowAreaDamageRate` UI 文案已带说明）4（成就/访客叙事引用）未做，属可选项，不阻塞关闭。
 >
-> 对账记录：与 `docs/plans/book-damage-events-plan.md` 的鼠患预防设计（借阅区等级降低损毁）为同一机制，实施时以本实现为准。
+> 对账记录：与 `docs/archive/plans/book-damage-events-plan.md` 的鼠患预防设计（借阅区等级降低损毁）为同一机制，实施时以本实现为准。（plan 已 2026-09-20 归档）
 
 ---
 
