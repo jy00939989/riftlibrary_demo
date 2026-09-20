@@ -179,9 +179,23 @@ function showBookCompleteCard(bookTitle, bookEmoji, copyCount, callback, book, n
     `🏅 解锁名家书评：${book ? getBookReviews(book).slice(0, 40) + '…' : '待发现'}`,
     `🌟 解锁典藏封面 · 金光特效${book?.collectorCover ? ' · ' + book.collectorCover : ''}`
   ];
+  // 首通即典藏（2026-09-15 熟练度改制）：首通一次解锁全部五档，卡片须展示完整礼包而非单一级差奖励
+  const masteryBundleShort = ['📖 书籍上架 · 可供访客借阅', '📝 作者小传', '💬 创作轶闻', '🏅 名家书评', '🌟 典藏封面 · 金光特效'];
 
   const isFirstTime = copyCount === 1;
-  const rewardText = newLevel && masteryRewards[newLevel] ? masteryRewards[newLevel] : '';
+  let rewardHtml = '';
+  if (newLevel && newLevel >= 5) {
+    rewardHtml = `<div class="bg-magic-gold/10 border border-magic-gold/30 rounded-lg p-3 mb-3 text-sm text-ink">
+      <span class="text-xs text-magic-gold font-bold">🔓 首通即典藏 · 全部解锁</span>
+      <div class="text-left text-xs mt-1 space-y-0.5 text-ink-light">
+        ${masteryBundleShort.map(l => `<div>${l}</div>`).join('')}
+      </div>
+    </div>`;
+  } else if (newLevel && masteryRewards[newLevel]) {
+    rewardHtml = `<div class="bg-magic-gold/10 border border-magic-gold/30 rounded-lg p-3 mb-3 text-sm text-ink">
+      <span class="text-xs text-magic-gold font-bold">🔓 新解锁</span><br>${masteryRewards[newLevel]}
+    </div>`;
+  }
 
   if (isFirstTime) {
     card.innerHTML = `

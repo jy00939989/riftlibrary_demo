@@ -104,5 +104,13 @@ assert(state.books.book_030_vol1.masteryLevel === 2, 'noMastery 书不追溯');
 runMigrations();
 assert(state.books.book_001.masteryLevel === 5, '重复迁移幂等');
 
+// ── 日记模板档位回归（2026-09-20）：熟练度恒 5 后，档位必须按 copyCount 分 ──
+// 旧 tierMap 按 mastery 分档 → 首通（mastery 恒 5）必抽中「第三遍」文案（图南 8080 实测逮获）
+const { generateDiaryEntry } = await import('../js/diary.js');
+const s1 = Array.from({ length: 40 }, () => generateDiaryEntry('book_complete', { title: '传习录', copyCount: 1, mastery: 5 }));
+assert(s1.every(s => !s.includes('第三遍') && !s.includes('第四遍') && !s.includes('第五遍')), '首通日记不再出现「第三/四/五遍」文案');
+const s3 = Array.from({ length: 40 }, () => generateDiaryEntry('book_complete', { title: '传习录', copyCount: 3, mastery: 5 }));
+assert(s3.every(s => s.includes('第三遍')), '第三次誊抄日记稳定命中第三遍档');
+
 console.log(`\n${pass} 通过, ${fail} 失败`);
 process.exit(fail > 0 ? 1 : 0);
