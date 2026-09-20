@@ -17,6 +17,7 @@ import {
   checkGrandOpening, getTodayEvents, getCurrentMonthBanner
 } from '../core/exhibition.js';
 import { fmtZhe, fmtOff } from '../../data/event_calendar.js';
+import { renderMusicRoomPage } from './music-room.js'; // 留声阁并入大厅（2026-09-20）：直接模块引用，无环（music-room 不再回引 exhibition）
 
 // ========== 公共件：房间页面包屑（迁入页 header 一行，plan §2.3 工程注记） ==========
 
@@ -343,7 +344,7 @@ function openInlineMusicRoom() {
     const foot = document.querySelector('#page-exhibition .exh-event-banner')?.parentElement;
     (foot || document.getElementById('page-exhibition')).appendChild(slot);
   }
-  if (window.renderMusicRoomPage) window.renderMusicRoomPage(slot);
+  renderMusicRoomPage(slot); // 模块级直引——旧 window 守卫因未暴露恒为 undefined，点击曾无反应
   slot.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
