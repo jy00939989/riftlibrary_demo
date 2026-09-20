@@ -56,6 +56,9 @@ anchors:
   - { type: file, path: "data/signboards.js", weight: 0.1 }
   - { type: file, path: "scripts/test-disasters-batch2.mjs", weight: 0.1 }
   - { type: file, path: "docs/archive/plans/book-damage-events-plan.md", weight: 0.1 }
+  - { type: file, path: "visual/exhibition/hall_lv2.jpg", weight: 0.1 }
+  - { type: file, path: "visual/exhibition/hall_lv3.jpg", weight: 0.1 }
+  - { type: file, path: "visual/exhibition/hall_lv4.jpg", weight: 0.1 }
   # 移档前旧路径（drift 提交记的是当时路径，串匹配不解析 rename）
   - { type: file, path: "docs/plans/game-animations-plan.md", weight: 0.1 }
   - { type: file, path: "docs/plans/xiachan-text-rewrite-plan.md", weight: 0.1 }
