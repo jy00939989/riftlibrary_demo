@@ -187,21 +187,7 @@ anchors:
 - [ ] 新建 Edge Function `kimi-proxy` 转发 Moonshot API，前端替换本地 Flask 代理调用
 - [ ] 补全 OAuth 回调处理、`profiles` 自动建行、离线 fallback 与错误状态暴露
 
-### god-module-split-plan（神模块拆分）
-- [x] Phase 1：拆出 `js/state/state.js` / `migrations.js` / `save.js`，`js/state.js` 变 shim
-- [x] Phase 2：按购买类型拆分 `js/shop.js` 到 `js/core/shop/*.js`，原文件变转发壳
-- [x] Phase 3：把专注生命周期从 `app.js` 迁到 `js/core/focus-session.js`、`focus-rewards.js`、`focus-orchestrator.js`
-- [x] Phase 4：拆分 `js/render/focus.js` / `js/render/shop.js` 到子目录，确保 render 不再直接改 state
-- [x] Phase 5：`app.js` 只保留启动顺序与全局事件，其余弹窗/卡片迁出
-- [x] 同步改造 `actions`：由 app 注入或静态导入，建立“render → actions → core → state → save”数据流
 
-### god-module-split-full-implementation-plan（神模块拆分完整实施）
-- [x] Phase 1：落地 `js/state/state.js`、`migrations.js`、`save.js`，`js/state.js` 仅 re-export
-- [x] Phase 2：创建 `js/core/shop/book-shop.js`、`library-upgrades.js`、`plane-portals.js`、`signboards.js`
-- [x] Phase 3：创建 `js/core/focus-session.js`、`focus-rewards.js`、`focus-orchestrator.js`
-- [x] Phase 4：拆分 `js/render/focus/*.js` 与 `js/render/shop/*.js`，通用弹窗抽到 `js/render/shared/`
-- [x] Phase 5：`app.js` 瘦身到 <400 行，剩余弹窗/卡片迁到 render shared
-- [x] 重构 `actions` 为统一入口，render 通过 actions 调用 core，不直接修改 state
 
 ### economy-balance-review（经济平衡）
 - [x] 为氛围 500 硬封顶后增加消费口 → **v4 整个问题消失**：500 封顶随 EXP 模型移除，溢出概念不存在
@@ -335,10 +321,10 @@ anchors:
 - [ ] M3《诗经》全文入库（同上）
 - [ ] 跑全套测试脚本确认无回归（check:imports + 手工 test-*.mjs）
 
-### drift-guide-for-tunan（田园 v2.1 细读指南，2026-09-20）
+### drift-guide-for-tunan（田园 v2.1 细读指南，2026-09-20 ✅ 已交付）
 > 给上面第二项铺路：v2.1 全文很长（结局机检表 R1-R5 27 组合、acts.gate、flags 三态、M1-M6 迁移矩阵、内容预算 87 篇），直接细读门槛高。
-- [ ] 克克通读 v2.1，产出一页「图南细读指南」：需图南拍板的决策点清单 + 六专科评审折入摘要 + 损失模型签署边界回顾
-- [ ] 指南挂 `docs/plans/reviews/` 或 pastoral plan 附录，评审记录互挂注记
+- [x] 克克通读 v2.1 + workbuddy v3 §九 + briefing，产出一页「图南细读指南」：40 分钟阅读路线 + A/B/C 三档决策清单（A 档 8 项含 workbuddy §10.2 五开放问题 + 损失模型签署边界回顾）→ `reviews/pastoral-v21-reading-guide.md`
+- [x] 指南挂 reviews/，plan 状态行与 briefing 相关文件互挂注记
 
 ### ✅ music-festival-sale（音乐节日半价日，2026-09-20 落地）
 > 图南四问拍板：巴赫 3/21 + 莫扎特 1/27 + 贝多芬 12/16 + 维瓦尔第 3/4 + 国际音乐日 10/1 + 国际爵士乐日 4/30；**半价、单日等值**（守 grill #3 区间纪律）。留音阁唱片架 + 环境音架两架通用；0 元档不参与。
@@ -375,10 +361,6 @@ anchors:
 
 ## 🟠 已部分完成待收尾
 
-### god-module-split-full-implementation-plan（收尾）
-- [x] Phase 2–5 继续推进：shop 拆分、focus 拆分、render 拆分、app.js 瘦身
-- [x] 按 review 决策重渲染触发机制与 actions 注入方式
-- [x] `migrations.js` 版本门控 runner 长期可用
 
 ### recopy-system-revision-plan（重抄系统修订） 【计划已归档 archive/plans/，2026-09-18】
 - [ ] 修正 import 路径：`saveState` 来自 `js/state/save.js`，`createBookRecord` 来自 `js/core/book-utils.js`
