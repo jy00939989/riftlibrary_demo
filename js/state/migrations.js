@@ -42,7 +42,8 @@ const MIGRATIONS = [
   { version: 11, up: migrateV11 },
   { version: 12, up: migrateV12 },
   { version: 13, up: migrateV13 },
-  { version: 14, up: migrateV14 }
+  { version: 14, up: migrateV14 },
+  { version: 15, up: migrateV15 }
 ];
 
 function migrateV12() {
@@ -54,6 +55,19 @@ function migrateV12() {
     if (isNoMasteryBook(bookId)) return;
     bs.masteryLevel = 5;
   });
+}
+
+function migrateV15() {
+  // 2026-09-20 图南拍板 masteryLevel 只取 1/2（1=在架，2=典藏）——旧值重映射：2→1、5→2。
+  // noMastery 书（分卷/典藏版）无此字段，跳过。幂等：1/2 不在映射表内，重复执行无副作用。
+  const REMAP = { 2: 1, 5: 2 };
+  for (const [bookId, bs] of Object.entries(state.books || {})) {
+    if (!bs) continue;
+    if (isNoMasteryBook(bookId)) continue;
+    if (REMAP[bs.masteryLevel] !== undefined) {
+      bs.masteryLevel = REMAP[bs.masteryLevel];
+    }
+  }
 }
 
 function migrateV14() {

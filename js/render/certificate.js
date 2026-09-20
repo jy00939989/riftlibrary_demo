@@ -16,8 +16,8 @@ function getRandomQuote(book) {
 
 export function showCertificate(book, callback) {
   const bs = state.books[book.id];
-  const masteryNames = ['', '初识', '熟悉', '精通', '大师', '传承'];
-  const masteryName = masteryNames[bs.masteryLevel] || '初识';
+  const masteryNames = ['', '在架', '典藏'];
+  const masteryName = masteryNames[bs.masteryLevel] || '在架';
   const quote = getRandomQuote(book);
   const hasCoverImage = !!book.cover;
 

@@ -63,9 +63,8 @@ export function completeBook(bookId) {
   bookState.copyCount = prevCopyCount + 1;
   if (!isNoMasteryBook(bookId)) {
     // 普通书两次抄写周期（2026-09-20 图南重新拍板，推翻 9-15「一次成典藏」）：
-    // - 首次完成 → Lv2（书籍上架 + 作者小传）
-    // - 花费 1 灵感重抄完成 → Lv5（典藏：轶事/书评/典藏封面/金光/master 增益全解锁）
-    bookState.masteryLevel = isFirstCompletion ? 2 : 5;
+    // 等级只取 1/2 两值：1=在架（首通：誊抄完成并上架+作者小传），2=典藏（重抄 1 次：轶事/书评/典藏封面/金光/master 增益）
+    bookState.masteryLevel = isFirstCompletion ? 1 : 2;
   }
 
   if (isFirstCompletion) {

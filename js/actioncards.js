@@ -83,7 +83,7 @@ const ACTIONS = [
         if (bs.status !== 'completed') return false;
         const book = BOOKS[id];
         if (!book || book.noMastery) return false;
-        return bs.masteryLevel < 5;
+        return bs.masteryLevel < 2; // 1=在架（未典藏）才可加注
       });
     },
     apply() {
@@ -91,7 +91,7 @@ const ACTIONS = [
         if (bs.status !== 'completed') return false;
         const book = BOOKS[id];
         if (!book || book.noMastery) return false;
-        return bs.masteryLevel < 5;
+        return bs.masteryLevel < 2;
       });
       const [id, bs] = pick(candidates);
       const book = BOOKS[id];
