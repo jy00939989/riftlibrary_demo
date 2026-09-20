@@ -325,9 +325,26 @@ function enterRoom(roomId) {
   if (room.tab === 'library') {
     window.switchTab('library');
     if (room.subTab && window.switchLibrarySubTab) window.switchLibrarySubTab(room.subTab);
+  } else if (roomId === 'musicroom') {
+    // 2026-09-20 图南拍板：留声阁并入展览厅——热点在同页展开唱片架，不再跳独立标签页
+    openInlineMusicRoom();
   } else {
     window.switchTab(room.tab);
   }
+}
+
+/** 大厅页内展开留声阁（页脚横幅下方插槽渲染 + 滚动到位） */
+function openInlineMusicRoom() {
+  let slot = document.getElementById('exhibition-musicroom-slot');
+  if (!slot) {
+    slot = document.createElement('div');
+    slot.id = 'exhibition-musicroom-slot';
+    slot.className = 'mt-4';
+    const foot = document.querySelector('#page-exhibition .exh-event-banner')?.parentElement;
+    (foot || document.getElementById('page-exhibition')).appendChild(slot);
+  }
+  if (window.renderMusicRoomPage) window.renderMusicRoomPage(slot);
+  slot.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // ========== 修复面板（破败态点击；三轨清单 + 修复按钮置灰） ==========

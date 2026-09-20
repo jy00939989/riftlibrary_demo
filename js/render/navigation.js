@@ -26,7 +26,6 @@ export function renderCurrentTab() {
     case 'visitors': renderVisitorsPage(); break;
     case 'exhibition': renderExhibitionPage(); break;
     case 'archive': renderArchivePage(); break;
-    case 'musicroom': renderMusicRoomPage(); break;
     case 'shop': renderShopPage(); break;
   }
 }
@@ -82,7 +81,6 @@ export function localizeStaticElements() {
     'tab-visitors': 'tabReaderSalon',
     'tab-exhibition': 'tabExhibitionHall',
     'tab-archive': 'tabArchive',
-    'tab-musicroom': 'tabMusicRoom',
     'tab-shop': 'tabPlaneShop'
   };
   Object.entries(tabMap).forEach(([id, key]) => {
