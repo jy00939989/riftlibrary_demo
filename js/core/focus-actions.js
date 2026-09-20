@@ -72,8 +72,13 @@ export function handleCompleteFocus(isAuto = false) {
     sess.intervalId = null;
   }
 
+  // 墨水打翻：提前结束番茄钟/倒计时（未到目标时长手动收笔）时的低概率事件（图南 2026-09-20 修订）
+  const endedEarly = !isAuto && (sess.targetMinutes || 0) > 0 && sess.elapsedSeconds < sess.targetMinutes * 60;
+  const earlyBookId = endedEarly ? sess.bookId : null;
+
   const result = completeFocus(isAuto);
   runFocusOrchestration(result, isAuto);
+  if (earlyBookId) maybeTriggerInkSpill(earlyBookId);
 }
 
 export function handleAbandonFocus() {
@@ -87,6 +92,5 @@ export function handleAbandonFocus() {
       target_minutes: sess.targetMinutes
     });
     abandonFocus();
-    maybeTriggerInkSpill(); // 墨水打翻：放弃专注的低概率叙事负反馈（book-damage-events 批次二）
   }
 }

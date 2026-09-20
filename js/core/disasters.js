@@ -68,8 +68,10 @@ const THEFT = {
 const TYPHOON_BOOKS = {
   hitChance: 0.4,            // 每次台风过境，书籍被波及的条件概率
   lossMin: 0.10, lossMax: 0.20,
-  maxBooks: 2,               // 谷雨在场抢救时降为 1 且损失减半（由调用方传 savedByGuyu）
+  maxBooks: 2,
   signboardDef: 0.80,        // 密封窗棂：概率 -80%
+  helperChance: 0.3,         // 每位在场访客（browsing）抢收窗户的概率
+  windowSlots: [0, 4],       // 窗边位定义：书架每行 5 列网格的首尾两槽（两端靠窗）
 };
 
 const DAY = 1000 * 60 * 60 * 24;
@@ -234,14 +236,13 @@ function triggerWorm() {
   };
 }
 
-/** 墨水打翻：专注放弃链调用（focus-actions handleAbandonFocus）。只削当前书已抄字数，不打 damaged 标。 */
-export function maybeTriggerInkSpill() {
+/** 墨水打翻：提前结束番茄钟/倒计时时低概率触发（focus-actions handleCompleteFocus 调用）。
+ *  只削当前书已抄字数，不打 damaged 标。 */
+export function maybeTriggerInkSpill(bookId) {
   if (typeof state !== 'object' || !state.books) return null;
   if (getSettings().disastersEnabled === false) return null;
   if (inCooldown(state.lastInkTime, INK.cooldownDays)) return null;
 
-  const sess = state.currentSession || {};
-  const bookId = sess.bookId;
   const bs = bookId && state.books[bookId];
   const book = bookId && BOOKS[bookId];
   if (!bs || !book || (bs.copiedWords || 0) <= 0) return null;
@@ -253,7 +254,7 @@ export function maybeTriggerInkSpill() {
   if (bs.status === 'completed' && bs.copiedWords < book.totalWords) bs.status = 'copying';
   saveState();
   addHistory('disaster', `🖋️ 墨水打翻，污了《${book.title}》`, `损失${loss.toLocaleString()}字，无需修复，重抄即可`);
-  addDiaryEntry('special_event', { detail: `🖋️ 放弃专注的那一刻，手肘碰翻了墨水瓶。墨迹在《${book.title}》的纸页上洇开一朵黑色的花。墨墨递来吸墨纸，什么也没说。` });
+  addDiaryEntry('special_event', { detail: `🖋️ 提前收笔的那一刻，手肘碰翻了墨水瓶。墨迹在《${book.title}》的纸页上洇开一朵黑色的花。墨墨递来吸墨纸，什么也没说。` });
   const result = {
     kind: 'ink', emoji: '🖋️',
     lines: [t('disasterBookLossLine').replace('{title}', book.title).replace('{loss}', loss.toLocaleString())],
@@ -297,7 +298,35 @@ function triggerTheft() {
   return { kind: 'theft', emoji: '🥷', lines: [t('disasterTheftLine').replace('{title}', title).replace('{days}', THEFT.returnDays)], saveBy: null };
 }
 
-/** 台风过境时波及窗边书架（app.js 在台风发生后调用）。阶段≥5 建筑稳固免疫。 */
+/** 窗边位书架上的受灾候选：书架每行 5 列，首尾两槽定义为窗边位（两端靠窗） */
+function pickWindowShelfVictims(maxCount) {
+  const slots = new Set();
+  for (const shelf of (state.library.shelves || [])) {
+    if (!Array.isArray(shelf)) continue;
+    TYPHOON_BOOKS.windowSlots.forEach(idx => {
+      const id = shelf[idx];
+      if (id) slots.add(id);
+    });
+  }
+  if (!slots.size) return [];
+  const eligible = Object.entries(state.books || {}).filter(([bookId, bs]) => {
+    if (!slots.has(bookId)) return false;
+    if (!bs || bs.status !== 'completed' || bs.damaged || bs.stolenAt) return false;
+    if ((bs.copiedWords || 0) <= 0) return false;
+    const book = BOOKS[bookId];
+    if (!book || book.indestructible) return false;
+    if ((state.restorationBox || []).includes(bookId)) return false;
+    return true;
+  });
+  for (let i = eligible.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [eligible[i], eligible[j]] = [eligible[j], eligible[i]];
+  }
+  return eligible.slice(0, maxCount).map(([bookId, bs]) => ({ bookId, bs, book: BOOKS[bookId] }));
+}
+
+/** 台风过境时波及窗边书架（app.js 在台风发生后调用）。
+ *  阶段≥5 建筑稳固免疫；每位在场访客（browsing）都有概率抢收窗户，每人护住一本。 */
 export function tryTriggerTyphoonBookDamage(typhoonResult) {
   if (typeof state !== 'object' || !state.books) return null;
   if (getSettings().disastersEnabled === false) return null;
@@ -308,20 +337,29 @@ export function tryTriggerTyphoonBookDamage(typhoonResult) {
   if (stageLv >= 5) return null;                        // 建筑稳固：滴水不漏
   if (hasSignboard('sealed_window') && Math.random() < TYPHOON_BOOKS.signboardDef) return null;
 
-  const savedByGuyu = !!typhoonResult.savedByGuyu;      // 谷雨抢收窗户：至多 1 本、损失减半
-  const maxBooks = savedByGuyu ? 1 : TYPHOON_BOOKS.maxBooks;
-  const victims = pickVictims(maxBooks);
+  // 全场访客援手：每人独立概率抢收窗户，护住一本书（图南 2026-09-20 修订：不只谷雨）
+  const browsing = (state.visitors || []).filter(v => v && v.status === 'browsing');
+  const helpers = browsing.filter(() => Math.random() < TYPHOON_BOOKS.helperChance);
+  const savedCount = Math.min(TYPHOON_BOOKS.maxBooks, helpers.length);
+  const victimCount = TYPHOON_BOOKS.maxBooks - savedCount;
+  if (victimCount <= 0) {
+    addHistory('disaster', `🌪️ 台风过境，窗边书架安然无恙`, `${helpers.length} 位访客抢收了窗户`);
+    addDiaryEntry('special_event', { detail: `🌪️ 强台风过境，雨点砸得窗户哐哐响。${helpers.map(h => h.name || h.charId).join('、')}赶在雨渗进来前合力关紧了所有窗棂。窗边书架，一本没湿。` });
+    return { kind: 'typhoon_books', emoji: '🌪️', lines: [], saveBy: helpers.length, fullySaved: true };
+  }
+
+  const victims = pickWindowShelfVictims(victimCount);
   if (!victims.length) return null;
 
   const lines = [];
   victims.forEach(v => {
-    const ratio = randRange(TYPHOON_BOOKS.lossMin, TYPHOON_BOOKS.lossMax) * (savedByGuyu ? 0.5 : 1);
+    const ratio = randRange(TYPHOON_BOOKS.lossMin, TYPHOON_BOOKS.lossMax);
     const loss = applyDamage(v.bs, v.book, ratio);
     lines.push(t('disasterBookLossLine').replace('{title}', v.book.title).replace('{loss}', loss.toLocaleString()));
   });
-  addHistory('disaster', `🌪️ 台风渗雨，泡皱了 ${victims.length} 本书`, savedByGuyu ? '谷雨抢收了窗户，损失减半' : '低阶馆舍窗棂不牢，需专注修复');
-  addDiaryEntry('special_event', { detail: `🌪️ 强台风过境，雨从窗框渗进来，泡皱了${victims.map(v => `《${v.book.title}》`).join('、')}的最后几页。${savedByGuyu ? '谷雨死死拽住了窗棂，书只湿了个角。' : '风把整扇窗拍得哐哐响，像有人在敲一个回不去的家。'}` });
-  return { kind: 'typhoon_books', emoji: '🌪️', lines, saveBy: savedByGuyu ? 'guyu' : null };
+  addHistory('disaster', `🌪️ 台风渗雨，泡皱了 ${victims.length} 本书`, savedCount ? `${helpers.length} 位访客抢收窗户，护住了 ${savedCount} 本` : '低阶馆舍窗棂不牢，需专注修复');
+  addDiaryEntry('special_event', { detail: `🌪️ 强台风过境，雨从窗框渗进来，泡皱了${victims.map(v => `《${v.book.title}》`).join('、')}的最后几页。${savedCount ? `${helpers.map(h => h.name || h.charId).join('、')}死死护住了另外几扇窗。` : '风把整扇窗拍得哐哐响，像有人在敲一个回不去的家。'}` });
+  return { kind: 'typhoon_books', emoji: '🌪️', lines, saveBy: savedCount, fullySaved: false };
 }
 
 /** 到期状态清扫：积灰风吹自净 / 失窃书自动寻回（带 15% 损失）。每次 tick 入口先扫。 */
@@ -434,7 +472,7 @@ function showDisasterPopup(result) {
       <div class="text-left bg-white/50 rounded-lg p-3 mb-3 space-y-1">
         ${result.lines.map(l => `<p class="text-xs text-ink">📕 ${l}</p>`).join('')}
         ${result.atmospherePenalty ? `<p class="text-xs text-red-700 font-bold">✨ ${t('disasterAtmosphereLoss').replace('{n}', result.atmospherePenalty)}</p>` : ''}
-        ${result.saveBy === 'guyu' ? `<p class="text-xs text-magic-blue font-bold">🌾 ${t('disasterSavedByGuyu')}</p>` : ''}
+        ${result.saveBy ? `<p class="text-xs text-magic-blue font-bold">🌾 ${t('disasterTyphoonHelpersLine').replace('{n}', result.saveBy)}</p>` : ''}
       </div>
       <p class="text-[11px] text-ink-light/70 mb-3">${t('disasterRepairHint')}</p>
       <button class="disaster-ok-btn px-6 py-2 bg-wood text-white rounded-lg text-sm font-bold hover:shadow-lg transition-all">${t('confirm')}</button>

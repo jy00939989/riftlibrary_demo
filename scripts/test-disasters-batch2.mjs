@@ -79,8 +79,7 @@ function completeOne(words = 3468) {
 freshLibrary(); completeOne();
 setSetting('disastersEnabled', false);
 ok(dis.tryTriggerBookDisasters(null).length === 0, '总闸关闭：tick 零事件');
-state.currentSession = { bookId: BOOK_ID };
-ok(dis.maybeTriggerInkSpill() === null, '总闸关闭：墨水也不触发');
+ok(dis.maybeTriggerInkSpill(BOOK_ID) === null, '总闸关闭：墨水也不触发');
 ok(dis.tryTriggerTyphoonBookDamage({ savedByGuyu: false }) === null, '总闸关闭：台风书籍不波及');
 setSetting('disastersEnabled', true);
 
@@ -110,20 +109,18 @@ bs3.lastBorrowedAt = Date.now(); bs3.wormLevel = 2; // 模拟刚被借阅
 seq(0.9999, 0.9999, 0.9999, 0, 0.5, 0.5); // worm 判定给中，但无冷门书
 ok(dis.tryTriggerBookDisasters(null).length === 0, '刚借阅的书不再中蛀虫（通风契约）');
 
-// ── 4. 墨水打翻：只削字数、无受损标、有冷却 ──
+// ── 4. 墨水打翻：提前结束番茄钟/倒计时（handleCompleteFocus 判定后传入 bookId）──
 freshLibrary(); const bs4 = completeOne();
 bs4.status = 'copying'; bs4.copiedWords = 1000;
-state.currentSession = { bookId: BOOK_ID };
 seq(0.01); // 命中 0.06 概率
-const ink = dis.maybeTriggerInkSpill();
+const ink = dis.maybeTriggerInkSpill(BOOK_ID);
 ok(ink && ink.kind === 'ink', '墨水打翻命中');
 ok(bs4.damaged !== true, '墨水不打破损标');
 const inkLoss = 1000 - bs4.copiedWords;
 ok(inkLoss >= 30 && inkLoss <= 50, `墨水损失 3-5%（实际 ${inkLoss}）`);
 seq(0.01);
-ok(dis.maybeTriggerInkSpill() === null, '墨水冷却期内不重复');
-state.currentSession = { bookId: null };
-ok(dis.maybeTriggerInkSpill() === null, '无当前书不触发墨水');
+ok(dis.maybeTriggerInkSpill(BOOK_ID) === null, '墨水冷却期内不重复');
+ok(dis.maybeTriggerInkSpill(null) === null, '无当前书不触发墨水');
 
 // ── 5. 积灰：挡住借阅 → 掸灰恢复 → 到期风净 ──
 freshLibrary(); const bs5 = completeOne();
@@ -159,34 +156,53 @@ ok(bs6.damaged === true, '寻回带损（15%→受损标）');
 const backLoss = Math.round(3468 * 0.15);
 ok(bs6.copiedWords === 3468 - backLoss, `寻回损失 15%（实际 ${backLoss}）`);
 
-// ── 7. 台风波及：低阶馆舍受灾 → 阶段免疫 → 密封窗棂 → 谷雨减半 ──
+// ── 7. 台风波及：窗边位定义 → 全场访客援手 → 阶段免疫 → 密封窗棂 ──
+// 窗边位 = 书架每行 5 列的首尾两槽（[0] 与 [4]）
+freshLibrary(); const bs7m = completeOne();
+state.library.shelves = [[null, null, BOOK_ID, null, null]]; // 中间位 = 非窗边
+seq(0);
+ok(dis.tryTriggerTyphoonBookDamage({ any: true }) === null, '非窗边位的书不受波及（窗边定义生效）');
+ok(!bs7m.damaged, '中间位书无损');
+// 窗边位 [0]：无访客援手 → 命中
 freshLibrary(); const bs7 = completeOne();
+state.library.shelves = [[BOOK_ID, null, null, null, null]];
 state.library.atmosphere = 0; // 1 阶
-seq(0, 0.9999, 0.5, 0.5); // hitChance 中；无窗棂；损失率
-const tb = dis.tryTriggerTyphoonBookDamage({ savedByGuyu: false });
-ok(tb && tb.kind === 'typhoon_books', '低阶馆舍台风波及');
+seq(0, 0.5, 0.5); // hitChance 中；损失率
+const tb = dis.tryTriggerTyphoonBookDamage({ any: true });
+ok(tb && tb.kind === 'typhoon_books' && !tb.fullySaved, '窗边位低阶馆舍受灾');
 ok(bs7.damaged === true, '台风水浸打破损标');
 const tbLoss = 3468 - bs7.copiedWords;
 ok(tbLoss >= Math.round(3468 * 0.10) && tbLoss <= Math.round(3468 * 0.20), `台风损失 10-20%（实际 ${tbLoss}）`);
+// 一位在场访客援手：护住一本（maxBooks 2→1）
+freshLibrary(); const bs7h = completeOne();
+state.library.shelves = [[BOOK_ID, null, null, null, null]];
+state.visitors = [{ charId: 'xiachan', status: 'browsing' }];
+seq(0, 0, 0.5, 0.5); // hit 中；访客援手判定中；损失率
+const tbh = dis.tryTriggerTyphoonBookDamage({ any: true });
+ok(tbh && tbh.saveBy === 1 && !tbh.fullySaved, '一位访客援手护住一本');
+ok(bs7h.damaged === true, '剩余一本仍受灾');
+// 两位在场访客同时援手：全部护住
+freshLibrary(); const bs7f = completeOne();
+state.library.shelves = [[BOOK_ID, null, null, null, null]];
+state.visitors = [{ charId: 'xiachan', status: 'browsing' }, { charId: 'guyu', status: 'browsing' }];
+seq(0, 0, 0); // hit 中；两位访客都援手成功
+const tbf = dis.tryTriggerTyphoonBookDamage({ any: true });
+ok(tbf && tbf.fullySaved === true, '两位访客合力全部护住');
+ok(!bs7f.damaged, '全护住时零损失');
 // 阶段免疫
 freshLibrary(); const bs7b = completeOne();
+state.library.shelves = [[BOOK_ID, null, null, null, null]];
 state.library.atmosphere = 5600; // 5 阶
 seq(0);
-ok(dis.tryTriggerTyphoonBookDamage({ savedByGuyu: false }) === null, '5 阶建筑稳固免疫');
+ok(dis.tryTriggerTyphoonBookDamage({ any: true }) === null, '5 阶建筑稳固免疫');
 ok(!bs7b.damaged, '免疫书无损');
 // 密封窗棂
 freshLibrary(); const bs7c = completeOne();
+state.library.shelves = [[BOOK_ID, null, null, null, null]];
 state.library.atmosphere = 0;
 state.signboards.push('sealed_window');
-seq(0, 0.5); // hitChance 中；窗棂 80% 挡下（0.5<0.8）
-ok(dis.tryTriggerTyphoonBookDamage({ savedByGuyu: false }) === null, '密封窗棂挡下');
-// 谷雨抢救：损失减半
-freshLibrary(); const bs7d = completeOne();
-seq(0, 0.5, 0.5); // hitChance 中；无窗棂；损失率
-const tb2 = dis.tryTriggerTyphoonBookDamage({ savedByGuyu: true });
-ok(tb2 && tb2.saveBy === 'guyu', '谷雨抢救标记');
-const guyuLoss = 3468 - bs7d.copiedWords;
-ok(guyuLoss >= Math.round(3468 * 0.05) && guyuLoss <= Math.round(3468 * 0.10), `谷雨减半损失（实际 ${guyuLoss}）`);
+seq(0, 0.5); // hit 中；窗棂 80% 挡下（0.5<0.8）
+ok(dis.tryTriggerTyphoonBookDamage({ any: true }) === null, '密封窗棂挡下');
 
 // ── 8. 新标志牌入库 ──
 const { SIGNBOARDS } = await import('../data/signboards.js');

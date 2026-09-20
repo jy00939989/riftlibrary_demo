@@ -1377,7 +1377,7 @@ const TERM_DATA = Object.freeze({
   disasterTheftLine: { zh: '《{title}》失窃，约 {days} 天后自动寻回（损失部分字数）', en: '"{title}" was stolen; it will find its way back in ~{days} days (with some loss)' },
   disasterTyphoonBooksTitle: { zh: '台风渗雨', en: 'Typhoon Rain' },
   disasterTyphoonBooksDesc: { zh: '强台风过境，雨从窗框渗进来，泡皱了窗边书架上的书。', en: 'The typhoon drove rain through the window frames, wrinkling the books by the sill.' },
-  disasterSavedByGuyu: { zh: '谷雨抢收了窗户，损失减半', en: 'Guyu slammed the windows shut — losses halved' },
+  disasterTyphoonHelpersLine: { zh: '{n} 位在场访客抢收窗户', en: '{n} visitor(s) slammed the windows shut' },
   dustyBadge: { zh: '积灰中 · 访客不愿借阅', en: 'Dusty · visitors avoid it' },
   dustCleanBtn: { zh: '🧹 掸灰', en: '🧹 Dust off' },
   dustCleanedToast: { zh: '掸去灰尘，书页重新发亮', en: 'Dusted — the pages gleam again' },
