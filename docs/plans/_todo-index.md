@@ -251,6 +251,7 @@ anchors:
 - [x] 扩展 `TRACK_DEFS` 支持独立唱片（→ 以 `tier:'any'` 落地，购买即得；special 档位未做，等价目标已达成）
 - [x] 实现多种解锁方式（→ 金币购买 + requiresBook 前置（亚瑟王联动）已落地；种子兑换/访客事件未做）
 - [x] 中英文曲名文案（9-11 随 audio 整理同步）
+- [ ] **作曲家诞辰改编队列（2026-09-20 §八新增，图南慢慢做，按节日倒排）**：P0 巴赫·G弦（3/21 前）/ P0 月光（12/16 前）/ P1 小夜曲（1/27 前）/ P1 四季·秋（凑齐）/ P2 自新大陆（遗留）/ P2 闭馆后爵士（原创避开版权）/ P2 欢乐颂（10/1 前）——Suno prompt 与入库规格齐（library-music-expansion-plan §八），节日当天自动半价
 
 ### curator-office-organization-plan（馆长办公室整理）
 - [ ] 梳理现有 `js/render/office.js` 信息结构，输出新版线框
