@@ -344,11 +344,11 @@ anchors:
 - [ ] 细读后 todo-index §plane1-overhaul 打勾 + 阶段入 planner
 - [ ] Phase 0 开第一工单：修 atmo bug + 新建 test-plane-baseline.mjs + 聚合器
 
-### fulltext-books-m2-m3（M2 东京梦华录 / M3 诗经全文入库，2026-09-20）
-> 现状锚点：方案 `docs/plans/fulltext-books-batch1.md`（c68637d）图南已批 D1-D4 按推荐；M1 图书馆指南已完成（1c0a67c），照 M1 路径执行即可。
-- [ ] M2《东京梦华录》全文入库（分卷结构 + 双语词条 + 测试）
-- [ ] M3《诗经》全文入库（同上）
-- [ ] 跑全套测试脚本确认无回归（check:imports + 手工 test-*.mjs）
+### fulltext-books-m2-m3（M2 东京梦华录 / M3 诗经全文入库，2026-09-20 ✅ 已交付）
+> 现状锚点：方案 `docs/writing/fulltext-books-batch1.md` 图南已批 D1-D4 按推荐；M1 图书馆指南已完成（1c0a67c），照 M1 路径执行。
+- [x] M2 东京梦华录入库（32,337 字：Gutenberg 标点本为底 + kanripo 逐卷对齐补 44 缺字洞 + 5 处校勘注剔除 + OpenCC 简化；独立校验器逐节比对 100% 覆盖）
+- [x] M3 诗经入库（305 篇全收 38,281 字，6→8 章：风×4/小雅二/大雅/颂；不含诗序，D2）
+- [x] 验收：audit-book-word-counts 完全对应 4/71（004/011/015/026）+ check:imports ✓ + 全套 13 测试脚本绿
 
 ### drift-guide-for-tunan（田园 v2.1 细读指南，2026-09-20 ✅ 已交付）
 > 给上面第二项铺路：v2.1 全文很长（结局机检表 R1-R5 27 组合、acts.gate、flags 三态、M1-M6 迁移矩阵、内容预算 87 篇），直接细读门槛高。
