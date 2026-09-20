@@ -7,7 +7,8 @@ anchors:
 # 田园瘟疫纪事·位面重建方案（pastoral-plane-rebuild-plan）v2.1
 
 > 状态：v2.1——2026-09-18 六专科评审全面修订为 v2 后，同日 game-designer 追评（`reviews/pastoral-plane-rebuild-plan-review.md`）D1-D8 全折入；待图南终审后入 planner
-> 细读指南：`reviews/pastoral-v21-reading-guide.md`（2026-09-20 克克产出——40 分钟阅读路线 + A/B/C 三档决策清单，**细读从它开始**）；剧情向一页回顾见 `pastoral-plane-briefing.md`
+> 细读指南：`reviews/pastoral-v21-reading-guide.md`（2026-09-20 克克产出——40 分钟阅读路线 + A/B/C 三档决策清单）；剧情向一页回顾见 `pastoral-plane-briefing.md`
+> **通俗白话版：`pastoral-plane-plain.md`（2026-09-20 应图南要求而作——零术语讲故事：五幕剧情/五个角色/三个抉择/三结局/机制全白话，完全没读过方案的人也能懂，从这个读起）**
 > 关联待办：`plane1-overhaul`（第一位面整体建设重启）
 > 决策来源：图南 2026-09-18 拍板——①重建 ②叙事重打磨 ③模板化 ④双轨·先馆后谷 ⑤轻分支·抉择有痕 ⑥骨架硬·血肉软；
 > 评审后追加——⑦三分支点（补幕3）⑧结局对称化 ⑨完整损失模型 ⑩草药砍出 v1 ⑪ gather 绑定专注 ⑫ ch6 stub 契约 ⑬ 墨墨含蓄规则
