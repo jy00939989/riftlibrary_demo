@@ -34,6 +34,7 @@ anchors:
 >
 > **时效注记（2026-09-04 对账）**：本方案写于 2026-08-20，此后「留声阁唱片系统」已落地（2026-09-03，亚瑟王之死典藏联动 + 环境音并入独家购买入口）。**本方案只管新曲目制作与选曲**；播放通路、环境音售卖、唱片载体一律以留声阁现状为准，场景分配表中涉及「环境音」的条目按留声阁实际执行。
 > **落地注记（2026-09-04 对账，47235db / 8aca59b）**：首期落地推荐中**维瓦尔第《春》《冬》、格什温《蓝色狂想曲》三首意象曲已于 2026-08-28 入库**并在留声阁接线（`data/music.js`，各档定价 400–800💰，「湖边临终的亚瑟王」需 `book_031`）；另有 6 首场馆 tier 演示 BGM（荒废/城镇/星辰 × 基准 + 变奏）同批入库。原 `Suno 音乐生成 4.5_...mp3` 脏文件名已于 8aca59b 改名「湖边早春」。候选表只剩**德沃夏克《自新大陆·第二乐章》**未制作。
+> **联动注记（2026-09-20）**：音乐节日半价日系统已上线（`data/event_calendar.js`，6 个 type:'music' 节日，留音阁全场 shopDiscount 0.5 自动生效）——本计划 §八 的作曲家改编曲天然与节日联动：**作曲家诞辰当天，其曲目自动半价**。制作排期可参考节日日历倒排。
 
 ---
 
@@ -277,3 +278,85 @@ unlockedTracks: []
 - [ ] 每首曲子的大致情绪/风格
 - [ ] 是否有明确对应的访客或书籍
 - [ ] 是否参与自动 BGM 轮播（默认不建议）
+
+---
+
+## 八、音乐节日联动 · 作曲家诞辰改编队列（2026-09-20 新增）
+
+> 来源：音乐节日半价日上线（6 节日：莫扎特 1/27 · 维瓦尔第 3/4 · 巴赫 3/21 · 爵士日 4/30 · 国际音乐日 10/1 · 贝多芬 12/16）。
+> 定位：**「作曲家诞辰系列」改编唱片**——每位作曲家 1-2 首意象曲，走 §二 既有 Suno 管线；节日当天该作曲家曲目自动半价（shopDiscount 乘区已对全部标价曲目生效，零额外代码）。
+> 节奏：图南慢慢做，按节日日历倒排优先。做完一首走既有入库链路（`data/music.js` 注册 + 中英曲名 + visit 半价日自动联动）。
+
+### 8.1 节日-作曲家-曲目映射
+
+| 节日 | 日期 | 作曲家/主题 | 已有曲目 | 推荐改编（新） | 优先级 |
+|---|---|---|---|---|---|
+| 莫扎特诞辰 | 1/27 | 莫扎特 | — | 《小夜曲 K.525》意象曲（明亮专注） | P1 |
+| 维瓦尔第诞辰 | 3/4 | 维瓦尔第 | ✅ 冬/春意象曲 | 《四季·秋》意象曲（**凑齐四季**，收获/归档感） | P1 |
+| 巴赫诞辰 | 3/21 | 巴赫 | — | **《G 弦上的咏叹调》意象曲**（全馆气质最合）＋备选《郭德堡变奏曲·主题》（深度专注） | **P0** |
+| 国际爵士乐日 | 4/30 | 爵士（格什温血统） | ✅ 蓝色狂想曲 | 原创《闭馆后爵士》环境曲（萨克斯慢摇，**避开版权曲目**） | P2 |
+| 国际音乐日 | 10/1 | 综合庆典 | — | 《欢乐颂》庆典意象曲（贝九终章改编，全馆暖意） | P2 |
+| 贝多芬诞辰 | 12/16 | 贝多芬（与奥斯汀同日，双活动并存） | — | **《月光·第一乐章》意象曲**（深夜闭馆）＋备选《悲怆·第二乐章》 | **P0** |
+| （无节日绑定） | — | 德沃夏克 | — | 《自新大陆·第二乐章》（§一遗留候选，深夜治愈常规上架） | P2 |
+
+### 8.2 Suno Prompt（§二 公式体）
+
+**巴赫·G 弦上的咏叹调**（P0，3/21 前出）：
+```
+A hushed, luminous reimagining of Bach's "Air on the G String" for a cozy fantasy library.
+Solo cello over soft synth pads, gentle harpsichord, warm string ensemble.
+Slow 4/4, smooth and breathing, like dusk light on old book spines.
+No vocals, loop-friendly, 1-minute intro then steady body.
+```
+
+**贝多芬·月光第一乐章**（P0，12/16 前出）：
+```
+A soft, contemplative adaptation of Beethoven's "Moonlight Sonata" 1st movement for a library at closing time.
+Felt piano arpeggios, muted pads, distant cello swells.
+Very slow, sparse, meditative — candlelight on empty reading desks.
+No vocals, loop-friendly, 1-minute intro then steady body.
+```
+
+**莫扎特·小夜曲**（P1，1/27 前出）：
+```
+A light-hearted, sunlit reimagining of Mozart's "Eine kleine Nachtmusik" for a cozy fantasy library.
+Strings with music-box accents, playful harp, bright but gentle.
+Moderate 4/4, airy and cheerful, like opening the curtains on a good morning.
+No vocals, loop-friendly, 1-minute intro then steady body.
+```
+
+**维瓦尔第·四季·秋**（P1，凑齐四季）：
+```
+A rustic, warm reimagining of Vivaldi's "Autumn" for a cozy fantasy library.
+Solo violin and lute, light percussion, harvest-dance energy softened for reading.
+Moderate tempo, golden and content, like shelved preserves and dried flowers.
+No vocals, loop-friendly, 1-minute intro then steady body.
+```
+
+**闭馆后爵士**（P2 原创，避开版权）：
+```
+An original slow jazz nocturne for a fantasy library's after-hours corner.
+Smoky saxophone, muted trumpet, brushed drums, upright bass.
+Late-night, candlelit, a little sleepy — last cup of tea music.
+Instrumental, loop-friendly, 1-minute intro then steady body.
+```
+
+**欢乐颂庆典**（P2，10/1 前出）：
+```
+A warm, celebratory reimagining of Beethoven's "Ode to Joy" for a library festival day.
+String ensemble with soft brass, gentle tympani, wordless choir pad.
+Stately 4/4, glowing and communal, like the whole hall raising a lamp together.
+Instrumental (or wordless choir), loop-friendly, 1-minute intro then steady body.
+```
+
+### 8.3 入库规格（沿用既有链路）
+
+- 命名：`bach-air.mp3` / `beethoven-moonlight.mp3` / `mozart-nachtmusik.mp3` / `vivaldi-autumn.mp3` / `after-hours-jazz.mp3` / `ode-to-joy.mp3`
+- 注册：`data/music.js` 追加 `tier: 'any'` 条目，定价沿用 400–800 档（P0 两首 600，秋/小夜曲/爵士 500，欢乐颂 700）
+- 曲名走 `musicTrack_*` i18n 词条（zh「巴赫·G弦咏叹」/en「Air on the G String · Bach」体例，对齐现有 winter/spring-reverie 格式）
+- 验收：节日当天该曲目半价自动生效（shopDiscount 乘区已覆盖，测试断言见 test-music-festival-sale.mjs）；墨墨日记可在节日当天提一句（P3 可选，非本期）
+
+### 8.4 制作队列（todo 同步）
+
+- [ ] P0 巴赫·G 弦（3/21 前）　- [ ] P0 月光（12/16 前）　- [ ] P1 小夜曲（1/27 前）
+- [ ] P1 四季·秋（凑齐）　- [ ] P2 自新大陆（遗留候选）　- [ ] P2 闭馆后爵士　- [ ] P2 欢乐颂（10/1 前）
