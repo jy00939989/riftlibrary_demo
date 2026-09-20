@@ -155,14 +155,15 @@ function nextDiaryPageNumber() {
 
 export function generateDiaryEntry(type, vars = {}) {
   let openingKey;
-  if (type === 'book_complete' && vars.mastery) {
+  if (type === 'book_complete' && vars.copyCount) {
     const pool = OPENING_KEYS[type];
     if (!pool) { openingKey = pick(OPENING_KEYS.focus_complete); }
     else {
-      const lv = Math.min(vars.mastery, 5);
-      // Lv2=首次(0-1), Lv3=二次(2-3), Lv4=三次(4-5), Lv5=四次(6-7), Lv6=五次(8-9)
-      const tierMap = { 1: [0, 1], 2: [0, 1], 3: [2, 3], 4: [4, 5], 5: [6, 7], 6: [8, 9] };
-      const [a, b] = tierMap[lv] || [0, 1];
+      // 2026-09-15 熟练度改制后 mastery 恒 5，档位只能按 copyCount 分（旧 tierMap 按 mastery 分 → 首通必抽中"第三遍"文案，bug 2026-09-20 修复）
+      const cc = Math.min(vars.copyCount, 5);
+      // 1=首通(0-2) 2=(3-4) 3=(5-6) 4=(7-8) 5+=(9-10)
+      const tierMap = { 1: [0, 2], 2: [3, 4], 3: [5, 6], 4: [7, 8], 5: [9, 10] };
+      const [a, b] = tierMap[cc] || [0, 2];
       openingKey = pool[Math.floor(Math.random() * (b - a + 1)) + a];
     }
   } else {

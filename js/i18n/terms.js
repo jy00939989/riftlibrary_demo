@@ -351,10 +351,10 @@ const TERM_DATA = Object.freeze({
   anecdotesMissing: { zh: '创作轶闻待发现', en: 'Anecdotes yet to be discovered' },
   reviewsMissing: { zh: '名家书评待发现', en: 'Critical reviews yet to be discovered' },
   collectorCoverEffect: { zh: '典藏封面 · 金光特效 · {cover}', en: 'Collector cover · golden glow · {cover}' },
-  masteryPhaseFirst: { zh: '📖 首次完成', en: '📖 First Completion' },
-  masteryPhaseRecopy: { zh: '✨ 典藏内容', en: '✨ Collector Content' },
+  masteryPhaseFirst: { zh: '📖 誊抄完成', en: '📖 Completion' },
+  masteryPhaseRecopy: { zh: '✨ 典藏内容（首通即得）', en: '✨ Collector Content (first completion)' },
   masteryUnlockOnFirst: { zh: '首次完成本书后解锁', en: 'Unlock upon first completion' },
-  masteryUnlockOnRecopy: { zh: '花费 1 灵感重抄后解锁', en: 'Unlock after spending 1 inspiration to recopy' },
+  masteryUnlockOnRecopy: { zh: '首次完成即全部解锁（2026-09 改制，不再需重抄解锁）', en: 'All unlocked on first completion (reworked 2026-09 — no recopy needed)' },
   masteryMasterBonus: { zh: '✦ 已计入全局精通加成：专注速度 +0.1%', en: '✦ Counted toward global mastery bonus: focus speed +0.1%' },
   insufficientInspiration: { zh: '灵感不足！需要 {cost} 💡，当前拥有 {current} 💡', en: 'Not enough Inspiration! Need {cost} 💡, currently have {current} 💡' },
 
