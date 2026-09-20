@@ -1,4 +1,4 @@
-# 田园瘟疫纪事·位面重建方案 评审（pastoral-plane-rebuild-plan v2）
+# 田园瘟疫纪事·位面重建方案 评审（pastoral-plane-rebuild-plan v2 → v2.1）
 
 > 评审人：Game Designer　|　日期：2026-09-18　|　视角：机制 + 数值 + 代码架构 + 经济账本一致性
 > 关联：sink-ledger.md、economy-subsystem-architecture-review.md（A1/A2/A4）、main-quest-chapter-system-plan-review-v2.md（ch6 撞车）
