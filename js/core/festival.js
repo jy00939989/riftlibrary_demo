@@ -8,10 +8,10 @@ import { t } from '../i18n/terms.js';
 
 /**
  * 检查并发放活动窗内未领取的节日礼
- * @param {number} [now] - 测试可注入（默认 now）
+ * @param {number} [now] - 测试可注入（默认 __dev.getNow 或真实时间）
  * @returns {Array} 本次新发放的活动列表（空数组 = 无发放）
  */
-export function checkFestivalGifts(now = Date.now()) {
+export function checkFestivalGifts(now = (typeof window !== 'undefined' && window.__dev?.getNow?.()) || Date.now()) {
   const granted = [];
   for (const key of Object.keys(FESTIVALS)) {
     const fest = FESTIVALS[key];
