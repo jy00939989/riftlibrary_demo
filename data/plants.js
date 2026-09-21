@@ -98,12 +98,14 @@ export const PLANT_TYPES = {
 
 // ========== 嫁接改良五档（2026-09-21 晚图南改版：原一次性 60→90%+多年生 梯度太大） ==========
 // 每档消耗同类种子，全品种统一阶梯；多年生 = 收获时按概率回落 restartLevel 重长（否则照常凋谢）。
+// 2026-09-22 图南拍板再削：旧 ③30%/④60%/⑤100% + 固定回落 Lv3 太狠（满档≈永生速刷），
+// 降为 ③25%/④40%/⑤55%、回落统一 Lv2——满档期望株产 ≈2.2 次收获，有惊喜但不再永生。
 export const IMPROVE_TIERS = [
   { seedCost: 2, seedDropRate: 0.70 },
   { seedCost: 3, seedDropRate: 0.80 },
-  { seedCost: 4, perennialChance: 0.30, restartLevel: 3 },
-  { seedCost: 5, perennialChance: 0.60, restartLevel: 3 },
-  { seedCost: 6, perennialChance: 1.00, restartLevel: 3 }
+  { seedCost: 4, perennialChance: 0.25, restartLevel: 2 },
+  { seedCost: 5, perennialChance: 0.40, restartLevel: 2 },
+  { seedCost: 6, perennialChance: 0.55, restartLevel: 2 }
 ];
 
 // ========== 温室培育设施（2026-09-21 图南四决策：解决「浇水绑死专注时长→扩盆无意义」） ==========

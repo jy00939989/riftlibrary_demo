@@ -107,6 +107,9 @@ export const state = {
   // 事件历史
   history: [],
 
+  // 温室成长日志（种植/改良/收获/多年生/消失分类记录，温室页筛选查看）
+  plantLogs: [],
+
   // 成就
   achievements: [],
 

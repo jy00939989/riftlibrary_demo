@@ -16,6 +16,22 @@ export function addHistory(type, title, detail = '') {
   saveState();
 }
 
+// ========== 温室成长日志（2026-09-22 图南） ==========
+// 种植/改良/收获/多年生/消失（凋谢·铲除·台风）大事分类记录，温室页按类筛选查看。
+// 放 storage.js 而非 plants.js：visitors.js（台风摧毁）也要写，避免 plants↔visitors 循环依赖。
+const PLANT_LOG_CAP = 50;
+
+export function addPlantLog(type, title, detail = '') {
+  if (!state.plantLogs) state.plantLogs = [];
+  state.plantLogs.unshift({ type, title, detail, time: Date.now() });
+  if (state.plantLogs.length > PLANT_LOG_CAP) state.plantLogs.length = PLANT_LOG_CAP;
+  saveState();
+}
+
+export function getPlantLogs() {
+  return state.plantLogs || [];
+}
+
 export function addCoins(amount) {
   state.coins += amount;
   saveState();
