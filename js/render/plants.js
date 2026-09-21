@@ -54,14 +54,17 @@ const GH_POT_SLOTS = [
 // 功能区热点框（左/上/宽/高 %）：右上工具架 = 设施升级区；右下柜台 = 兑换区
 const GH_REGIONS = {
   facilities: { x: 64, y: 8, w: 25, h: 45 },
-  exchange: { x: 66, y: 56, w: 34, h: 42 }
+  exchange: { x: 66, y: 56, w: 34, h: 42 },
+  // 柜台上的一叠纸（1920×1089 实测：纸张堆 x1755-1870/y748-838）→ 成长日志
+  log: { x: 91.5, y: 68, w: 6.5, h: 9.5 }
 };
 // 铭牌标签锚点（中心点 %）：顶部大牌=温室名；长椅上方=盆栽；工具架铭牌=设施；柜台铭牌=兑换
 const GH_LABELS = {
   title: { x: 34.5, y: 16 },
   pots: { x: 15, y: 47 },
   facilities: { x: 76.5, y: 12.5 },
-  exchange: { x: 79, y: 86 }
+  exchange: { x: 79, y: 86 },
+  log: { x: 93.5, y: 66 }
 };
 
 function renderGreenhouseScene() {
@@ -85,12 +88,15 @@ function renderGreenhouseScene() {
   // 功能区整面透明热区（铭牌标签下方，保证移动端点按面积）
   scene.appendChild(sceneRegion(GH_REGIONS.facilities, () => scrollToSection('gh-section-facilities')));
   scene.appendChild(sceneRegion(GH_REGIONS.exchange, () => scrollToSection('gh-section-seeds')));
+  // 柜台上一叠纸 → 成长日志（DOM 置后，覆盖在兑换热区之上）
+  scene.appendChild(sceneRegion(GH_REGIONS.log, () => scrollToSection('gh-section-log')));
 
   // 铭牌标签（盖在图的空白铭牌上）
   scene.appendChild(sceneLabel(GH_LABELS.title, `🌿 ${t('tabGreenhouse')} · 💧${getWaterCount()}`, null, null));
   scene.appendChild(sceneLabel(GH_LABELS.pots, t('plantPotsTitle'), anyHarvest ? '#f59e0b' : anyWaterable ? '#3b82f6' : null, () => scrollToSection('gh-section-pots')));
   scene.appendChild(sceneLabel(GH_LABELS.facilities, t('greenhouseFacilities'), facilityDot ? '#10b981' : null, () => scrollToSection('gh-section-facilities')));
   scene.appendChild(sceneLabel(GH_LABELS.exchange, t('greenhouseExchangeTitle'), anyExchange ? '#10b981' : null, () => scrollToSection('gh-section-seeds')));
+  scene.appendChild(sceneLabel(GH_LABELS.log, `📖 ${t('plantLogSceneLabel')}`, null, () => scrollToSection('gh-section-log')));
 
   // 四个盆位：已种植 → 活立绘（点击去盆栽区）；空盆 → 隐形按钮（点击去购买种子）
   (state.plants || []).forEach((plant, idx) => {
