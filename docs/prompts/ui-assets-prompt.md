@@ -880,6 +880,10 @@ open 房间暖光常亮（`.exh-spot.open .exh-spot-glow opacity:1`）——「�
 
 ## 十九、2026 双节素材整版（2026-09-21 图南立项：横幅+纪念牌+饮品「一张图出」切片制）
 
+
+> **切片外包（2026-09-21 图南安排）**：切割由专人负责，母档 `visual/festival/sheet_midautumn2026_master.png`（1254×1254）。
+> 交付路径以下表「文件」列为准（代码已全部接线，图到即显）；切图要点：横幅 1140×328 区、纪念牌含挂链完整、
+> 任务板横向、四饮品各自独立成图（白底或透明底均可，界面 object-contain 容纳）。
 > 用途一图六件，出图后按下方切片表裁切落盘：
 > ① 缮写页节日横幅 `visual/festival/banner_midautumn2026.jpg`（9/25–10/8 挂缮写页顶部，区间横幅机制已上线）
 > ② 中秋纪念牌 `visual/signboards/sign_mid_autumn.png`（挂展览厅标志牌墙；出图前 emoji 🌕 占位）
