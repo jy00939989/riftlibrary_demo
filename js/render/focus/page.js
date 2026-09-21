@@ -5,6 +5,7 @@ import { el, actions } from '../common.js';
 import { stopWriting, pauseWriting, resumeWriting, isWriting } from '../writing.js';
 import { getFocusSpeedMultiplier, getMasteredBookSpeedBonus } from '../../core/shop/library-upgrades.js';
 import { t, getFocusRoomLevelName } from '../../i18n/terms.js';
+import { getMonthBanner } from '../../../data/event_calendar.js';
 import { renderDailyTasks } from './daily-tasks.js';
 import { renderModeSelector } from './mode-selector.js';
 import { renderBookSelector } from './book-selector.js';
@@ -43,6 +44,28 @@ export function renderFocusPage() {
   container.innerHTML = '';
 
   updateFocusBackground();
+
+  // 节日横幅（2026-09-21：区间型月横幅带图时挂缮写页顶部，图缺则文字条兜底）
+  const festBanner = getMonthBanner();
+  if (festBanner) {
+    const strip = el('div', 'mb-4 rounded-xl overflow-hidden border-2 border-amber-300/60 shadow-lg relative');
+    if (festBanner.image) {
+      const img = document.createElement('img');
+      img.src = `visual/festival/${festBanner.image}.jpg`;
+      img.alt = t(festBanner.nameKey);
+      img.className = 'w-full h-24 object-cover';
+      img.onerror = () => {
+        strip.innerHTML = `<div class="bg-gradient-to-r from-amber-500/90 to-magic-gold/90 text-white text-center py-4 text-sm font-bold">🌕 ${t(festBanner.nameKey)}</div>`;
+      };
+      strip.appendChild(img);
+    } else {
+      strip.innerHTML = `<div class="bg-gradient-to-r from-amber-500/90 to-magic-gold/90 text-white text-center py-4 text-sm font-bold">📚 ${t(festBanner.nameKey)}</div>`;
+    }
+    const tag = el('div', 'absolute bottom-1 right-2 text-[10px] text-white/90 bg-ink/50 px-1.5 py-0.5 rounded');
+    tag.textContent = t(festBanner.nameKey);
+    strip.appendChild(tag);
+    container.appendChild(strip);
+  }
 
   // Scriptorium banner
   const flv = state.library.focusLevel || 0;
