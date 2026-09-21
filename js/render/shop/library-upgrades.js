@@ -9,8 +9,7 @@ import {
   isMusicRoomUnlocked, unlockMusicRoom
 } from '../../shop.js';
 import {
-  isRestorationUnlocked, unlockRestorationRoom,
-  getRestorationUnlockPrice, getRestorationLevel,
+  isRestorationUnlocked, getRestorationLevel,
   getRestorationUpgradePrice, upgradeRestorationLevel
 } from '../../capacity.js';
 import { PLANES, canUnlockPlane } from '../../../data/planes.js';
@@ -244,7 +243,6 @@ export function renderLibraryUpgrades() {
   const restorationMaxed = restorationLevel >= 5;
   const rgateLocked = restorationUnlocked && !restorationMaxed && restorationLevel + 1 > gateCap; // D22 阶段门槛
   const restorationUpgradePrice = getRestorationUpgradePrice();
-  const restorationUnlockPrice = getRestorationUnlockPrice();
   const restorationImgNames = [
     'restoration_lv0_ruins.jpg',
     'restoration_lv1_shelter.jpg',
@@ -261,7 +259,7 @@ export function renderLibraryUpgrades() {
   } else if (restorationLevel === 0) {
     restorationStats = t('restorationRoomStatsUnlockedLevel0');
   } else {
-    restorationStats = t('restorationRoomStats').replace('{value}', restorationLevel * 5);
+    restorationStats = t('restorationRoomStats').replace('{value}', restorationLevel * 10);
   }
 
   const restorationCard = el('div', 'bg-white rounded-xl p-4 border-2 border-magic-gold/30 flex gap-4 items-center');
@@ -280,7 +278,7 @@ export function renderLibraryUpgrades() {
       </div>
       <p class="text-xs text-ink-light mb-2">${restorationStats}</p>
       ${!restorationUnlocked
-        ? `<button class="buy-restoration-btn px-4 py-1.5 bg-magic-gold text-white rounded-lg text-sm font-bold hover:shadow-lg transition-all">${t('unlock')} 💰${restorationUnlockPrice.toLocaleString()}</button>`
+        ? `<span class="text-xs text-ink-light">🔓 ${t('restorationFreeGrantHint')}</span>`
         : restorationMaxed
           ? `<span class="text-sm text-magic-gold font-bold">${t('maxLevel')} ✨</span>`
           : rgateLocked
@@ -289,24 +287,6 @@ export function renderLibraryUpgrades() {
       }
     </div>
   `;
-
-  const buyRestorationBtn = restorationCard.querySelector('.buy-restoration-btn');
-  if (buyRestorationBtn) {
-    buyRestorationBtn.addEventListener('click', () => {
-      if (unlockRestorationRoom()) {
-        playSfx('buy_success');
-        updateStatusBar();
-        const trigger = checkAndShowTutorial('restoration_unlock');
-        if (trigger) dispatchTutorialUI(trigger);
-        if (actions.renderShopPage) {
-          actions.renderShopPage();
-        }
-        showRestorationUpgrade(0);
-      } else {
-        window.showToast(`${t('insufficientCoins')} 💰`, 'error');
-      }
-    });
-  }
 
   const upgradeRestorationBtn = restorationCard.querySelector('.upgrade-restoration-btn');
   if (upgradeRestorationBtn) {

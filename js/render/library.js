@@ -11,7 +11,9 @@ import { TIER_GOALS, getTierStatus, countTierGoalsComplete } from '../../data/ti
 import { BOOKS } from '../../data/books.js';
 import { VOLUME_GROUPS, getVolumeGroupProgress, isVolumeBookId } from '../../data/volume_groups.js';
 import { canCollectVolumeGroup, collectVolumeGroup } from '../volumes.js';
-import { storeInRestorationBox, removeFromRestorationBox, getRestorationBoxSlots, getRestorationBoxCount, getRestorationSlotPrice, expandRestorationBoxSlots, getRestorationLevel, getRestorationUpgradePrice, upgradeRestorationLevel, getRestorationRepairSpeedBonus, isRestorationUnlocked, getRestorationUnlockPrice } from '../capacity.js';
+import { storeInRestorationBox, removeFromRestorationBox, getRestorationBoxSlots, getRestorationBoxCount, getRestorationSlotPrice, expandRestorationBoxSlots, getRestorationLevel, getRestorationUpgradePrice, upgradeRestorationLevel, getRestorationRepairSpeedBonus, isRestorationUnlocked, grantRestorationRoom } from '../capacity.js';
+import { dispatchTutorialUI } from './tutorial-ui.js';
+import { checkAndShowTutorial } from '../tutorial.js';
 import { updateStatusBar, getBookTitle } from './common.js';
 import { exhibitionBreadcrumbHTML, bindExhibitionBreadcrumb } from './exhibition.js';
 import { playSfx } from '../audio.js';
@@ -463,7 +465,7 @@ function renderRestorationTab(container) {
   const wrapper = document.createElement('div');
   wrapper.className = 'space-y-6';
 
-  // 0. 修复室是否已解锁
+  // 0. 修复室是否已解锁（Lv0 免费：主动修缮或首次受灾自动点亮）
   if (!isRestorationUnlocked()) {
     const unlockCard = document.createElement('div');
     unlockCard.className = 'bg-amber-50/80 rounded-xl p-6 border-2 border-amber-200 text-center';
@@ -471,12 +473,18 @@ function renderRestorationTab(container) {
       <div class="text-4xl mb-3">🔒</div>
       <h3 class="font-display text-lg font-bold mb-2">${t('restorationRoomLocked')}</h3>
       <p class="text-sm text-ink-light mb-4">${t('restorationRoomLockedDesc')}</p>
-      <button class="goto-shop-restoration-btn px-5 py-2 bg-magic-gold text-white text-sm font-bold rounded-lg hover:shadow-lg transition-all">
-        ${t('gotoShopUnlock').replace('{price}', getRestorationUnlockPrice().toLocaleString())}
+      <button class="grant-restoration-btn px-5 py-2 bg-magic-gold text-white text-sm font-bold rounded-lg hover:shadow-lg transition-all">
+        ${t('grantRestorationFree')}
       </button>
+      <p class="text-xs text-ink-light/60 mt-3">${t('restorationGrantHint')}</p>
     `;
-    unlockCard.querySelector('.goto-shop-restoration-btn').addEventListener('click', () => {
-      if (window.switchTab) window.switchTab('shop');
+    unlockCard.querySelector('.grant-restoration-btn').addEventListener('click', () => {
+      if (grantRestorationRoom()) {
+        playSfx('buy_success');
+        const trigger = checkAndShowTutorial('restoration_unlock');
+        if (trigger) dispatchTutorialUI(trigger);
+        renderRestorationTab(container);
+      }
     });
     container.appendChild(unlockCard);
     return;
@@ -559,7 +567,9 @@ function renderRestorationTab(container) {
             <div class="text-xs text-ink-light">${t('volumesCopied').replace('{current}', progress.completed).replace('{total}', progress.total)}</div>
           </div>
         </div>
-        ${collectable ? `<button class="collect-btn px-3 py-1.5 bg-magic-gold text-white text-xs font-bold rounded-lg hover:shadow-lg transition-all" data-group="${group.collectedBookId}">${t('craftCollectorEdition')}</button>` : ''}
+        ${collectable ? (level >= 1
+          ? `<button class="collect-btn px-3 py-1.5 bg-magic-gold text-white text-xs font-bold rounded-lg hover:shadow-lg transition-all" data-group="${group.collectedBookId}">${t('craftCollectorEdition')}</button>`
+          : `<span class="text-xs text-ink-light">🔒 ${t('craftRequiresRestorationLevel1')}</span>`) : ''}
       </div>
       <div class="w-full h-2 bg-wood/10 rounded-full mb-3 overflow-hidden">
         <div class="h-full bg-magic-gold rounded-full" style="width:${percent}%"></div>
@@ -579,6 +589,8 @@ function renderRestorationTab(container) {
           if (ach.length > 0) showAchievementToast(ach[0]);
           updateStatusBar();
           renderRestorationTab(container);
+        } else if (result.reason === 'restoration_level_required') {
+          window.showToast(t('craftRequiresRestorationLevel1'), 'error');
         }
       });
     }
