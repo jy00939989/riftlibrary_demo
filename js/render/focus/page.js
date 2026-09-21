@@ -45,8 +45,10 @@ export function renderFocusPage() {
 
   updateFocusBackground();
 
-  // 节日横幅（2026-09-21：区间型月横幅带图时挂缮写页顶部，图缺则文字条兜底）
-  const festBanner = getMonthBanner();
+  // 节日横幅（2026-09-21：区间型月横幅带图时挂缮写页顶部，图缺则文字条兜底；
+  // 时间走 __dev.getNow——dev 控制台调时后刷新即可预览非当日横幅）
+  const devNow = (typeof window !== 'undefined' && window.__dev?.getNow?.()) || Date.now();
+  const festBanner = getMonthBanner(new Date(devNow));
   if (festBanner) {
     const strip = el('div', 'mb-4 rounded-xl overflow-hidden border-2 border-amber-300/60 shadow-lg relative');
     if (festBanner.image) {
