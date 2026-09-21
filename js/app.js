@@ -13,8 +13,10 @@ import { getLocale, setLocale } from './i18n/terms.js';
 import { addCoins, addHistory, updateStreak, addAtmosphere, updateBodyBackground, onStageCross } from './storage.js';
 import { renderFocusPage, renderBookshelfPage, renderLibraryPage,
   renderVisitorsPage, renderArchivePage, renderShopPage, setActions,
-  updateStatusBar, initBagEntry, renderGuideQuestWidget, showPlantLossPopup
+  updateStatusBar, initBagEntry, renderGuideQuestWidget, showPlantLossPopup,
+  showFestivalGiftPopup
 } from './render/index.js';
+import { checkFestivalGifts } from './core/festival.js';
 import { setCompleteCallback, syncTimer } from './timer.js';
 import { isNoMasteryBook } from './core/book-eligibility.js';
 import { spawnVisitor, tickVisitorBrowsing, checkDueVisitors, getStageWitnesses, tryTriggerGuyuPlantCare, tryTriggerTyphoonDisaster } from './visitors.js';
@@ -112,6 +114,14 @@ function init() {
 
   // 温室储水设施：离线蓄水发放（水箱 ≥2 才有；不足一个周期则只刷新锚点）
   try { grantOfflineWater(); } catch (e) { console.warn('[app] offline water grant failed', e); }
+
+  // 双节活动：窗口内首次启动自动发登录礼（幂等，app 启动链单点触发）
+  try {
+    const granted = checkFestivalGifts();
+    if (granted.length) {
+      setTimeout(() => granted.forEach(f => showFestivalGiftPopup(f)), 600);
+    }
+  } catch (e) { console.warn('[app] festival gift check failed', e); }
 
   initAuth().catch(err => console.warn('[app] backend auth init failed', err));
 

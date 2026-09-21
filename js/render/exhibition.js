@@ -79,7 +79,7 @@ function renderSignboardWall() {
   Object.values(SIGNBOARDS).forEach(sb => {
     const isOwned = owned.includes(sb.id);
     const serial = state.signboardSerials?.[sb.id];
-    const isLimited = sb.price === 0 && sb.image;
+    const isLimited = sb.giftOnly || (sb.price === 0 && sb.image);
 
     const card = document.createElement('div');
     card.className = `rounded-xl p-4 border-2 flex gap-3 items-center ${isOwned ? 'bg-green-50 border-green-200' : 'bg-white border-wood/20 hover:border-magic-gold/50 hover:shadow-lg transition-all'}`;
@@ -94,7 +94,7 @@ function renderSignboardWall() {
 
     const actionHtml = !isOwned
       ? (isLimited
-        ? `<span class="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded font-bold">${t('limitedSignboardLabel') || '兑换码获取'}</span>`
+        ? `<span class="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded font-bold">${sb.giftOnly ? (t('festivalSignboardLabel') || '活动限定') : (t('limitedSignboardLabel') || '兑换码获取')}</span>`
         : `<button class="signboard-buy-btn px-3 py-1.5 ${state.coins >= sb.price ? 'bg-magic-gold text-white hover:shadow-lg' : 'bg-gray-300 text-gray-500 cursor-not-allowed'} rounded-lg text-sm font-bold transition-all" ${state.coins < sb.price ? 'disabled' : ''}>💰${sb.price}</button>`)
       : '';
 

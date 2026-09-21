@@ -135,5 +135,17 @@ export const SIGNBOARDS = {
     price: 800,
     page: 'bookshelf',
     buff: { type: 'disaster_defense', target: 'typhoon_books', value: 0.80, desc: '台风波及书籍概率 -80%' }
+  },
+  // 2026 中秋·国庆双节纪念牌：活动窗内登录自动发放（giftOnly，不可购买），暂用 emoji 立绘，图出图后补 image
+  mid_autumn_plaque: {
+    id: 'mid_autumn_plaque',
+    name: '中秋纪念牌',
+    emoji: '🌕',
+    icon: '🌕',
+    description: '2026 中秋与国庆相逢，图书馆挂起一轮不会落下的圆月。限时不限量——只要在双节期间推开馆门，它就在那里。',
+    price: 0,
+    giftOnly: true,
+    page: 'focus',
+    buff: { type: 'focus_speed', value: 0.02, desc: '缮写速率 +2%' }
   }
 };
