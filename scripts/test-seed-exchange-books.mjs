@@ -3,6 +3,8 @@
 // 锁死三件套：① 卷书奖励 rewardBookIds 一次发全卷（逐卷入箱、已拥有跳过）
 //             ② 商店池不再含 book_034 两卷（种子兑换限定，同绿野仙踪/爱丽丝纪律）
 //             ③ 迁移 v13 修复 soft-lock：旧档误发典藏版 → 回锁 + 补发两卷
+//               （2026-09-21 加闸：copyCount/copiedWords/status 证明已合成的典藏版不回锁；
+//                 回锁时直发版移出手稿箱腾格；测试每次重跑迁移须先置 _schemaVersion=12）
 // 用法：node scripts/test-seed-exchange-books.mjs
 
 // ── 环境 mock（必须在动态 import 之前装好）──
@@ -74,27 +76,35 @@ assert(!state.books['book_034'] || state.books['book_034'].status === 'locked',
 
 // ── S3：迁移 v13 修复 soft-lock（旧档误发典藏版 → 回锁+补卷）──
 const s2 = await import('../js/state.js'); // 同 state 引用
-state.books['book_034'] = { status: 'completed', copiedWords: 123, copyCount: 1, masteryLevel: 2, damaged: false, repairWords: 0, repairProgress: 0 };
+// 受害者签名 = 旧直发：典藏版是 createBookRecord() 默认（全 0 / unlocked），两卷从未拥有
+state.books['book_034'] = { status: 'unlocked', copiedWords: 0, copyCount: 0, masteryLevel: 0, damaged: false, repairWords: 0, repairProgress: 0 };
 delete state.books['book_034_vol1'];
 delete state.books['book_034_vol2'];
 state._schemaVersion = 12;
 runMigrations();
 const col = state.books['book_034'];
 assert(col.status === 'locked' && col.copiedWords === 0, 'S3a 典藏版回锁且进度清零');
+assert(!(state.manuscriptBox || []).includes('book_034'), 'S3a2 回锁的典藏版移出手稿箱腾格');
 assert(state.books['book_034_vol1'] && state.books['book_034_vol1'].status !== 'locked'
     && state.books['book_034_vol2'] && state.books['book_034_vol2'].status !== 'locked',
   'S3b 两卷补发到手');
-// 幂等：再跑一次不重复发卷
+// 幂等：版本归零重跑整条迁移链，不重复发卷
 const boxCount = (state.manuscriptBox || []).filter(id => id === 'book_034_vol1').length;
+state._schemaVersion = 12;
 runMigrations();
 const boxCount2 = (state.manuscriptBox || []).filter(id => id === 'book_034_vol1').length;
 assert(boxCount === boxCount2, 'S3c 重复迁移幂等（卷一不重复入箱）');
-// 正常合成路径（vols 已拥有 + 典藏版在架）不被误伤
-state.books['book_034_vol1'].status = 'completed';
-state.books['book_034_vol2'].status = 'completed';
-state.books['book_034'].status = 'completed';
+// 正常合成路径（volumes.js 真实签名：典藏版 completed + copyCount>=1，两卷 locked 且不在箱）不被误伤
+state.books['book_034'] = { status: 'completed', copiedWords: 500, copyCount: 1, masteryLevel: 2, damaged: false, repairWords: 0, repairProgress: 0 };
+state.books['book_034_vol1'] = { status: 'locked', copiedWords: 0, copyCount: 0, masteryLevel: 0, damaged: false, repairWords: 0, repairProgress: 0 };
+state.books['book_034_vol2'] = { status: 'locked', copiedWords: 0, copyCount: 0, masteryLevel: 0, damaged: false, repairWords: 0, repairProgress: 0 };
+state.manuscriptBox = (state.manuscriptBox || []).filter(id => id !== 'book_034_vol1' && id !== 'book_034_vol2');
+state._schemaVersion = 12;
 runMigrations();
-assert(state.books['book_034'].status === 'completed', 'S3d 正常合成路径的典藏版不受影响');
+assert(state.books['book_034'].status === 'completed' && state.books['book_034'].copiedWords === 500,
+  'S3d 正常合成路径的典藏版不受影响');
+assert(state.books['book_034_vol1'].status === 'locked' && state.books['book_034_vol2'].status === 'locked',
+  'S3e 正常合成路径的两卷保持 locked 不重复补发');
 
 console.log(`\n秘密花园兑换修复回归：${pass} 过 ${fail} 挂`);
 process.exit(fail ? 1 : 0);
