@@ -46,6 +46,7 @@ const TERM_DATA = Object.freeze({
   tabGreenhouse: { zh: '温室', en: 'Greenhouse' },
   greenhouseSeedShop: { zh: '购买种子', en: 'Buy Seeds' },
   signboardWallTitle: { zh: '标志牌墙', en: 'Signboard Wall' },
+  greenhouseExchangeTitle: { zh: '兑换区', en: 'Exchange' },
   signboardWallDesc: { zh: '每一块牌子都挂在馆内某个角落，默默发挥它的作用。', en: 'Every plaque hangs in a corner of the library, quietly doing its job.' },
   tabArchive: { zh: '馆史档案', en: 'Archive' },
   tabExhibitionHall: { zh: '展览厅', en: 'Exhibition Hall' },
