@@ -4,7 +4,7 @@
 // 温室培育线（2026-09-21 图南四决策）：喷壶泼溅/储水设施/改良品种/绿手指，
 // 解决「浇水次数绑死专注时长 → 盆位扩容无意义」。
 import { state, saveState } from './state.js';
-import { spendCoins, addCoins, addAtmosphere, addHistory, addInspiration } from './storage.js';
+import { spendCoins, addCoins, addAtmosphere, addHistory, addInspiration, addPlantLog } from './storage.js';
 import { markTaskDone } from './dailytasks.js';
 import { PLANT_TYPES, SEED_EXCHANGE, WATERING_CANS, WATER_TANKS, GREEN_THUMB, IMPROVE_TIERS } from '../data/plants.js';
 import { isBookCapacityFull, isManuscriptBoxFull, addToManuscriptBox, getManuscriptSlots, getManuscriptBoxCount } from './capacity.js';
@@ -142,7 +142,7 @@ export function getGreenThumbProgress() {
 }
 
 // ========== 改良品种（嫁接，五档渐进；2026-09-21 晚图南改版） ==========
-// ①掉率70% ②80% ③多年生30% ④多年生60% ⑤多年生100%；每档耗同类种子（成本在 IMPROVE_TIERS）。
+// ①掉率70% ②80% ③多年生25%回落Lv2 ④40% ⑤55%（2026-09-22 由 30/60/100%+Lv3 削下）；每档耗同类种子（成本在 IMPROVE_TIERS）。
 // 存档兼容：v16 当天的布尔真值按满档（≈旧 90%+必多年生）计。
 
 export function getImproveTier(type) {
@@ -205,6 +205,7 @@ export function unlockImproved(type) {
     : `多年生概率 ${Math.round(next.perennialChance * 100)}%`;
   addHistory('plant', `🧬 嫁接改良 ${def.emoji} ${t(def.nameKey)} · ${newTier}/5 档`,
     `消耗${next.seedCost}颗种子 · ${effect}`);
+  addPlantLog('improve', `🧬 嫁接改良 ${def.emoji} ${t(def.nameKey)} · ${newTier}/5 档`, `消耗${next.seedCost}颗种子 · ${effect}`);
   saveState();
   return true;
 }
@@ -434,6 +435,7 @@ export function harvestPlant(potIndex = 0) {
 
   const seedName = seedDropped ? ` + 获得 ${t(def.nameKey)}种子 ×1` : '';
   addHistory('plant', `收获 ${def.emoji} ${t(def.nameKey)}`, `+${def.harvestAtmosphere}氛围 +${def.harvestCoins}智慧之光${seedName}`);
+  addPlantLog('harvest', `收获 ${def.emoji} ${t(def.nameKey)}`, `+${def.harvestAtmosphere}氛围 +${def.harvestCoins}智慧之光${seedName}`);
 
   // 多年生（五档改良 ③④⑤ 解锁）：按概率回落 restartLevel 重长，未中则照常凋谢
   const perChance = getPerennialChance(plant.activeType);
@@ -446,8 +448,10 @@ export function harvestPlant(potIndex = 0) {
     plant.harvested = false;
     plant.lastCareTime = getNow();
     addHistory('plant', `🧬 ${t(def.nameKey)}多年生萌发`, `回落 Lv${restartLv}，继续生长，无需重新种植`);
+    addPlantLog('perennial', `🧬 ${t(def.nameKey)}多年生萌发`, `回落 Lv${restartLv} 重长，无需重新种植`);
   } else {
     // 凋谢 → 空盆
+    addPlantLog('wither', `🥀 ${t(def.nameKey)}收获后凋谢`, '一生结束，盆中清空');
     resetPlantToEmpty(plant);
   }
 
@@ -463,6 +467,7 @@ export function abandonPlant(potIndex = 0) {
 
   resetPlantToEmpty(plant);
   addHistory('plant', `铲除 ${def.emoji} ${t(def.nameKey)}`, '盆栽已清空，可以重新种植');
+  addPlantLog('abandon', `铲除 ${def.emoji} ${t(def.nameKey)}`, '盆栽清空，可以重新种植');
   saveState();
   return { ok: true, def };
 }
@@ -484,6 +489,7 @@ export function checkWither() {
     if (hoursSinceCare >= 72) {
       const def = PLANT_TYPES[plant.activeType];
       addHistory('plant', `${def ? def.emoji + ' ' + t(def.nameKey) : '植物'}凋谢了`, '72小时未照料，植物枯萎');
+      addPlantLog('wither', `🥀 ${def ? def.emoji + ' ' + t(def.nameKey) : '植物'}凋谢了`, '72小时未照料，枯萎清盆');
       resetPlantToEmpty(plant);
       withered.push(def || { id: plant.activeType, emoji: '🥀', nameKey: null });
     }
@@ -516,6 +522,7 @@ export function plantSeed(plantType, potIndex = null) {
   plant.harvested = false;
 
   addHistory('plant', `种下 ${def.emoji} ${t(def.nameKey)}`, `花费${cost}智慧之光`);
+  addPlantLog('plant', `种下 ${def.emoji} ${t(def.nameKey)}`, `花费${cost}智慧之光`);
   saveState();
   return true;
 }

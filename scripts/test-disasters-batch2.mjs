@@ -2,6 +2,7 @@
 // 书籍灾难批次二（2026-09-20「清了剩余」）回归测试
 // 覆盖五件新事件：蛀虫（冷门/叠级/借阅通风）/ 墨水打翻（放弃链/只削字数/冷却）/
 //   积灰（挡借阅/掸灰/风净）/ 窃书（失窃/寻回带损）/ 台风波及（阶段免疫/窗棂/谷雨）+ 总闸与免疫
+//   + 首次受灾自动免费开放修复室（2026-09-21 防软锁）/ 合成典藏版 gated 修复室 Lv≥1
 // 确定性手法：Math.random 队列（默认 0.9999=全不命中，按需注入小值）；单本 completed 书房态
 // 用法：node scripts/test-disasters-batch2.mjs
 
@@ -208,6 +209,41 @@ ok(dis.tryTriggerTyphoonBookDamage({ any: true }) === null, '密封窗棂挡下'
 const { SIGNBOARDS } = await import('../data/signboards.js');
 ok(!!SIGNBOARDS.camphor_bookmark && SIGNBOARDS.camphor_bookmark.buff.target === 'worm', '樟木书签入库');
 ok(!!SIGNBOARDS.sealed_window && SIGNBOARDS.sealed_window.buff.target === 'typhoon_books', '密封窗棂入库');
+
+// ── 9. 首次受灾自动免费开放修复室（2026-09-21 图南拍板，撤销 300 币解锁防软锁）──
+freshLibrary(); const bs9 = completeOne();
+state.restorationUnlocked = false; delete state.restorationLevel;
+seq(0.9999, 0.9999, 0, 0.5, 0.5); // 队列 rat→mold→fire→worm→dust→theft：fire 命中
+const r9 = dis.tryTriggerBookDisasters(null);
+ok(r9.some(r => r.kind === 'fire'), '火灾命中（自动点亮前置）');
+ok(bs9.damaged === true, '受灾破损');
+ok(state.restorationUnlocked === true, '首次受灾自动点亮修复室');
+ok((state.restorationLevel || 0) === 0, '点亮为 Lv0');
+// 幂等：已升级后再受灾不回退等级
+state.restorationLevel = 2;
+state.books[BOOK_ID] = { status: 'completed', copiedWords: 3468, readChapters: [] };
+delete state.lastFireTime;
+seq(0.9999, 0.9999, 0, 0.5, 0.5);
+const r9b = dis.tryTriggerBookDisasters(null);
+ok(r9b.some(r => r.kind === 'fire'), '第二次火灾命中');
+ok(state.restorationUnlocked === true && state.restorationLevel === 2, '自动点亮幂等（不重置已升等级）');
+
+// ── 10. 合成典藏版 gated 修复室 Lv≥1 ──
+const vol = await import('../js/volumes.js');
+freshLibrary();
+state.restorationUnlocked = false; state.restorationLevel = 0;
+state.books = {
+  book_034_vol1: { status: 'completed', copiedWords: 100000, readChapters: [] },
+  book_034_vol2: { status: 'completed', copiedWords: 100000, readChapters: [] }
+};
+ok(vol.collectVolumeGroupById('book_034').reason === 'restoration_level_required', '无修复室：合成被拒');
+state.restorationUnlocked = true;
+ok(vol.collectVolumeGroupById('book_034').reason === 'restoration_level_required', 'Lv0：合成被拒');
+state.restorationLevel = 1;
+const cr = vol.collectVolumeGroupById('book_034');
+ok(cr.ok === true && cr.collectedBookId === 'book_034', 'Lv1：合成成功');
+ok(state.books['book_034'].status === 'completed', '典藏版生成');
+ok(state.books['book_034_vol1'].status === 'locked' && state.books['book_034_vol2'].status === 'locked', '两卷合成后锁定（消耗语义）');
 
 console.log(`\ndisasters-batch2：${pass} 通过，${fail} 失败`);
 process.exit(fail ? 1 : 0);

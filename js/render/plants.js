@@ -1,6 +1,7 @@
 // 温室页面渲染（2026-09-21 独立成页，图南三决策：种子购买迁入/标志牌迁展览厅/贴纸记技术债）
-// 结构：盆栽区（盆位+解锁）→ 培育设施（喷壶/水箱/绿手指）→ 购买种子 → 种子库存
+// 结构：盆栽区（盆位+解锁）→ 培育设施（喷壶/水箱/绿手指）→ 购买种子 → 种子库存 → 成长日志
 import { state, saveState } from '../state.js';
+import { getPlantLogs } from '../storage.js';
 import { updateStatusBar, showImagePreview } from './common.js';
 import { playSfx } from '../audio.js';
 import { PLANT_TYPES, SEED_EXCHANGE, WATERING_CANS, WATER_TANKS } from '../../data/plants.js';
@@ -163,6 +164,7 @@ export function renderGreenhousePage() {
   wrapper.appendChild(renderFacilities());
   wrapper.appendChild(renderPlantShop());
   wrapper.appendChild(renderSeedInventory());
+  wrapper.appendChild(renderPlantLog());
 
   container.innerHTML = '';
   container.appendChild(wrapper);
@@ -448,20 +450,21 @@ function renderFacilities() {
     footer: thumbProg.next === null
       ? t('greenThumbMaxed').replace('{n}', thumbProg.current)
       : `${t('greenThumbProgress').replace('{n}', thumbProg.current)} · ${t('greenThumbProgress').replace('{n}', thumbProg.next)} → Lv${thumbLv + 1}`,
-    next: null // 被动成长，不可购买
+    next: null, // 被动成长，不可购买
+    passive: true // 不显示「✅ 已满级」徽标——等级看 footer 的真实进度
   }));
 
   section.appendChild(grid);
   return section;
 }
 
-function renderFacilityCard({ emoji, name, desc, footer = null, next = null, canAfford = false, onUpgrade = null }) {
+function renderFacilityCard({ emoji, name, desc, footer = null, next = null, canAfford = false, onUpgrade = null, passive = false }) {
   const card = document.createElement('div');
   card.className = 'bg-white rounded-xl p-4 border-2 border-teal-200 flex flex-col';
 
   const btnHtml = next
     ? `<button class="facility-upgrade-btn px-4 py-1.5 mt-3 rounded-lg text-sm font-bold transition-all ${canAfford ? 'bg-teal-600 text-white hover:shadow-lg' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}">${t('facilityUpgrade').replace('{price}', next.price.toLocaleString())}</button>`
-    : `<span class="text-xs text-green-600 font-bold mt-3 inline-block">✅ ${t('facilityMaxed')}</span>`;
+    : passive ? '' : `<span class="text-xs text-green-600 font-bold mt-3 inline-block">✅ ${t('facilityMaxed')}</span>`;
 
   card.innerHTML = `
     <div class="flex items-center gap-2 mb-2">
@@ -751,6 +754,71 @@ export function showPlantHarvestPopup(def, result) {
   };
   overlay.querySelector('button').addEventListener('click', close);
   overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+}
+
+// ========== 温室成长日志（2026-09-22 图南：种植/改良/收获/多年生/消失大事分类记录） ==========
+
+let plantLogFilter = 'all';
+const PLANT_LOG_FILTERS = ['all', 'plant', 'improve', 'harvest', 'perennial', 'gone'];
+// 「消失」= 凋谢（72h 未照料/收获后寿终）+ 铲除 + 台风刮走
+const PLANT_LOG_GONE_TYPES = new Set(['wither', 'abandon', 'typhoon']);
+
+function renderPlantLog() {
+  const section = document.createElement('div');
+  section.className = 'bg-white/60 rounded-xl p-5 border border-wood/20';
+  section.id = 'gh-section-log';
+
+  const header = document.createElement('h3');
+  header.className = 'font-bold text-lg mb-3';
+  header.textContent = `📖 ${t('plantLogTitle')}`;
+  section.appendChild(header);
+
+  const filterRow = document.createElement('div');
+  filterRow.className = 'flex gap-2 flex-wrap mb-3';
+  PLANT_LOG_FILTERS.forEach(f => {
+    const btn = document.createElement('button');
+    btn.className = `px-3 py-1 rounded-full text-xs font-bold transition-all ${plantLogFilter === f ? 'bg-magic-gold text-white' : 'bg-wood/10 text-ink-light hover:bg-wood/20'}`;
+    btn.textContent = t('plantLogFilter_' + f);
+    btn.addEventListener('click', () => {
+      plantLogFilter = f;
+      renderGreenhousePage();
+      // 整页重排后滚回日志区，保持浏览位置
+      setTimeout(() => scrollToSection('gh-section-log'), 50);
+    });
+    filterRow.appendChild(btn);
+  });
+  section.appendChild(filterRow);
+
+  const logs = getPlantLogs();
+  const filtered = logs.filter(l => plantLogFilter === 'all'
+    || (plantLogFilter === 'gone' ? PLANT_LOG_GONE_TYPES.has(l.type) : l.type === plantLogFilter));
+
+  if (filtered.length === 0) {
+    const empty = document.createElement('p');
+    empty.className = 'text-sm text-ink-light';
+    empty.textContent = t('plantLogEmpty');
+    section.appendChild(empty);
+    return section;
+  }
+
+  const list = document.createElement('div');
+  list.className = 'space-y-1.5 max-h-72 overflow-y-auto pr-1';
+  filtered.forEach(l => {
+    const time = new Date(l.time);
+    const timeStr = `${String(time.getMonth() + 1).padStart(2, '0')}-${String(time.getDate()).padStart(2, '0')} ${String(time.getHours()).padStart(2, '0')}:${String(time.getMinutes()).padStart(2, '0')}`;
+    const row = document.createElement('div');
+    row.className = 'flex items-center justify-between gap-3 text-xs bg-wood/5 rounded-lg px-3 py-1.5';
+    row.innerHTML = `
+      <div class="min-w-0">
+        <div class="font-medium truncate">${l.title}</div>
+        ${l.detail ? `<div class="text-ink-light/70 truncate">${l.detail}</div>` : ''}
+      </div>
+      <div class="text-ink-light/50 flex-shrink-0">${timeStr}</div>
+    `;
+    list.appendChild(row);
+  });
+  section.appendChild(list);
+  return section;
 }
 
 // ========== 植物消失通报（凋谢/台风） ==========

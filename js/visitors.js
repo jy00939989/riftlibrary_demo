@@ -1,10 +1,10 @@
 // 访客系统 —— 纯逻辑模块，不碰 DOM
 import { state, saveState } from './state.js';
-import { addCoins, addAtmosphere, addHistory } from './storage.js';
+import { addCoins, addAtmosphere, addHistory, addPlantLog } from './storage.js';
 import { t } from './i18n/terms.js';
 import { BOOKS } from '../data/books.js';
 import { addDiaryEntry } from './diary.js';
-import { isBookCapacityFull, addToManuscriptBox, createBookRecord, unlockBook } from './capacity.js';
+import { isBookCapacityFull, addToManuscriptBox, createBookRecord, unlockBook, grantRestorationRoom } from './capacity.js';
 import { collectVisitorItem } from './visitorMemory.js';
 import { getCurationBorrowBonus } from './curation.js';
 import { VISITOR_NARRATIVES } from '../data/visitor-events.js';
@@ -599,13 +599,16 @@ export function tryTriggerTyphoonDisaster() {
       plant.level -= 1;
       plant.growthProgress = 0;
       addHistory('disaster', `🌪️ 台风过境，谷雨抢回了${t(def.nameKey)}`, '植物降了 1 级，但还活着');
+      addPlantLog('typhoon', `🌪️ 谷雨抢回了${def.emoji} ${t(def.nameKey)}`, '台风过境：降了 1 级，但还活着');
     } else {
       resetPlantToEmptyState(plant);
       addHistory('disaster', `🌪️ 台风过境，谷雨没能拉住${t(def.nameKey)}`, '植物被刮走了');
+      addPlantLog('typhoon', `🌪️ ${def.emoji} ${t(def.nameKey)}被台风刮走了`, '谷雨没能拉住，盆栽清空');
     }
   } else {
     resetPlantToEmptyState(plant);
     addHistory('disaster', `🌪️ 台风过境，${t(def.nameKey)}被刮走了`, '盆栽已清空');
+    addPlantLog('typhoon', `🌪️ ${def.emoji} ${t(def.nameKey)}被台风刮走了`, '盆栽已清空');
   }
 
   // 玩家反馈「植物忽然不见了」：弹窗之外补持久通报位（温室页红卡）+ 墨墨日记叙事
@@ -1248,6 +1251,8 @@ export function collectReturn(visitorId) {
     const damageChance = getDamageChance(state.library.borrowLevel || 0, (state.signboards || []).includes('care_for_books'), bs?.wearCount || 0);
     const title = bDef ? (bDef.volumeTitle || bDef.title) : bid;
     if (Math.random() < damageChance && bs && !bDef?.indestructible && !inRestoration) {
+      // 首次受灾自动免费开放修复室（2026-09-21 图南拍板：撤销 300 币解锁，杜绝金币软锁）
+      grantRestorationRoom();
       bs.damaged = true;
       bs.repairWords = Math.round(bs.copiedWords * 0.15);
       bs.repairProgress = 0;

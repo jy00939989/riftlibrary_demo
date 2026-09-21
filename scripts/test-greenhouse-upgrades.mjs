@@ -156,7 +156,7 @@ state.coins = 99999;
 plants.upgradeTank();
 assert(state.waterTankLevel === 3 && state.waterOfflineAt === T0, '升级蓄水池：等级提升且锚点重置为当下');
 
-console.log('\n[7] 嫁接改良五档（①70% ②80% ③多年生30% ④60% ⑤100%）');
+console.log('\n[7] 嫁接改良五档（①70% ②80% ③多年生25%回落Lv2 ④40% ⑤55%）');
 state.seeds.bird_of_paradise = 1;
 assert(plants.getImproveTier('bird_of_paradise') === 0, '初始 0 档');
 assert(plants.canUnlockImproved('bird_of_paradise') === false, '1 颗 < 首档 2 颗拒绝');
@@ -171,30 +171,32 @@ assert(plants.getEffectiveSeedDropRate('bird_of_paradise') === 0.80, '②档掉�
 assert(plants.getPerennialChance('bird_of_paradise') === 0, '②档仍无多年生');
 state.seeds.bird_of_paradise = 4;
 assert(plants.unlockImproved('bird_of_paradise') === true, '③档耗 4 颗');
-assert(plants.getPerennialChance('bird_of_paradise') === 0.30, '③档多年生 30%');
+assert(plants.getPerennialChance('bird_of_paradise') === 0.25, '③档多年生 25%');
+assert(plants.getPerennialRestartLevel('bird_of_paradise') === 2, '③档回落 Lv2');
 assert(plants.getEffectiveSeedDropRate('bird_of_paradise') === 0.80, '③档掉率维持 80%');
 // 旧存档布尔真值兼容（v16 当天语义=90%+必多年生 ≈ 满档）
 state.improvedPlants.magic_rose = true;
 assert(plants.getImproveTier('magic_rose') === 5, '旧布尔 true 按满档计');
-assert(plants.getPerennialChance('magic_rose') === 1.00, '满档多年生 100%');
+assert(plants.getPerennialChance('magic_rose') === 0.55, '满档多年生 55%');
 state.seeds.magic_rose = 99;
 assert(plants.canUnlockImproved('magic_rose') === false && plants.getNextImproveTier('magic_rose') === null, '满档后无下档');
 state.seeds.bird_of_paradise = 99;
-plants.unlockImproved('bird_of_paradise'); // ④档 60%
-plants.unlockImproved('bird_of_paradise'); // ⑤档 100%
+plants.unlockImproved('bird_of_paradise'); // ④档 40%
+plants.unlockImproved('bird_of_paradise'); // ⑤档 55%
 assert(plants.getImproveTier('bird_of_paradise') === 5, '鹤望兰五档升满');
-assert(plants.getPerennialChance('bird_of_paradise') === 1.00, '⑤档多年生 100%');
+assert(plants.getPerennialChance('bird_of_paradise') === 0.55, '⑤档多年生 55%');
+assert((state.plantLogs || [])[0]?.type === 'improve', '成长日志：嫁接改良有记录');
 
-console.log('\n[8] 多年生概率收获：roll 中→回落 Lv3，未中→清盆');
+console.log('\n[8] 多年生概率收获：roll 中→回落 Lv2，未中→清盆');
 state.coins = 99999;
 state.plantHarvests = 0;
-// 魔法玫瑰满档（chance 1.0）：必回落
+// 魔法玫瑰满档（chance 0.55）：roll 0.3 中掉率与多年生
 plantDirect(0, 'magic_rose', 5, PLANT_TYPES.magic_rose.growthPerLevel);
-Math.random = () => 0.5;
+Math.random = () => 0.3;
 state.seeds.magic_rose = 0;
 let r8 = plants.harvestPlant(0);
-assert(r8 && r8.perennial === true && r8.seedDropped === true, '满档收获：必掉种子 + 必多年生');
-assert(state.plants[0].activeType === 'magic_rose' && state.plants[0].level === 3 && state.plants[0].growthProgress === 0, '满档：回落 Lv3 植株保留');
+assert(r8 && r8.perennial === true && r8.seedDropped === true, '满档收获：掉种子 + 多年生（roll 0.3 < 55%）');
+assert(state.plants[0].activeType === 'magic_rose' && state.plants[0].level === 2 && state.plants[0].growthProgress === 0, '满档：回落 Lv2 植株保留');
 assert(state.plantHarvests === 1, '绿手指计数 +1');
 // 鹤望兰 0 档（chance 0）：必清盆
 plantDirect(1, 'bird_of_paradise', 5, PLANT_TYPES.bird_of_paradise.growthPerLevel);
@@ -202,16 +204,20 @@ state.improvedPlants.bird_of_paradise = 0;
 Math.random = () => 0.01; // 掉率 roll 必中，但多年生 0% 必不中
 r8 = plants.harvestPlant(1);
 assert(r8 && r8.perennial === false && state.plants[1].activeType === null, '0 档：收获后清盆');
-// 三档 30%：roll=0.2 中 → 回落；roll=0.5 不中 → 清盆
+// 三档 25%：roll=0.2 中 → 回落；roll=0.5 不中 → 清盆
 state.improvedPlants.starlight_fern = 3;
 plantDirect(2, 'starlight_fern', 5, PLANT_TYPES.starlight_fern.growthPerLevel);
 Math.random = () => 0.2;
 r8 = plants.harvestPlant(2);
-assert(r8.perennial === true && state.plants[2].level === 3, '③档 roll=0.2 < 30% → 多年生回落');
+assert(r8.perennial === true && state.plants[2].level === 2, '③档 roll=0.2 < 25% → 多年生回落 Lv2');
 plantDirect(2, 'starlight_fern', 5, PLANT_TYPES.starlight_fern.growthPerLevel);
 Math.random = () => 0.5;
 r8 = plants.harvestPlant(2);
-assert(r8.perennial === false && state.plants[2].activeType === null, '③档 roll=0.5 ≥ 30% → 凋谢清盆');
+assert(r8.perennial === false && state.plants[2].activeType === null, '③档 roll=0.5 ≥ 25% → 凋谢清盆');
+// 成长日志分类记录（2026-09-22）：收获/多年生/凋谢各有其类
+assert((state.plantLogs || []).some(l => l.type === 'harvest'), '成长日志：收获有记录');
+assert((state.plantLogs || []).some(l => l.type === 'perennial'), '成长日志：多年生萌发有记录');
+assert((state.plantLogs || []).some(l => l.type === 'wither'), '成长日志：凋谢有记录');
 console.log('\n[9] 绿手指：阈值等级 + 成长加成');
 state.plantHarvests = 0;
 assert(plants.getGreenThumbLevel() === 0, '0 收获 Lv0');
