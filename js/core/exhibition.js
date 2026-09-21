@@ -11,6 +11,7 @@ import { getLibraryStage } from '../storage.js';
 import { getEventsOnDate, getEventEffectMults, getMonthBanner } from '../../data/event_calendar.js';
 import { getTodayKey, onNewDay } from './day-boundary.js';
 import { addDiaryEntry } from '../diary.js';
+import { getAchievementStats } from '../achievements.js';
 import { t } from '../i18n/terms.js';
 
 // ========== 常量（plan §三：大厅分级设施 + 房间双门槛） ==========
@@ -35,12 +36,18 @@ export const EXHIBITION_ROOMS = {
     condition: () => ({ met: true }) // 档案是「馆的记忆」，随馆而生——建成即开放
   },
   signboards: {
-    emoji: '🪧', nameKey: 'roomSignboards', price: 500, tab: 'library', subTab: 'decoration',
+    // 2026-09-21 图南决策：标志牌收编进展览厅（温室独立成页后办公室不再有布置子标签）→ 房间直通展览厅页
+    emoji: '🪧', nameKey: 'roomSignboards', price: 500, tab: 'exhibition',
     condition: () => ({ met: (state.signboards || []).length >= 1, progressKey: 'exhCondSignboard', have: (state.signboards || []).length, need: 1 })
   },
   achievements: {
     emoji: '🏆', nameKey: 'roomAchievements', price: 800, tab: 'library', subTab: 'achievements',
-    condition: () => ({ met: (state.achievements || []).length >= 10, progressKey: 'exhCondAchievements', have: (state.achievements || []).length, need: 10 })
+    // 2026-09-21 修复：成就真源在 persistence（ACHIEVEMENTS 键 unlocked 表），state.achievements 不存在——
+    // 原读法恒 0，玩家十几个成就也显示 0/条件永不满足（用户报 bug）
+    condition: () => {
+      const { unlocked } = getAchievementStats();
+      return { met: unlocked >= 10, progressKey: 'exhCondAchievements', have: unlocked, need: 10 };
+    }
   },
   collection: {
     emoji: '🎁', nameKey: 'roomCollection', price: 800, tab: 'library', subTab: 'collection',

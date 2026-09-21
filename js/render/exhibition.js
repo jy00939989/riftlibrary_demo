@@ -4,11 +4,13 @@
 // 修复过渡 = CSS 光扫 + 灰度褪去（~1.2s，本厅不入 seedance 清单）。
 // 美术债：大厅底图 visual/exhibition/hall_v1.jpg 未出图前，用羊皮纸大厅 CSS 构图（零美术债实现）。
 import { state } from '../state.js';
-import { t } from '../i18n/terms.js';
+import { t, getPageName } from '../i18n/terms.js';
 import { playSfx } from '../audio.js';
-import { updateStatusBar } from './common.js';
+import { updateStatusBar, showImagePreview } from './common.js';
 import { showToast } from './shared/toast.js';
 import { getLibraryStage } from '../storage.js';
+import { purchaseSignboard } from '../shop.js';
+import { SIGNBOARDS } from '../../data/signboards.js';
 import {
   isExhibitionBuilt, canBuildExhibitionHall, buildExhibitionHall,
   getHallUpgradePrice, getHallLevelCap, canUpgradeHall, upgradeHall,
@@ -47,11 +49,92 @@ export function renderExhibitionPage() {
   if (!container) return;
   container.innerHTML = '';
 
+  const wrapper = document.createElement('div');
+  wrapper.className = 'space-y-6';
+
   if (!isExhibitionBuilt()) {
-    renderUnbuiltHall(container);
-    return;
+    renderUnbuiltHall(wrapper);
+  } else {
+    renderHall(wrapper);
   }
-  renderHall(container);
+
+  // 标志牌墙（2026-09-21 图南决策：从温室/商店收编进展览厅；不受建成门控，早期可购买）
+  wrapper.appendChild(renderSignboardWall());
+  container.appendChild(wrapper);
+}
+
+// ========== 标志牌墙：展览（已拥有）+ 购买（未拥有）一体 ==========
+
+function renderSignboardWall() {
+  const section = document.createElement('div');
+  section.className = 'parchment-bg rounded-2xl magic-glow p-5';
+  section.innerHTML = `<h3 class="font-bold text-lg mb-1 flex items-center gap-2">🪧 ${t('signboardWallTitle')}</h3>
+    <p class="text-xs text-ink-light mb-3">${t('signboardWallDesc')}</p>`;
+
+  const grid = document.createElement('div');
+  grid.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3';
+
+  const owned = state.signboards || [];
+
+  Object.values(SIGNBOARDS).forEach(sb => {
+    const isOwned = owned.includes(sb.id);
+    const serial = state.signboardSerials?.[sb.id];
+    const isLimited = sb.price === 0 && sb.image;
+
+    const card = document.createElement('div');
+    card.className = `rounded-xl p-4 border-2 flex gap-3 items-center ${isOwned ? 'bg-green-50 border-green-200' : 'bg-white border-wood/20 hover:border-magic-gold/50 hover:shadow-lg transition-all'}`;
+
+    const iconHtml = sb.image
+      ? `<img src="${sb.image}" alt="${sb.name}" class="w-12 h-12 object-contain flex-shrink-0 cursor-pointer" title="点击看大图" />`
+      : `<div class="text-3xl flex-shrink-0">${sb.emoji}</div>`;
+
+    const serialBadge = isOwned && serial !== undefined
+      ? `<span class="text-xs bg-amber-200 text-amber-800 px-1.5 py-0.5 rounded" title="限量编号">NO.${serial}</span>`
+      : '';
+
+    const actionHtml = !isOwned
+      ? (isLimited
+        ? `<span class="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded font-bold">${t('limitedSignboardLabel') || '兑换码获取'}</span>`
+        : `<button class="signboard-buy-btn px-3 py-1.5 ${state.coins >= sb.price ? 'bg-magic-gold text-white hover:shadow-lg' : 'bg-gray-300 text-gray-500 cursor-not-allowed'} rounded-lg text-sm font-bold transition-all" ${state.coins < sb.price ? 'disabled' : ''}>💰${sb.price}</button>`)
+      : '';
+
+    card.innerHTML = `
+      ${iconHtml}
+      <div class="flex-1 min-w-0">
+        <div class="font-bold text-sm flex items-center gap-2 flex-wrap">
+          ${sb.name}
+          ${isOwned ? `<span class="text-xs bg-green-200 text-green-700 px-1.5 py-0.5 rounded">✅ ${t('owned')}</span>${serialBadge}` : ''}
+        </div>
+        <p class="text-xs text-ink-light">${sb.description}</p>
+        <p class="text-xs text-ink-light mt-0.5">📌 ${t('hungOnPage').replace('{page}', getPageName(sb.page))}</p>
+        ${sb.buff && sb.buff.desc ? `<p class="text-xs text-magic-gold/80 mt-0.5 italic">${sb.buff.desc}</p>` : ''}
+      </div>
+      ${actionHtml}
+    `;
+
+    const iconImg = card.querySelector('img');
+    if (iconImg && sb.image) {
+      iconImg.addEventListener('click', () => showImagePreview(sb.image, sb.name));
+    }
+
+    const buyBtn = card.querySelector('.signboard-buy-btn');
+    if (buyBtn && !isOwned && !isLimited && state.coins >= sb.price) {
+      buyBtn.addEventListener('click', () => {
+        if (purchaseSignboard(sb.id)) {
+          playSfx('buy_success');
+          updateStatusBar();
+          renderExhibitionPage();
+        } else {
+          showToast(`${t('insufficientCoins')} 💰`, 'error');
+        }
+      });
+    }
+
+    grid.appendChild(card);
+  });
+
+  section.appendChild(grid);
+  return section;
 }
 
 function renderUnbuiltHall(container) {

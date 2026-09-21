@@ -94,7 +94,6 @@ export function showShopOpenGuide(callback) {
     <div class="text-left text-base text-ink-light mb-3 space-y-1">
       <div>${formatTerm('tutorialShopReadingAreaUpgrade', { readingArea: t('readingArea'), upgrade: t('upgrade') })}</div>
       <div>${formatTerm('tutorialShopScriptoriumUpgrade', { scriptorium: t('tabScriptorium'), upgrade: t('upgrade') })}</div>
-      <div>${formatTerm('tutorialShopDecor', { decor: t('decoration') })}</div>
       <div>${formatTerm('tutorialShopNewBooks', { newBooks: t('newBooksInStock') })}</div>
     </div>
     <button class="px-6 py-3 bg-magic-gold text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all">${t('tutorialExplore')}</button>
@@ -122,7 +121,6 @@ export function showLibraryOpenGuide(callback) {
       <div>${formatTerm('tutorialOfficeOverview', { overview: t('subtabOverview') })}</div>
       <div>${formatTerm('tutorialOfficeAchievements', { achievements: t('subtabAchievements') })}</div>
       <div>${formatTerm('tutorialOfficeCollection', { collection: t('subtabCollection') })}</div>
-      <div>${formatTerm('tutorialOfficeDecoration', { decoration: t('subtabDecoration') })}</div>
       <div>${formatTerm('tutorialOfficeGuide', { guide: t('subtabGuide') })}</div>
     </div>
     <button class="px-6 py-3 bg-magic-gold text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all">${t('tutorialGotIt')}</button>

@@ -21,7 +21,7 @@ import { spawnVisitor, tickVisitorBrowsing, checkDueVisitors, getStageWitnesses,
 import { tryTriggerBookDisasters } from './core/disasters.js';
 import { checkAutoUnlockPacks } from './shop.js';
 import { checkAchievements, checkAllOnInit } from './achievements.js';
-import { addWaterOpportunity, checkWither } from './plants.js';
+import { addWaterOpportunity, checkWither, grantOfflineWater } from './plants.js';
 import { addDiaryEntry, tryGenerateDailySummary } from './diary.js';
 import { ensureGuideQuests } from './guidequests.js';
 import { tickPlaneVisitors } from './quests.js';
@@ -110,6 +110,9 @@ function init() {
   // 展览厅活动日判定②：页面加载（onNewDay 订阅负责日界侧；落戳幂等，同日不双写）
   try { checkEventDayDiary(); } catch (e) { console.warn('[app] event diary check failed', e); }
 
+  // 温室储水设施：离线蓄水发放（水箱 ≥2 才有；不足一个周期则只刷新锚点）
+  try { grantOfflineWater(); } catch (e) { console.warn('[app] offline water grant failed', e); }
+
   initAuth().catch(err => console.warn('[app] backend auth init failed', err));
 
   setCompleteCallback(handleCompleteFocus);
@@ -136,7 +139,7 @@ function init() {
     state.currentSession.targetMinutes = 1;
   }
 
-  ['focus', 'bookshelf', 'library', 'visitors', 'exhibition', 'archive', 'shop'].forEach(tab => {
+  ['focus', 'bookshelf', 'library', 'visitors', 'greenhouse', 'exhibition', 'archive', 'shop'].forEach(tab => {
     const btn = document.getElementById('tab-' + tab);
     if (btn) btn.addEventListener('click', () => switchTab(tab));
   });
@@ -294,7 +297,7 @@ function init() {
     if (disaster) {
       if (switchTab && typeof renderLibraryPage === 'function') renderLibraryPage();
       if (typeof window.renderShopPage === 'function') window.renderShopPage();
-      if (typeof window.renderDecorationPage === 'function') window.renderDecorationPage();
+      if (typeof window.renderGreenhousePage === 'function') window.renderGreenhousePage();
     }
 
     // 书籍灾难事件（鼠患/霉斑/火灾/蛀虫/积灰/窃书/台风波及，可在设置关闭）

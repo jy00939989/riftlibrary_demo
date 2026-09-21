@@ -1,4 +1,5 @@
-// 图书馆 & 收藏室页面渲染（子标签页：概况 / 成就柜 / 收藏室 / 布置 / 攻略 / 古籍修复室）
+// 图书馆 & 收藏室页面渲染（子标签页：概况 / 成就柜 / 收藏室 / 攻略 / 古籍修复室）
+// 2026-09-21：布置（温室）子标签退役——温室独立成顶页 tab-greenhouse（图南决策）
 import { state } from '../state.js';
 import { getAtmosphereStage, getRandomDescription, getStageProgress, getFacilityLevelCap, getFacilityRequiredStage, getStageUpRequirements, getStageThreshold } from '../../data/atmosphere.js';
 import { getAtmosphereLevel, canHoldStageCeremony, holdStageCeremony, getStageUpSnapshot } from '../storage.js';
@@ -6,7 +7,6 @@ import { getFocusSpeedMultiplier, getSignboardBuffSum } from '../shop.js';
 import { getMasteredBookSpeedBonus } from '../core/shop/library-upgrades.js';
 import { renderAchievements } from './achievements.js';
 import { renderCollection } from './collection.js';
-import { renderDecorationPage } from './plants.js';
 import { TIER_GOALS, getTierStatus, countTierGoalsComplete } from '../../data/tiergoals.js';
 import { BOOKS } from '../../data/books.js';
 import { VOLUME_GROUPS, getVolumeGroupProgress, isVolumeBookId } from '../../data/volume_groups.js';
@@ -79,10 +79,6 @@ export function renderLibraryPage() {
           ${activeSubTab === 'restoration' ? 'bg-white text-magic-gold border-b-2 border-magic-gold -mb-0.5' : 'text-ink-light hover:text-ink hover:bg-white/50'}">
           📜 ${t('restorationRoom')}
         </button>
-        <button data-subtab="decoration" class="subtab-btn flex-shrink-0 px-3 sm:px-5 py-3 text-sm font-bold transition-all
-          ${activeSubTab === 'decoration' ? 'bg-white text-magic-gold border-b-2 border-magic-gold -mb-0.5' : 'text-ink-light hover:text-ink hover:bg-white/50'}">
-          🏺 ${t('subtabDecoration')}
-        </button>
         <button data-subtab="guide" class="subtab-btn flex-shrink-0 px-3 sm:px-5 py-3 text-sm font-bold transition-all
           ${activeSubTab === 'guide' ? 'bg-white text-magic-gold border-b-2 border-magic-gold -mb-0.5' : 'text-ink-light hover:text-ink hover:bg-white/50'}">
           📖 ${t('subtabGuide')}
@@ -111,7 +107,6 @@ export function renderLibraryPage() {
       case 'achievements': renderAchievementsTab(contentArea); break;
       case 'collection': renderCollectionTab(contentArea); break;
       case 'restoration': renderRestorationTab(contentArea); break;
-      case 'decoration': renderDecorationTab(contentArea); break;
       case 'guide': renderGuideTab(contentArea); break;
     }
   }
@@ -342,19 +337,6 @@ function renderAchievementsTab(container) {
   container.innerHTML = '<div id="achievements-grid"></div>';
   const grid = document.getElementById('achievements-grid');
   if (grid) renderAchievements(grid);
-}
-
-// ========== 布置子标签 ==========
-
-function renderDecorationTab(container) {
-  container.innerHTML = '<div id="decoration-content"></div>';
-  const content = document.getElementById('decoration-content');
-  if (!content) return;
-  try {
-    renderDecorationPage();
-  } catch (e) {
-    content.innerHTML = `<p class="text-center text-red-500 py-8">${t('decorationPageLoadFailed')}</p>`;
-  }
 }
 
 // ========== 馆长手册子标签 ==========
