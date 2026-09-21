@@ -867,3 +867,13 @@ open 房间暖光常亮（`.exh-spot.open .exh-spot-glow opacity:1`）——「�
 3. 与 hall_lv5 摆在一起风格不打架（色调/笔触/透视接近）
 4. 落盘 `visual/greenhouse/greenhouse_main.jpg`（<500KB，参考 hall 的 PNG→JPG 压缩档），
    然后把 renderGreenhouseScene 三热点改为图上的绝对坐标（百分比定位，坐标写进本文件备注）
+
+### ✅ 已落地（2026-09-21 图南供图当日接入）
+
+母档 `visual/greenhouse/gh_master.png`（1920×1089）→ 压缩档 `greenhouse_main.jpg` 481KB。
+图完全命中约定：四空盆等距一字排开、三功能区界线分明、三块空白铭牌无文字、风格与 hall 系列一致。
+实测坐标（相对图宽高 %，render/plants.js GH_POT_SLOTS / GH_REGIONS / GH_LABELS 常量）：
+- 盆位中心 x：21.7 / 32.7 / 42.4 / 51.6，y ≈ 63-64.5（活立绘 translateY(-92%) 锚定盆口）
+- 设施热区：左64 上8 宽25 高45（右上工具架）；兑换热区：左66 上56 宽34 高42（右下柜台）
+- 铭牌标签：温室名 34.5/16（顶部大牌）、盆栽 15/47、设施 76.5/12.5、兑换 79/86
+- 交互：盆位点击分流（已种植→盆栽区 / 空盆→购买种子）；状态脉冲点挂铭牌标签
