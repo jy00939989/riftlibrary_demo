@@ -16,15 +16,15 @@ export function renderDailyTasks() {
     { icon: '🌱', label: t('dailyWaterPlant'), done: dt.waterDone, reward: '💰 10' }
   ];
 
-  const card = el('div', 'mb-4 rounded-xl overflow-hidden border border-wood/20 flex flex-row items-stretch');
+  const card = el('div', 'mb-4 rounded-xl overflow-hidden border border-wood/20 flex flex-row items-center');
   card.style.background = 'linear-gradient(180deg, rgba(245,230,200,0.75) 0%, rgba(232,213,168,0.55) 100%)';
   card.style.boxShadow = 'inset 0 0 30px rgba(139,105,20,0.06), 0 1px 4px rgba(0,0,0,0.08)';
 
-  // 任务板插画（素材整版 D 区切片；图缺时静默移除，布局自动回退纯文字版）
+  // 任务板插画（素材整版 D 区切片；横版画按固定高度等比起宽，竖条裁切问题修复 2026-09-21）
   const boardImg = document.createElement('img');
   boardImg.src = 'visual/focusroom/daily_tasks_board.png';
   boardImg.alt = t('dailyTask');
-  boardImg.className = 'w-24 sm:w-28 self-stretch object-cover flex-shrink-0';
+  boardImg.className = 'h-32 sm:h-36 w-auto flex-shrink-0 self-center';
   boardImg.onerror = () => boardImg.remove();
   card.appendChild(boardImg);
 
