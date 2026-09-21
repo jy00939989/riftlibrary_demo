@@ -48,3 +48,4 @@ temple/
 
 # 本地服务运行日志
 service-logs/
+*.qkdownloading
