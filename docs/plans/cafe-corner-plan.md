@@ -32,6 +32,9 @@ anchors:
   - { type: file, path: "js/render/shop/cafe-panel.js", weight: 0.1 }
   - { type: file, path: "js/render/visitors.js", weight: 0.1 }
   - { type: file, path: "scripts/test-cafe.mjs", weight: 0.1 }
+  # 2026-09-21 温室培育线 + 温室独立成页（union 追加，勿动既有）
+  - { type: file, path: "scripts/test-greenhouse-upgrades.mjs", weight: 0.1 }
+  - { type: file, path: "docs/tech-debt/scenery-sticker-system.md", weight: 0.1 }
 ---
 
 # 咖啡角计划（cafe-corner-plan）v3.1
