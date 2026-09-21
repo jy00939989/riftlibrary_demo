@@ -1,11 +1,11 @@
 // Shop page entry point — orchestrates all shop sections and countdown lifecycle
+// 2026-09-21：馆内装潢区退役（图南决策）——植物购买迁入温室独立页，标志牌收编展览厅
 import { el } from '../common.js';
 import { ensureShopState, getShopState } from '../../shop.js';
 import { t } from '../../i18n/terms.js';
 import { renderDlcPacksSection } from '../dlc-packs.js';
 import { renderLibraryUpgrades } from './library-upgrades.js';
 import { renderBookSection } from './book-section.js';
-import { renderDecorationShop } from './decorations.js';
 import { cleanupTimer, startCountdownTimer } from './countdown.js';
 
 export function renderShopPage() {
@@ -28,9 +28,6 @@ export function renderShopPage() {
   // ========== New Books ==========
   wrapper.appendChild(renderBookSection(`📚 ${t('newBooksInStock')}`, shopState.fixed, false));
   wrapper.appendChild(renderBookSection(`🔥 ${t('limitedTimeOffer')}`, shopState.rotating, true));
-
-  // ========== Decorations ==========
-  wrapper.appendChild(renderDecorationShop());
 
   container.appendChild(wrapper);
 

@@ -1,27 +1,30 @@
-// 馆内布置子标签渲染 —— 植物状态 + 标志牌展示 + 种子库存
+// 温室页面渲染（2026-09-21 独立成页，图南三决策：种子购买迁入/标志牌迁展览厅/贴纸记技术债）
+// 结构：盆栽区（盆位+解锁）→ 培育设施（喷壶/水箱/绿手指）→ 购买种子 → 种子库存
 import { state, saveState } from '../state.js';
 import { updateStatusBar, showImagePreview } from './common.js';
-import { PLANT_TYPES, SEED_EXCHANGE } from '../../data/plants.js';
-import { SIGNBOARDS } from '../../data/signboards.js';
-import { canHarvest, harvestPlant, canExchangeSeed, exchangeSeed, getActivePlantDef, canWater, canFertilize, abandonPlant, getSeedExchanges, waterPlant, fertilizePlant, unlockPot, canUnlockPot, getPotCount, getNextPotPrice, MAX_POTS, getWaterCount } from '../plants.js';
+import { playSfx } from '../audio.js';
+import { PLANT_TYPES, SEED_EXCHANGE, WATERING_CANS, WATER_TANKS } from '../../data/plants.js';
+import { canHarvest, harvestPlant, canExchangeSeed, exchangeSeed, getActivePlantDef, canWater, canFertilize, abandonPlant, getSeedExchanges, waterPlant, fertilizePlant, unlockPot, canUnlockPot, getPotCount, getNextPotPrice, MAX_POTS, getWaterCount, getWateringCanLevel, getWaterTankLevel, getNextCanUpgrade, getNextTankUpgrade, canUpgradeCan, canUpgradeTank, upgradeCan, upgradeTank, getGreenThumbLevel, getGreenThumbProgress, isImproved, getEffectiveSeedDropRate, canUnlockImproved, unlockImproved, getSplashTargets, plantSeed } from '../plants.js';
 import { t } from '../i18n/terms.js';
 import { suppressGuideWidget } from './guidequests.js';
 
-export function renderDecorationPage() {
-  const container = document.getElementById('decoration-content');
+export function renderGreenhousePage() {
+  const container = document.getElementById('page-greenhouse');
   if (!container) return;
 
   const wrapper = document.createElement('div');
   wrapper.className = 'space-y-6';
 
   wrapper.appendChild(renderPlantArea());
+  wrapper.appendChild(renderFacilities());
+  wrapper.appendChild(renderPlantShop());
   wrapper.appendChild(renderSeedInventory());
-  wrapper.appendChild(renderSignboardCollection());
-  wrapper.appendChild(renderStickerPlaceholder());
 
   container.innerHTML = '';
   container.appendChild(wrapper);
 }
+
+window.renderGreenhousePage = renderGreenhousePage;
 
 // 植物立绘渲染：预加载探测，失败回退 emoji
 export function renderPlantArt(def, level, size = null) {
@@ -120,13 +123,25 @@ function renderPotUnlockCard() {
   btn.innerHTML = `💰${price.toLocaleString()}`;
   btn.addEventListener('click', () => {
     if (unlockPot()) {
-      renderDecorationPage();
-      if (typeof window.renderShopPage === 'function') window.renderShopPage();
+      renderGreenhousePage();
+
       updateStatusBar();
     }
   });
   card.appendChild(btn);
   return card;
+}
+
+// 浇水按钮文案（温室页与位面商店装潢页共用；喷壶档位决定文案，2026-09-21）
+export function getWaterButtonLabel(def, potIndex = 0) {
+  const canLv = getWateringCanLevel();
+  if (canLv === 2) return t('waterSplashTwo');
+  if (canLv === 3) {
+    const activeCount = Math.max(1, getSplashTargets(potIndex).length);
+    const per = Math.max(1, Math.round(def.waterGrowth * 2 / activeCount));
+    return t('waterSplashAll').replace('{per}', per);
+  }
+  return `${t('water')} ${t('waterGrowth').replace('{value}', def.waterGrowth)}`;
 }
 
 // 单盆卡：空盆 → 引导提示；活盆 → 立绘/进度/操作（交互与单株时代一致，仅索引化）
@@ -141,7 +156,7 @@ function renderPotCard(plant, potIndex) {
           <img src="visual/plants/plant_16_empty_pot.png" alt="${t('plantPotEmpty')}" class="w-16 h-16 object-contain opacity-70">
         </div>
         <p class="text-xs text-ink-light">${t('plantPotEmpty')}</p>
-        <p class="text-xs text-ink-light mt-1">前往 <span class="text-magic-gold font-bold">位面商店 → 馆内装潢</span> 购买植物</p>
+        <p class="text-xs text-ink-light mt-1">在本页下方 <span class="text-magic-gold font-bold">购买种子</span> 种下新植物</p>
       </div>
     `;
     return card;
@@ -149,6 +164,9 @@ function renderPotCard(plant, potIndex) {
 
   const def = PLANT_TYPES[plant.activeType];
   if (!def) return card;
+
+  const improved = isImproved(plant.activeType);
+  const dropRate = Math.round(getEffectiveSeedDropRate(plant.activeType) * 100);
 
   const progressPercent = Math.min(100, Math.round((plant.growthProgress / def.growthPerLevel) * 100));
   const levelName = def.levelNames[plant.level] || '';
@@ -162,6 +180,7 @@ function renderPotCard(plant, potIndex) {
   info.innerHTML = `
     <div class="flex items-center justify-center gap-2 mb-2 flex-wrap">
       <span class="font-bold">${t(def.nameKey)}</span>
+      ${improved ? `<span class="text-xs bg-teal-200 text-teal-800 px-2 py-1 rounded-full font-bold">${t('improvedBadge')}</span>` : ''}
       <span class="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full">Lv.${plant.level} · ${levelName}</span>
     </div>
     <div class="h-3 bg-gray-200 rounded-full overflow-hidden mb-2">
@@ -170,7 +189,7 @@ function renderPotCard(plant, potIndex) {
     <p class="text-xs text-ink-light mb-3 text-center">成长进度 ${progressPercent}%</p>
     <div class="flex gap-2 flex-wrap justify-center" id="dec-plant-actions-${potIndex}"></div>
     ${canHarvestNow
-      ? `<p class="text-xs text-yellow-600 mt-3 text-center">✨ 可以收获了！将以${Math.round(def.seedDropRate * 100)}%概率获得种子</p>`
+      ? `<p class="text-xs text-yellow-600 mt-3 text-center">✨ 可以收获了！将以${dropRate}%概率获得种子${improved && def.improved ? `<br>${t('harvestPerennialNote')}` : ''}</p>`
       : `<p class="text-xs text-ink-light mt-2 text-center">${plant.level < 5 ? `下一级施肥所需 💰${def.fertilizeCosts[plant.level + 1] || 0}` : '进度满即可收获'}</p>`
     }
   `;
@@ -188,22 +207,23 @@ function renderPotCard(plant, potIndex) {
       const result = harvestPlant(potIndex);
       if (result) showPlantHarvestPopup(def, result);
       updateStatusBar();
-      if (typeof window.renderShopPage === 'function') window.renderShopPage();
-      renderDecorationPage();
+
+      renderGreenhousePage();
     });
     actions.appendChild(harvestBtn);
   } else {
-    // 浇水按钮
+    // 浇水按钮（喷壶档位决定泼溅范围，2026-09-21）
     const canWaterNow = canWater(potIndex);
+    const waterLabel = getWaterButtonLabel(def, potIndex);
     const waterBtn = document.createElement('button');
     waterBtn.className = `px-3 py-2 bg-blue-500 text-white rounded-lg text-sm font-bold hover:shadow-lg transition-all ${!canWaterNow ? 'opacity-50 cursor-not-allowed' : ''}`;
     waterBtn.disabled = !canWaterNow;
-    waterBtn.innerHTML = `💧 浇水 (+${def.waterGrowth})`;
+    waterBtn.innerHTML = waterLabel;
     waterBtn.addEventListener('click', () => {
       const result = waterPlant(potIndex);
       if (result.ok && result.justMatured) showPlantMaturityToast(def);
-      renderDecorationPage();
-      if (typeof window.renderShopPage === 'function') window.renderShopPage();
+      renderGreenhousePage();
+
       updateStatusBar();
     });
     actions.appendChild(waterBtn);
@@ -217,8 +237,8 @@ function renderPotCard(plant, potIndex) {
     fertBtn.addEventListener('click', () => {
       const result = fertilizePlant(potIndex);
       if (result.ok && result.justMatured) showPlantMaturityToast(def);
-      renderDecorationPage();
-      if (typeof window.renderShopPage === 'function') window.renderShopPage();
+      renderGreenhousePage();
+
       updateStatusBar();
     });
     actions.appendChild(fertBtn);
@@ -231,13 +251,90 @@ function renderPotCard(plant, potIndex) {
   abandonBtn.addEventListener('click', () => {
     if (confirm(t('plantAbandonConfirm').replace('{name}', t(def.nameKey)))) {
       abandonPlant(potIndex);
-      renderDecorationPage();
-      if (typeof window.renderShopPage === 'function') window.renderShopPage();
+      renderGreenhousePage();
+
       updateStatusBar();
     }
   });
   actions.appendChild(abandonBtn);
 
+  return card;
+}
+
+// ========== 培育设施（喷壶 / 水箱 / 绿手指，2026-09-21 温室培育线） ==========
+
+function renderFacilities() {
+  const section = document.createElement('div');
+  section.className = 'bg-white/60 rounded-xl p-5 border-2 border-teal-200';
+
+  section.innerHTML = `<h3 class="font-bold text-lg mb-3 flex items-center gap-2">🛠️ ${t('greenhouseFacilities')}</h3>`;
+
+  const grid = document.createElement('div');
+  grid.className = 'grid grid-cols-1 md:grid-cols-3 gap-3';
+
+  grid.appendChild(renderFacilityCard({
+    emoji: WATERING_CANS[getWateringCanLevel() - 1].emoji,
+    name: t(WATERING_CANS[getWateringCanLevel() - 1].nameKey),
+    desc: t(WATERING_CANS[getWateringCanLevel() - 1].descKey),
+    next: getNextCanUpgrade(),
+    canAfford: canUpgradeCan(),
+    onUpgrade: () => upgradeCan()
+  }));
+
+  grid.appendChild(renderFacilityCard({
+    emoji: WATER_TANKS[getWaterTankLevel() - 1].emoji,
+    name: t(WATER_TANKS[getWaterTankLevel() - 1].nameKey),
+    desc: t(WATER_TANKS[getWaterTankLevel() - 1].descKey),
+    next: getNextTankUpgrade(),
+    canAfford: canUpgradeTank(),
+    onUpgrade: () => upgradeTank()
+  }));
+
+  const thumbLv = getGreenThumbLevel();
+  const thumbProg = getGreenThumbProgress();
+  grid.appendChild(renderFacilityCard({
+    emoji: '🌿',
+    name: t('greenThumb'),
+    desc: thumbLv === 0
+      ? t('greenThumbDesc')
+      : `${t('greenThumbDesc')}（+${thumbLv * 5}%）`,
+    footer: thumbProg.next === null
+      ? t('greenThumbMaxed').replace('{n}', thumbProg.current)
+      : `${t('greenThumbProgress').replace('{n}', thumbProg.current)} · ${t('greenThumbProgress').replace('{n}', thumbProg.next)} → Lv${thumbLv + 1}`,
+    next: null // 被动成长，不可购买
+  }));
+
+  section.appendChild(grid);
+  return section;
+}
+
+function renderFacilityCard({ emoji, name, desc, footer = null, next = null, canAfford = false, onUpgrade = null }) {
+  const card = document.createElement('div');
+  card.className = 'bg-white rounded-xl p-4 border-2 border-teal-200 flex flex-col';
+
+  const btnHtml = next
+    ? `<button class="facility-upgrade-btn px-4 py-1.5 mt-3 rounded-lg text-sm font-bold transition-all ${canAfford ? 'bg-teal-600 text-white hover:shadow-lg' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}">${t('facilityUpgrade').replace('{price}', next.price.toLocaleString())}</button>`
+    : `<span class="text-xs text-green-600 font-bold mt-3 inline-block">✅ ${t('facilityMaxed')}</span>`;
+
+  card.innerHTML = `
+    <div class="flex items-center gap-2 mb-2">
+      <span class="text-2xl">${emoji}</span>
+      <span class="font-bold text-sm">${name}</span>
+    </div>
+    <p class="text-xs text-ink-light leading-relaxed flex-1">${desc}</p>
+    ${footer ? `<p class="text-xs text-teal-700 mt-2">${footer}</p>` : ''}
+    ${btnHtml}
+  `;
+
+  if (next && canAfford && onUpgrade) {
+    card.querySelector('.facility-upgrade-btn').addEventListener('click', () => {
+      if (onUpgrade()) {
+        renderGreenhousePage();
+
+        updateStatusBar();
+      }
+    });
+  }
   return card;
 }
 
@@ -308,7 +405,7 @@ function renderSeedInventory() {
         btn.addEventListener('click', () => {
           if (exchangeSeed(seedType, item.index)) {
             if (typeof window.renderBookshelfPage === 'function') window.renderBookshelfPage();
-            renderDecorationPage();
+            renderGreenhousePage();
           }
         });
         right.appendChild(btn);
@@ -320,6 +417,39 @@ function renderSeedInventory() {
       row.appendChild(right);
       list.appendChild(row);
     });
+
+    // 嫁接改良（2026-09-21 温室培育线）：种子 sink + 掉率提升 + 多年生
+    if (plantDef.improved) {
+      const row = document.createElement('div');
+      row.className = 'flex items-center justify-between text-sm border-t border-teal-200 pt-2 mt-1';
+
+      const left = document.createElement('div');
+      left.className = 'text-ink-light';
+      if (isImproved(seedType)) {
+        left.innerHTML = `<span class="text-xs text-teal-700 font-bold">${t('improvedUnlocked').replace('{rate}', Math.round(plantDef.improved.seedDropRate * 100))}</span>`;
+      } else {
+        left.innerHTML = `<span class="font-bold text-teal-700">${t('unlockImprovedTitle')}</span><br><span class="text-xs">${t('unlockImprovedDesc').replace('{cost}', plantDef.improved.seedCost)}</span>`;
+      }
+
+      const right = document.createElement('div');
+      if (!isImproved(seedType)) {
+        if (canUnlockImproved(seedType)) {
+          const btn = document.createElement('button');
+          btn.className = 'px-3 py-1 bg-teal-600 text-white rounded-lg text-xs font-bold hover:shadow transition-all';
+          btn.textContent = `🌰 ×${plantDef.improved.seedCost}`;
+          btn.addEventListener('click', () => {
+            if (unlockImproved(seedType)) renderGreenhousePage();
+          });
+          right.appendChild(btn);
+        } else {
+          right.innerHTML = `<span class="text-xs text-ink-light">${t('needSeedsToImprove').replace('{n}', plantDef.improved.seedCost - count)}</span>`;
+        }
+      }
+
+      row.appendChild(left);
+      row.appendChild(right);
+      list.appendChild(row);
+    }
 
     card.appendChild(list);
     grid.appendChild(card);
@@ -333,70 +463,63 @@ function renderSeedInventory() {
   return section;
 }
 
-// ========== 标志牌收集 ==========
+// ========== 购买种子（2026-09-21 图南决策：从位面商店迁入温室；有空盆才展示） ==========
 
-function renderSignboardCollection() {
+function renderPlantShop() {
   const section = document.createElement('div');
-  section.className = 'bg-white/60 rounded-xl p-5 border-2 border-magic-gold/20';
+  section.className = 'bg-white/60 rounded-xl p-5 border-2 border-green-200';
 
-  section.innerHTML = '<h3 class="font-bold text-lg mb-3 flex items-center gap-2">🪧 标志牌</h3>';
+  const pots = state.plants || [];
+  const hasEmptyPot = pots.some(p => !p.activeType || p.level === 0);
+  if (!hasEmptyPot) return section;
+
+  section.innerHTML = `<h3 class="font-bold text-lg mb-3 flex items-center gap-2">🌰 ${t('greenhouseSeedShop')}</h3>`;
 
   const grid = document.createElement('div');
-  grid.className = 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3';
+  grid.className = 'grid grid-cols-1 md:grid-cols-3 gap-3';
 
-  const owned = state.signboards || [];
-
-  if (owned.length === 0) {
-    grid.innerHTML = '<p class="text-sm text-ink-light col-span-full text-center py-4">还没有标志牌。前往 <span class="text-magic-gold font-bold">位面商店 → 馆内装潢</span> 购买吧</p>';
-    section.appendChild(grid);
-    return section;
-  }
-
-  Object.values(SIGNBOARDS).forEach(sb => {
-    const isOwned = owned.includes(sb.id);
-    if (!isOwned) return;
-
+  Object.values(PLANT_TYPES).forEach(pt => {
     const card = document.createElement('div');
-    card.className = 'bg-white rounded-xl p-3 border-2 border-magic-gold/30 text-center hover:shadow-md transition-all';
-    const buffNote = sb.buff && sb.buff.desc ? `<div class="text-xs text-magic-gold/70 mt-1 italic">${sb.buff.desc}</div>` : '';
-    const iconHtml = sb.image
-      ? `<img src="${sb.image}" alt="${sb.name}" class="w-10 h-10 object-contain mx-auto mb-2 cursor-pointer" title="点击看大图" />`
-      : `<div class="text-3xl mb-2">${sb.emoji}</div>`;
-    card.innerHTML = `
-      ${iconHtml}
-      <div class="font-bold text-xs">${sb.name}</div>
-      <div class="text-xs text-ink-light mt-1">📌 ${getPageDisplayName(sb.page)}</div>
-      ${buffNote}
+    card.className = 'bg-white rounded-xl p-4 border-2 border-green-200 flex gap-3 items-center hover:shadow-lg transition-all';
+    const cost = pt.fertilizeCosts[1];
+    const canAfford = state.coins >= cost;
+
+    const artWrap = document.createElement('div');
+    artWrap.className = 'flex-shrink-0';
+    artWrap.appendChild(renderPlantArt(pt, 1, 56));
+
+    const info = document.createElement('div');
+    info.className = 'flex-1 min-w-0';
+    info.innerHTML = `
+      <div class="font-bold text-sm">${t(pt.nameKey)}</div>
+      <p class="text-xs text-ink-light mt-0.5 line-clamp-2">${t(pt.descKey)}</p>
+      <div class="flex items-center gap-2 mt-1.5">
+        <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">${t('plantGrowLevels')}</span>
+        <span class="text-xs text-ink-light">${t('waterAndFertilize')}</span>
+      </div>
     `;
 
-    const iconImg = card.querySelector('img');
-    if (iconImg && sb.image) {
-      iconImg.addEventListener('click', () => showImagePreview(sb.image, sb.name));
-    }
+    const btn = document.createElement('button');
+    btn.className = `flex-shrink-0 px-4 py-1.5 ${canAfford ? 'bg-green-600 text-white hover:shadow-lg' : 'bg-gray-300 text-gray-500 cursor-not-allowed'} rounded-lg text-sm font-bold transition-all`;
+    btn.disabled = !canAfford;
+    btn.innerHTML = `💰${cost.toLocaleString()}`;
+    btn.addEventListener('click', () => {
+      if (plantSeed(pt.id)) {
+        playSfx('buy_success');
+        updateStatusBar();
+        renderGreenhousePage();
+      } else {
+        window.showToast(t('purchaseFailed'), 'error');
+      }
+    });
 
+    card.appendChild(artWrap);
+    card.appendChild(info);
+    card.appendChild(btn);
     grid.appendChild(card);
   });
 
   section.appendChild(grid);
-  return section;
-}
-
-function getPageDisplayName(page) {
-  const names = { focus: '缮写室', visitors: '读者沙龙', bookshelf: '大书库', shop: '位面商店', library: '馆长办公室', archive: '馆史档案' };
-  return names[page] || page;
-}
-
-// ========== 将来造景贴纸区占位 ==========
-
-function renderStickerPlaceholder() {
-  const section = document.createElement('div');
-  section.className = 'bg-gray-100 rounded-xl p-5 border-2 border-dashed border-gray-300 text-center';
-  section.innerHTML = `
-    <div class="text-3xl mb-2">🎨</div>
-    <p class="text-sm text-ink-light font-bold">造景贴纸</p>
-    <p class="text-xs text-ink-light mt-1">将盆栽和标志牌拖放布置到图书馆场景中</p>
-    <span class="text-xs text-ink-light bg-gray-200 px-2 py-0.5 rounded mt-2 inline-block">🏗️ 规划中…</span>
-  `;
   return section;
 }
 
@@ -438,6 +561,9 @@ export function showPlantHarvestPopup(def, result) {
   const seedText = result.seedDropped
     ? `<p class="text-sm text-magic-gold font-bold mb-2">🌰 ${t('seedObtained').replace('{name}', t(def.nameKey))}</p>`
     : '';
+  const perennialText = result.perennial
+    ? `<p class="text-sm text-teal-700 font-bold mb-2">🧬 ${t('harvestPerennialNote')}</p>`
+    : '';
   overlay.innerHTML = `
     <div class="parchment-bg rounded-2xl p-6 max-w-sm w-full text-center magic-glow animate-scale-in">
       <div class="text-5xl mb-3">${def.emoji}</div>
@@ -454,7 +580,10 @@ export function showPlantHarvestPopup(def, result) {
         </div>
       </div>
       ${seedText}
-      <p class="text-xs text-ink-light mb-4">${t('plantHarvestEmptyPot')}</p>
+      ${perennialText}
+      <p class="text-xs text-ink-light mb-4">${result.perennial
+        ? `🧬 ${t(def.nameKey)} ${t('improvedPerennialHint').replace('{lv}', def.improved.restartLevel).replace('{rate}', Math.round(def.improved.seedDropRate * 100))}`
+        : t('plantHarvestEmptyPot')}</p>
       <button class="px-6 py-3 bg-magic-gold text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all">${t('continueBtn')}</button>
     </div>
   `;
@@ -510,7 +639,7 @@ function renderPlantLossAlert(alert) {
   card.querySelector('.plant-loss-dismiss').addEventListener('click', () => {
     state.plantLossAlert = null;
     saveState();
-    renderDecorationPage();
+    renderGreenhousePage();
   });
   return card;
 }

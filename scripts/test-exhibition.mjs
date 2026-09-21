@@ -34,10 +34,20 @@ const { state } = await import('../js/state.js');
 const { runMigrations } = await import('../js/state/migrations.js');
 const exh = await import('../js/core/exhibition.js');
 const cal = await import('../data/event_calendar.js');
+const { getAchievementState } = await import('../js/achievements.js');
 
 const RealDate = Date;
 const T0 = new RealDate('2026-09-10T12:00:00').getTime(); // 非活动日（9/15 才是阿加莎诞辰）
 const at = (m, d) => new RealDate(`2026-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}T08:00:00`).getTime();
+
+// 成就真源在 persistence（riftlib_achievements，{unlocked: {id: {unlockedAt}}}）——
+// state.achievements 是假字段（2026-09-21 成就柜恒 0 bug 的根因），测试必须写真存储
+function setUnlockedAchievements(n) {
+  const ids = getAchievementState().map(a => a.id);
+  const unlocked = {};
+  ids.slice(0, n).forEach(id => { unlocked[id] = { unlockedAt: T0 }; });
+  localStorage.setItem('riftlib_achievements', JSON.stringify({ unlocked }));
+}
 
 let pass = 0, fail = 0;
 function assert(cond, msg) {
@@ -55,7 +65,7 @@ function freshExh(opts = {}) {
     grandOpeningShown: false, lastEventId: null, lastEventDay: null
   };
   state.signboards = opts.signboards ?? [];
-  state.achievements = opts.achievements ?? [];
+  setUnlockedAchievements(opts.achievementsCount ?? 0);
   state.visitorMemory = { items: opts.mementos ?? [] };
   state.musicRoom = { unlocked: opts.musicRoom ?? false, tracks: [] };
   window.__dev = { getNow: () => T0 };
@@ -109,11 +119,15 @@ exh.buildExhibitionHall(); exh.upgradeHall(); exh.upgradeHall(); exh.upgradeHall
 assert(!exh.getRepairSnapshot('signboards').collectionMet, '纪念牌 0/1 ❌');
 assert(!exh.getRepairSnapshot('achievements').collectionMet, '成就 0/10 ❌');
 assert(!exh.getRepairSnapshot('collection').collectionMet, '纪念品 0/5 ❌');
+// 回归（2026-09-21 用户报 bug）：假字段 state.achievements 有值但真源为空 → 仍须 0
+state.achievements = ['F01', 'F02', 'F03', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09', 'F10'];
+assert(!exh.getRepairSnapshot('achievements').collectionMet && exh.EXHIBITION_ROOMS.achievements.condition().have === 0,
+  '假字段不生效：state.achievements 塞 10 个 id，真源空 → 仍 0/10（bug 回归钉）');
 state.signboards = ['sb1'];
-state.achievements = new Array(10).fill('a');
+setUnlockedAchievements(10);
 state.visitorMemory = { items: new Array(5).fill({}) };
 assert(exh.getRepairSnapshot('signboards').collectionMet, '纪念牌 1/1 ✓');
-assert(exh.getRepairSnapshot('achievements').collectionMet, '成就 10/10 ✓');
+assert(exh.getRepairSnapshot('achievements').collectionMet, '真源解锁 10 项成就 → 10/10 ✓');
 assert(exh.getRepairSnapshot('collection').collectionMet, '纪念品 5/5 ✓');
 
 // ═══ 5. 修复三轨与金币 ═══
@@ -142,7 +156,7 @@ assert(exh.getRoomStatus('musicroom') === 'open', '商店建造后下一次读�
 
 // ═══ 7. 全馆开放庆典（一次性）═══
 console.log('\n=== 7. 全馆开放庆典 ===');
-freshExh({ stage: 5, coins: 99999, musicRoom: true, signboards: ['sb1'], achievements: new Array(10).fill('a'), mementos: new Array(5).fill({}) });
+freshExh({ stage: 5, coins: 99999, musicRoom: true, signboards: ['sb1'], achievementsCount: 10, mementos: new Array(5).fill({}) });
 exh.buildExhibitionHall();
 exh.upgradeHall(); exh.upgradeHall(); exh.upgradeHall(); exh.upgradeHall(); // Lv5，五槽
 exh.repairRoom('signboards');
@@ -152,7 +166,7 @@ const rLast = exh.repairRoom('collection');
 assert(rLast.grandOpening === true && state.exhibition.grandOpeningShown, '第五室修复 → 全馆开放一次性触发');
 assert(exh.checkGrandOpening() === false, '已置位不重复触发');
 // 兜底检出路径：四室已修、留声阁最后才建 → syncMusicRoomEntrance 点亮后 checkGrandOpening 发放
-freshExh({ stage: 5, coins: 99999, musicRoom: false, signboards: ['sb1'], achievements: new Array(10).fill('a'), mementos: new Array(5).fill({}) });
+freshExh({ stage: 5, coins: 99999, musicRoom: false, signboards: ['sb1'], achievementsCount: 10, mementos: new Array(5).fill({}) });
 exh.buildExhibitionHall();
 exh.upgradeHall(); exh.upgradeHall(); exh.upgradeHall(); exh.upgradeHall();
 exh.repairRoom('signboards'); exh.repairRoom('achievements'); exh.repairRoom('collection');
@@ -194,7 +208,7 @@ console.log('\n=== 10. 迁移 v10 ===');
 state._schemaVersion = 9;
 delete state.exhibition;
 runMigrations();
-assert(state._schemaVersion === 15, 'schemaVersion 9 → 15');
+assert(state._schemaVersion === 16, 'schemaVersion 9 → 16');
 assert(state.exhibition && state.exhibition.built === false && state.exhibition.level === 0, 'exhibition 默认态');
 assert(Object.keys(state.exhibition.rooms).length === 5 && state.exhibition.rooms.musicroom === 'ruined', '五房间全破败');
 runMigrations();

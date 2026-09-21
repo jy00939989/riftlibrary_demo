@@ -43,7 +43,8 @@ const MIGRATIONS = [
   { version: 12, up: migrateV12 },
   { version: 13, up: migrateV13 },
   { version: 14, up: migrateV14 },
-  { version: 15, up: migrateV15 }
+  { version: 15, up: migrateV15 },
+  { version: 16, up: migrateV16 }
 ];
 
 function migrateV12() {
@@ -68,6 +69,16 @@ function migrateV15() {
       bs.masteryLevel = REMAP[bs.masteryLevel];
     }
   }
+}
+
+function migrateV16() {
+  // 2026-09-21 温室培育线默认值：喷壶/水箱 Lv1、改良品种表、绿手指计数、离线蓄水锚点。
+  // 全部幂等：仅补缺省，不覆盖已有值。
+  if (!state.wateringCanLevel) state.wateringCanLevel = 1;
+  if (!state.waterTankLevel) state.waterTankLevel = 1;
+  if (!state.improvedPlants) state.improvedPlants = {};
+  if (!state.plantHarvests) state.plantHarvests = 0;
+  if (!state.waterOfflineAt) state.waterOfflineAt = Date.now();
 }
 
 function migrateV14() {

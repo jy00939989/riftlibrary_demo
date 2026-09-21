@@ -1,10 +1,12 @@
 // 植物逻辑模块 —— 浇水/施肥/成长/收获/凋谢/铲除/种子兑换/盆位扩容（纯逻辑，不碰DOM）
 // 温室花盆扩容（cafe-corner-plan §2.6 Phase 0）：state.plants 数组最多 4 盆，
 // 单株数据结构不变；所有单株函数 potIndex 参数化（默认 0 = 原单株语义）。
+// 温室培育线（2026-09-21 图南四决策）：喷壶泼溅/储水设施/改良品种/绿手指，
+// 解决「浇水次数绑死专注时长 → 盆位扩容无意义」。
 import { state, saveState } from './state.js';
 import { spendCoins, addCoins, addAtmosphere, addHistory, addInspiration } from './storage.js';
 import { markTaskDone } from './dailytasks.js';
-import { PLANT_TYPES, SEED_EXCHANGE } from '../data/plants.js';
+import { PLANT_TYPES, SEED_EXCHANGE, WATERING_CANS, WATER_TANKS, GREEN_THUMB } from '../data/plants.js';
 import { isBookCapacityFull, isManuscriptBoxFull, addToManuscriptBox, getManuscriptSlots, getManuscriptBoxCount } from './capacity.js';
 import { createBookRecord } from './core/book-utils.js';
 import { hasSignboard } from './shop.js';
@@ -65,6 +67,111 @@ export function unlockPot() {
   return true;
 }
 
+// ========== 培育设施：喷壶 / 水箱 / 绿手指（2026-09-21） ==========
+
+function getCanDef() {
+  return WATERING_CANS[(state.wateringCanLevel || 1) - 1] || WATERING_CANS[0];
+}
+
+function getTankDef() {
+  return WATER_TANKS[(state.waterTankLevel || 1) - 1] || WATER_TANKS[0];
+}
+
+export function getWateringCanLevel() {
+  return getCanDef().level;
+}
+
+export function getWaterTankLevel() {
+  return getTankDef().level;
+}
+
+export function getNextCanUpgrade() {
+  return WATERING_CANS[state.wateringCanLevel || 1] || null; // 数组下标 = 当前等级 → 下一档
+}
+
+export function getNextTankUpgrade() {
+  return WATER_TANKS[state.waterTankLevel || 1] || null;
+}
+
+export function canUpgradeCan() {
+  const next = getNextCanUpgrade();
+  return !!next && state.coins >= next.price;
+}
+
+export function canUpgradeTank() {
+  const next = getNextTankUpgrade();
+  return !!next && state.coins >= next.price;
+}
+
+export function upgradeCan() {
+  const next = getNextCanUpgrade();
+  if (!next || !spendCoins(next.price)) return false;
+  state.wateringCanLevel = next.level;
+  addHistory('plant', `🚿 浇水工具升级：${t(next.nameKey)}`, `花费${next.price}智慧之光 · ${t(next.descKey)}`);
+  saveState();
+  return true;
+}
+
+export function upgradeTank() {
+  const next = getNextTankUpgrade();
+  if (!next || !spendCoins(next.price)) return false;
+  state.waterTankLevel = next.level;
+  // 离线蓄水的计时锚点从购买时刻起算，避免追溯发放
+  state.waterOfflineAt = getNow();
+  addHistory('plant', `🏺 储水设施升级：${t(next.nameKey)}`, `花费${next.price}智慧之光 · ${t(next.descKey)}`);
+  saveState();
+  return true;
+}
+
+// 绿手指等级：按累计收获次数（state.plantHarvests）查 thresholds
+export function getGreenThumbLevel() {
+  const n = state.plantHarvests || 0;
+  let lv = 0;
+  for (const th of GREEN_THUMB.thresholds) {
+    if (n >= th) lv++;
+  }
+  return lv;
+}
+
+export function getGreenThumbProgress() {
+  const n = state.plantHarvests || 0;
+  const ths = GREEN_THUMB.thresholds;
+  const lv = getGreenThumbLevel();
+  if (lv >= ths.length) return { current: n, next: null, remaining: 0 };
+  return { current: n, next: ths[lv], remaining: ths[lv] - n };
+}
+
+// ========== 改良品种（嫁接） ==========
+
+export function isImproved(type) {
+  return !!(state.improvedPlants && state.improvedPlants[type]);
+}
+
+export function getEffectiveSeedDropRate(type) {
+  const def = PLANT_TYPES[type];
+  if (!def) return 0;
+  return isImproved(type) && def.improved ? def.improved.seedDropRate : def.seedDropRate;
+}
+
+export function canUnlockImproved(type) {
+  const def = PLANT_TYPES[type];
+  if (!def || !def.improved) return false;
+  if (isImproved(type)) return false;
+  return (state.seeds[type] || 0) >= def.improved.seedCost;
+}
+
+// 消耗同类种子解锁改良品种：掉率 60%→90% + 多年生（收获回落 restartLevel 重长）
+export function unlockImproved(type) {
+  const def = PLANT_TYPES[type];
+  if (!def || !def.improved || !canUnlockImproved(type)) return false;
+  if (!spendSeed(type, def.improved.seedCost)) return false;
+  state.improvedPlants[type] = true;
+  addHistory('plant', `🧬 嫁接改良：${def.emoji} ${t(def.nameKey)}`,
+    `消耗${def.improved.seedCost}颗种子 · 掉率 ${Math.round(def.seedDropRate * 100)}%→${Math.round(def.improved.seedDropRate * 100)}%，收获后回落 Lv${def.improved.restartLevel} 多年生`);
+  saveState();
+  return true;
+}
+
 // ========== 单株查询 ==========
 
 export function getPlantDef(type) {
@@ -92,11 +199,12 @@ export function spendSeed(seedType, n = 1) {
   return true;
 }
 
-// ========== 成长计算（含谷雨光环） ==========
+// ========== 成长计算（含谷雨光环 + 绿手指） ==========
 
 function getPlantGrowthMultiplier() {
   const aura = getAuraPlantGrowth();
-  return 1 + aura;
+  const thumb = 1 + GREEN_THUMB.bonusPerLevel * getGreenThumbLevel();
+  return (1 + aura) * thumb;
 }
 
 function applyGrowth(baseGrowth) {
@@ -120,45 +228,88 @@ export function canWater(potIndex = 0) {
   return (state.water || 0) > 0;
 }
 
-// 浇水：消耗一次全局浇水次数，增加成长值
-export function waterPlant(potIndex = 0) {
-  const plant = getPot(potIndex);
-  const def = getActivePlantDef(potIndex);
-  if (!plant || !def || !canWater(potIndex)) return { ok: false, justMatured: false };
+// 单盆缺水度：进度百分比越低越缺水（泼溅选盆依据）
+function neediness(potIndex) {
+  const p = getPot(potIndex);
+  const d = getActivePlantDef(potIndex);
+  if (!p || !d) return Infinity;
+  return p.growthProgress / d.growthPerLevel;
+}
 
-  const wasHarvestable = canHarvest(potIndex);
+// 本次浇水波及的目标盆（含点击盆；点击盆优先，其余按缺水度排序补足）
+export function getSplashTargets(potIndex = 0) {
+  const can = getCanDef();
+  const candidates = getActivePotIndices().filter(i => canWater(i));
+  if (!candidates.includes(potIndex)) return [];
+  if (can.splash === Infinity) return candidates;
+  const rest = candidates
+    .filter(i => i !== potIndex)
+    .sort((a, b) => neediness(a) - neediness(b));
+  return [potIndex, ...rest].slice(0, can.splash);
+}
+
+// 每盆成长份额（Lv1/Lv2 各全额；Lv3 总 2 份均分）
+function getPerPotShare(targetCount) {
+  const can = getCanDef();
+  if (can.perPotShare != null) return can.perPotShare;
+  return targetCount > 0 ? can.totalShares / targetCount : 0;
+}
+
+// 浇水：消耗一次全局浇水次数，按喷壶档位泼溅多盆（2026-09-21 温室培育线）
+export function waterPlant(potIndex = 0) {
+  const def = getActivePlantDef(potIndex);
+  if (!def || !canWater(potIndex)) return { ok: false, justMatured: false, watered: [] };
+
+  const targets = getSplashTargets(potIndex);
+  const share = getPerPotShare(targets.length);
+
   state.water = (state.water || 0) - 1;
 
-  // 禁止烟火标志牌：浇水有几率暴击（×2 成长）
-  let waterGrowth = def.waterGrowth;
-  let crit = false;
-  if (hasSignboard('no_smoking')) {
-    const critRate = SIGNBOARDS.no_smoking?.buff?.value || 0;
-    if (Math.random() < critRate) {
-      waterGrowth *= 2;
-      crit = true;
+  const watered = [];
+  let anyCrit = false;
+  let anyJustMatured = false;
+  targets.forEach(idx => {
+    const p = getPot(idx);
+    const pDef = getActivePlantDef(idx);
+    if (!p || !pDef) return;
+    const wasHarvestable = canHarvest(idx);
+
+    // 禁止烟火标志牌：浇水有几率暴击（×2 成长，逐盆独立判定）
+    let growth = pDef.waterGrowth * share;
+    let crit = false;
+    if (hasSignboard('no_smoking')) {
+      const critRate = SIGNBOARDS.no_smoking?.buff?.value || 0;
+      if (Math.random() < critRate) {
+        growth *= 2;
+        crit = true;
+        anyCrit = true;
+      }
     }
-  }
 
-  const actualGrowth = applyGrowth(waterGrowth);
-  plant.growthProgress += actualGrowth;
-  plant.lastCareTime = getNow();
+    const actualGrowth = applyGrowth(growth);
+    p.growthProgress += actualGrowth;
+    p.lastCareTime = getNow();
+    checkLevelUp(pDef, p);
 
-  // 检查是否升到下一级（或可收获）
-  checkLevelUp(def, plant);
+    const justMatured = !wasHarvestable && canHarvest(idx);
+    if (justMatured) anyJustMatured = true;
+    watered.push({ potIndex: idx, actualGrowth, crit, justMatured });
+  });
 
-  // 今日馆务
+  // 今日馆务（一次点击算一次）
   const taskResult = markTaskDone('water', state);
   if (taskResult) {
     addHistory('task', `📜 今日馆务：${taskResult.name}`, taskResult.reward);
   }
 
-  const justMatured = !wasHarvestable && canHarvest(potIndex);
-  if (crit) {
-    addHistory('plant', '💥 浇水暴击！', `禁止烟火庇佑，成长 +${actualGrowth}`);
+  if (watered.length > 1) {
+    addHistory('plant', `💧 一瓢浇了 ${watered.length} 盆`, watered.map(w => `+${w.actualGrowth}`).join(' / '));
+  }
+  if (anyCrit) {
+    addHistory('plant', '💥 浇水暴击！', '禁止烟火庇佑，部分盆栽成长 ×2');
   }
   saveState();
-  return { ok: true, justMatured, actualGrowth };
+  return { ok: true, justMatured: anyJustMatured, actualGrowth: watered[0]?.actualGrowth || 0, watered };
 }
 
 // 是否可施肥
@@ -225,7 +376,7 @@ export function canHarvest(potIndex = 0) {
   return true;
 }
 
-// 收获：获得氛围+智慧之光，概率得种子，植物凋谢
+// 收获：获得氛围+智慧之光，概率得种子（改良品种掉率提升），植物凋谢或多年生回落
 export function harvestPlant(potIndex = 0) {
   const plant = getPot(potIndex);
   const def = getActivePlantDef(potIndex);
@@ -234,20 +385,34 @@ export function harvestPlant(potIndex = 0) {
   addAtmosphere(def.harvestAtmosphere);
   addCoins(def.harvestCoins);
 
+  const dropRate = getEffectiveSeedDropRate(plant.activeType);
   let seedDropped = false;
-  if (Math.random() < def.seedDropRate) {
+  if (Math.random() < dropRate) {
     addSeed(def.seedType, 1);
     seedDropped = true;
   }
 
+  // 绿手指：累计收获次数（唯一事实源，等级由阈值推导）
+  state.plantHarvests = (state.plantHarvests || 0) + 1;
+
+  const improved = isImproved(plant.activeType) && def.improved;
   const seedName = seedDropped ? ` + 获得 ${t(def.nameKey)}种子 ×1` : '';
   addHistory('plant', `收获 ${def.emoji} ${t(def.nameKey)}`, `+${def.harvestAtmosphere}氛围 +${def.harvestCoins}智慧之光${seedName}`);
 
-  // 凋谢 → 空盆
-  resetPlantToEmpty(plant);
+  if (improved) {
+    // 多年生：回落 restartLevel 重新生长，植株保留（2026-09-21 温室培育线）
+    plant.level = def.improved.restartLevel;
+    plant.growthProgress = 0;
+    plant.harvested = false;
+    plant.lastCareTime = getNow();
+    addHistory('plant', `🧬 ${t(def.nameKey)}多年生萌发`, `回落 Lv${def.improved.restartLevel}，继续生长，无需重新种植`);
+  } else {
+    // 凋谢 → 空盆
+    resetPlantToEmpty(plant);
+  }
 
   saveState();
-  return { seedDropped, seedType: def.seedType, def };
+  return { seedDropped, seedType: def.seedType, def, perennial: !!improved };
 }
 
 // 铲除指定盆位植物
@@ -316,11 +481,33 @@ export function plantSeed(plantType, potIndex = null) {
 }
 
 // 添加浇水机会（由专注完成触发；2026-09-15 起全局池——不管有没有种植物都累积 +1，
-// 可之后分配给任意一盆；旧版「逐盆发放」由迁移 v11 收编为全局）
-export function addWaterOpportunity() {
-  state.water = (state.water || 0) + 1;
+// 可之后分配给任意一盆；旧版「逐盆发放」由迁移 v11 收编为全局）。
+// 2026-09-21 储水设施：长专注（≥45/≥90 分钟）按档位额外 +1——番茄钟产水不变，深专注多得水。
+export function addWaterOpportunity(minutes = 20) {
+  const tank = getTankDef();
+  let gained = 1; // ≥20min 才触发（调用方门控）
+  for (const threshold of tank.focusBonus) {
+    if (minutes >= threshold) gained += 1;
+  }
+  state.water = (state.water || 0) + gained;
   saveState();
-  return true;
+  return gained;
+}
+
+// 离线蓄水（水箱 ≥2 才有）：按距上次在线时长每 hoursPer 小时 +1，封顶 cap。
+// 在初始化链调用（app.js）；返回发放数量，0 表示无发放。
+export function grantOfflineWater(now = getNow()) {
+  const tank = getTankDef();
+  if (!tank.offline) return 0;
+  const last = state.waterOfflineAt || now;
+  const hours = (now - last) / (1000 * 60 * 60);
+  if (hours < tank.offline.hoursPer) return 0;
+  const n = Math.min(tank.offline.cap, Math.floor(hours / tank.offline.hoursPer));
+  state.water = (state.water || 0) + n;
+  state.waterOfflineAt = now;
+  addHistory('plant', '💧 储水设施蓄水', `离线 ${Math.floor(hours)} 小时，浇水次数 +${n}`);
+  saveState();
+  return n;
 }
 
 // ========== 种子兑换（数组版） ==========

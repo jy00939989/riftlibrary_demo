@@ -30,7 +30,8 @@ export const PLANT_TYPES = {
     harvestCoins: 35,
     seedType: 'bird_of_paradise',
     seedDropRate: 0.6,
-    levelNames: ['', '幼苗', '小株', '茂叶', '含苞', '绽放']
+    levelNames: ['', '幼苗', '小株', '茂叶', '含苞', '绽放'],
+    improved: { seedCost: 2, seedDropRate: 0.9, restartLevel: 3 }
   },
 
   magic_rose: {
@@ -61,7 +62,8 @@ export const PLANT_TYPES = {
     harvestCoins: 30,
     seedType: 'magic_rose',
     seedDropRate: 0.6,
-    levelNames: ['', '幼苗', '小株', '茂叶', '含苞', '绽放']
+    levelNames: ['', '幼苗', '小株', '茂叶', '含苞', '绽放'],
+    improved: { seedCost: 3, seedDropRate: 0.9, restartLevel: 3 }
   },
 
   starlight_fern: {
@@ -92,8 +94,64 @@ export const PLANT_TYPES = {
     harvestCoins: 15,
     seedType: 'starlight_fern',
     seedDropRate: 0.6,
-    levelNames: ['', '孢子', '嫩芽', '舒展', '流光', '星瀑']
+    levelNames: ['', '孢子', '嫩芽', '舒展', '流光', '星瀑'],
+    // 嫁接改良（2026-09-21 温室培育线）：消耗同类种子解锁，掉率提升 + 多年生
+    improved: { seedCost: 4, seedDropRate: 0.9, restartLevel: 3 }
   }
+};
+
+// ========== 温室培育设施（2026-09-21 图南四决策：解决「浇水绑死专注时长→扩盆无意义」） ==========
+//
+// 浇水工具（喷壶）：1 次浇水按档位泼溅多盆。
+//   Lv2「各全额」与 Lv3「总 2 份均分」在 2 盆时数学一致；Lv3 的价值是 3-4 盆零操作均匀浇水。
+//   注：泼溅不放大单份成长——总成长恒 ≤2 份，扩盆赚的是操作与均匀，放量由储水/改良/绿手指给。
+export const WATERING_CANS = [
+  {
+    level: 1, id: 'watering_can', nameKey: 'canWatering', emoji: '💧', price: 0,
+    splash: 1, perPotShare: 1,
+    descKey: 'canWateringDesc'
+  },
+  {
+    level: 2, id: 'long_spout_can', nameKey: 'canLongSpout', emoji: '🚿', price: 800,
+    splash: 2, perPotShare: 1,
+    descKey: 'canLongSpoutDesc'
+  },
+  {
+    level: 3, id: 'sprinkler_can', nameKey: 'canSprinkler', emoji: '🌧️', price: 2000,
+    splash: Infinity, perPotShare: null, // null = 总 2 份均分（见 totalShares）
+    totalShares: 2,
+    descKey: 'canSprinklerDesc'
+  }
+];
+
+// 储水设施：专注产出档位 + 离线蓄水（等级 ≥2 才有离线）。
+//   专注加成只奖长专注（≥45/≥90 分钟），番茄钟玩家产水不变——控放量 + 合硬核 ethos。
+export const WATER_TANKS = [
+  {
+    level: 1, id: 'clay_jar', nameKey: 'tankClayJar', emoji: '🏺', price: 0,
+    focusBonus: [], // [额外+1 水的分钟门槛]
+    offline: null,
+    descKey: 'tankClayJarDesc'
+  },
+  {
+    level: 2, id: 'copper_tank', nameKey: 'tankCopper', emoji: '⚱️', price: 600,
+    focusBonus: [45],
+    offline: { hoursPer: 6, cap: 4 },
+    descKey: 'tankCopperDesc'
+  },
+  {
+    level: 3, id: 'arcane_reservoir', nameKey: 'tankArcane', emoji: '🔮', price: 1800,
+    focusBonus: [45, 90],
+    offline: { hoursPer: 3, cap: 8 },
+    descKey: 'tankArcaneDesc'
+  }
+];
+
+// 绿手指：累计收获次数升档，每级浇水/施肥成长 +5%（乘法叠在谷雨光环上）
+// 2026-09-21 图南修订：温室扩建+装备加成后收获会滚雪球，阈值阶梯式放大（Lv1 的 3 次保留作早期甜头）
+export const GREEN_THUMB = {
+  bonusPerLevel: 0.05,
+  thresholds: [3, 20, 50, 100, 200] // 达到阈值 → Lv1..Lv5
 };
 
 // 种子兑换表 —— 每种子的可兑换奖励列表

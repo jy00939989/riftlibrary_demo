@@ -99,7 +99,7 @@ state.books.book_030_vol1.status = 'completed';
 state.books.book_030_vol1.masteryLevel = 2; // noMastery 书的残留值不动
 state._schemaVersion = 11;
 runMigrations();
-assert(state._schemaVersion === 15, 'schemaVersion 11 → 15');
+assert(state._schemaVersion === 16, 'schemaVersion 11 → 15');
 assert(state.books.book_001.masteryLevel === 1, '全链迁移后首通书=1 在架（v12升满→v14回落→v15重映射）');
 assert(state.books.book_002 && state.books.book_002.masteryLevel === 2, '真典藏（copyCount≥2）=2 典藏');
 assert(state.books.book_030_vol1.masteryLevel === 2, 'noMastery 书字段不被迁移触碰');

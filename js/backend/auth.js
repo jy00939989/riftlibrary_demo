@@ -8,12 +8,15 @@ let authInitialized = false;
 /**
  * 将 Supabase Auth 错误转义为对用户友好的中文提示
  * @param {any} error
+ * @param {string} [scene] - 调用场景（诊断日志用）
  * @returns {string}
  */
-function mapAuthError(error) {
+function mapAuthError(error, scene = '') {
   if (!error) return '未知错误';
   const message = (error.message || '').toLowerCase();
   const code = (error.code || '').toLowerCase();
+  // 诊断日志：422 等错误的原始响应只看 console 资源行分不清原因，落全量原始错误备查
+  console.warn(`[backend] auth error${scene ? ` (${scene})` : ''}:`, error.code || '(no code)', '-', error.message || '(no message)');
 
   if (
     code === 'over_email_send_rate_limit' ||
@@ -55,6 +58,12 @@ function mapAuthError(error) {
     message.includes('hcaptcha')
   ) {
     return '人机验证失败，请刷新后重试';
+  }
+  if (
+    message.includes('signups not allowed') ||
+    message.includes('new users are not allowed')
+  ) {
+    return '当前未开放新用户注册，请联系管理员';
   }
   return error.message || '未知错误';
 }
@@ -118,13 +127,13 @@ export async function signUp(email, password, captchaToken, redirectTo) {
   // 若当前是匿名用户，直接 updateUser 升级为邮箱账号，保留同一 user_id
   if (currentUser && currentUser.is_anonymous) {
     const { data, error } = await client.auth.updateUser({ email, password });
-    if (error) return { ok: false, error: mapAuthError(error), code: error.code };
+    if (error) return { ok: false, error: mapAuthError(error, 'signup-upgrade'), code: error.code };
     currentUser = data.user;
     return { ok: true, user: data.user };
   }
 
   const { data, error } = await client.auth.signUp({ email, password, options: signUpOptions });
-  if (error) return { ok: false, error: mapAuthError(error), code: error.code };
+  if (error) return { ok: false, error: mapAuthError(error, 'signup'), code: error.code };
   if (data.user) currentUser = data.user;
   return { ok: true, user: data.user };
 }
@@ -136,7 +145,7 @@ export async function signIn(email, password) {
   if (!isBackendReady()) return { ok: false, error: 'backend_not_ready' };
   const client = getClient();
   const { data, error } = await client.auth.signInWithPassword({ email, password });
-  if (error) return { ok: false, error: mapAuthError(error), code: error.code };
+  if (error) return { ok: false, error: mapAuthError(error, 'signin'), code: error.code };
   if (data.user) currentUser = data.user;
   return { ok: true, user: data.user };
 }
@@ -148,7 +157,7 @@ export async function signOut() {
   if (!isBackendReady()) return { ok: true };
   const client = getClient();
   const { error } = await client.auth.signOut();
-  if (error) return { ok: false, error: mapAuthError(error), code: error.code };
+  if (error) return { ok: false, error: mapAuthError(error, 'signout'), code: error.code };
   currentUser = null;
   await initAuth();
   return { ok: true };
@@ -164,7 +173,7 @@ export async function resendVerification(email) {
     type: 'signup',
     email
   });
-  if (error) return { ok: false, error: mapAuthError(error), code: error.code };
+  if (error) return { ok: false, error: mapAuthError(error, 'resend'), code: error.code };
   return { ok: true, data };
 }
 
@@ -178,7 +187,7 @@ export async function resetPassword(email, redirectTo) {
   const client = getClient();
   const options = redirectTo ? { redirectTo } : {};
   const { data, error } = await client.auth.resetPasswordForEmail(email, options);
-  if (error) return { ok: false, error: mapAuthError(error), code: error.code };
+  if (error) return { ok: false, error: mapAuthError(error, 'reset-password'), code: error.code };
   return { ok: true, data };
 }
 
@@ -190,6 +199,6 @@ export async function updatePassword(newPassword) {
   if (!isBackendReady()) return { ok: false, error: 'backend_not_ready' };
   const client = getClient();
   const { data, error } = await client.auth.updateUser({ password: newPassword });
-  if (error) return { ok: false, error: mapAuthError(error), code: error.code };
+  if (error) return { ok: false, error: mapAuthError(error, 'update-password'), code: error.code };
   return { ok: true, user: data.user };
 }

@@ -9,7 +9,7 @@ import { resetMomoSuggestion } from './momo-suggestion.js';
 import {
   renderFocusPage, renderBookshelfPage, renderLibraryPage,
   renderVisitorsPage, renderArchivePage, renderShopPage, renderMusicRoomPage,
-  renderExhibitionPage
+  renderExhibitionPage, renderGreenhousePage
 } from './index.js';
 
 let currentTab = 'focus';
@@ -24,6 +24,7 @@ export function renderCurrentTab() {
     case 'bookshelf': renderBookshelfPage(); break;
     case 'library': renderLibraryPage(); break;
     case 'visitors': renderVisitorsPage(); break;
+    case 'greenhouse': renderGreenhousePage(); break;
     case 'exhibition': renderExhibitionPage(); break;
     case 'archive': renderArchivePage(); break;
     case 'shop': renderShopPage(); break;
@@ -79,6 +80,7 @@ export function localizeStaticElements() {
     'tab-bookshelf': 'tabGrandLibrary',
     'tab-library': 'tabCuratorOffice',
     'tab-visitors': 'tabReaderSalon',
+    'tab-greenhouse': 'tabGreenhouse',
     'tab-exhibition': 'tabExhibitionHall',
     'tab-archive': 'tabArchive',
     'tab-shop': 'tabPlaneShop'

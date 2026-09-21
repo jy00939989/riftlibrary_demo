@@ -132,9 +132,9 @@ export function completeFocus(isAuto = false) {
   state.focus.totalWords += wordsGained;
   updateStreak();
 
-  // 植物浇水机会（番茄钟 / 倒计时 / 正计时 均触发）
+  // 植物浇水机会（番茄钟 / 倒计时 / 正计时 均触发；储水设施按档位给长专注额外 +1）
   if (minutes >= 20) {
-    addWaterOpportunity();
+    addWaterOpportunity(minutes);
   }
 
   // 书籍进度
