@@ -30,8 +30,7 @@ export const PLANT_TYPES = {
     harvestCoins: 35,
     seedType: 'bird_of_paradise',
     seedDropRate: 0.6,
-    levelNames: ['', '幼苗', '小株', '茂叶', '含苞', '绽放'],
-    improved: { seedCost: 2, seedDropRate: 0.9, restartLevel: 3 }
+    levelNames: ['', '幼苗', '小株', '茂叶', '含苞', '绽放']
   },
 
   magic_rose: {
@@ -62,8 +61,7 @@ export const PLANT_TYPES = {
     harvestCoins: 30,
     seedType: 'magic_rose',
     seedDropRate: 0.6,
-    levelNames: ['', '幼苗', '小株', '茂叶', '含苞', '绽放'],
-    improved: { seedCost: 3, seedDropRate: 0.9, restartLevel: 3 }
+    levelNames: ['', '幼苗', '小株', '茂叶', '含苞', '绽放']
   },
 
   starlight_fern: {
@@ -94,11 +92,19 @@ export const PLANT_TYPES = {
     harvestCoins: 15,
     seedType: 'starlight_fern',
     seedDropRate: 0.6,
-    levelNames: ['', '孢子', '嫩芽', '舒展', '流光', '星瀑'],
-    // 嫁接改良（2026-09-21 温室培育线）：消耗同类种子解锁，掉率提升 + 多年生
-    improved: { seedCost: 4, seedDropRate: 0.9, restartLevel: 3 }
+    levelNames: ['', '孢子', '嫩芽', '舒展', '流光', '星瀑']
   }
 };
+
+// ========== 嫁接改良五档（2026-09-21 晚图南改版：原一次性 60→90%+多年生 梯度太大） ==========
+// 每档消耗同类种子，全品种统一阶梯；多年生 = 收获时按概率回落 restartLevel 重长（否则照常凋谢）。
+export const IMPROVE_TIERS = [
+  { seedCost: 2, seedDropRate: 0.70 },
+  { seedCost: 3, seedDropRate: 0.80 },
+  { seedCost: 4, perennialChance: 0.30, restartLevel: 3 },
+  { seedCost: 5, perennialChance: 0.60, restartLevel: 3 },
+  { seedCost: 6, perennialChance: 1.00, restartLevel: 3 }
+];
 
 // ========== 温室培育设施（2026-09-21 图南四决策：解决「浇水绑死专注时长→扩盆无意义」） ==========
 //

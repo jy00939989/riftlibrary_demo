@@ -4,7 +4,7 @@ import { state, saveState } from '../state.js';
 import { updateStatusBar, showImagePreview } from './common.js';
 import { playSfx } from '../audio.js';
 import { PLANT_TYPES, SEED_EXCHANGE, WATERING_CANS, WATER_TANKS } from '../../data/plants.js';
-import { canHarvest, harvestPlant, canExchangeSeed, exchangeSeed, getActivePlantDef, canWater, canFertilize, abandonPlant, getSeedExchanges, waterPlant, fertilizePlant, unlockPot, canUnlockPot, getPotCount, getNextPotPrice, MAX_POTS, getWaterCount, getWateringCanLevel, getWaterTankLevel, getNextCanUpgrade, getNextTankUpgrade, canUpgradeCan, canUpgradeTank, upgradeCan, upgradeTank, getGreenThumbLevel, getGreenThumbProgress, isImproved, getEffectiveSeedDropRate, canUnlockImproved, unlockImproved, getSplashTargets, plantSeed } from '../plants.js';
+import { canHarvest, harvestPlant, canExchangeSeed, exchangeSeed, getActivePlantDef, canWater, canFertilize, abandonPlant, getSeedExchanges, waterPlant, fertilizePlant, unlockPot, canUnlockPot, getPotCount, getNextPotPrice, MAX_POTS, getWaterCount, getWateringCanLevel, getWaterTankLevel, getNextCanUpgrade, getNextTankUpgrade, canUpgradeCan, canUpgradeTank, upgradeCan, upgradeTank, getGreenThumbLevel, getGreenThumbProgress, getImproveTier, getEffectiveSeedDropRate, getPerennialChance, getNextImproveTier, canUnlockImproved, unlockImproved, getSplashTargets, plantSeed } from '../plants.js';
 import { t } from '../i18n/terms.js';
 import { suppressGuideWidget } from './guidequests.js';
 
@@ -310,7 +310,8 @@ function renderPotCard(plant, potIndex) {
   const def = PLANT_TYPES[plant.activeType];
   if (!def) return card;
 
-  const improved = isImproved(plant.activeType);
+  const improveTier = getImproveTier(plant.activeType);
+  const perChance = getPerennialChance(plant.activeType);
   const dropRate = Math.round(getEffectiveSeedDropRate(plant.activeType) * 100);
 
   const progressPercent = Math.min(100, Math.round((plant.growthProgress / def.growthPerLevel) * 100));
@@ -325,7 +326,7 @@ function renderPotCard(plant, potIndex) {
   info.innerHTML = `
     <div class="flex items-center justify-center gap-2 mb-2 flex-wrap">
       <span class="font-bold">${t(def.nameKey)}</span>
-      ${improved ? `<span class="text-xs bg-teal-200 text-teal-800 px-2 py-1 rounded-full font-bold">${t('improvedBadge')}</span>` : ''}
+      ${improveTier > 0 ? `<span class="text-xs bg-teal-200 text-teal-800 px-2 py-1 rounded-full font-bold">${t('improvedBadge')} Lv${improveTier}</span>` : ''}
       <span class="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full">Lv.${plant.level} · ${levelName}</span>
     </div>
     <div class="h-3 bg-gray-200 rounded-full overflow-hidden mb-2">
@@ -334,7 +335,7 @@ function renderPotCard(plant, potIndex) {
     <p class="text-xs text-ink-light mb-3 text-center">成长进度 ${progressPercent}%</p>
     <div class="flex gap-2 flex-wrap justify-center" id="dec-plant-actions-${potIndex}"></div>
     ${canHarvestNow
-      ? `<p class="text-xs text-yellow-600 mt-3 text-center">✨ 可以收获了！将以${dropRate}%概率获得种子${improved && def.improved ? `<br>${t('harvestPerennialNote')}` : ''}</p>`
+      ? `<p class="text-xs text-yellow-600 mt-3 text-center">✨ 可以收获了！将以${dropRate}%概率获得种子${perChance > 0 ? `<br>${t('perennialChanceHint').replace('{p}', Math.round(perChance * 100))}` : ''}</p>`
       : `<p class="text-xs text-ink-light mt-2 text-center">${plant.level < 5 ? `下一级施肥所需 💰${def.fertilizeCosts[plant.level + 1] || 0}` : '进度满即可收获'}</p>`
     }
   `;
@@ -566,36 +567,41 @@ function renderSeedInventory() {
       list.appendChild(row);
     });
 
-    // 嫁接改良（2026-09-21 温室培育线）：种子 sink + 掉率提升 + 多年生
-    if (plantDef.improved) {
+    // 嫁接改良（2026-09-21 晚图南改版）：五档渐进，每档耗同类种子
+    {
+      const tier = getImproveTier(seedType);
+      const next = getNextImproveTier(seedType);
       const row = document.createElement('div');
-      row.className = 'flex items-center justify-between text-sm border-t border-teal-200 pt-2 mt-1';
+      row.className = 'border-t border-teal-200 pt-2 mt-1 space-y-1';
 
-      const left = document.createElement('div');
-      left.className = 'text-ink-light';
-      if (isImproved(seedType)) {
-        left.innerHTML = `<span class="text-xs text-teal-700 font-bold">${t('improvedUnlocked').replace('{rate}', Math.round(plantDef.improved.seedDropRate * 100))}</span>`;
-      } else {
-        left.innerHTML = `<span class="font-bold text-teal-700">${t('unlockImprovedTitle')}</span><br><span class="text-xs">${t('unlockImprovedDesc').replace('{cost}', plantDef.improved.seedCost)}</span>`;
-      }
+      const head = document.createElement('div');
+      head.className = 'flex items-center justify-between text-sm gap-1 flex-wrap';
+      const nextDesc = next
+        ? (next.seedDropRate !== undefined
+          ? t('improveNextDrop').replace('{rate}', Math.round(next.seedDropRate * 100))
+          : t('improveNextPerennial').replace('{p}', Math.round(next.perennialChance * 100)))
+        : t('improveMaxed');
+      head.innerHTML = `<span class="font-bold text-teal-700">${t('unlockImprovedTitle')} · ${t('improveTierProgress').replace('{n}', tier)}</span>
+        <span class="text-xs text-ink-light">${nextDesc}</span>`;
+      row.appendChild(head);
 
-      const right = document.createElement('div');
-      if (!isImproved(seedType)) {
+      if (next) {
+        const foot = document.createElement('div');
+        foot.className = 'flex items-center justify-between';
         if (canUnlockImproved(seedType)) {
           const btn = document.createElement('button');
           btn.className = 'px-3 py-1 bg-teal-600 text-white rounded-lg text-xs font-bold hover:shadow transition-all';
-          btn.textContent = `🌰 ×${plantDef.improved.seedCost}`;
+          btn.textContent = `🌰 ×${next.seedCost}`;
           btn.addEventListener('click', () => {
             if (unlockImproved(seedType)) renderGreenhousePage();
           });
-          right.appendChild(btn);
+          foot.appendChild(btn);
         } else {
-          right.innerHTML = `<span class="text-xs text-ink-light">${t('needSeedsToImprove').replace('{n}', plantDef.improved.seedCost - count)}</span>`;
+          foot.innerHTML = `<span class="text-xs text-ink-light">${t('needSeedsToImprove').replace('{n}', next.seedCost - count)}</span>`;
         }
+        row.appendChild(foot);
       }
 
-      row.appendChild(left);
-      row.appendChild(right);
       list.appendChild(row);
     }
 
@@ -711,7 +717,7 @@ export function showPlantHarvestPopup(def, result) {
     ? `<p class="text-sm text-magic-gold font-bold mb-2">🌰 ${t('seedObtained').replace('{name}', t(def.nameKey))}</p>`
     : '';
   const perennialText = result.perennial
-    ? `<p class="text-sm text-teal-700 font-bold mb-2">🧬 ${t('harvestPerennialNote')}</p>`
+    ? `<p class="text-sm text-teal-700 font-bold mb-2">🧬 ${t('harvestPerennialRegrow')}</p>`
     : '';
   overlay.innerHTML = `
     <div class="parchment-bg rounded-2xl p-6 max-w-sm w-full text-center magic-glow animate-scale-in">
@@ -731,7 +737,7 @@ export function showPlantHarvestPopup(def, result) {
       ${seedText}
       ${perennialText}
       <p class="text-xs text-ink-light mb-4">${result.perennial
-        ? `🧬 ${t(def.nameKey)} ${t('improvedPerennialHint').replace('{lv}', def.improved.restartLevel).replace('{rate}', Math.round(def.improved.seedDropRate * 100))}`
+        ? `🧬 ${t('harvestPerennialRegrow')}`
         : t('plantHarvestEmptyPot')}</p>
       <button class="px-6 py-3 bg-magic-gold text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all">${t('continueBtn')}</button>
     </div>
