@@ -22,7 +22,7 @@ export function renderDailyTasks() {
 
   // 任务板插画（素材整版 D 区切片；图缺时静默移除，布局自动回退纯文字版）
   const boardImg = document.createElement('img');
-  boardImg.src = 'visual/focus/daily_tasks_board.png';
+  boardImg.src = 'visual/focusroom/daily_tasks_board.png';
   boardImg.alt = t('dailyTask');
   boardImg.className = 'w-24 sm:w-28 self-stretch object-cover flex-shrink-0';
   boardImg.onerror = () => boardImg.remove();
