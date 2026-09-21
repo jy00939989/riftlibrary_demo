@@ -16,19 +16,20 @@ export function renderDailyTasks() {
     { icon: '🌱', label: t('dailyWaterPlant'), done: dt.waterDone, reward: '💰 10' }
   ];
 
-  const card = el('div', 'mb-4 rounded-xl overflow-hidden border border-wood/20');
+  const card = el('div', 'mb-4 rounded-xl overflow-hidden border border-wood/20 flex flex-row items-stretch');
   card.style.background = 'linear-gradient(180deg, rgba(245,230,200,0.75) 0%, rgba(232,213,168,0.55) 100%)';
   card.style.boxShadow = 'inset 0 0 30px rgba(139,105,20,0.06), 0 1px 4px rgba(0,0,0,0.08)';
 
-  // 任务板插画（素材整版 D 区切片；图缺时静默回退纯文字头，不裸奔）
+  // 任务板插画（素材整版 D 区切片；图缺时静默移除，布局自动回退纯文字版）
   const boardImg = document.createElement('img');
   boardImg.src = 'visual/focus/daily_tasks_board.png';
   boardImg.alt = t('dailyTask');
-  boardImg.className = 'w-full h-24 object-cover block';
+  boardImg.className = 'w-24 sm:w-28 self-stretch object-cover flex-shrink-0';
   boardImg.onerror = () => boardImg.remove();
   card.appendChild(boardImg);
 
   card.insertAdjacentHTML('beforeend', `
+    <div class="flex-1 min-w-0">
     <div class="flex items-center gap-2 px-4 pt-3 pb-1">
       <span class="text-sm">📜</span>
       <span class="text-xs font-bold tracking-wider" style="color:#6b5010">${t('dailyTask')}</span>
@@ -67,7 +68,8 @@ export function renderDailyTasks() {
     ` : allDone ? `
       <div class="text-center py-2 text-[11px] tracking-wider font-bold" style="color:#6b5010;">${t('dailyTasksAllCompleted')}</div>
     ` : ''}
-  `;
+    </div>
+  `);
 
   if (allDone && !dt.allClaimed) {
     const claimBtn = card.querySelector('.claim-all-btn');
