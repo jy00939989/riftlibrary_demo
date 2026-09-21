@@ -55,6 +55,18 @@ export const CAFE_RECIPES = [
     price: 110,
     favor: 10,
     unlockLevel: 2
+  },
+  // 2026 中秋·国庆双节限定饮品：窗口外不出现在咖啡角（festivalKey 门控）
+  // 定价纪律（§2.3 效率对齐 92-98%）：3 星光蕨种子 = 120 价值 → 115 = 95.8% ✓
+  {
+    id: 'osmanthus_mooncake_tea',
+    emoji: '🥮',
+    nameKey: 'cafeRecipeMooncakeTea',
+    material: { seedType: 'starlight_fern', count: 3 },
+    price: 115,
+    favor: 12,
+    unlockLevel: 1,
+    festivalKey: 'midAutumn2026'
   }
 ];
 

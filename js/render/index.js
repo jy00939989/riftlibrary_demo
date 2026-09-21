@@ -16,3 +16,4 @@ export { renderGuideQuestWidget, showQuestCompleteToast } from './guidequests.js
 export { renderMomoSuggestion, resetMomoSuggestion } from './momo-suggestion.js';
 export { showBagPanel, hideBagPanel, initBagEntry, updateBagBadge } from './bag.js';
 export { showPlantLossPopup, renderGreenhousePage } from './plants.js';
+export { showFestivalGiftPopup } from './festival.js';

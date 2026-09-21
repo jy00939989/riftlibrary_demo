@@ -32,7 +32,8 @@ export function purchaseSignboard(signboardId) {
   const def = SIGNBOARDS[signboardId];
   if (!def) return false;
   if (hasSignboard(signboardId)) return false;
-  // 限量纪念牌（price === 0 且带专属 image）只能通过兑换码获得，不可商店购买
+  // 限量纪念牌（price === 0 且带专属 image）与活动礼物牌（giftOnly）只能通过发放获得，不可商店购买
+  if (def.giftOnly) return false;
   if (def.price === 0 && def.image) return false;
   if (!spendCoins(def.price)) return false;
 

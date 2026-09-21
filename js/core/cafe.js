@@ -15,6 +15,7 @@ import {
   getCafeRecipe, getRecipesForLevel
 } from '../../data/cafe.js';
 import { getFacilityLevelCap } from '../../data/atmosphere.js';
+import { isFestivalActive } from '../../data/festival.js';
 import { getLibraryStage } from '../storage.js';
 import { t } from '../i18n/terms.js';
 
@@ -64,7 +65,9 @@ export function upgradeCafe() {
   if (!canUpgradeCafe()) return false;
   spendCoins(getCafeUpgradePrice());
   state.cafe.level += 1;
-  const unlocked = getRecipesForLevel(state.cafe.level).filter(r => r.unlockLevel === state.cafe.level);
+  const unlocked = getRecipesForLevel(state.cafe.level)
+    .filter(r => r.unlockLevel === state.cafe.level)
+    .filter(r => !r.festivalKey || isFestivalActive(r.festivalKey));
   const extra = unlocked.length > 0 ? ` · 新食谱：${unlocked.map(r => r.emoji).join(' ')}` : '';
   addHistory('cafe', `☕ 咖啡角升级到 Lv.${state.cafe.level}`, `借书概率增益 +${state.cafe.level * 5}% · 好感 ×${(1 + CAFE_FAVOR_MULT_STEP * (state.cafe.level - 1)).toFixed(1)}${extra}`);
   saveState();

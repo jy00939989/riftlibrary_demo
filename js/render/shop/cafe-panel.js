@@ -11,6 +11,7 @@ import {
   canUpgradeCafe, upgradeCafe, getCafeStock, canCraftRecipe, craftRecipe
 } from '../../core/cafe.js';
 import { getFacilityRequiredStage } from '../../../data/atmosphere.js';
+import { isFestivalActive } from '../../../data/festival.js';
 
 export function openCafePanel() {
   const existing = document.getElementById('cafe-panel-modal');
@@ -77,7 +78,9 @@ function renderRecipes() {
   const dormant = isCafeDormant();
   const list = el('div', 'space-y-2 mb-4');
 
-  CAFE_RECIPES.forEach(recipe => {
+  // 节日限定饮品：仅在活动窗口内出现（festivalKey 门控，窗口外完全隐藏）
+  const visibleRecipes = CAFE_RECIPES.filter(r => !r.festivalKey || isFestivalActive(r.festivalKey));
+  visibleRecipes.forEach(recipe => {
     const locked = cafe.level < recipe.unlockLevel;
     const stock = getCafeStock(recipe.id);
     const seedDef = PLANT_TYPES[recipe.material.seedType];
