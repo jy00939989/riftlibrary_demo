@@ -505,7 +505,8 @@ function renderSeedInventory() {
   section.innerHTML = '<h3 class="font-bold text-lg mb-3 flex items-center gap-2">🌰 种子库存</h3>';
 
   const grid = document.createElement('div');
-  grid.className = 'grid grid-cols-1 gap-3';
+  // 2026-09-21 图南改版：一类型一栏三列卡片，不再整宽拉通（原单列长条无美感）
+  grid.className = 'grid grid-cols-1 md:grid-cols-3 gap-3';
 
   let hasAny = false;
 
@@ -518,13 +519,13 @@ function renderSeedInventory() {
     const exchanges = getSeedExchanges(seedType);
 
     const card = document.createElement('div');
-    card.className = 'bg-white rounded-xl p-4 border-2 border-wood/20';
+    card.className = 'bg-white rounded-xl p-4 border-2 border-wood/20 flex flex-col';
 
     const header = document.createElement('div');
     header.className = 'flex items-center gap-3 mb-3';
     header.innerHTML = `
       <span class="text-3xl">${plantDef.emoji}</span>
-      <div class="flex-1">
+      <div class="flex-1 min-w-0">
         <div class="font-bold text-sm">${t(plantDef.nameKey)} ${t('seed')}</div>
         <div class="text-xs text-ink-light">🌰 ×${count}</div>
       </div>
@@ -532,11 +533,11 @@ function renderSeedInventory() {
     card.appendChild(header);
 
     const list = document.createElement('div');
-    list.className = 'space-y-2';
+    list.className = 'space-y-2 flex-1';
 
     exchanges.forEach(item => {
       const row = document.createElement('div');
-      row.className = 'flex items-center justify-between text-sm';
+      row.className = 'flex items-center justify-between gap-1 text-sm flex-wrap';
 
       const left = document.createElement('div');
       left.className = 'text-ink-light';
@@ -603,7 +604,7 @@ function renderSeedInventory() {
   });
 
   if (!hasAny) {
-    grid.innerHTML = '<p class="text-sm text-ink-light text-center py-4">还没有种子。种植并收获植物来获取种子吧！</p>';
+    grid.innerHTML = '<p class="text-sm text-ink-light text-center py-4 col-span-full">还没有种子。种植并收获植物来获取种子吧！</p>';
   }
 
   section.appendChild(grid);
