@@ -97,9 +97,14 @@ function migrateV14() {
 function migrateV13() {
   // 2026-09-16 秘密花园种子兑换修复：旧配置错把卷书奖励写成典藏版 book_034
   //（0 章不可抄），且典藏版在架会让 isVolumeConsumed 永久吞掉两卷——兑换者反向 soft-lock。
-  // 修复：已中招存档典藏版回锁 + 补发两卷（正常合成路径的存档 vols 已拥有，不受影响）。
+  // 修复：已中招存档典藏版回锁 + 补发两卷。
+  // 2026-09-21 补闸：合成路径（volumes.js）完成后两卷同样置 locked，与直发受害者签名
+  // 一致，只能凭典藏版自身进度区分——直发版是 createBookRecord() 默认（全 0 / unlocked），
+  // 合成版必有 copyCount>=1 或 copiedWords>0 或 status 'completed'。后者不得回锁补卷
+  //（此前误伤合法合成者：典藏版消失、两卷重发为待抄写）。
   const col = state.books && state.books['book_034'];
   if (!col || col.status === 'locked') return;
+  if (col.status === 'completed' || (col.copyCount || 0) > 0 || (col.copiedWords || 0) > 0) return;
   const missing = ['book_034_vol1', 'book_034_vol2'].filter(id => {
     const bs = state.books[id];
     return !bs || bs.status === 'locked';
@@ -112,6 +117,8 @@ function migrateV13() {
   col.damaged = false;
   col.repairWords = 0;
   col.repairProgress = 0;
+  // 直发版当年被塞进手稿箱且 0 章永不完成，永久占格（getManuscriptBoxCount 按数组长度）——回锁时一并移出腾位
+  state.manuscriptBox = (state.manuscriptBox || []).filter(id => id !== 'book_034');
   missing.forEach(id => {
     state.books[id] = createBookRecord();
     addToManuscriptBox(id);
