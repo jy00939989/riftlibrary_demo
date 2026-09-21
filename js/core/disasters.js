@@ -10,6 +10,7 @@ import { BOOKS } from '../../data/books.js';
 import { addDiaryEntry } from '../diary.js';
 import { getSettings } from '../settings.js';
 import { hasSignboard } from '../shop.js';
+import { grantRestorationRoom } from '../capacity.js';
 import { getAtmosphereStage } from '../../data/atmosphere.js';
 
 // ========== 参数 ==========
@@ -115,6 +116,8 @@ function pickColdBooks(graceDays) {
 
 /** 套用损毁：与还书损毁同语义（visitors.js 判定 1） */
 function applyDamage(bs, book, ratio) {
+  // 首次受灾自动免费开放修复室（2026-09-21 图南拍板：撤销 300 币解锁，杜绝金币软锁）
+  grantRestorationRoom();
   const loss = Math.round((bs.copiedWords || 0) * ratio);
   bs.damaged = true;
   bs.repairWords = loss;

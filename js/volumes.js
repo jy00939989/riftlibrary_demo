@@ -3,7 +3,7 @@
 
 import { state, saveState } from './state.js';
 import { addAtmosphere, addCoins, addHistory } from './storage.js';
-import { placeOnShelf, addToManuscriptBox, createBookRecord } from './capacity.js';
+import { placeOnShelf, addToManuscriptBox, createBookRecord, isRestorationUnlocked, getRestorationLevel } from './capacity.js';
 import { getVolumeGroupByCollectedId } from '../data/volume_groups.js';
 import { BOOKS } from '../data/books.js';
 
@@ -24,6 +24,10 @@ export function canCollectVolumeGroup(group) {
 }
 
 export function collectVolumeGroup(group) {
+  // 合成典藏版是修复室独门手艺：需已解锁且 Lv≥1（2026-09-21 图南拍板，给升级一个刚性理由）
+  if (!isRestorationUnlocked() || getRestorationLevel() < 1) {
+    return { ok: false, reason: 'restoration_level_required' };
+  }
   if (!canCollectVolumeGroup(group)) {
     return { ok: false, reason: 'not_ready' };
   }

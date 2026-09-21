@@ -225,22 +225,20 @@ export function expandRestorationBoxSlots() {
 // ========== 古籍修复室等级 ==========
 
 const MAX_RESTORATION_LEVEL = 5;
-const RESTORATION_UNLOCK_PRICE = 300; // 解锁 Lv0（开放修复室）的价格
 
 export function isRestorationUnlocked() {
   return !!state.restorationUnlocked;
 }
 
-export function getRestorationUnlockPrice() {
-  return RESTORATION_UNLOCK_PRICE;
-}
-
-export function unlockRestorationRoom() {
+/** Lv0 免费开放（2026-09-21 图南拍板，撤销 300 币解锁）：金币消耗全部移到升级，
+ *  杜绝「书坏了 → 损坏书不能外借 → 金币收入砍断 → 攒不出解锁费」的软锁。
+ *  两个入口：首次修复受损书籍时自动点亮（disasters.js / visitors.js 受灾路径调用）；
+ *  玩家也可在修复室页主动免费修缮。幂等。 */
+export function grantRestorationRoom() {
   if (state.restorationUnlocked) return false;
-  if (!spendCoins(RESTORATION_UNLOCK_PRICE)) return false;
   state.restorationUnlocked = true;
   state.restorationLevel = 0;
-  addHistory('purchase', `📜 解锁古籍修复室`, `花费${RESTORATION_UNLOCK_PRICE}智慧之光`);
+  addHistory('event', `📜 古籍修复室的灯亮了`, `受损的书籍有了归处——修复室免费开放`);
   saveState();
   return true;
 }
@@ -267,16 +265,16 @@ export function upgradeRestorationLevel() {
   state.restorationLevel = level + 1;
   const exp = state.restorationLevel * FACILITY_EXP_PER_LEVEL; // D19 等级×20
   addAtmosphere(exp);
-  addHistory('purchase', `📜 古籍修复室升至 Lv.${state.restorationLevel}`, `花费${price}智慧之光 · 修复速度 +5% · +${exp}氛围`);
+  addHistory('purchase', `📜 古籍修复室升至 Lv.${state.restorationLevel}`, `花费${price}智慧之光 · 修复速度 +10% · +${exp}氛围`);
   saveState();
   return true;
 }
 
 /**
- * 修复时的额外速度加成（不含基础的 5%）。
- * Lv0: 0%，Lv1: 5%，... Lv5: 25%
+ * 修复时的额外速度加成。
+ * Lv0: 0%，Lv1: 10%，... Lv5: 50%（2026-09-21 由 5%/级 拉大为 10%/级，给升级更实的体感）
  */
 export function getRestorationRepairSpeedBonus() {
   if (!state.restorationUnlocked) return 0;
-  return (getRestorationLevel() || 0) * 0.05;
+  return (getRestorationLevel() || 0) * 0.10;
 }
