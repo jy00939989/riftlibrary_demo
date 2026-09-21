@@ -8,7 +8,7 @@ import { cleanBookDust } from '../core/disasters.js';
 import { checkTaskCompletion } from '../quests.js';
 import { getManuscriptSlots, getManuscriptBoxCount, getManuscriptSlotPrice, expandManuscriptSlots, getBookCapacity, getOwnedBookCount } from '../capacity.js';
 import { calcCurationEffects } from '../curation.js';
-import { getEffectiveCopiedWords } from '../core/book-utils.js';
+import { getEffectiveCopiedWords, getRepairProgress } from '../core/book-utils.js';
 import { isNoMasteryBook } from '../core/book-eligibility.js';
 import { setFocusBook } from '../core/focus-session.js';
 import { unlockReCopy, toggleBookStar, markChapterRead } from '../core/book-progress.js';
@@ -391,6 +391,9 @@ function renderBookCard(book) {
   const isCopying = bookState.status === 'copying' || (bookState.copiedWords > 0 && !isCompleted);
   const isUnstarted = !isCompleted && !isCopying;
   const isJustCompleted = isCompleted && effectiveWords === 0;
+  // 损坏标识：书卡必须能看出"这本坏了且能去修"（此前损坏书与普通在抄书无差别，玩家找不到修复入口）
+  const isDamaged = !!bookState.damaged;
+  const repairInfo = isDamaged ? getRepairProgress(bookState) : null;
   const displayProgress = isJustCompleted ? 100 : progress;
   const starIcon = bookState.starred ? '⭐' : '☆';
   const coverSrc = book.cover || null;
@@ -411,7 +414,8 @@ function renderBookCard(book) {
         ? `<img src="${coverSrc}" alt="${getBookTitle(book)}" class="absolute inset-0 w-full h-full object-cover"
              onerror="this.style.display='none'; this.parentElement.querySelector('.cover-fallback').classList.remove('hidden');">`
         : ''}
-      ${isCompleted ? '<div class="absolute top-2 left-2 text-xs z-10">🏆</div>' : ''}
+      ${isCompleted && !isDamaged ? '<div class="absolute top-2 left-2 text-xs z-10">🏆</div>' : ''}
+      ${isDamaged ? '<div class="absolute top-2 left-2 text-xs z-10">🩹</div>' : ''}
     </div>
 
     <!-- 书脊信息区 -->
@@ -427,6 +431,11 @@ function renderBookCard(book) {
       <div class="text-[10px] text-ink-light/60 mt-1">
         ${isCompleted ? `${t('completed')} ✓` : isCopying ? `${t('copying')} ${progress}%` : t('pendingTranscription')}
       </div>
+      ${isDamaged ? `
+        <div class="mt-2 rounded-lg bg-red-50 border border-red-300 px-2 py-1.5 text-center">
+          <div class="text-[10px] text-red-500 font-bold mb-1">${repairInfo ? t('repairing').replace('{pct}', repairInfo.pct) : `🩹 ${t('damaged')}`}</div>
+          <button class="repair-card-btn w-full px-2 py-1 bg-red-400/90 text-white rounded text-[10px] font-bold hover:shadow transition-all">${t('goRepair')}</button>
+        </div>` : ''}
       ${isCompleted && !book.indestructible ? renderBookCondition(book.id) : ''}
       ${isCompleted && bookState.dustyAt ? `
         <div class="mt-2 rounded-lg bg-stone-100 border border-stone-300 px-2 py-1.5 text-center">
@@ -477,10 +486,21 @@ function renderBookCard(book) {
     });
   }
 
+  // 去修复：设为专注书并跳专注页（专注誊抄即修复）
+  const repairCardBtn = cardDiv.querySelector('.repair-card-btn');
+  if (repairCardBtn) {
+    repairCardBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      setFocusBook(book.id);
+      document.getElementById('tab-focus').click();
+    });
+  }
+
   // 整卡点击
   cardDiv.addEventListener('click', (e) => {
     if (e.target.classList.contains('star-btn')) return;
     if (e.target.classList.contains('re-copy-card-btn')) return;
+    if (e.target.classList.contains('repair-card-btn')) return;
     if (isCompleted && bookState.masteryLevel >= 1 && !isNoMasteryBook(book.id)) {
       showMasteryDetail(book);
     } else {
