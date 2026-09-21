@@ -6,7 +6,7 @@
 import { state, saveState } from './state.js';
 import { spendCoins, addCoins, addAtmosphere, addHistory, addInspiration } from './storage.js';
 import { markTaskDone } from './dailytasks.js';
-import { PLANT_TYPES, SEED_EXCHANGE, WATERING_CANS, WATER_TANKS, GREEN_THUMB } from '../data/plants.js';
+import { PLANT_TYPES, SEED_EXCHANGE, WATERING_CANS, WATER_TANKS, GREEN_THUMB, IMPROVE_TIERS } from '../data/plants.js';
 import { isBookCapacityFull, isManuscriptBoxFull, addToManuscriptBox, getManuscriptSlots, getManuscriptBoxCount } from './capacity.js';
 import { createBookRecord } from './core/book-utils.js';
 import { hasSignboard } from './shop.js';
@@ -141,33 +141,70 @@ export function getGreenThumbProgress() {
   return { current: n, next: ths[lv], remaining: ths[lv] - n };
 }
 
-// ========== 改良品种（嫁接） ==========
+// ========== 改良品种（嫁接，五档渐进；2026-09-21 晚图南改版） ==========
+// ①掉率70% ②80% ③多年生30% ④多年生60% ⑤多年生100%；每档耗同类种子（成本在 IMPROVE_TIERS）。
+// 存档兼容：v16 当天的布尔真值按满档（≈旧 90%+必多年生）计。
 
-export function isImproved(type) {
-  return !!(state.improvedPlants && state.improvedPlants[type]);
+export function getImproveTier(type) {
+  const v = state.improvedPlants?.[type];
+  if (typeof v === 'number') return Math.max(0, Math.min(v, IMPROVE_TIERS.length));
+  return v ? IMPROVE_TIERS.length : 0;
+}
+
+export function getNextImproveTier(type) {
+  const tier = getImproveTier(type);
+  return tier >= IMPROVE_TIERS.length ? null : IMPROVE_TIERS[tier];
 }
 
 export function getEffectiveSeedDropRate(type) {
   const def = PLANT_TYPES[type];
   if (!def) return 0;
-  return isImproved(type) && def.improved ? def.improved.seedDropRate : def.seedDropRate;
+  let rate = def.seedDropRate;
+  const tier = getImproveTier(type);
+  for (let i = 0; i < tier; i++) {
+    if (IMPROVE_TIERS[i].seedDropRate !== undefined) rate = IMPROVE_TIERS[i].seedDropRate;
+  }
+  return rate;
+}
+
+// 多年生概率（0 = 未解锁多年生；roll 中则收获后回落 restartLevel 重长，否则照常凋谢）
+export function getPerennialChance(type) {
+  const tier = getImproveTier(type);
+  let chance = 0;
+  for (let i = 0; i < tier; i++) {
+    if (IMPROVE_TIERS[i].perennialChance !== undefined) chance = IMPROVE_TIERS[i].perennialChance;
+  }
+  return chance;
+}
+
+export function getPerennialRestartLevel(type) {
+  const tier = getImproveTier(type);
+  let lv = 3;
+  for (let i = 0; i < tier; i++) {
+    if (IMPROVE_TIERS[i].restartLevel !== undefined) lv = IMPROVE_TIERS[i].restartLevel;
+  }
+  return lv;
 }
 
 export function canUnlockImproved(type) {
-  const def = PLANT_TYPES[type];
-  if (!def || !def.improved) return false;
-  if (isImproved(type)) return false;
-  return (state.seeds[type] || 0) >= def.improved.seedCost;
+  const next = getNextImproveTier(type);
+  if (!next) return false;
+  return (state.seeds[type] || 0) >= next.seedCost;
 }
 
-// 消耗同类种子解锁改良品种：掉率 60%→90% + 多年生（收获回落 restartLevel 重长）
+// 消耗同类种子升一档改良
 export function unlockImproved(type) {
+  const next = getNextImproveTier(type);
+  if (!next || !canUnlockImproved(type)) return false;
+  if (!spendSeed(type, next.seedCost)) return false;
+  const newTier = getImproveTier(type) + 1;
+  state.improvedPlants[type] = newTier;
   const def = PLANT_TYPES[type];
-  if (!def || !def.improved || !canUnlockImproved(type)) return false;
-  if (!spendSeed(type, def.improved.seedCost)) return false;
-  state.improvedPlants[type] = true;
-  addHistory('plant', `🧬 嫁接改良：${def.emoji} ${t(def.nameKey)}`,
-    `消耗${def.improved.seedCost}颗种子 · 掉率 ${Math.round(def.seedDropRate * 100)}%→${Math.round(def.improved.seedDropRate * 100)}%，收获后回落 Lv${def.improved.restartLevel} 多年生`);
+  const effect = next.seedDropRate !== undefined
+    ? `掉率 ${Math.round(getEffectiveSeedDropRate(type) * 100)}%`
+    : `多年生概率 ${Math.round(next.perennialChance * 100)}%`;
+  addHistory('plant', `🧬 嫁接改良 ${def.emoji} ${t(def.nameKey)} · ${newTier}/5 档`,
+    `消耗${next.seedCost}颗种子 · ${effect}`);
   saveState();
   return true;
 }
@@ -395,24 +432,27 @@ export function harvestPlant(potIndex = 0) {
   // 绿手指：累计收获次数（唯一事实源，等级由阈值推导）
   state.plantHarvests = (state.plantHarvests || 0) + 1;
 
-  const improved = isImproved(plant.activeType) && def.improved;
   const seedName = seedDropped ? ` + 获得 ${t(def.nameKey)}种子 ×1` : '';
   addHistory('plant', `收获 ${def.emoji} ${t(def.nameKey)}`, `+${def.harvestAtmosphere}氛围 +${def.harvestCoins}智慧之光${seedName}`);
 
-  if (improved) {
-    // 多年生：回落 restartLevel 重新生长，植株保留（2026-09-21 温室培育线）
-    plant.level = def.improved.restartLevel;
+  // 多年生（五档改良 ③④⑤ 解锁）：按概率回落 restartLevel 重长，未中则照常凋谢
+  const perChance = getPerennialChance(plant.activeType);
+  const perennial = perChance > 0 && Math.random() < perChance;
+
+  if (perennial) {
+    const restartLv = getPerennialRestartLevel(plant.activeType);
+    plant.level = restartLv;
     plant.growthProgress = 0;
     plant.harvested = false;
     plant.lastCareTime = getNow();
-    addHistory('plant', `🧬 ${t(def.nameKey)}多年生萌发`, `回落 Lv${def.improved.restartLevel}，继续生长，无需重新种植`);
+    addHistory('plant', `🧬 ${t(def.nameKey)}多年生萌发`, `回落 Lv${restartLv}，继续生长，无需重新种植`);
   } else {
     // 凋谢 → 空盆
     resetPlantToEmpty(plant);
   }
 
   saveState();
-  return { seedDropped, seedType: def.seedType, def, perennial: !!improved };
+  return { seedDropped, seedType: def.seedType, def, perennial };
 }
 
 // 铲除指定盆位植物

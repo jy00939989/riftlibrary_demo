@@ -156,36 +156,62 @@ state.coins = 99999;
 plants.upgradeTank();
 assert(state.waterTankLevel === 3 && state.waterOfflineAt === T0, '升级蓄水池：等级提升且锚点重置为当下');
 
-console.log('\n[7] 改良品种：种子解锁（sink）');
+console.log('\n[7] 嫁接改良五档（①70% ②80% ③多年生30% ④60% ⑤100%）');
 state.seeds.bird_of_paradise = 1;
-assert(plants.canUnlockImproved('bird_of_paradise') === false, '种子不足（1<2）拒绝解锁');
-assert(plants.unlockImproved('bird_of_paradise') === false, '解锁失败不扣种子');
+assert(plants.getImproveTier('bird_of_paradise') === 0, '初始 0 档');
+assert(plants.canUnlockImproved('bird_of_paradise') === false, '1 颗 < 首档 2 颗拒绝');
 state.seeds.bird_of_paradise = 2;
-assert(plants.canUnlockImproved('bird_of_paradise') === true, '2 颗种子可解锁鹤望兰');
-assert(plants.unlockImproved('bird_of_paradise') === true && state.seeds.bird_of_paradise === 0, '解锁消耗 2 颗种子');
-assert(plants.isImproved('bird_of_paradise') === true, '解锁标记生效');
-assert(plants.getEffectiveSeedDropRate('bird_of_paradise') === 0.9, '掉率 0.6→0.9');
-assert(plants.getEffectiveSeedDropRate('magic_rose') === 0.6, '未改良品种掉率不变');
-assert(plants.canUnlockImproved('bird_of_paradise') === false, '已改良不可重复解锁');
+assert(plants.unlockImproved('bird_of_paradise') === true && state.seeds.bird_of_paradise === 0, '①档耗 2 颗');
+assert(plants.getImproveTier('bird_of_paradise') === 1, '升到 1 档');
+assert(plants.getEffectiveSeedDropRate('bird_of_paradise') === 0.70, '①档掉率 70%');
+assert(plants.getPerennialChance('bird_of_paradise') === 0, '①档无多年生');
+state.seeds.bird_of_paradise = 3;
+assert(plants.unlockImproved('bird_of_paradise') === true, '②档耗 3 颗');
+assert(plants.getEffectiveSeedDropRate('bird_of_paradise') === 0.80, '②档掉率 80%');
+assert(plants.getPerennialChance('bird_of_paradise') === 0, '②档仍无多年生');
+state.seeds.bird_of_paradise = 4;
+assert(plants.unlockImproved('bird_of_paradise') === true, '③档耗 4 颗');
+assert(plants.getPerennialChance('bird_of_paradise') === 0.30, '③档多年生 30%');
+assert(plants.getEffectiveSeedDropRate('bird_of_paradise') === 0.80, '③档掉率维持 80%');
+// 旧存档布尔真值兼容（v16 当天语义=90%+必多年生 ≈ 满档）
+state.improvedPlants.magic_rose = true;
+assert(plants.getImproveTier('magic_rose') === 5, '旧布尔 true 按满档计');
+assert(plants.getPerennialChance('magic_rose') === 1.00, '满档多年生 100%');
+state.seeds.magic_rose = 99;
+assert(plants.canUnlockImproved('magic_rose') === false && plants.getNextImproveTier('magic_rose') === null, '满档后无下档');
+state.seeds.bird_of_paradise = 99;
+plants.unlockImproved('bird_of_paradise'); // ④档 60%
+plants.unlockImproved('bird_of_paradise'); // ⑤档 100%
+assert(plants.getImproveTier('bird_of_paradise') === 5, '鹤望兰五档升满');
+assert(plants.getPerennialChance('bird_of_paradise') === 1.00, '⑤档多年生 100%');
 
-console.log('\n[8] 多年生收获：回落 Lv3 保留植株 + 计数');
+console.log('\n[8] 多年生概率收获：roll 中→回落 Lv3，未中→清盆');
 state.coins = 99999;
-plantDirect(0, 'bird_of_paradise', 5, PLANT_TYPES.bird_of_paradise.growthPerLevel);
 state.plantHarvests = 0;
-Math.random = () => 0.5; // < 0.9 必掉
-state.seeds.bird_of_paradise = 0;
-r = plants.harvestPlant(0);
-assert(r && r.perennial === true && r.seedDropped === true, '改良种收获：掉种子 + 多年生标记');
-assert(state.plants[0].activeType === 'bird_of_paradise' && state.plants[0].level === 3 && state.plants[0].growthProgress === 0, '回落 Lv3 清空进度、植株保留');
-assert(state.plants[0].harvested === false, '多年生不设 harvested 标记');
+// 魔法玫瑰满档（chance 1.0）：必回落
+plantDirect(0, 'magic_rose', 5, PLANT_TYPES.magic_rose.growthPerLevel);
+Math.random = () => 0.5;
+state.seeds.magic_rose = 0;
+let r8 = plants.harvestPlant(0);
+assert(r8 && r8.perennial === true && r8.seedDropped === true, '满档收获：必掉种子 + 必多年生');
+assert(state.plants[0].activeType === 'magic_rose' && state.plants[0].level === 3 && state.plants[0].growthProgress === 0, '满档：回落 Lv3 植株保留');
 assert(state.plantHarvests === 1, '绿手指计数 +1');
-assert(state.seeds.bird_of_paradise === 1, '种子入袋');
-// 未改良品种收获仍清盆（旧行为保持）
-plantDirect(1, 'magic_rose', 5, PLANT_TYPES.magic_rose.growthPerLevel);
-Math.random = () => 0.99; // > 0.6 不掉
-r = plants.harvestPlant(1);
-assert(r && r.perennial === false && state.plants[1].activeType === null && state.plants[1].level === 0, '普通品种收获后清盆');
-
+// 鹤望兰 0 档（chance 0）：必清盆
+plantDirect(1, 'bird_of_paradise', 5, PLANT_TYPES.bird_of_paradise.growthPerLevel);
+state.improvedPlants.bird_of_paradise = 0;
+Math.random = () => 0.01; // 掉率 roll 必中，但多年生 0% 必不中
+r8 = plants.harvestPlant(1);
+assert(r8 && r8.perennial === false && state.plants[1].activeType === null, '0 档：收获后清盆');
+// 三档 30%：roll=0.2 中 → 回落；roll=0.5 不中 → 清盆
+state.improvedPlants.starlight_fern = 3;
+plantDirect(2, 'starlight_fern', 5, PLANT_TYPES.starlight_fern.growthPerLevel);
+Math.random = () => 0.2;
+r8 = plants.harvestPlant(2);
+assert(r8.perennial === true && state.plants[2].level === 3, '③档 roll=0.2 < 30% → 多年生回落');
+plantDirect(2, 'starlight_fern', 5, PLANT_TYPES.starlight_fern.growthPerLevel);
+Math.random = () => 0.5;
+r8 = plants.harvestPlant(2);
+assert(r8.perennial === false && state.plants[2].activeType === null, '③档 roll=0.5 ≥ 30% → 凋谢清盆');
 console.log('\n[9] 绿手指：阈值等级 + 成长加成');
 state.plantHarvests = 0;
 assert(plants.getGreenThumbLevel() === 0, '0 收获 Lv0');
