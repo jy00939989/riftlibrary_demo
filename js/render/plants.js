@@ -23,8 +23,9 @@ function ensureSceneStyle() {
     }
     .gh-dot { position: absolute; top: -4px; right: -4px; width: 14px; height: 14px; border-radius: 9999px; border: 2px solid #fff; animation: ghPulse 1.6s infinite; }
     @keyframes ghPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.25); } }
-    .gh-hotspot { position: relative; transition: transform 0.15s ease, box-shadow 0.15s ease; }
-    .gh-hotspot:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.15); }
+    .gh-hotspot { transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease; }
+    .gh-hotspot:hover { filter: brightness(1.08); }
+    button.gh-hotspot:focus-visible { outline: 2px solid #34d399; outline-offset: 2px; }
   `;
   document.head.appendChild(style);
 }
@@ -40,86 +41,83 @@ function scrollToSection(sectionId) {
   setTimeout(() => el.classList.remove('gh-flash'), 1700);
 }
 
-// ========== 温室场景导览（展览厅式可点击热点，2026-09-21 图南决策；A 路零美术 CSS 构图） ==========
-// 结构预留换底图：未来出温室底图后，把热点改成图片上的绝对坐标即可（同 hall_lvN 路线）。
+// ========== 温室场景导览（展览厅式可点击热点；2026-09-21 B 路底图版） ==========
+// 底图 visual/greenhouse/greenhouse_main.jpg（1920×1089 压缩档 481KB；母档 gh_master.png 同目录）。
+// 坐标全部为相对图宽高的实测百分比；换图必须重测（同 exhibition.js SPOT_COORDS 纪律）。
+// 铭牌藏名纪律：图内三块空白铭牌无文字，名称由本组件 HTML 盖。
+
+// 长椅四空盆盆位中心（从左到右）
+const GH_POT_SLOTS = [
+  { x: 21.7, y: 64.5 }, { x: 32.7, y: 64.0 }, { x: 42.4, y: 63.5 }, { x: 51.6, y: 63.0 }
+];
+// 功能区热点框（左/上/宽/高 %）：右上工具架 = 设施升级区；右下柜台 = 兑换区
+const GH_REGIONS = {
+  facilities: { x: 64, y: 8, w: 25, h: 45 },
+  exchange: { x: 66, y: 56, w: 34, h: 42 }
+};
+// 铭牌标签锚点（中心点 %）：顶部大牌=温室名；长椅上方=盆栽；工具架铭牌=设施；柜台铭牌=兑换
+const GH_LABELS = {
+  title: { x: 34.5, y: 16 },
+  pots: { x: 15, y: 47 },
+  facilities: { x: 76.5, y: 12.5 },
+  exchange: { x: 79, y: 86 }
+};
+
 function renderGreenhouseScene() {
   ensureSceneStyle();
   const scene = document.createElement('div');
-  scene.className = 'rounded-2xl border-2 border-green-300 overflow-hidden mb-0';
-  scene.style.background = 'linear-gradient(180deg, rgba(214,238,222,0.85) 0%, rgba(186,222,199,0.9) 60%, rgba(160,205,178,0.95) 100%)';
+  scene.className = 'relative rounded-2xl border-2 border-green-300 overflow-hidden';
 
-  // ── 楣条：温室名 + 浇水次数 ──
-  const head = document.createElement('div');
-  head.className = 'px-4 py-2 flex items-center justify-between border-b border-green-400/40';
-  head.innerHTML = `
-    <span class="font-display font-bold text-green-900">🌿 ${t('tabGreenhouse')}</span>
-    <span class="text-xs font-bold text-magic-blue bg-white/70 px-2 py-0.5 rounded-full" title="${t('waterPoolHint')}">💧 ${t('waterPoolCount').replace('{n}', getWaterCount())}</span>
-  `;
-  scene.appendChild(head);
+  const img = document.createElement('img');
+  img.src = 'visual/greenhouse/greenhouse_main.jpg';
+  img.alt = t('tabGreenhouse');
+  img.className = 'w-full block select-none';
+  scene.appendChild(img);
 
-  const body = document.createElement('div');
-  body.className = 'flex flex-col sm:flex-row gap-3 p-4 items-stretch';
-
-  // ── 左：种植区热点（活盆立绘长椅）──
+  // 状态判定（与旧 CSS 版同语义）
   const activeIdx = (state.plants || []).map((p, i) => (p && p.activeType && p.level > 0 ? i : -1)).filter(i => i >= 0);
   const anyHarvest = activeIdx.some(i => canHarvest(i));
   const anyWaterable = getWaterCount() > 0 && activeIdx.some(i => canWater(i));
-
-  const bench = document.createElement('button');
-  bench.className = 'gh-hotspot flex-1 rounded-xl border-2 border-green-500/50 bg-white/60 px-3 py-2 flex flex-col';
-  const potRow = document.createElement('div');
-  potRow.className = 'flex items-end justify-center gap-2 flex-1 min-h-[64px]';
-  (state.plants || []).forEach((plant, idx) => {
-    const cell = document.createElement('span');
-    cell.className = 'inline-flex flex-col items-center';
-    if (plant && plant.activeType) {
-      const def = PLANT_TYPES[plant.activeType];
-      cell.appendChild(def ? renderPlantArt(def, plant.level, 44) : document.createTextNode('🪴'));
-    } else {
-      const img = document.createElement('img');
-      img.src = 'visual/plants/plant_16_empty_pot.png';
-      img.className = 'w-9 h-9 object-contain opacity-60';
-      cell.appendChild(img);
-    }
-    potRow.appendChild(cell);
-  });
-  const benchLabel = document.createElement('span');
-  benchLabel.className = 'text-xs font-bold text-green-800 mt-1';
-  benchLabel.textContent = t('plantPotsTitle');
-  bench.appendChild(potRow);
-  bench.appendChild(benchLabel);
-  if (anyHarvest) bench.appendChild(makeDot('#f59e0b'));
-  else if (anyWaterable) bench.appendChild(makeDot('#3b82f6'));
-  bench.addEventListener('click', () => scrollToSection('gh-section-pots'));
-  body.appendChild(bench);
-
-  // ── 右：设施升级区 + 兑换区 两热点 ──
-  const side = document.createElement('div');
-  side.className = 'flex sm:flex-col gap-3 sm:w-44';
-
   const facilityDot = canUpgradeCan() || canUpgradeTank();
-  const facilityBtn = makeHotspotCard({
-    emoji: WATERING_CANS[(state.wateringCanLevel || 1) - 1]?.emoji || '🛠️',
-    label: t('greenhouseFacilities'),
-    dot: facilityDot,
-    onClick: () => scrollToSection('gh-section-facilities')
-  });
-  side.appendChild(facilityBtn);
-
   const anyExchange = Object.keys(SEED_EXCHANGE).some(st => getSeedExchanges(st).some(x => x.canExchange));
-  const exchangeBtn = makeHotspotCard({
-    emoji: '🌰',
-    label: t('greenhouseExchangeTitle'),
-    dot: anyExchange,
-    onClick: () => scrollToSection('gh-section-seeds')
-  });
-  side.appendChild(exchangeBtn);
 
-  body.appendChild(side);
-  scene.appendChild(body);
+  // 功能区整面透明热区（铭牌标签下方，保证移动端点按面积）
+  scene.appendChild(sceneRegion(GH_REGIONS.facilities, () => scrollToSection('gh-section-facilities')));
+  scene.appendChild(sceneRegion(GH_REGIONS.exchange, () => scrollToSection('gh-section-seeds')));
+
+  // 铭牌标签（盖在图的空白铭牌上）
+  scene.appendChild(sceneLabel(GH_LABELS.title, `🌿 ${t('tabGreenhouse')} · 💧${getWaterCount()}`, null, null));
+  scene.appendChild(sceneLabel(GH_LABELS.pots, t('plantPotsTitle'), anyHarvest ? '#f59e0b' : anyWaterable ? '#3b82f6' : null, () => scrollToSection('gh-section-pots')));
+  scene.appendChild(sceneLabel(GH_LABELS.facilities, t('greenhouseFacilities'), facilityDot ? '#10b981' : null, () => scrollToSection('gh-section-facilities')));
+  scene.appendChild(sceneLabel(GH_LABELS.exchange, t('greenhouseExchangeTitle'), anyExchange ? '#10b981' : null, () => scrollToSection('gh-section-seeds')));
+
+  // 四个盆位：已种植 → 活立绘（点击去盆栽区）；空盆 → 隐形按钮（点击去购买种子）
+  (state.plants || []).forEach((plant, idx) => {
+    const slot = GH_POT_SLOTS[idx];
+    if (!slot) return;
+    const planted = plant && plant.activeType && plant.level > 0;
+    const btn = document.createElement('button');
+    btn.className = 'absolute transform -translate-x-1/2 -translate-y-[92%] flex items-end justify-center';
+    btn.style.left = slot.x + '%';
+    btn.style.top = slot.y + '%';
+    btn.style.width = '8%';
+    btn.style.minWidth = '34px';
+    btn.style.minHeight = '44px';
+    if (planted) {
+      const def = PLANT_TYPES[plant.activeType];
+      if (def) btn.appendChild(renderPlantArt(def, plant.level, 56));
+      btn.title = t(def?.nameKey || 'plantPotsTitle');
+    } else {
+      btn.title = t('greenhouseSeedShop');
+    }
+    btn.addEventListener('click', () => scrollToSection(planted ? 'gh-section-pots' : 'gh-section-shop'));
+    scene.appendChild(btn);
+  });
+
   return scene;
 }
 
+// 整面透明热区按钮
 function makeDot(color) {
   const dot = document.createElement('span');
   dot.className = 'gh-dot';
@@ -127,13 +125,30 @@ function makeDot(color) {
   return dot;
 }
 
-function makeHotspotCard({ emoji, label, dot = false, onClick }) {
+function sceneRegion(region, onClick) {
   const btn = document.createElement('button');
-  btn.className = 'gh-hotspot flex-1 rounded-xl border-2 border-teal-500/50 bg-white/60 px-3 py-2 flex items-center gap-2 justify-center';
-  btn.innerHTML = `<span class="text-xl">${emoji}</span><span class="text-xs font-bold text-teal-900">${label}</span>`;
-  if (dot) btn.appendChild(makeDot('#10b981'));
+  btn.className = 'gh-hotspot absolute cursor-pointer';
+  btn.style.left = region.x + '%';
+  btn.style.top = region.y + '%';
+  btn.style.width = region.w + '%';
+  btn.style.height = region.h + '%';
   btn.addEventListener('click', onClick);
   return btn;
+}
+
+// 铭牌标签：pos=中心点%；dot 颜色非空则加脉冲点；onClick 为空则纯展示
+function sceneLabel(pos, html, dotColor, onClick) {
+  const el = document.createElement(onClick ? 'button' : 'div');
+  el.className = 'absolute transform -translate-x-1/2 -translate-y-1/2 px-2 py-0.5 rounded-full text-xs font-bold bg-amber-50/90 text-amber-900 border border-amber-300/70 shadow-sm whitespace-nowrap';
+  el.style.left = pos.x + '%';
+  el.style.top = pos.y + '%';
+  if (onClick) {
+    el.classList.add('gh-hotspot');
+    el.addEventListener('click', onClick);
+  }
+  el.innerHTML = html;
+  if (dotColor) el.appendChild(makeDot(dotColor));
+  return el;
 }
 
 export function renderGreenhousePage() {
