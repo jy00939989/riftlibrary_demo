@@ -83,6 +83,33 @@ export function showVisitorArriveGuide(callback) {
   document.body.appendChild(overlay);
 }
 
+// 首次打开温室：种植-培育-收获循环（2026-09-21 温室独立成页配套）
+export function showGreenhouseOpenGuide(callback) {
+  const { overlay, card, dismiss } = makeOverlay(`
+    <div class="text-5xl mb-4">🌱</div>
+    <h3 class="font-display text-2xl font-bold mb-2">${t('tabGreenhouse')}</h3>
+    <p class="text-ink-light leading-relaxed mb-3 text-base">
+      ${t('tutorialGreenhouseDesc')}
+    </p>
+    <div class="text-left text-base text-ink-light mb-3 space-y-1.5">
+      <div>${t('tutorialGreenhouseWater')}</div>
+      <div>${formatTerm('tutorialGreenhouseFacilities', { facilities: t('greenhouseFacilities') })}</div>
+      <div>${formatTerm('tutorialGreenhouseSeeds', { seeds: t('seed') })}</div>
+      <div>${formatTerm('tutorialGreenhousePots', { pots: t('plantPotsTitle'), max: 4, hours: 72 })}</div>
+    </div>
+    <button class="px-6 py-3 bg-magic-gold text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all">${t('tutorialExplore')}</button>
+  `);
+
+  card.querySelector('button').addEventListener('click', () => {
+    dismiss(() => {
+      markTutorialSeen('greenhouse_open');
+      if (callback) callback();
+    });
+  });
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) card.querySelector('button').click(); });
+  document.body.appendChild(overlay);
+}
+
 // 首次打开位面商店：解释商店
 export function showShopOpenGuide(callback) {
   const { overlay, card, dismiss } = makeOverlay(`
@@ -329,6 +356,10 @@ export function dispatchTutorialUI(trigger, callback) {
       }
       if (trigger.event === 'library_open') {
         showLibraryOpenGuide(callback);
+        return true;
+      }
+      if (trigger.event === 'greenhouse_open') {
+        showGreenhouseOpenGuide(callback);
         return true;
       }
       if (trigger.event === 'restoration_unlock') {

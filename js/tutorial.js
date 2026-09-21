@@ -19,6 +19,10 @@ const TRIGGERS = {
     flag: 'firstLibraryOpen',
     type: 'context-card'
   },
+  greenhouse_open: {
+    flag: 'firstGreenhouseOpen',
+    type: 'context-card'
+  },
   book_complete: {
     flag: 'firstBookComplete',
     type: 'certificate'

@@ -52,8 +52,8 @@ export function switchTab(tabName) {
     triggerQuestCheck('tab_shop');
   }
 
-  if (tabName === 'shop' || tabName === 'library') {
-    const event = tabName === 'shop' ? 'shop_open' : 'library_open';
+  if (tabName === 'shop' || tabName === 'library' || tabName === 'greenhouse') {
+    const event = tabName === 'shop' ? 'shop_open' : tabName === 'library' ? 'library_open' : 'greenhouse_open';
     const trigger = checkAndShowTutorial(event);
     if (trigger) {
       setTimeout(() => dispatchTutorialUI(trigger), 400);
