@@ -24,8 +24,14 @@ export const EVENT_CALENDAR = [
     effect: { focusCoinsMult: 1.2 } },
   { id: 'agatha_birthday', month: 9, day: 15, nameKey: 'evtAgathaBirthday', type: 'author',
     effect: { borrowFavorMult: 1.5 } },
+  // 2026-09-25 中秋（与鲁迅诞辰同日并存，乘区各算各的——多日重叠连乘预留已有）
+  { id: 'mid_autumn', month: 9, day: 25, nameKey: 'evtMidAutumn', type: 'festival',
+    effect: { focusCoinsMult: 1.1 } },
   { id: 'luxun_birthday', month: 9, day: 25, nameKey: 'evtLuxunBirthday', type: 'author',
     effect: { borrowFavorMult: 1.5 } },
+  // 2026-10-01 国庆（与国际音乐日同日并存：focusCoinsMult × shopDiscount 各算各的）
+  { id: 'national_day', month: 10, day: 1, nameKey: 'evtNationalDay', type: 'festival',
+    effect: { focusCoinsMult: 1.1 } },
   { id: 'intl_music_day', month: 10, day: 1, nameKey: 'evtIntlMusicDay', type: 'music',
     effect: { shopDiscount: 0.5 } },
   { id: 'qianzhongshu_birthday', month: 10, day: 16, nameKey: 'evtQianzhongshuBirthday', type: 'author',
@@ -40,6 +46,10 @@ export const EVENT_CALENDAR = [
 // 整月展示横幅（monthSpan 仅展示层）：4 月「书香苏州」（苏州市全民阅读系列活动，图南苏州人指定收录）
 export const MONTH_BANNERS = [
   { id: 'book_suzhou_month', month: 4, nameKey: 'evtBookSuzhouMonth' },
+  // 2026-09-21 区间型：start/end 限定日区间（双节 9/25–10/8），image 可选挂图（缮写页横幅用）
+  { id: 'midautumn_natl_banner', nameKey: 'evtMidAutumnNationalBanner',
+    start: { month: 9, day: 25 }, end: { month: 10, day: 8 },
+    image: 'banner_midautumn2026' }
 ];
 
 /** 某日命中的活动日列表（不设时分秒，纯日历日等值判定） */
@@ -54,10 +64,19 @@ export function isEventDay(date = new Date()) {
   return getEventsOnDate(date).length > 0;
 }
 
-/** 某日命中的整月横幅（无则 null） */
+/** 某日命中的展示横幅（整月型按月份；区间型按 start/end 日区间；无则 null） */
 export function getMonthBanner(date = new Date()) {
   const m = date.getMonth() + 1;
-  return MONTH_BANNERS.find(b => b.month === m) || null;
+  const d = date.getDate();
+  return MONTH_BANNERS.find(b => {
+    if (b.month) return b.month === m;
+    if (b.start && b.end) {
+      const after = m > b.start.month || (m === b.start.month && d >= b.start.day);
+      const before = m < b.end.month || (m === b.end.month && d <= b.end.day);
+      return after && before;
+    }
+    return false;
+  }) || null;
 }
 
 // 折扣显示格式（纯函数，展示层共用）：0.5 → '5'（五折）/ fmtOff → '50'

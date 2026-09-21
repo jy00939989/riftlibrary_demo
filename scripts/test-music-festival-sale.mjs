@@ -23,7 +23,7 @@ const MUSIC_DAYS = [
   ['mozart_birthday', 1, 27], ['vivaldi_birthday', 3, 4], ['bach_birthday', 3, 21],
   ['jazz_day', 4, 30], ['intl_music_day', 10, 1], ['beethoven_birthday', 12, 16],
 ];
-ok(EVENT_CALENDAR.length === 13, `日历总条数 13（7 旧 + 6 新），实际 ${EVENT_CALENDAR.length}`);
+ok(EVENT_CALENDAR.length === 15, `日历总条数 15（7 旧 + 6 音乐 + 2 双节节庆 2026-09-21 入列），实际 ${EVENT_CALENDAR.length}`);
 for (const [id, m, day] of MUSIC_DAYS) {
   const ev = EVENT_CALENDAR.find(e => e.id === id);
   ok(!!ev, `${id} 存在`);
@@ -38,8 +38,10 @@ for (const [id, m, day] of MUSIC_DAYS) {
   const mults = getEventEffectMults(d(2027, m, day));
   ok(mults.shopDiscount === 0.5, `${m}/${day} shopDiscount=0.5`);
   const expectFavor = id === 'beethoven_birthday' ? 1.5 : 1; // 12/16 与奥斯汀同日
-  ok(mults.borrowFavorMult === expectFavor && mults.focusCoinsMult === 1,
-    `${m}/${day} borrowFavor=${expectFavor} focusCoins=1（实际 ${mults.borrowFavorMult}）`);
+  // 2026-09-21 起 10/1 国庆（focusCoinsMult 1.1）与国际音乐日并存 → focusCoins 分日期断言
+  const expectCoins = (m === 10 && day === 1) ? 1.1 : 1;
+  ok(mults.borrowFavorMult === expectFavor && mults.focusCoinsMult === expectCoins,
+    `${m}/${day} borrowFavor=${expectFavor} focusCoins=${expectCoins}（实际 ${mults.borrowFavorMult}/${mults.focusCoinsMult}）`);
 }
 const plain = getEventEffectMults(d(2027, 6, 1));
 ok(plain.shopDiscount === 1 && plain.borrowFavorMult === 1 && plain.focusCoinsMult === 1, '非活动日三乘区全 1');

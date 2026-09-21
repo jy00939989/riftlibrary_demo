@@ -32,6 +32,7 @@ export const CAFE_RECIPES = [
   {
     id: 'vanilla_tea',
     emoji: '🍵',
+    image: 'visual/cafe/drink_vanilla_tea.png',
     nameKey: 'cafeRecipeVanillaTea',
     material: { seedType: 'bird_of_paradise', count: 2 },
     price: 50,
@@ -41,6 +42,7 @@ export const CAFE_RECIPES = [
   {
     id: 'rose_dew',
     emoji: '🌹',
+    image: 'visual/cafe/drink_rose_dew.png',
     nameKey: 'cafeRecipeRoseDew',
     material: { seedType: 'magic_rose', count: 2 },
     price: 65,
@@ -50,6 +52,7 @@ export const CAFE_RECIPES = [
   {
     id: 'starlight_special',
     emoji: '✨',
+    image: 'visual/cafe/drink_starlight_special.png',
     nameKey: 'cafeRecipeStarlightSpecial',
     material: { seedType: 'starlight_fern', count: 3 },
     price: 110,
@@ -61,6 +64,7 @@ export const CAFE_RECIPES = [
   {
     id: 'osmanthus_mooncake_tea',
     emoji: '🥮',
+    image: 'visual/cafe/drink_mooncake_tea.png',
     nameKey: 'cafeRecipeMooncakeTea',
     material: { seedType: 'starlight_fern', count: 3 },
     price: 115,

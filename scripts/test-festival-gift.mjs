@@ -61,7 +61,7 @@ function assert(cond, msg) {
   else { console.log(`  ❌ ${msg}`); fail++; }
 }
 
-console.log('\n[1] 日期窗边界（2026 中秋 9/25 → 国庆收官 10/8）');
+console.log('\n[1] 迁移 v16 默认值（幂等）');
 assert(isFestivalActive('midAutumn2026', at(9, 24, 23)) === false, '9/24 窗口外');
 assert(isFestivalActive('midAutumn2026', at(9, 25, 0)) === true, '9/25 零点窗口内');
 assert(isFestivalActive('midAutumn2026', at(10, 1, 12)) === true, '国庆日窗口内');
@@ -109,6 +109,20 @@ console.log('\n[4] 桂花月饼茶：窗口内外可见性（festivalKey 门控�
 const mooncake = CAFE_RECIPES.find(r => r.id === 'osmanthus_mooncake_tea');
 assert(!!mooncake && mooncake.festivalKey === 'midAutumn2026', '限定饮品在食谱表带 festivalKey');
 assert(mooncake.material.seedType === 'starlight_fern' && mooncake.material.count === 3, '配方：星光蕨种子 ×3');
+
+console.log('\n[5] 活动日历：中秋/国庆入列 + 区间横幅');
+const { getEventsOnDate, getMonthBanner } = await import('../data/event_calendar.js');
+const evt925 = getEventsOnDate(new RealDate('2026-09-25T12:00:00'));
+assert(evt925.some(e => e.id === 'mid_autumn') && evt925.some(e => e.id === 'luxun_birthday'), '9/25 中秋与鲁迅诞辰并存');
+assert(evt925.find(e => e.id === 'mid_autumn').effect.focusCoinsMult === 1.1, '中秋 focusCoinsMult 1.1');
+const evt1001 = getEventsOnDate(new RealDate('2026-10-01T12:00:00'));
+assert(evt1001.some(e => e.id === 'national_day') && evt1001.some(e => e.id === 'intl_music_day'), '10/1 国庆与国际音乐日并存');
+const bannerIn = getMonthBanner(new RealDate('2026-09-26T12:00:00'));
+assert(bannerIn && bannerIn.id === 'midautumn_natl_banner' && bannerIn.image === 'banner_midautumn2026', '9/26 命中双节横幅（带挂图名）');
+assert(getMonthBanner(new RealDate('2026-09-24T12:00:00')) === null, '9/24 横幅未开始');
+assert(getMonthBanner(new RealDate('2026-10-08T12:00:00'))?.id === 'midautumn_natl_banner', '10/8 横幅收官日仍命中');
+assert(getMonthBanner(new RealDate('2026-10-09T12:00:00')) === null, '10/9 横幅已结束');
+assert(getMonthBanner(new RealDate('2026-04-10T12:00:00'))?.id === 'book_suzhou_month', '4 月整月横幅旧行为不破');
 
 console.log(`\n========== 结果: ${pass} 通过, ${fail} 失败 ==========`);
 process.exit(fail > 0 ? 1 : 0);

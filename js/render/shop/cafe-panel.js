@@ -89,8 +89,11 @@ function renderRecipes() {
     const canCraft = !locked && !dormant && canCraftRecipe(recipe.id);
 
     const card = el('div', `bg-white rounded-xl p-3 border-2 flex items-center gap-3 ${locked ? 'opacity-50 border-gray-200' : 'border-wood/20'}`);
+    const iconHtml = recipe.image
+      ? `<img src="${recipe.image}" alt="${t(recipe.nameKey)}" class="w-10 h-10 object-contain flex-shrink-0" onerror="this.outerHTML='<span class=\\'text-2xl\\'>${recipe.emoji}</span>'" />`
+      : `<span class="text-2xl">${recipe.emoji}</span>`;
     card.innerHTML = `
-      <span class="text-2xl">${recipe.emoji}</span>
+      ${iconHtml}
       <div class="flex-1 min-w-0">
         <div class="font-bold text-sm">${t(recipe.nameKey)}
           <span class="text-xs font-normal text-ink-light ml-1">${t('cafeStockLabel')} ${stock}</span>
