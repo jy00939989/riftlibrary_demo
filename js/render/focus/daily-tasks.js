@@ -20,7 +20,15 @@ export function renderDailyTasks() {
   card.style.background = 'linear-gradient(180deg, rgba(245,230,200,0.75) 0%, rgba(232,213,168,0.55) 100%)';
   card.style.boxShadow = 'inset 0 0 30px rgba(139,105,20,0.06), 0 1px 4px rgba(0,0,0,0.08)';
 
-  card.innerHTML = `
+  // 任务板插画（素材整版 D 区切片；图缺时静默回退纯文字头，不裸奔）
+  const boardImg = document.createElement('img');
+  boardImg.src = 'visual/focus/daily_tasks_board.png';
+  boardImg.alt = t('dailyTask');
+  boardImg.className = 'w-full h-24 object-cover block';
+  boardImg.onerror = () => boardImg.remove();
+  card.appendChild(boardImg);
+
+  card.insertAdjacentHTML('beforeend', `
     <div class="flex items-center gap-2 px-4 pt-3 pb-1">
       <span class="text-sm">📜</span>
       <span class="text-xs font-bold tracking-wider" style="color:#6b5010">${t('dailyTask')}</span>
