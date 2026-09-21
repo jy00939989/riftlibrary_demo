@@ -1036,7 +1036,7 @@ const TERM_DATA = Object.freeze({
   waterSplashTwo: { zh: '💧 浇水 ×2盆', en: '💧 Water ×2 pots' },
   waterSplashAll: { zh: '🌧️ 花洒全盆 (+{per}/盆)', en: '🌧️ Splash all (+{per}/pot)' },
   improvedBadge: { zh: '🧬 改良种', en: '🧬 Improved' },
-  improvedPerennialHint: { zh: '多年生：收获后回落 Lv.{lv} 继续生长，不掉率减半的恐惧——种子掉率 {rate}%', en: 'Perennial: falls back to Lv.{lv} after harvest; seed drop {rate}%' },
+  improvedPerennialHint: { zh: '多年生：收获后回落 Lv.{lv} 继续生长 · 种子掉率 {rate}%', en: 'Perennial: falls back to Lv.{lv} after harvest; seed drop {rate}%' },
   unlockImprovedTitle: { zh: '🔬 嫁接改良', en: '🔬 Graft Improvement' },
   unlockImprovedDesc: { zh: '消耗 {cost} 颗同类种子：掉率 60%→90%，收获后回落 Lv3 多年生（一次种植多次收获）', en: 'Spend {cost} same-type seeds: drop 60%→90%, perennial regrowth from Lv3 after each harvest' },
   improvedUnlocked: { zh: '✅ 已改良：掉率 {rate}% · 多年生', en: '✅ Improved: {rate}% drop · perennial' },
@@ -1152,7 +1152,6 @@ const TERM_DATA = Object.freeze({
   faqQ12: { zh: 'Q: 书籍损毁了怎么办？', en: 'Q: What if a book is damaged?' },
   faqA12: { zh: '解锁古籍修复室后，将损坏书籍放入修复室，通过誊抄字数修复。升级修复室可加快修复速度。', en: 'Unlock the Restoration Room and place damaged books there; repair by investing copied words. Upgrading the room speeds up repairs.' },
 
-  decorationPageLoadFailed: { zh: '布置页面加载失败', en: 'Decor page failed to load' },
   collectionLoadFailed: { zh: '收藏室加载失败', en: 'Collection failed to load' },
 
   // ========== 收藏室 ==========
