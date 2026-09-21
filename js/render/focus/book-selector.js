@@ -15,6 +15,9 @@ export function renderBookSelector(sess) {
   const eligibleBooks = Object.values(BOOKS).filter(book => {
     const bs = state.books[book.id];
     if (!bs || bs.status === 'locked') return false;
+    // 损坏书永远可选中修复，豁免下面的精通/重抄过滤——否则 mastered 书（copyCount≥5 未解锁重抄）
+    // 损坏后被隐藏，除消耗道具外无路可修
+    if (bs.damaged) return true;
     // Books not in mastery system disappear after completion
     if (isNoMasteryBook(book.id) && bs.status === 'completed') return false;
     // Mastered books only show if re-copy is unlocked
