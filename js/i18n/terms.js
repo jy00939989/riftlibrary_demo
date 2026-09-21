@@ -1013,6 +1013,7 @@ const TERM_DATA = Object.freeze({
   diaryPlantTyphoonLost: { zh: '🌪️ 半夜台风过境，{name}被整株刮走了。墨墨对着空花盆发了会儿呆，决定明天把温室的窗户钉牢一点。', en: '🌪️ A typhoon struck at midnight and swept {name} clean away. Momo stared at the empty pot for a while, then resolved to bolt the greenhouse windows tighter.' },
   diaryPlantTyphoonSaved: { zh: '🌾 台风夜里，谷雨死死抱住了{name}。它活下来了，只是蔫了一圈，掉了片叶子。', en: '🌾 During the typhoon night, Guyu held {name} tight. It survived—just a bit wilted, one leaf short.' },
   plantLogTitle: { zh: '温室成长日志', en: 'Greenhouse Growth Log' },
+  plantLogSceneLabel: { zh: '成长日志', en: 'Log' },
   plantLogFilter_all: { zh: '全部', en: 'All' },
   plantLogFilter_plant: { zh: '种植', en: 'Planted' },
   plantLogFilter_improve: { zh: '改良', en: 'Improved' },
