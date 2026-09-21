@@ -15,7 +15,9 @@ export const AMBIENT_DEFS = [
     price: 800,
     file: 'audio/ambient/中世纪修道院氛围音_25分钟循环.mp3',
     dlcPackId: 'pack_british_legends'
-  }
+  },
+  // 2026-09-21 图南供曲：暴雪天壁炉（25 分钟循环，常驻 500💰，与维多利亚书房同档）
+  { id: 'blizzard_fireplace', name: t('ambientName_blizzard_fireplace'), emoji: '🔥', price: 500, file: 'audio/ambient/blizzard_fireplace.mp3' }
 ];
 
 let currentAudio = null;

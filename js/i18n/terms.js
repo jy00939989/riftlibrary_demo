@@ -964,6 +964,7 @@ const TERM_DATA = Object.freeze({
   unlockAtNextStage: { zh: '氛围达到下一阶段解锁', en: 'Unlock at next atmosphere stage' },
   ambientName_victorian_study: { zh: '维多利亚书房', en: 'Victorian Study' },
   ambientName_medieval_monastery: { zh: '中世纪修道院', en: 'Medieval Monastery' },
+  ambientName_blizzard_fireplace: { zh: '暴雪天壁炉', en: 'Blizzard Hearth' },
   ambientLockedByPackHint: { zh: '解锁「{pack}」补充包后开放购买', en: 'Available after unlocking the "{pack}" DLC pack' },
   musicVolume: { zh: '音乐音量', en: 'Music Volume' },
   ambientVolume: { zh: '环境音音量', en: 'Ambient Volume' },
