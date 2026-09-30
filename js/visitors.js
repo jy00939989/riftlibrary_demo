@@ -828,9 +828,14 @@ export function getCompletedBooks() {
     // 积灰/失窃中的书暂不可借（book-damage-events 批次二）
     return bs && bs.status === 'completed' && !bs.damaged && !inRestoration &&
            !bs.dustyAt && !bs.stolenAt &&
-           !state.visitors.some(v => (v.status === 'borrowed' || v.status === 'due') &&
-             ((v.bookIds && v.bookIds.length ? v.bookIds : [v.bookId]).includes(book.id)));
+           !isBookLentOut(book.id);
   });
+}
+
+/** 书当前是否被访客借走（在借/逾期状态访客的持有清单里）——书架「已借出」状态展示用 */
+export function isBookLentOut(bookId) {
+  return state.visitors.some(v => (v.status === 'borrowed' || v.status === 'due') &&
+    ((v.bookIds && v.bookIds.length ? v.bookIds : [v.bookId]).includes(bookId)));
 }
 
 function attemptBorrow(visitor, completedBooks, now) {

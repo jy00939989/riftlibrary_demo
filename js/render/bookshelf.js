@@ -13,7 +13,7 @@ import { isNoMasteryBook } from '../core/book-eligibility.js';
 import { setFocusBook } from '../core/focus-session.js';
 import { unlockReCopy, toggleBookStar, markChapterRead } from '../core/book-progress.js';
 import { autoShelveCompletedManuscripts, swapShelfSlots } from '../core/library.js';
-import { getBookCondition, getDamageChance } from '../visitors.js';
+import { getBookCondition, getDamageChance, isBookLentOut } from '../visitors.js';
 
 const SHELF_CAPACITY = 5;
 let currentFilter = 'all';
@@ -365,7 +365,7 @@ function applyFilters(books) {
   return result;
 }
 
-// 书况（Phase 3 借还链）：磨损档位 + 该书磨损加权后的还书损毁率
+// 书况（Phase 3 借还链）：磨损档位（2026-09-30 「磨损」改名「微旧」，与损毁状态消歧）+ 该书磨损加权后的还书损毁率
 function renderBookCondition(bookId) {
   const bs = state.books[bookId];
   if (!bs) return '';
@@ -385,9 +385,10 @@ function renderBookCard(book) {
   const bookState = state.books[book.id];
   const effectiveWords = getEffectiveCopiedWords(bookState, book.totalWords);
   const progress = book.totalWords > 0 ? Math.round((effectiveWords / book.totalWords) * 100) : 0;
-  const masteryNames = ['', t('masteryName1'), t('masteryName2'), t('masteryName3'), t('masteryName4'), t('masteryName5')];
-  const masteryName = masteryNames[bookState.masteryLevel] || '';
+  // 2026-09-30 图南拍板：书卡不显示 在架/精通/大师/典藏 等等级文案——典藏版只用左上角 🏆 小图标表示
+  const isCollectorEdition = (bookState.masteryLevel || 0) >= 2;
   const isCompleted = bookState.status === 'completed';
+  const isLentOut = isCompleted && isBookLentOut(book.id); // 借出中的书优先显示「已借出」
   const isCopying = bookState.status === 'copying' || (bookState.copiedWords > 0 && !isCompleted);
   const isUnstarted = !isCompleted && !isCopying;
   const isJustCompleted = isCompleted && effectiveWords === 0;
@@ -414,7 +415,7 @@ function renderBookCard(book) {
         ? `<img src="${coverSrc}" alt="${getBookTitle(book)}" class="absolute inset-0 w-full h-full object-cover"
              onerror="this.style.display='none'; this.parentElement.querySelector('.cover-fallback').classList.remove('hidden');">`
         : ''}
-      ${isCompleted && !isDamaged ? '<div class="absolute top-2 left-2 text-xs z-10">🏆</div>' : ''}
+      ${isCollectorEdition && !isDamaged ? '<div class="absolute top-2 left-2 text-xs z-10">🏆</div>' : ''}
       ${isDamaged ? '<div class="absolute top-2 left-2 text-xs z-10">🩹</div>' : ''}
     </div>
 
@@ -422,14 +423,13 @@ function renderBookCard(book) {
     <div class="bg-white/80 px-3 py-2.5 border-t border-wood/10">
       <div class="flex items-center justify-between mb-1.5">
         <span class="text-[10px] text-ink-light">${t('wordsCount').replace('{n}', book.totalWords.toLocaleString())}</span>
-        ${masteryName ? `<span class="text-[10px] font-bold text-magic-gold">✦ ${masteryName}</span>` : ''}
         ${isUnstarted ? `<span class="text-[10px] text-ink-light/50">${t('clickToStart')}</span>` : ''}
       </div>
       <div class="h-2 bg-wood/10 rounded-full overflow-hidden">
         <div class="h-full rounded-full transition-all duration-700 ${isCompleted ? 'bg-magic-gold' : 'bg-magic-blue'}" style="width:${Math.min(100, displayProgress)}%"></div>
       </div>
       <div class="text-[10px] text-ink-light/60 mt-1">
-        ${isCompleted ? `${t('completed')} ✓` : isCopying ? `${t('copying')} ${progress}%` : t('pendingTranscription')}
+        ${isLentOut ? t('borrowed') : isCompleted ? `${t('completed')} ✓` : isCopying ? `${t('copying')} ${progress}%` : t('pendingTranscription')}
       </div>
       ${isDamaged ? `
         <div class="mt-2 rounded-lg bg-red-50 border border-red-300 px-2 py-1.5 text-center">
