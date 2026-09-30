@@ -8,7 +8,7 @@ if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
 
 import { state, initState, saveState, ensureAllBooksInManuscriptBox } from './state.js';
 import { runLegacyMigration, remove, STORAGE_KEYS, load } from './persistence.js';
-import { initSettings, getSettings } from './settings.js';
+import { initSettings, getSettings, setSetting } from './settings.js';
 import { getLocale, setLocale } from './i18n/terms.js';
 import { addCoins, addHistory, updateStreak, addAtmosphere, updateBodyBackground, onStageCross } from './storage.js';
 import { renderFocusPage, renderBookshelfPage, renderLibraryPage,
@@ -208,6 +208,22 @@ function init() {
       if (!moreMenu.contains(e.target) && !moreBtn.contains(e.target)) {
         moreMenu.classList.add('hidden');
       }
+    });
+  }
+
+  // 墨墨建议气泡开关（玩家反馈：右下角气泡在手机上挡点击）——开关即生效，菜单保持展开
+  const momoBubbleBtn = document.getElementById('nav-more-momo-bubble');
+  const momoBubbleState = document.getElementById('nav-more-momo-bubble-state');
+  const syncMomoBubbleLabel = () => {
+    if (momoBubbleState) momoBubbleState.textContent = getSettings().momoBubble !== false ? '开' : '关';
+  };
+  if (momoBubbleBtn) {
+    syncMomoBubbleLabel();
+    momoBubbleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      setSetting('momoBubble', getSettings().momoBubble === false); // 关→开 / 开→关
+      syncMomoBubbleLabel();
+      renderMomoSuggestion(); // 立即生效：关掉即消失，打开即恢复
     });
   }
 

@@ -1,5 +1,6 @@
 // 墨墨建议气泡 —— 持久化右下角提示，根据游戏状态给出情境建议
 import { state } from '../state.js';
+import { getSettings } from '../settings.js';
 import { t } from '../i18n/terms.js';
 
 // ========== 建议池（按优先级排序，首个命中即显示） ==========
@@ -85,6 +86,7 @@ let lastSuggestionId = '';
 // ========== 核心函数 ==========
 
 export function getMomoSuggestion() {
+  if (getSettings().momoBubble === false) return null; // 玩家在设置里关掉了气泡（手机上挡点击）
   if (Date.now() < dismissedUntil) return null;
 
   for (const sug of MOMO_SUGGESTIONS) {
