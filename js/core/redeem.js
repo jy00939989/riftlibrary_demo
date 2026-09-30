@@ -11,6 +11,8 @@ import { track } from '../backend/analytics.js';
 import { ITEMS, getItemDef, isItemUsable, itemRequiresTarget } from '../../data/items.js';
 import { SIGNBOARDS } from '../../data/signboards.js';
 import { BOOKS } from '../../data/books.js';
+import { PLANT_TYPES } from '../../data/plants.js';
+import { t } from '../i18n/terms.js';
 import { isBookEligibleForBrush as _isBookEligibleForBrush } from './book-eligibility.js';
 import { updateStatusBar } from '../render/common.js';
 import { showCertificate } from '../render/certificate.js';
@@ -75,7 +77,10 @@ export function formatRewardSummary(rewards) {
   if (rewards.coins) parts.push(`${rewards.coins}智慧之光`);
   if (rewards.inspiration) parts.push(`${rewards.inspiration}灵感`);
   if (rewards.seeds) {
-    Object.entries(rewards.seeds).forEach(([type, count]) => parts.push(`${count}${type}种子`));
+    Object.entries(rewards.seeds).forEach(([type, count]) => {
+      const def = PLANT_TYPES[type];
+      parts.push(`${count}${def ? t(def.nameKey) : type}种子`);
+    });
   }
   if (rewards.items) {
     Object.entries(rewards.items).forEach(([id, count]) => {
