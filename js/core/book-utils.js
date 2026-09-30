@@ -146,3 +146,14 @@ export function getRepairProgress(bookState) {
   const pct = Math.min(100, Math.round((done / total) * 100));
   return { remaining, total, done, pct };
 }
+
+/**
+ * 修复会话中是否隐藏誊抄进度条（图南 2026-09-30 拍板）。
+ * 已上架过的书（copyCount≥1）损坏后修复时，effectiveWords = copiedWords % totalWords 回卷为 0，
+ * 誊抄条只剩 0% 噪音；首次抄写中的书（copyCount=0）誊抄与修复并行，两条都有意义。
+ * @param {object|null} bookState 书籍存档状态
+ * @param {object|null} repair getRepairProgress() 返回值
+ */
+export function shouldHideCopyBarInRepair(bookState, repair) {
+  return !!repair && (bookState?.copyCount || 0) >= 1;
+}

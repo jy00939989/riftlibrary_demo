@@ -10,7 +10,7 @@
 //           remainGameMin = max(0, totalMin - doneMin)；remainWallMin = ceil(remainGameMin / speed)
 // 已知保守项：首 5 分钟茶饮 110/分钟快于估算（方向：预估略长，玩家早抄完不投诉）
 
-import { estimateRemainingMinutes, getEffectiveCopiedWords, getWordsToNextCompletion } from '../js/core/book-utils.js';
+import { estimateRemainingMinutes, getEffectiveCopiedWords, getWordsToNextCompletion, getRepairProgress, shouldHideCopyBarInRepair } from '../js/core/book-utils.js';
 
 let passed = 0;
 let failed = 0;
@@ -112,6 +112,55 @@ test('S6.1 getWordsToNextCompletion 与估算分子一致', () => {
   assertEq(getEffectiveCopiedWords(bs, 10000), 2500);
   assertEq(getWordsToNextCompletion(bs, 10000), 7500);
   assertEq(estimateRemainingMinutes({ totalWords: 10000, effectiveWords: getEffectiveCopiedWords(bs, 10000) }), 75);
+});
+
+// ── S7 修复中誊抄条隐藏（2026-09-30 图南拍板：已上架的书修复只剩修复条）──
+test('S7.1 已上架书修复中隐藏誊抄条（copyCount≥1 + repair）', () => {
+  const shelved = { copyCount: 1, copiedWords: 10000, damaged: true, repairWords: 500, repairProgress: 100 };
+  assertEq(shouldHideCopyBarInRepair(shelved, getRepairProgress(shelved)), true);
+});
+test('S7.2 首次抄写中的书（copyCount=0）损坏：两条并存不隐藏', () => {
+  const firstCopy = { copyCount: 0, copiedWords: 3000, damaged: true, repairWords: 500, repairProgress: 100 };
+  assertEq(shouldHideCopyBarInRepair(firstCopy, getRepairProgress(firstCopy)), false);
+});
+test('S7.3 典藏重抄中无损坏：不隐藏', () => {
+  const recopy = { copyCount: 1, copiedWords: 12500, damaged: false };
+  assertEq(shouldHideCopyBarInRepair(recopy, getRepairProgress(recopy)), false);
+});
+test('S7.4 已上架书誊抄条回卷为 0% 的噪音根源（effectiveWords=0）', () => {
+  const shelved = { copyCount: 1, copiedWords: 10000 };
+  assertEq(getEffectiveCopiedWords(shelved, 10000), 0); // 根因：% totalWords 回卷
+});
+
+// ── S8 修复条每秒实况推进（2026-09-30 图南拍板：不要一分钟跳一次）──
+// getLiveRepairProgress 在 render 层（结算才入账的 repairProgress + 会话内估算叠加）
+import { state } from '../js/state.js';
+import { getLiveRepairProgress } from '../js/render/focus/progress-bar.js';
+
+test('S8.1 会话内实时修复进度平滑递增且封顶', () => {
+  state.books['__t_repair'] = { copyCount: 1, copiedWords: 5000, damaged: true, repairWords: 1000, repairProgress: 400 };
+  const sess = { active: true, bookId: '__t_repair', elapsedSeconds: 0, teaBoost: false };
+  const t0 = getLiveRepairProgress(sess);
+  sess.elapsedSeconds = 30;
+  const t30 = getLiveRepairProgress(sess);
+  sess.elapsedSeconds = 60;
+  const t60 = getLiveRepairProgress(sess);
+  assertEq(t0.done, 400);               // 起点 = state 已入账
+  if (!(t30.done > t0.done && t60.done > t30.done)) throw new Error('未平滑递增');
+  if (!(t60.done <= 1000 && t60.pct <= 100)) throw new Error('未封顶');
+  delete state.books['__t_repair'];
+});
+test('S8.2 非修复中的书返回 null', () => {
+  state.books['__t_ok'] = { copyCount: 0, copiedWords: 100 };
+  const sess = { active: true, bookId: '__t_ok', elapsedSeconds: 60 };
+  assertEq(getLiveRepairProgress(sess), null);
+  delete state.books['__t_ok'];
+});
+test('S8.3 未激活会话返回 null', () => {
+  state.books['__t_rep2'] = { copyCount: 1, damaged: true, repairWords: 100, repairProgress: 0 };
+  const sess = { active: false, bookId: '__t_rep2', elapsedSeconds: 60 };
+  assertEq(getLiveRepairProgress(sess), null);
+  delete state.books['__t_rep2'];
 });
 
 console.log(`\n${passed} 通过, ${failed} 失败`);

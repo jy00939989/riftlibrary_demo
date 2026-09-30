@@ -2,3 +2,4 @@
 export { renderFocusPage } from './focus/page.js';
 export { showCompletionCard } from './focus/completion-card.js';
 export { showActionCards } from './shared/action-cards.js';
+export { updateRepairBarLive } from './focus/progress-bar.js';

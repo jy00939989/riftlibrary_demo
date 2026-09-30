@@ -4,28 +4,32 @@ import { el, getBookTitle, getBookQuotes, getChapterTitle, getChapterPreview } f
 import { getMomoReview } from '../../../data/momo-reviews.js';
 import { t } from '../../i18n/terms.js';
 
-export function showCompletionCard({ minutes, words, coins, book, streak, totalWords, nextMilestone, chapterInfo, nextPreview }, callback) {
-  const momoReview = getMomoReview(book);
+export function showCompletionCard({ minutes, words, coins, book, streak, totalWords, nextMilestone, chapterInfo, nextPreview, slim }, callback) {
+  // slim：修复会话结算（图南 2026-09-30 拍板）——已上架的书只剩「修了xx字」这一件事，
+  // 不展示里程碑/章节/摘录/下章预告/墨墨点评/引文，只留三格统计 + 标注输入 + 继续按钮。
+  const momoReview = slim ? '' : getMomoReview(book);
   let quoteText = '';
   let quoteSource = '';
-  if (book && getBookQuotes(book)) {
-    const quoteKeys = Object.keys(getBookQuotes(book));
-    const key = quoteKeys[Math.floor(Math.random() * quoteKeys.length)];
-    quoteText = getBookQuotes(book)[key];
-    quoteSource = t('bookSource').replace('{title}', getBookTitle(book));
-  }
-  if (!quoteText) {
-    const generalQuotes = [
-      t('completionQuote1'),
-      t('completionQuote2'),
-      t('completionQuote3')
-    ];
-    quoteText = generalQuotes[Math.floor(Math.random() * generalQuotes.length)];
+  if (!slim) {
+    if (book && getBookQuotes(book)) {
+      const quoteKeys = Object.keys(getBookQuotes(book));
+      const key = quoteKeys[Math.floor(Math.random() * quoteKeys.length)];
+      quoteText = getBookQuotes(book)[key];
+      quoteSource = t('bookSource').replace('{title}', getBookTitle(book));
+    }
+    if (!quoteText) {
+      const generalQuotes = [
+        t('completionQuote1'),
+        t('completionQuote2'),
+        t('completionQuote3')
+      ];
+      quoteText = generalQuotes[Math.floor(Math.random() * generalQuotes.length)];
+    }
   }
 
   // Next milestone progress
   let milestoneHtml = '';
-  if (nextMilestone && totalWords) {
+  if (!slim && nextMilestone && totalWords) {
     const pct = Math.min(99, Math.round(totalWords / nextMilestone * 100));
     milestoneHtml = `
       <div class="bg-white/60 rounded-lg p-2 mb-1">
@@ -48,7 +52,7 @@ export function showCompletionCard({ minutes, words, coins, book, streak, totalW
   const localizedNextPreview = nextChapter ? getChapterPreview(nextChapter) : nextPreview;
 
   let chapterHtml = '';
-  if (chapterInfo && book) {
+  if (!slim && chapterInfo && book) {
     chapterHtml = `
       <div class="bg-white/60 rounded-lg p-3 mb-3 text-left">
         <div class="flex items-center justify-between mb-1.5">
@@ -68,7 +72,7 @@ export function showCompletionCard({ minutes, words, coins, book, streak, totalW
 
   // Echoed sentence
   let echoHtml = '';
-  if (localizedHighlight) {
+  if (!slim && localizedHighlight) {
     echoHtml = `
       <div class="bg-amber-50/80 border-l-4 border-magic-gold rounded-r-lg p-3 mb-3 text-left">
         <div class="text-xs text-magic-gold font-bold mb-1">${t('justCopiedSentence')}</div>
@@ -79,7 +83,7 @@ export function showCompletionCard({ minutes, words, coins, book, streak, totalW
 
   // Next chapter preview
   let nextPreviewHtml = '';
-  if (localizedNextPreview) {
+  if (!slim && localizedNextPreview) {
     nextPreviewHtml = `
       <div class="bg-stone-50/80 border-l-4 border-stone-300 rounded-r-lg p-3 mb-3 text-left">
         <div class="text-xs text-ink-light font-bold mb-1">${t('nextChapterQuotePreview')}</div>
@@ -143,7 +147,7 @@ export function showCompletionCard({ minutes, words, coins, book, streak, totalW
         class="w-full px-2.5 py-1.5 bg-white border border-wood rounded-lg text-sm text-ink focus:outline-none focus:border-magic-gold"
         placeholder="${t('focusSessionLabelPlaceholder')}" maxlength="40" autocomplete="off">
     </div>
-    <div class="italic text-ink-light mb-2 text-xs">「${quoteText}」${quoteSource}</div>
+    ${quoteText ? `<div class="italic text-ink-light mb-2 text-xs">「${quoteText}」${quoteSource}</div>` : ''}
     <button class="px-6 py-2.5 bg-magic-gold text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all text-sm">${t('continueText')}</button>
   `;
 
