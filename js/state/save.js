@@ -24,6 +24,10 @@ export function saveState() {
   };
   // locale 已迁移到 settings，不再写入主存档
   delete toSave.locale;
+  // 存档时间戳：同步选择弹窗与账号面板展示「哪边更新」（2026-09-30 玩家建议）
+  // 同步写回内存态，UI 读 state.savedAt 即为最近一次保存时间
+  toSave.savedAt = Date.now();
+  state.savedAt = toSave.savedAt;
   const ok = save(STORAGE_KEYS.STATE, toSave);
   if (ok) {
     debouncedUploadSave(toSave);

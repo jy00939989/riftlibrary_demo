@@ -59,10 +59,10 @@ async function uploadSave(statePayload) {
 
 /**
  * 登录成功后拉取云端存档
- * @returns {object|null} 云端 save_data 或 null
+ * @returns {{saveData: object|null, updatedAt: string|null}} 云端存档与上传时间；无存档返回 { saveData: null, updatedAt: null }
  */
 export async function downloadSave() {
-  if (!isBackendReady() || !getCurrentUser()) return null;
+  if (!isBackendReady() || !getCurrentUser()) return { saveData: null, updatedAt: null };
   const client = getClient();
   const user = getCurrentUser();
 
@@ -74,9 +74,9 @@ export async function downloadSave() {
       .maybeSingle();
 
     if (error) throw error;
-    return data?.save_data || null;
+    return { saveData: data?.save_data || null, updatedAt: data?.updated_at || null };
   } catch (err) {
     console.warn('[backend] save download failed', err);
-    return null;
+    return { saveData: null, updatedAt: null };
   }
 }

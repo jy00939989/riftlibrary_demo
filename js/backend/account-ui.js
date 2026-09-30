@@ -8,7 +8,7 @@ import {
 } from './index.js';
 import { redeemCode } from './redeem-code.js';
 import { t } from '../i18n/terms.js';
-import { saveState } from '../state.js';
+import { saveState, state } from '../state.js';
 import { applyRedeemRewards, formatRewardSummary } from '../core/redeem.js';
 import { HCAPTCHA_SITE_KEY } from './config.js';
 
@@ -132,6 +132,13 @@ function formatSyncStatus() {
   return t('accountSyncStatusIdle');
 }
 
+/** 存档时间统一格式化：MM-DD HH:mm；缺失/非法返回「时间未知」 */
+function formatSaveTime(ts) {
+  const d = ts ? new Date(ts) : null;
+  if (!d || isNaN(d.getTime())) return t('syncTimeUnknown');
+  return d.toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+}
+
 export function showAccountPanel() {
   const existing = document.getElementById('account-panel-modal');
   if (existing) { existing.remove(); return; }
@@ -174,9 +181,11 @@ export function showAccountPanel() {
         ${isAnonymous
           ? `<span class="text-ink-light">${t('accountLoggedInAs').replace('{email}', t('accountAnonymousUser'))}</span>
              <div class="text-xs text-ink-light/60 mt-1">${formatSyncStatus()} · ${t('accountPendingEvents').replace('{n}', getPendingEventCount())}</div>
+             <div class="text-xs text-ink-light/60 mt-0.5">${t('accountLocalSavedAt').replace('{time}', formatSaveTime(state.savedAt))}</div>
              <div class="text-xs text-magic-gold mt-2">${t('redeemNeedEmail') || '注册邮箱账号后即可兑换礼包'}</div>`
           : `<span class="text-magic-blue font-bold">${t('accountLoggedInAs').replace('{email}', email)}</span>
-             <div class="text-xs text-ink-light/60 mt-1">${formatSyncStatus()} · ${t('accountPendingEvents').replace('{n}', getPendingEventCount())}</div>`
+             <div class="text-xs text-ink-light/60 mt-1">${formatSyncStatus()} · ${t('accountPendingEvents').replace('{n}', getPendingEventCount())}</div>
+             <div class="text-xs text-ink-light/60 mt-0.5">${t('accountLocalSavedAt').replace('{time}', formatSaveTime(state.savedAt))}</div>`
         }
       </div>
 
@@ -294,10 +303,10 @@ export function showAccountPanel() {
     if (result.ok) {
       passwordInput.value = '';
       // 登录成功后先检查云端是否有存档，再决定上传还是下载
-      const cloudSave = await downloadSave();
-      if (cloudSave) {
+      const cloud = await downloadSave();
+      if (cloud.saveData) {
         close();
-        showSyncChoiceModal(cloudSave);
+        showSyncChoiceModal(cloud.saveData, cloud.updatedAt);
       } else {
         // 云端无存档，直接上传本地存档
         saveState();
@@ -320,10 +329,10 @@ export function showAccountPanel() {
 
   overlay.querySelector('#account-download')?.addEventListener('click', async () => {
     msg(t('accountDownloading'));
-    const cloudSave = await downloadSave();
-    if (cloudSave) {
+    const cloud = await downloadSave();
+    if (cloud.saveData) {
       close();
-      showSyncChoiceModal(cloudSave, true);
+      showSyncChoiceModal(cloud.saveData, cloud.updatedAt, true);
     } else {
       msg(t('accountNoCloudSave'), true);
     }
@@ -577,9 +586,16 @@ function isPasswordRecoveryFlow() {
  * @param {object} cloudSave - 从云端下载的 save_data
  * @param {boolean} [isManual] - 是否为用户手动点击「从云端恢复」触发
  */
-function showSyncChoiceModal(cloudSave, isManual = false) {
+function showSyncChoiceModal(cloudSave, cloudUpdatedAt, isManual = false) {
   const existing = document.getElementById('sync-choice-modal');
   if (existing) { existing.remove(); return; }
+
+  // 哪边更新：本地 savedAt（saveState 时间戳，旧存档可能缺失）对比云端 updated_at（DB 上传时间）
+  const localTs = state.savedAt || null;
+  const cloudTs = cloudUpdatedAt || cloudSave?.savedAt || null;
+  const localNewer = localTs && cloudTs && localTs > new Date(cloudTs).getTime();
+  const cloudNewer = localTs && cloudTs && new Date(cloudTs).getTime() > localTs;
+  const newerBadge = `<span class="ml-1 text-[10px] bg-magic-gold/20 text-magic-gold px-1.5 py-0.5 rounded-full">${t('syncNewerBadge')}</span>`;
 
   const overlay = document.createElement('div');
   overlay.id = 'sync-choice-modal';
@@ -590,10 +606,12 @@ function showSyncChoiceModal(cloudSave, isManual = false) {
       <p class="text-xs text-ink-light mb-5 text-center">${t('accountSyncChoiceDesc')}</p>
       <div class="space-y-3">
         <button id="sync-upload-local" class="w-full px-4 py-2 bg-magic-gold text-white rounded-lg font-bold text-sm hover:shadow transition-all">
-          ${t('accountUploadLocal')}
+          ${t('accountUploadLocal')}${localNewer ? newerBadge : ''}
+          <span class="block text-[10px] font-normal opacity-90 mt-0.5">${t('syncLocalSaveTime').replace('{time}', formatSaveTime(localTs))}</span>
         </button>
         <button id="sync-download-cloud" class="w-full px-4 py-2 bg-magic-blue text-white rounded-lg font-bold text-sm hover:shadow transition-all">
-          ${t('accountDownloadCloud')}
+          ${t('accountDownloadCloud')}${cloudNewer ? newerBadge : ''}
+          <span class="block text-[10px] font-normal opacity-90 mt-0.5">${t('syncCloudSaveTime').replace('{time}', formatSaveTime(cloudTs))}</span>
         </button>
         ${isManual ? '' : `<button id="sync-decide-later" class="w-full px-4 py-2 bg-wood/15 text-ink rounded-lg font-bold text-sm hover:bg-wood/25 transition-all">${t('accountDecideLater')}</button>`}
       </div>
