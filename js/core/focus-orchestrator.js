@@ -137,6 +137,7 @@ export function runFocusOrchestration(result, isAuto) {
       newMilestones,
       chapterInfo, nextPreview,
       repairCompleted,
+      isRepairSession: !!repairResult, // applyRepairProgress 非 null 即结算时书在损坏修复中
       repairBookTitle: repairResult ? repairResult.repairBookTitle : ''
     });
 
@@ -215,7 +216,7 @@ function handlePostFocusEffects(effects) {
     isFirstBookComplete,
     newMilestones,
     chapterInfo, nextPreview,
-    repairCompleted, repairBookTitle
+    repairCompleted, isRepairSession, repairBookTitle
   } = effects;
 
   // 构建回调链（从后往前串联）
@@ -228,7 +229,8 @@ function handlePostFocusEffects(effects) {
       totalWords: state.focus.totalWords,
       nextMilestone: nextMs,
       chapterInfo,
-      nextPreview
+      nextPreview,
+      slim: !!isRepairSession // 修复会话：结算卡走精简版（图南 9/30 拍板，无下章预告等冗余内容）
     }, (label) => {
       // 玩家已提交 label（可能为空），写入历史、会话记录、墨墨日志
       const labelText = label ? ` · ${label}` : '';

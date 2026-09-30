@@ -5,7 +5,7 @@ import { getFocusSpeedMultiplier } from './shop.js';
 import { getAuraSpeedBonus } from './visitors.js';
 import { getCurationFocusSpeed } from './curation.js';
 import { getChapterInfo, getEffectiveCopiedWords } from './core/book-utils.js';
-import { renderFocusPage, updateTimerDisplay, formatTime } from './render/index.js';
+import { renderFocusPage, updateTimerDisplay, formatTime, updateRepairBarLive } from './render/index.js';
 import { BOOKS } from '../data/books.js';
 
 let timerInterval = null;
@@ -170,6 +170,7 @@ function tick() {
   const effectiveWords = book && bookState ? getEffectiveCopiedWords(bookState, book.totalWords) : 0;
   const bookWords = book ? effectiveWords + sessionEstimate : 0;
   updateTimerDisplay(timeStr, totalWords, bookWords);
+  updateRepairBarLive(sess); // 修复条每秒实况推进（结算才入账的 repairProgress 之外叠加会话内估算）
 }
 
 export function syncTimer() {
