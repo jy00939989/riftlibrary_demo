@@ -40,6 +40,9 @@ export function isBookEligibleForBrush(bookId, bookState) {
   const book = BOOKS[bookId];
   if (!bookState || !book) return false;
   if (bookState.status === 'locked') return false;
+  // 损坏的书不可作为笔类目标：对损坏的已上架书加字数会触发伪「重抄完成」→ 误升典藏
+  // （2026-09-30 修复会话伪典藏同源漏洞；损坏的书该走修复，不该吃笔）
+  if (bookState.damaged) return false;
   if (bookState.status === 'completed') {
     return !isNoMasteryBook(bookId);
   }

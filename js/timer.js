@@ -139,7 +139,9 @@ function tick() {
 
       const effectiveWords = getEffectiveCopiedWords(bookState, book.totalWords);
       const wordsNeeded = book.totalWords - effectiveWords;
-      if (wordsNeeded > 0 && wordsGained >= wordsNeeded) {
+      // 已上架书损坏修复 = 纯修复会话：誊抄自动完成判定不适用（否则修复修到 totalWords 就自动结算）
+      const repairOnly = bookState.damaged && (bookState.copyCount || 0) >= 1;
+      if (!repairOnly && wordsNeeded > 0 && wordsGained >= wordsNeeded) {
         stopTimer();
         if (onComplete) {
           try { onComplete(true); } catch (e) {
