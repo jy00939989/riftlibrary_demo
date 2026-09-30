@@ -141,14 +141,21 @@ export function completeFocus(isAuto = false) {
   let bookProgressResult = null;
   let repairResult = null;
   if (sess.bookId) {
-    const applied = applyWords(sess.bookId, wordsGained);
-    bookProgressResult = {
-      bookId: sess.bookId,
-      ...applied
-    };
+    const bs = state.books[sess.bookId];
+    // 已上架的书（copyCount≥1）损坏修复 = 纯修复会话：不再推进誊抄进度。
+    // effectiveWords = copiedWords % totalWords 回卷为 0，修复字数累计过 totalWords 会触发
+    // 伪「重抄完成」→ copyCount+1 → 误升典藏（2026-09-30 玩家报告，探针实证）
+    const repairOnly = bs && bs.damaged && (bs.copyCount || 0) >= 1;
+    if (!repairOnly) {
+      const applied = applyWords(sess.bookId, wordsGained);
+      bookProgressResult = {
+        bookId: sess.bookId,
+        ...applied
+      };
 
-    if (applied.didComplete) {
-      bookProgressResult.completion = completeBook(sess.bookId);
+      if (applied.didComplete) {
+        bookProgressResult.completion = completeBook(sess.bookId);
+      }
     }
 
     repairResult = applyRepairProgress(sess.bookId, wordsGained);
