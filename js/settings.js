@@ -13,6 +13,7 @@ export const DEFAULT_SETTINGS = {
   locale: 'zh',
   skipSeenAnimations: false, // 跳过重复动画：开启后已播放过的动画不再播
   disastersEnabled: true,   // 灾难事件（鼠患/霉斑/火灾）；关闭后仅保留还书损毁
+  momoBubble: true,         // 墨墨建议气泡（右下角）；关闭后不再弹出（玩家反馈：手机上挡点击）
 };
 
 // 旧版设置类 key → 新 settings 字段映射
