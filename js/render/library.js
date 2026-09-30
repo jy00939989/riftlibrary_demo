@@ -229,7 +229,11 @@ function renderOverview(container, stage, levelInfo, desc, atmoProg) {
   const stageName = getAtmosphereStageName(stage.level);
 
   // 誊抄速度加成分解（悬停卡片显示）
-  const pct = (v) => '+' + Math.round(v * 100) + '%';
+  // 小于 1% 的加成保留一位小数（精通每本 +0.1%，Math.round 会显示成 +0% 与缮写室横幅不一致）
+  const pct = (v) => {
+    const p = v * 100;
+    return '+' + (p > 0 && p < 1 ? p.toFixed(1) : Math.round(p)) + '%';
+  };
   const speedAch = getAchievementBonuses();
   const speedFocusLv = state.library.focusLevel || 0;
   const speedSignboard = getSignboardBuffSum('focus_speed');
