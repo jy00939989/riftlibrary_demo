@@ -204,9 +204,7 @@ function showBookCompleteCard(bookTitle, bookEmoji, copyCount, callback, book, n
       <h3 class="font-display text-2xl font-bold mb-2">《${bookTitle}》</h3>
       <p class="text-ink-light mb-2">已完整誊抄，永久收录于图书馆</p>
       <p class="text-magic-blue font-bold mb-2">📚 第${copyCount}次誊抄 · 可以出借了</p>
-      ${rewardText ? `<div class="bg-magic-gold/10 border border-magic-gold/30 rounded-lg p-3 mb-3 text-sm text-ink">
-        <span class="text-xs text-magic-gold font-bold">🔓 新解锁</span><br>${rewardText}
-      </div>` : ''}
+      ${rewardHtml}
       <div class="flex justify-center gap-1 mb-4">
         ${Array(Math.min(copyCount, 5)).fill('<span class="text-magic-gold text-lg">⭐</span>').join('')}
       </div>
@@ -222,9 +220,7 @@ function showBookCompleteCard(bookTitle, bookEmoji, copyCount, callback, book, n
       <div class="text-5xl mb-3">${bookEmoji}</div>
       <h3 class="font-display text-lg font-bold mb-1">《${bookTitle}》</h3>
       <p class="text-magic-blue font-bold text-sm mb-3">📚 第${copyCount}次誊抄完成</p>
-      ${rewardText ? `<div class="bg-magic-gold/10 border border-magic-gold/30 rounded-lg p-3 mb-3 text-sm text-ink">
-        <span class="text-xs text-magic-gold font-bold">🔓 新解锁</span><br>${rewardText}
-      </div>` : ''}
+      ${rewardHtml}
       <div class="flex justify-center gap-1 mb-3">
         ${Array(Math.min(copyCount, 5)).fill('<span class="text-magic-gold text-lg">⭐</span>').join('')}
       </div>
