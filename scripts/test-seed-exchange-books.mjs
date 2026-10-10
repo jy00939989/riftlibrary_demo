@@ -45,6 +45,8 @@ const { state } = await import('../js/state.js');
 const { runMigrations } = await import('../js/state/migrations.js');
 const plants = await import('../js/plants.js');
 const { SHARED_POOL } = await import('../data/book_pool.js');
+const { collectVolumeGroup } = await import('../js/volumes.js');
+const { getVolumeGroupByCollectedId } = await import('../data/volume_groups.js');
 
 let pass = 0, fail = 0;
 function assert(cond, name) {
@@ -105,6 +107,22 @@ assert(state.books['book_034'].status === 'completed' && state.books['book_034']
   'S3d 正常合成路径的典藏版不受影响');
 assert(state.books['book_034_vol1'].status === 'locked' && state.books['book_034_vol2'].status === 'locked',
   'S3e 正常合成路径的两卷保持 locked 不重复补发');
+
+// ── S4：合成典藏版后兑换闸门仍关闭（2026-10-10 玩家反馈「秘密花园无限复制」复现钉）──
+// 漏洞：合成后两卷置 locked，旧 isOneTimeExchanged 只看单卷 owned → 误判「未兑换」→ 两卷无限重发
+// 前置：S3 末尾把两卷置 locked 了，这里重建「两卷已完成」的合成前状态
+state.books['book_034_vol1'] = { status: 'completed', copiedWords: 100000, copyCount: 1, masteryLevel: 1, damaged: false, repairWords: 0, repairProgress: 0 };
+state.books['book_034_vol2'] = { status: 'completed', copiedWords: 100000, copyCount: 1, masteryLevel: 1, damaged: false, repairWords: 0, repairProgress: 0 };
+state.restorationUnlocked = true;
+state.restorationLevel = 1;
+const grp = getVolumeGroupByCollectedId('book_034');
+const collectResult = collectVolumeGroup(grp);
+assert(collectResult.ok === true, 'S4a 两卷已完成，合成成功');
+state.seeds['starlight_fern'] = 5; // 补足种子，排除种子数干扰
+assert(plants.canExchangeSeed('starlight_fern', 0) === false,
+  'S4b 合成后不可再兑换（哪怕种子充足）');
+assert(plants.getSeedExchanges('starlight_fern')[0].exchanged === true,
+  'S4c exchanged 标记为 true');
 
 console.log(`\n秘密花园兑换修复回归：${pass} 过 ${fail} 挂`);
 process.exit(fail ? 1 : 0);

@@ -127,12 +127,19 @@ export function renderBookshelfPage() {
           const bs = state.books[bookId];
           if (!book || !bs) return '';
           const isCompleted = bs.status === 'completed';
+          // 受灾降档的书优先显示损坏标识：否则 copying+damaged 会被读成「又多一本未抄的」
+          // （2026-10-10 绿野仙踪手稿箱误会事件）
+          const isDamaged = !!bs.damaged;
+          const statusText = isDamaged
+            ? `🩹 ${t('damagedPendingRepair')}`
+            : (isCompleted ? t('completedPendingShelve') : t('pendingTranscription'));
+          const statusClass = isDamaged ? 'text-red-500 font-bold' : 'text-ink-light';
           return `
-            <div class="p-3 rounded-lg border ${isCompleted ? 'bg-green-50/60 border-green-300' : 'bg-white/70 border-wood/20'} text-center">
+            <div class="p-3 rounded-lg border ${isCompleted && !isDamaged ? 'bg-green-50/60 border-green-300' : 'bg-white/70 border-wood/20'} text-center">
               <div class="text-2xl mb-1">${book.emoji}</div>
               <div class="text-xs font-bold text-ink">${getBookTitle(book)}</div>
-              <div class="text-[10px] text-ink-light mt-0.5">
-                ${isCompleted ? t('completedPendingShelve') : t('pendingTranscription')}
+              <div class="text-[10px] ${statusClass} mt-0.5">
+                ${statusText}
               </div>
             </div>
           `;

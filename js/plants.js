@@ -9,6 +9,7 @@ import { markTaskDone } from './dailytasks.js';
 import { PLANT_TYPES, SEED_EXCHANGE, WATERING_CANS, WATER_TANKS, GREEN_THUMB, IMPROVE_TIERS } from '../data/plants.js';
 import { isBookCapacityFull, isManuscriptBoxFull, addToManuscriptBox, getManuscriptSlots, getManuscriptBoxCount } from './capacity.js';
 import { createBookRecord } from './core/book-utils.js';
+import { getVolumeGroupByVolumeId, isVolumeGroupCollected } from '../data/volume_groups.js';
 import { hasSignboard } from './shop.js';
 import { SIGNBOARDS } from '../data/signboards.js';
 import { EMPTY_PLANT } from './state/migrations.js';
@@ -577,6 +578,10 @@ function isOneTimeExchanged(item) {
     // 多卷书：全部已拥有才算换过（异常半拥有态允许补齐）
     const ids = rewardBookIdsOf(item);
     if (ids.length === 0) return false;
+    // 卷组书合成典藏版后单卷置 locked（volumes.js），不能只看单卷——
+    // 否则合成后被误判「未兑换」，两卷无限重发（2026-10-10 复现：秘密花园无限复制）
+    const group = getVolumeGroupByVolumeId(ids[0]);
+    if (group && isVolumeGroupCollected(group, state.books)) return true;
     return ids.every(id => {
       const bs = state.books[id];
       return bs && bs.status !== 'locked';
