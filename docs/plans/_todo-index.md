@@ -340,7 +340,7 @@ anchors:
 ### v21-cleanup-drift-reconcile（v2.1 尾巴擦净 + drift 对账，2026-09-20）
 > 现状锚点：田园位面重建方案 v2.1 落盘 `docs/plans/pastoral-plane-rebuild-plan.md`（含评审对账注记）；9-18 收尾留三条尾巴；9-16 sync:state 曾报 drift_items_found=36（但该值窗口不稳定，权威面板是 GET /api/drift）。
 - [ ] 位面 plan 版本号三处统一（v2/v2.1 混用 → 统一 v2.1）
-- [ ] §二旧数「~150 氛围 faucet」改为真数 62（57 任务）
+- [x] §二旧数「~150 氛围 faucet」改为真数 62（57 任务）【2026-10-12 核实：9-20 批次已改净，四处 150 仅存「原估」历史语境，打勾销项】
 - [ ] sink-ledger 里 ×0.25 旧引用改为 ×0.6（借阅倍率 25%→60% 已改，9-18）
 - [ ] 查 GET /api/drift 权威面板；若仍挂榜，按 commit 逐条补锚点至 plan 文档 frontmatter（union 语义，勿 replace）
 
