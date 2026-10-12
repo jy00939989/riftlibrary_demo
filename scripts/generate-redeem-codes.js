@@ -74,6 +74,14 @@ function buildRewardJson(type) {
       };
     case 'opening':
       return {
+        coins: 200,
+        items: {
+          brush_reed_pen: 2,
+          brush_swan_quill: 2,
+          brush_mithril_nib: 1,
+          favor_note_targeted: 2,
+          favor_note_random: 2
+        },
         signboards: ['opening_plaque']
       };
     case 'gift':
