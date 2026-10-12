@@ -686,6 +686,8 @@ const TERM_DATA = Object.freeze({
   wordsCount: { zh: '{n}字', en: '{n} words' },
   copyProgressLabel: { zh: '《{title}》誊抄进度', en: '{title} — Copy Progress' },
   copyRemainEstimate: { zh: '⏳ 预计还需约 {min} 分钟', en: '⏳ About {min} min to finish' },
+  copyRemainEstimateLong: { zh: '⏳ 预计还需约 {h} 小时 {m} 分', en: '⏳ About {h}h {m}m to finish' },
+  copyRemainEstimateHours: { zh: '⏳ 预计还需约 {h} 小时', en: '⏳ About {h}h to finish' },
   repairSpeedBoost: { zh: '{pct}% · 修书中速度 +{n}%', en: '{pct}% · +{n}% repair speed' },
   writingStatus: { zh: '🖋️ 缮写中… 第{n}页', en: '🖋️ Writing… Page {n}' },
   momoMagicAccelerating: { zh: '✨ 墨墨的魔法加速中……', en: "✨ Momo's magic acceleration…" },

@@ -26,6 +26,16 @@ function computeRemainingMinutes(sess, book, bookState) {
   });
 }
 
+/** 剩余分钟显示格式化：>99 分钟转「X 小时 Y 分」（copy-eta-minutes 尾巴，2026-10-12 图南批） */
+function formatRemainMinutes(remaining) {
+  if (remaining <= 99) return t('copyRemainEstimate').replace('{min}', remaining);
+  const h = Math.floor(remaining / 60);
+  const m = remaining % 60;
+  return m === 0
+    ? t('copyRemainEstimateHours').replace('{h}', h)
+    : t('copyRemainEstimateLong').replace('{h}', h).replace('{m}', m);
+}
+
 /**
  * 会话内实时修复进度（图南 2026-09-30：修复条要每秒平滑推进，不要一分钟跳一次）。
  * state 里 repairProgress 只在结算时入账；此处把本会话已产生、未入账的字数
@@ -99,7 +109,7 @@ export function renderBookProgress(sess, book) {
         <div id="book-progress-fill" class="h-full bg-gradient-to-r from-amber-600 to-magic-gold rounded-full transition-all duration-500" style="width:${pct}%"></div>
       </div>
       <div id="book-progress-pct" class="text-right text-xs text-ink-light mt-0.5" data-value="${pct}">${pct}%</div>
-      <div id="book-progress-remain" class="text-right text-xs text-magic-gold mt-0.5" style="${remaining > 0 ? '' : 'display:none'}">${remaining > 0 ? t('copyRemainEstimate').replace('{min}', remaining) : ''}</div>
+      <div id="book-progress-remain" class="text-right text-xs text-magic-gold mt-0.5" style="${remaining > 0 ? '' : 'display:none'}">${remaining > 0 ? formatRemainMinutes(remaining) : ''}</div>
     </div>
     <div id="book-progress-repair" style="${repair ? '' : 'display:none'}">
       <div class="flex items-center justify-between mb-1 mt-3">
@@ -153,7 +163,7 @@ export function updateBookProgressDOM(sess) {
   const remainEl = document.getElementById('book-progress-remain');
   if (remainEl) {
     if (remaining > 0) {
-      remainEl.textContent = t('copyRemainEstimate').replace('{min}', remaining);
+      remainEl.textContent = formatRemainMinutes(remaining);
       remainEl.style.display = '';
     } else {
       remainEl.style.display = 'none';

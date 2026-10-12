@@ -115,7 +115,7 @@ anchors:
 
 ### copy-eta-minutes（誊抄室显示剩余分钟，2026-09-11 图南提）
 - [x] 专注页进度条显示「⏳ 预计还需约 N 分钟」（2026-09-14 落地 df1d11f：纯函数 estimateRemainingMinutes 对齐 tick 实际结算 100字/分×倍率×冲刺1.2，墨墨首会10×；**有意偏离**原注的 sessionEstimate 120/分预览口径——与实际结算差 20%，时间估算须用真实结算公式）
-- [ ] N 按当前誊抄速率实时刷新（暂停时停走）——分钟级刷新已随 updateBookProgressDOM 落地，>99 分钟「X 小时 Y 分」格式未做（当前直显大分钟数）
+- [x] N 按当前誊抄速率实时刷新（暂停时停走）——分钟级刷新已随 updateBookProgressDOM 落地；>99 分钟「X 小时 Y 分」格式 2026-10-12 落地（formatRemainMinutes + 两条 i18n 词条），整小时去尾零
 - [ ] 移动端不挤占进度条位置（放副标题行）——当前为 pct 行下方独立右对齐小字，未做移动端专门排布
 
 ### animation-suite-seedance-2.5（游戏动画 · 唯一活档）——【2026-09-18 合并老 game-animations-plan，见其归档注记】
