@@ -398,10 +398,10 @@ anchors:
 
 
 ### recopy-system-revision-plan（重抄系统修订） 【计划已归档 archive/plans/，2026-09-18】
-- [ ] 修正 import 路径：`saveState` 来自 `js/state/save.js`，`createBookRecord` 来自 `js/core/book-utils.js`
+- [x] 修正 import 路径：`saveState` 来自 `js/state/save.js`，`createBookRecord` 来自 `js/core/book-utils.js`【2026-10-12 核实：`js/state.js` 薄 shim 统一导出（saveState←state/save.js；createBookRecord←core/book-utils.js 经 capacity 向后兼容再导出），全库 40+ 导入经 check:imports 校验，架构即修正版，销项】
 - [ ] 决定 i18n 策略：推荐 `nameKey` + `t()`，否则收窄英文验收范围
 - [ ] `SEED_EXCHANGE` 数组化，每项加 `type` 与 `repeatable`；dispatch 加 `default` 分支
-- [ ] `abandonPlant` 重置为规范空盆对象，不要 `= null`
+- [x] `abandonPlant` 重置为规范空盆对象，不要 `= null`【2026-10-12 核实：实现走 resetPlantToEmpty() 按 EMPTY_PLANT 键拷贝（plants.js:476-480），全文件无 =null 赋值，销项】
 - [ ] 实现 `renderPlantArt` 预加载 fallback，不要依赖行内 `onerror`
 - [ ] 新增 `addSeed()` / `spendSeed()` 集中 helper，替换裸赋值
 - [ ] 确认 `DEFAULT_BOOKS` 是否含 book_023/024，若不含则明确 book 分支走 `createBookRecord`
