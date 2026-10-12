@@ -99,7 +99,7 @@ pastoral: {
 }
 ```
 
-**v1→v2 字段增改对照**：`stage`→`acts`（每幕加 `gate`）；`characters[].unlockStage`→`firstAct`；letters 增 `requiresFlag?`/`afterLetter?`/`reward?`（choice 级同名可选）；trigger 枚举扩 **`letter_completed`**（条件后续信——v1 schema 在自己的内容上就会断的第一处）；zones 拆 `visibleAct`/`unlockAct`、`states` 改规则表；新增顶层 `baseMap`。
+**v1→v2.1 字段增改对照**：`stage`→`acts`（每幕加 `gate`）；`characters[].unlockStage`→`firstAct`；letters 增 `requiresFlag?`/`afterLetter?`/`reward?`（choice 级同名可选）；trigger 枚举扩 **`letter_completed`**（条件后续信——v1 schema 在自己的内容上就会断的第一处）；zones 拆 `visibleAct`/`unlockAct`、`states` 改规则表；新增顶层 `baseMap`。
 
 ### 3.3 Flags 系统（三态·只设不消）
 
@@ -275,7 +275,7 @@ gate 数字为提案，Phase B 用 pacing 仿真脚本（扩展 `simulate-atmosp
 
 ---
 
-## 八、分阶段交付（v2 全部出口机检化）
+## 八、分阶段交付（v2.1 全部出口机检化）
 
 ### Phase 0 止血+基线（先行小批，随时可动工）
 - 修 `plane.js:78` atmo 残读
@@ -344,7 +344,7 @@ gate 数字为提案，Phase B 用 pacing 仿真脚本（扩展 `simulate-atmosp
 - **每幕完成**：智慧之光 + 灵感 + 一枚**信物**（叙事纪念：配方注记/怀疑之烛/议会印章），信物纯收藏、零数值膨胀。绝对值 [PLACEHOLDER]，档差 ≤100💰 仅约束金币项。
 - **三结局差异**（接主线 D7）：余烬 / 曙光给不同持续注记（草药学院 vs 怀疑之烛 vs 公民议会），收束后仍可读。
 
-### 9.5 既有事实保留（v2 核对）
+### 9.5 既有事实保留（v2.1 核对）
 - **gather**：≤3 次/日 × ≤10💰，绑定专注会话（不可能超专注速率）；**tend**：每登录日 1 次 ≤5💰，挂 `onNewDay`，离线不补发。两口为带 cap 的重复 faucet，靠速率上限节流（coins 线已 1.85× 过剩，量级可接受）。
 - **faucet 移除（真数）**：拆除 `pastoral_tasks.js` 实测移除 **62 点氛围 EXP**（57 条任务；原估 ~150 系 2.4× 高估）。
 - **熟客解耦**：结局不影响熟客注册，无双轨复利损失。
