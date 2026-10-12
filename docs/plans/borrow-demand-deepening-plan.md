@@ -26,6 +26,7 @@ anchors:
 
 # 借阅需求深化计划（borrow-demand-deepening-plan）v3.1
 
+> **数值修订：2026-09-18**，额外书金币 **×0.25 → ×0.6**（图南拍板：附带借阅奖励过低，`visitors.js:1236` 已落地，见文末实施记录）；正文 v2/v3 设计段中的 ×0.25 及「+25~43% 增幅预估」均为历史表述，以此条为准。
 > 立项：2026-09-10。**v3.1 修订：2026-09-10**，按 `reviews/economy-subsystem-architecture-review.md` 架构评审修订（A1 日界前置 / A3 增益读取契约 / A5 迁移注记 / A8 活跃日措辞，图南全采纳）。
 > **v3 修订：2026-09-10**，按 `reviews/borrow-cafe-joint-review-v2.md` 联合评审修订（金币口径改写 + 修复成本监控 + sink 台账 + 失败信号，D10-D13 图南全采纳）。
 > **v2 修订：2026-09-10**，按 `reviews/borrow-demand-deepening-plan-review.md` 一轮评审修订（2 P0 + 2 P1 + 3 P2 全实锤采纳，零事实错误）。
