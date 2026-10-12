@@ -109,7 +109,7 @@ export const TIER_GOALS = [
       { id: 't3g1', icon: '📖', label: '完成 5 本书',           check: (s) => countCompletedBooks(s) >= 5 },
       { id: 't3g2', icon: '⏱️', label: '累计专注 120 分钟',    check: (s) => (s.focus && s.focus.totalMinutes >= 120) },
       { id: 't3g3', icon: '👥', label: '吸引 3 位不同访客',    check: (s) => countUniqueVisitors(s) >= 3 },
-      { id: 't3g4', icon: '🌿', label: '拥有一株植物',          check: (s) => !!(s.plant && s.plant.activeType) },
+      { id: 't3g4', icon: '🪴', label: '拥有两个花盆',          check: (s) => (s.plants || []).length >= 2 },
     ]
   },
   {

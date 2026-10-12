@@ -4,7 +4,9 @@ import { addHistory, updateStreak } from './storage.js';
 import { getFocusSpeedMultiplier } from './shop.js';
 import { getAuraSpeedBonus } from './visitors.js';
 import { getCurationFocusSpeed } from './curation.js';
-import { getChapterInfo, getEffectiveCopiedWords } from './core/book-utils.js';
+import { getChapterInfo, getEffectiveCopiedWords, getRepairProgress } from './core/book-utils.js';
+import { calculateWordsGained } from './core/focus-rewards.js';
+import { isRestorationUnlocked, getRestorationRepairSpeedBonus } from './capacity.js';
 import { renderFocusPage, updateTimerDisplay, formatTime, updateRepairBarLive } from './render/index.js';
 import { BOOKS } from '../data/books.js';
 
@@ -149,6 +151,32 @@ function tick() {
           }
         }
         return;
+      }
+
+      // 纯修复会话：修复进度将达 100% 时自动结算（图南 2026-10-12——修完不应继续空跑计时）。
+      // 字数口径与 completeFocus 结算完全一致（rounded 分钟 + 修复速度加成），保证触发即真完成。
+      if (repairOnly) {
+        const repair = getRepairProgress(bookState);
+        if (repair) {
+          const settleWords = calculateWordsGained({
+            minutes,
+            teaBoost: !!sess.teaBoost,
+            focusSpeedMultiplier: getFocusSpeedMultiplier(),
+            auraSpeed: getAuraSpeedBonus(sess.bookCategory),
+            curationSpeed: getCurationFocusSpeed(),
+            repairSpeedBonus: isRestorationUnlocked() ? getRestorationRepairSpeedBonus() : 0,
+            getChapterInfo, book, bookState,
+          });
+          if (repair.done + settleWords >= repair.total) {
+            stopTimer();
+            if (onComplete) {
+              try { onComplete(true); } catch (e) {
+                renderFocusPage();
+              }
+            }
+            return;
+          }
+        }
       }
     }
   }

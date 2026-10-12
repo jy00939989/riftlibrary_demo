@@ -66,7 +66,7 @@ export function updateRepairBarLive(sess) {
   const doneEl = document.getElementById('book-progress-repair-done');
   if (doneEl) doneEl.textContent = live.done.toLocaleString();
   const boostEl = document.getElementById('book-progress-repair-boost');
-  if (boostEl) boostEl.textContent = t('repairSpeedBoost').replace('{pct}', live.pct).replace('{n}', 5);
+  if (boostEl) boostEl.textContent = t('repairSpeedBoost').replace('{pct}', live.pct).replace('{n}', Math.round(getRestorationRepairSpeedBonus() * 100));
 }
 
 export function renderBookProgress(sess, book) {
@@ -109,7 +109,7 @@ export function renderBookProgress(sess, book) {
       <div class="h-2 bg-wood/20 rounded-full overflow-hidden mb-3">
         <div id="book-progress-repair-fill" class="h-full bg-gradient-to-r from-amber-500 to-amber-400 rounded-full transition-all duration-500" style="width:${shownRepair ? shownRepair.pct : 0}%"></div>
       </div>
-      <div id="book-progress-repair-boost" class="text-right text-xs text-amber-600 mb-1">${shownRepair ? t('repairSpeedBoost').replace('{pct}', shownRepair.pct).replace('{n}', 5) : ''}</div>
+      <div id="book-progress-repair-boost" class="text-right text-xs text-amber-600 mb-1">${shownRepair ? t('repairSpeedBoost').replace('{pct}', shownRepair.pct).replace('{n}', Math.round(getRestorationRepairSpeedBonus() * 100)) : ''}</div>
     </div>
   `;
 
@@ -174,7 +174,7 @@ export function updateBookProgressDOM(sess) {
       const repairBoost = document.getElementById('book-progress-repair-boost');
       if (repairDoneEl) repairDoneEl.textContent = (shown.done || 0).toLocaleString();
       if (repairFill) repairFill.style.width = `${shown.pct}%`;
-      if (repairBoost) repairBoost.textContent = t('repairSpeedBoost').replace('{pct}', shown.pct).replace('{n}', 5);
+      if (repairBoost) repairBoost.textContent = t('repairSpeedBoost').replace('{pct}', shown.pct).replace('{n}', Math.round(getRestorationRepairSpeedBonus() * 100));
       repairSection.style.display = '';
     }
   } else if (repairSection) {

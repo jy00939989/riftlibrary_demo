@@ -3,6 +3,7 @@ import { state } from '../../state.js';
 import { BOOKS, COPY_TEMPLATES } from '../../../data/books.js';
 import { h, getBookTitle, getBookQuotes } from '../common.js';
 import { getRepairProgress } from '../../core/book-utils.js';
+import { getRestorationRepairSpeedBonus } from '../../capacity.js';
 import { t } from '../../i18n/terms.js';
 
 export function renderCopyPreview(book) {
@@ -21,7 +22,7 @@ export function renderCopyPreview(book) {
             <div class="text-xs text-amber-700 leading-relaxed mb-2">
               ${t('repairFlavourText')}
             </div>
-            ${remainStr ? `<div class="text-xs text-amber-600 font-bold">${remainStr} · ${t('repairSpeedBoost').replace('{pct}', repair.pct).replace('{n}', 5)}</div>` : ''}
+            ${remainStr ? `<div class="text-xs text-amber-600 font-bold">${remainStr} · ${t('repairSpeedBoost').replace('{pct}', repair.pct).replace('{n}', Math.round(getRestorationRepairSpeedBonus() * 100))}</div>` : ''}
           </div>
         </div>
       </div>
