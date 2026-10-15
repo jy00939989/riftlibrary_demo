@@ -9,7 +9,7 @@ if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
 import { state, initState, saveState, ensureAllBooksInManuscriptBox } from './state.js';
 import { runLegacyMigration, remove, STORAGE_KEYS, load } from './persistence.js';
 import { initSettings, getSettings, setSetting } from './settings.js';
-import { getLocale, setLocale } from './i18n/terms.js';
+import { getLocale, setLocale, t } from './i18n/terms.js';
 import { addCoins, addHistory, updateStreak, addAtmosphere, updateBodyBackground, onStageCross } from './storage.js';
 import { renderFocusPage, renderBookshelfPage, renderLibraryPage,
   renderVisitorsPage, renderArchivePage, renderShopPage, setActions,
@@ -172,6 +172,13 @@ function init() {
       btn.classList.toggle('bg-wood/20', active);
       btn.classList.toggle('font-bold', active);
     });
+    // D8「中文即资产」：EN 界面在语言菜单给叙事保留中文的预期管理说明（zh 隐藏）
+    const noteEl = document.getElementById('lang-narrative-note');
+    if (noteEl) {
+      const note = t('narrativeLanguageNote');
+      noteEl.textContent = note;
+      noteEl.classList.toggle('hidden', !note);
+    }
   };
   syncLocaleUI(getLocale());
 
@@ -248,6 +255,30 @@ function init() {
 
   updateLoadingScreen(70, '正在点亮烛台...');
 
+  // 复兴之路 tier 结算（2026-10-15 图南决策：目标完成即结算，不等升阶仪式——
+  // 与主线章节系统重做决策 8「章成即庆祝」同向；升阶仪式路径复用同一函数，tierPopupsShown 去重）
+  function settleTierReward(completedTier) {
+    if (!completedTier || (state.tierPopupsShown || []).includes(completedTier.id)) return false;
+    const goalsComplete = countTierGoalsComplete(completedTier, state);
+    const allDone = isTierComplete(completedTier, state);
+    showTierCompletePopup(completedTier, { goalsComplete, goalsTotal: completedTier.goals.length, allDone });
+    if (completedTier.rewardCoins > 0) addCoins(completedTier.rewardCoins);
+    if (completedTier.rewardAtmo > 0) addAtmosphere(completedTier.rewardAtmo);
+    addHistory('milestone', `🏛️ 馆长目标达成：${completedTier.emoji} ${completedTier.name}`,
+      `+${completedTier.rewardCoins}智慧之光 · +${completedTier.rewardAtmo}氛围`);
+    if (!state.tierPopupsShown) state.tierPopupsShown = [];
+    state.tierPopupsShown.push(completedTier.id);
+    saveState();
+    return true;
+  }
+
+  // 轮询各阶子目标完成度：全完成且未结算的立即结算（玩家完成最后一项目标后 ≤60s 内跳奖励）
+  function checkTierGoalsSettle() {
+    TIER_GOALS.forEach(tier => {
+      if (isTierComplete(tier, state)) settleTierReward(tier);
+    });
+  }
+
   try {
     onStageCross((crossedStages) => {
       const stageNames = ['', '废墟', '破败', '陈旧', '温暖', '星辰'];
@@ -273,19 +304,7 @@ function init() {
           });
         }
 
-        const completedTier = TIER_GOALS[stage - 2];
-        if (completedTier && !(state.tierPopupsShown || []).includes(completedTier.id)) {
-          const goalsComplete = countTierGoalsComplete(completedTier, state);
-          const allDone = isTierComplete(completedTier, state);
-          showTierCompletePopup(completedTier, { goalsComplete, goalsTotal: completedTier.goals.length, allDone });
-          if (completedTier.rewardCoins > 0) addCoins(completedTier.rewardCoins);
-          if (completedTier.rewardAtmo > 0) addAtmosphere(completedTier.rewardAtmo);
-          addHistory('milestone', `🏛️ 馆长目标达成：${completedTier.emoji} ${completedTier.name}`,
-            `+${completedTier.rewardCoins}智慧之光 · +${completedTier.rewardAtmo}氛围`);
-          if (!state.tierPopupsShown) state.tierPopupsShown = [];
-          state.tierPopupsShown.push(completedTier.id);
-          saveState();
-        }
+        settleTierReward(TIER_GOALS[stage - 2]);
       });
     }
   } catch (err) {
@@ -306,6 +325,8 @@ function init() {
   setTimeout(() => {
     const initAchievements = checkAllOnInit();
     showAchievementBatch(initAchievements);
+    // 复兴之路：老档已完成全部子目标但未结算的阶（曾绑升阶仪式），进游戏即补结算
+    checkTierGoalsSettle();
     hideLoadingScreen();
   }, state.introCompleted ? 500 : 5000);
 
@@ -337,6 +358,7 @@ function init() {
       renderVisitorsPage();
     }
     updateVisitorBadge();
+    checkTierGoalsSettle();
     saveState();
   }
   setInterval(tickVisitors, 60000);

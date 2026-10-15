@@ -140,9 +140,12 @@ function renderTierGoals(stage) {
   // D24：馆长目标阶梯跟「存储阶段」走——卡阶等待仪式时不提前显示下一阶目标。
   // 各阶 stageMin 与阶段阈值一致，直接以当前阶门槛值代入 getTierStatus。
   const curAtmo = stage.min;
+  // 2026-10-15：目标完成即结算——已结算的阶（tierPopupsShown）视同完成，
+  // 不等氛围跨阶，避免「奖励已领、卡片仍显示进行中」的撕裂感
+  const settledTierIds = state.tierPopupsShown || [];
 
   // 已完成阶 → 紧凑摘要（一行一行）
-  const completedTiers = TIER_GOALS.filter(t => getTierStatus(t, curAtmo) === 'completed');
+  const completedTiers = TIER_GOALS.filter(t => settledTierIds.includes(t.id) || getTierStatus(t, curAtmo) === 'completed');
   let completedHTML = '';
   if (completedTiers.length > 0) {
     const names = completedTiers.map(t => `${t.emoji} ${getTierTerm(t, 'Name')}`).join(' → ');
@@ -153,8 +156,8 @@ function renderTierGoals(stage) {
       </div>`;
   }
 
-  // 当前阶 → 完整展开
-  const activeTier = TIER_GOALS.find(t => getTierStatus(t, curAtmo) === 'active');
+  // 当前阶 → 完整展开（已结算的阶不再占位，让位给下一阶）
+  const activeTier = TIER_GOALS.find(t => !settledTierIds.includes(t.id) && getTierStatus(t, curAtmo) === 'active');
   let activeHTML = '';
   if (activeTier) {
     const goalsComplete = countTierGoalsComplete(activeTier, state);
