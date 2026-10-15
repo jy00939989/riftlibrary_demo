@@ -1,0 +1,6 @@
+# Netlify 部署配置（M5 密钥迁移后启用，2026-10-15）
+# 构建期从环境变量生成 js/backend/config.local.js（真实密钥不进 Git）；
+# 环境变量未设置时生成脚本静默跳过，config.js 自动降级纯本地模式。
+[build]
+  command = "node scripts/gen-netlify-config.mjs"
+  publish = "."

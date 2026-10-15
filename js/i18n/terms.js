@@ -12,6 +12,14 @@ const TERM_DATA = Object.freeze({
   librarySubtitle: { zh: '夹缝中的归墟 · 位面枢纽', en: 'A Rift Between Worlds · A Nexus of Realms' },
   unknown: { zh: '未知', en: 'Unknown' },
 
+  // ========== 语言与叙事 ==========
+  // D8 决策（2026-10-15 图南拍板「中文即资产」）：叙事内容保留原文，
+  // EN 界面在语言菜单给一句预期管理说明；zh 界面无需提示（空串隐藏）
+  narrativeLanguageNote: {
+    zh: '',
+    en: '📖 Visitor quotes, letters & stage lore stay in Chinese — the collection keeps its original language.'
+  },
+
   // ========== 存档管理 ==========
   saveManagerTitle: { zh: '💾 存档管理', en: '💾 Save Manager' },
   saveLocalWarning: { zh: '你的游戏数据保存在浏览器本地。更换设备或清理缓存后数据会丢失。<br>建议定期导出备份。', en: 'Your game data is saved locally in the browser. It will be lost if you switch devices or clear cache.<br>Regular exports are recommended.' },
