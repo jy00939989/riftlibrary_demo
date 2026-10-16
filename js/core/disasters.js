@@ -12,6 +12,7 @@ import { getSettings } from '../settings.js';
 import { hasSignboard } from '../shop.js';
 import { grantRestorationRoom } from '../capacity.js';
 import { getAtmosphereStage } from '../../data/atmosphere.js';
+import { applyCycleSafeWordLoss } from './book-utils.js';
 
 // ========== 参数 ==========
 // 单位：每分钟判定概率（tick 间隔 60s）；冷却单位：天
@@ -123,7 +124,8 @@ function applyDamage(bs, book, ratio) {
   bs.repairWords = loss;
   bs.repairProgress = 0;
   if (loss > 0) {
-    bs.copiedWords = Math.max(0, (bs.copiedWords || 0) - loss);
+    // 地板规则：已完成周期不可侵蚀（applyCycleSafeWordLoss），修复工时（repairWords）照收
+    applyCycleSafeWordLoss(bs, book && book.totalWords, loss);
     if (bs.status === 'completed' && book && bs.copiedWords < book.totalWords) {
       bs.status = 'copying';
     }
@@ -253,14 +255,21 @@ export function maybeTriggerInkSpill(bookId) {
   state.lastInkTime = getNow();
 
   const loss = Math.max(1, Math.round(bs.copiedWords * randRange(INK.lossMin, INK.lossMax)));
-  bs.copiedWords = Math.max(0, bs.copiedWords - loss);
+  // 地板规则：已成册的周期不可侵蚀；干净完成的书实际损失为 0（擦净即可，无需重抄）
+  const actualLoss = applyCycleSafeWordLoss(bs, book.totalWords, loss);
   if (bs.status === 'completed' && bs.copiedWords < book.totalWords) bs.status = 'copying';
   saveState();
-  addHistory('disaster', `🖋️ 墨水打翻，污了《${book.title}》`, `损失${loss.toLocaleString()}字，无需修复，重抄即可`);
+  if (actualLoss > 0) {
+    addHistory('disaster', `🖋️ 墨水打翻，污了《${book.title}》`, `损失${actualLoss.toLocaleString()}字，无需修复，重抄即可`);
+  } else {
+    addHistory('disaster', `🖋️ 墨水打翻，污了《${book.title}》`, '已成册的字完好无损，擦净即可');
+  }
   addDiaryEntry('special_event', { detail: `🖋️ 提前收笔的那一刻，手肘碰翻了墨水瓶。墨迹在《${book.title}》的纸页上洇开一朵黑色的花。墨墨递来吸墨纸，什么也没说。` });
   const result = {
     kind: 'ink', emoji: '🖋️',
-    lines: [t('disasterBookLossLine').replace('{title}', book.title).replace('{loss}', loss.toLocaleString())],
+    lines: [actualLoss > 0
+      ? t('disasterBookLossLine').replace('{title}', book.title).replace('{loss}', actualLoss.toLocaleString())
+      : t('disasterBookSparedLine').replace('{title}', book.title)],
     saveBy: null,
   };
   showDisasterPopup(result);

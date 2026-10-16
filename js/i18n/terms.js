@@ -1443,6 +1443,7 @@ const TERM_DATA = Object.freeze({
   disasterFireTitle: { zh: '火灾！', en: 'Fire!' },
   disasterFireDesc: { zh: '烛台倒了，火舌舔伤了几本书的脊背。', en: 'A candle fell; flames scorched the spines of several books.' },
   disasterBookLossLine: { zh: '《{title}》损失 {loss} 字，需专注修复', en: '"{title}" lost {loss} words — needs focused repair' },
+  disasterBookSparedLine: { zh: '《{title}》已成册的部分完好无损，擦净即可', en: 'The bound pages of "{title}" are unharmed — a wipe and it is fine' },
   disasterAtmosphereLoss: { zh: '氛围 -{n}', en: 'Atmosphere -{n}' },
   disasterRepairHint: { zh: '受损的书需在专注中慢慢修复；可在 🎼 设置里关闭灾难事件', en: 'Damaged books need focused repair. You can turn disasters off in 🎼 Settings.' },
   disasterWormTitle: { zh: '蛀虫侵蚀', en: 'Bookworms!' },

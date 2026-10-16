@@ -30,6 +30,25 @@ export function getEffectiveCopiedWords(bookState, totalWords) {
   return copiedWords % totalWords;
 }
 
+/**
+ * 损坏/墨水事件的扣字统一入口（2026-10-16 菜根谭事件地板规则）。
+ * 已完成周期（copyCount × totalWords）不可侵蚀：损失先吃当前周期进度，
+ * 当前周期不足时到地板为止——否则补回损失字数会被记成下一周期进度，
+ * 触发伪「重抄完成」→ copyCount+1 → 误升典藏。
+ * @param {object} bookState 书籍存档状态（就地修改 copiedWords）
+ * @param {number} totalWords 书总字数
+ * @param {number} loss 名义损失字数
+ * @returns {number} 实际扣掉的字数（被地板截断后可能小于名义损失）
+ */
+export function applyCycleSafeWordLoss(bookState, totalWords, loss) {
+  const copied = bookState.copiedWords || 0;
+  const floor = (bookState.copyCount || 0) * (totalWords || 0);
+  const next = Math.max(floor, copied - Math.max(0, loss || 0));
+  const actual = copied - next;
+  bookState.copiedWords = next;
+  return actual;
+}
+
 export function getWordsToNextCompletion(bookState, totalWords) {
   if (!bookState || !totalWords) return totalWords;
   const effective = getEffectiveCopiedWords(bookState, totalWords);

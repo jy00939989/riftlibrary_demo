@@ -15,6 +15,7 @@ import { PLANT_TYPES } from '../data/plants.js';
 import { track } from './backend/analytics.js';
 import { BORROW_LEVEL_TABLE, getWearMultiplier, getBookCondition, getBorrowSlots } from '../data/borrow-levels.js';
 import { getTodayKey } from './core/day-boundary.js';
+import { applyCycleSafeWordLoss } from './core/book-utils.js';
 import { cafeTick, cafeOnTimeSkip } from './core/cafe.js';
 import { getEventBorrowFavorMult } from './core/exhibition.js';
 
@@ -1262,7 +1263,8 @@ export function collectReturn(visitorId) {
       bs.repairWords = Math.round(bs.copiedWords * 0.15);
       bs.repairProgress = 0;
       if (bs.repairWords > 0) {
-        bs.copiedWords = Math.max(0, bs.copiedWords - bs.repairWords);
+        // 地板规则：已完成周期不可侵蚀（applyCycleSafeWordLoss），修复工时照收
+        applyCycleSafeWordLoss(bs, bDef && bDef.totalWords, bs.repairWords);
         if (bs.status === 'completed' && bDef && bs.copiedWords < bDef.totalWords) {
           bs.status = 'copying';
         }

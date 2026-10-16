@@ -67,9 +67,9 @@ export function completeBook(bookId) {
     bookState.masteryLevel = isFirstCompletion ? 1 : 2;
   }
 
-  if (isFirstCompletion) {
-    bookState.status = 'completed';
-  }
+  // 无论首通还是重抄，周期已满即回写 completed——否则非首通完成后状态卡在 'copying'，
+  // 书卡「誊抄中 0%」直到载入迁移兜底（2026-10-16 菜根谭事件）
+  bookState.status = 'completed';
 
   // Phase 3 借还链：重抄完成 = 抄写一部崭新副本，单书借阅磨损清零
   bookState.wearCount = 0;
