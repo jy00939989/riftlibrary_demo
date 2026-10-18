@@ -287,26 +287,11 @@ export function getSplashTargets(potIndex = 0) {
   return [potIndex, ...rest].slice(0, can.splash);
 }
 
-// 每盆成长份额（Lv1/Lv2 各全额；Lv4 总 2 份均分；Lv3 三叉：点盆全额 + 其余均分剩余池，总量恒 ≤2 份）
+// 每盆成长份额（Lv1/Lv2/Lv3 各全额；Lv4 花洒总 3 份均分——图南 10-17 拍板水量口径 3 份）
 function getPerPotShare(targetCount) {
   const can = getCanDef();
   if (can.perPotShare != null) return can.perPotShare;
   return targetCount > 0 ? can.totalShares / targetCount : 0;
-}
-
-/** 逐盆份额表（2026-10-17 三叉喷壶：primaryShare 档按「点盆吃全额、溅射盆均分剩余池」分配） */
-function getTargetShares(targets, tappedIndex) {
-  const can = getCanDef();
-  if (can.primaryShare != null) {
-    const rest = targets.filter(i => i !== tappedIndex);
-    const splashEach = rest.length > 0 ? (can.splashPool ?? 0) / rest.length : 0;
-    const map = new Map();
-    map.set(tappedIndex, can.primaryShare);
-    rest.forEach(i => map.set(i, splashEach));
-    return map;
-  }
-  const share = getPerPotShare(targets.length);
-  return new Map(targets.map(i => [i, share]));
 }
 
 // 浇水：消耗一次全局浇水次数，按喷壶档位泼溅多盆（2026-09-21 温室培育线）
@@ -315,7 +300,7 @@ export function waterPlant(potIndex = 0) {
   if (!def || !canWater(potIndex)) return { ok: false, justMatured: false, watered: [] };
 
   const targets = getSplashTargets(potIndex);
-  const shares = getTargetShares(targets, potIndex);
+  const share = getPerPotShare(targets.length);
 
   state.water = (state.water || 0) - 1;
 
@@ -327,7 +312,6 @@ export function waterPlant(potIndex = 0) {
     const pDef = getActivePlantDef(idx);
     if (!p || !pDef) return;
     const wasHarvestable = canHarvest(idx);
-    const share = shares.get(idx) ?? 0;
 
     // 禁止烟火标志牌：浇水有几率暴击（×2 成长，逐盆独立判定）
     let growth = pDef.waterGrowth * share;

@@ -111,10 +111,9 @@ export const IMPROVE_TIERS = [
 // ========== 温室培育设施（2026-09-21 图南四决策：解决「浇水绑死专注时长→扩盆无意义」） ==========
 //
 // 浇水工具（喷壶）：1 次浇水按档位泼溅多盆。
-//   Lv2「各全额」与 Lv4「总 2 份均分」在 2 盆时数学一致；Lv4 的价值是 3-4 盆零操作均匀浇水。
-//   Lv3 三叉喷壶（2026-10-17 图南加档）：泼 3 盆——点盆全额 + 其余两盆各半份，总量恒 2 份，
-//   任何盆数下对点盆零缩水（2 盆时退化为长嘴、1 盆时同浇水壶），只赚覆盖与省心。
-//   注：泼溅不放大单份成长——总成长恒 ≤2 份，扩盆赚的是操作与均匀，放量由储水/改良/绿手指给。
+//   Lv3 大容量喷壶（2026-10-17 图南加档并拍板水量口径）：1 次浇 3 盆各全额——总水量 3 份，
+//   泼溅自此放量（9-21「总成长恒 ≤2 份」不变式同日作废，扩盆同时赚操作与产量）。
+//   Lv4 花洒：全部活盆均分 3 份——满架温室的总闸，盆再多一键均匀浇透。
 export const WATERING_CANS = [
   {
     level: 1, id: 'watering_can', nameKey: 'canWatering', emoji: '💧', price: 0,
@@ -127,14 +126,14 @@ export const WATERING_CANS = [
     descKey: 'canLongSpoutDesc'
   },
   {
-    level: 3, id: 'trident_can', nameKey: 'canTrident', emoji: '🔱', price: 1500,
-    splash: 3, primaryShare: 1, splashPool: 1, // 点盆 1 全额 + 其余均分剩余 1 份（总量恒 2 份）
-    descKey: 'canTridentDesc'
+    level: 3, id: 'large_can', nameKey: 'canLarge', emoji: '🪣', price: 1500,
+    splash: 3, perPotShare: 1, // 3 盆各全额 = 总水量 3 份
+    descKey: 'canLargeDesc'
   },
   {
     level: 4, id: 'sprinkler_can', nameKey: 'canSprinkler', emoji: '🌧️', price: 2000,
-    splash: Infinity, perPotShare: null, // null = 总 2 份均分（见 totalShares）
-    totalShares: 2,
+    splash: Infinity, perPotShare: null, // null = 总 3 份均分（见 totalShares）
+    totalShares: 3,
     descKey: 'canSprinklerDesc'
   }
 ];
