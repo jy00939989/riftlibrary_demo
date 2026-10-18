@@ -298,6 +298,21 @@ function migrateV1() {
     });
   }
 
+  // 2026-10-17 好感追溯回填（铁证版，图南拍板）：叙事事件是历史好感的铁证——
+  // 偶层完成过 → 曾达 120，稀层触发过 → 曾达 280，终局后触发过 → 曾达 560
+  //（阈值对齐 ADR-FAVOR-001 / visitors.js FAVOR_THRESHOLDS）。全局好感只增不减，
+  // 「触发过 = 永远拥有」，取当前值与证明值的最大者：只抬不压、零通胀、天然幂等。
+  if (state.visitorNarratives && state.visitorFavors) {
+    Object.entries(state.visitorNarratives).forEach(([charId, ns]) => {
+      if (!ns || state.visitorFavors[charId] === undefined) return;
+      let floor = 0;
+      if ((ns.occasionalCompleted || []).length > 0 || (ns.postRareOccasionalCompleted || []).length > 0) floor = 120;
+      if (ns.rareTriggered) floor = 280;
+      if (ns.postRareTriggered) floor = 560;
+      if (floor > state.visitorFavors[charId]) state.visitorFavors[charId] = floor;
+    });
+  }
+
   // 旧存档迁移：visitorNarratives
   if (!state.visitorNarratives || Object.keys(state.visitorNarratives).length === 0) {
     state.visitorNarratives = {};

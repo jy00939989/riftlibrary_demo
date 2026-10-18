@@ -18,6 +18,8 @@ globalThis.document = {
 globalThis.localStorage = { getItem: () => null, setItem() {}, removeItem() {} };
 
 const { getFavorStage, FAVOR_STAGES, FAVOR_THRESHOLDS, FAVOR_CAP } = await import('../js/visitors.js');
+const { state } = await import('../js/state.js');
+const { runMigrations } = await import('../js/state/migrations.js');
 
 let passed = 0, failed = 0;
 const failures = [];
@@ -73,6 +75,49 @@ test('S4 越界钳制', () => {
   assertEq(getFavorStage(-50).favor, 0, '负数钳到 0');
   assertEq(getFavorStage(undefined).favor, 0, 'undefined 视为 0');
   assertEq(getFavorStage(NaN).favor, 0, 'NaN 视为 0');
+});
+
+// ── 好感追溯回填（铁证版，2026-10-17 图南拍板）──
+// 叙事事件是历史好感的铁证：偶层完成过 ≥120 / 稀层触发过 ≥280 / 终局后触发过 ≥560，取最大者，只抬不压。
+
+function freshNarratives() {
+  state.visitorFavors = { peizhou: 0, shenmingyuan: 0, xiachan: 5, jiangyoushu: 400 };
+  state.visitorNarratives = {
+    peizhou: { occasionalCompleted: ['ev1'], rareTriggered: true, postRareTriggered: false },
+    shenmingyuan: { occasionalCompleted: [], rareTriggered: false, postRareTriggered: true },
+    xiachan: { occasionalCompleted: ['ev1', 'ev2'], rareTriggered: false, postRareTriggered: false },
+    jiangyoushu: { occasionalCompleted: ['ev1'], rareTriggered: false, postRareTriggered: false }
+  };
+}
+
+test('M1 回填三档铁证', () => {
+  freshNarratives();
+  runMigrations();
+  assertEq(state.visitorFavors.peizhou, 280, '稀层触发过 → 280（压过偶层的 120）');
+  assertEq(state.visitorFavors.shenmingyuan, 560, '终局后触发过 → 560');
+  assertEq(state.visitorFavors.xiachan, 120, '仅偶层完成过 → 120（从 5 抬升）');
+});
+
+test('M2 只抬不压：当前值高于证明值保持不动', () => {
+  freshNarratives();
+  runMigrations();
+  assertEq(state.visitorFavors.jiangyoushu, 400, '当前 400 > 偶层证明 120 → 不压');
+});
+
+test('M3 幂等：重复迁移结果一致', () => {
+  freshNarratives();
+  runMigrations();
+  const snapshot = JSON.stringify(state.visitorFavors);
+  runMigrations();
+  assertEq(JSON.stringify(state.visitorFavors), snapshot, '二次迁移不漂移');
+});
+
+test('M4 无叙事记录的角色不动', () => {
+  freshNarratives();
+  delete state.visitorNarratives.peizhou;
+  state.visitorFavors.peizhou = 33;
+  runMigrations();
+  assertEq(state.visitorFavors.peizhou, 33, '无铁证不抬');
 });
 
 console.log(`\nfavor-stages：${passed} 通过, ${failed} 失败`);
