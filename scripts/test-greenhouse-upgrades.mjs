@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // 温室培育线（2026-09-21 图南四决策）测试
-// 覆盖：迁移 v16 默认值/喷壶泼溅（Lv2 两盆全额、Lv3 全部均分 2 份）/
+// 覆盖：迁移 v16 默认值/喷壶泼溅（Lv2 两盆全额、Lv3 三叉三盆点满余半、Lv4 全部均分 2 份）/
 //       储水设施（长专注档位 + 离线蓄水封顶 + 升级锚点重置）/改良品种（种子解锁、掉率、多年生回落）/
 //       绿手指（阈值等级 + 成长加成）
 // 用法：node scripts/test-greenhouse-upgrades.mjs
@@ -107,9 +107,37 @@ assert(state.plants[0].level === 3 && state.plants[0].growthProgress === 5, '盆
 assert(state.plants[1].level === 1 && state.plants[1].growthProgress === 25, '盆 1 全额 +25');
 assert(state.water === 0, '全局池只扣 1');
 
-console.log('\n[4] 喷壶 Lv3：1 水浇全部活盆，总 2 份均分');
+console.log('\n[4] 喷壶 Lv3 三叉：1 水浇 3 盆（点盆全额 + 其余均分剩余 1 份，总量恒 ≤2 份，图南 10-17 加档）');
 state.coins = 99999;
 state.wateringCanLevel = 3;
+state.water = 1;
+plantDirect(0, 'bird_of_paradise', 1, 0);   // 点盆
+plantDirect(1, 'bird_of_paradise', 1, 0);   // 最缺水
+plantDirect(2, 'bird_of_paradise', 1, 30);  // 次缺水
+plantDirect(3, 'bird_of_paradise', 1, 60);  // 最不缺，不应被捎带
+r = plants.waterPlant(0);
+assert(r.ok && r.watered.length === 3, '一瓢浇 3 盆');
+assert(r.watered[0].potIndex === 0 && state.plants[0].growthProgress === 25, '点盆全额 +25（任何盆数不缩水）');
+assert(state.plants[1].growthProgress === 13 && state.plants[2].growthProgress === 43, '其余两盆各半份（0+13、30+13）');
+assert(state.plants[3].growthProgress === 60, '第 4 盆（最不缺）未被捎带');
+assert(state.water === 0, '全局池只扣 1');
+// 2 盆时退化为长嘴：唯一溅射盆吃满剩余池 1 份 → 各全额
+state.water = 1;
+state.plants[2] = { ...EMPTY_PLANT };
+state.plants[3] = { ...EMPTY_PLANT };
+state.plants[0].growthProgress = 0;
+state.plants[1].growthProgress = 0;
+r = plants.waterPlant(0);
+assert(r.watered.length === 2 && state.plants[0].growthProgress === 25 && state.plants[1].growthProgress === 25, '2 盆时等同长嘴（各全额）');
+// 1 盆时同浇水壶
+state.water = 1;
+state.plants[1] = { ...EMPTY_PLANT };
+state.plants[0].growthProgress = 0;
+r = plants.waterPlant(0);
+assert(r.watered.length === 1 && state.plants[0].growthProgress === 25, '1 盆时同浇水壶（全额）');
+
+console.log('\n[4b] 喷壶 Lv4 花洒：1 水浇全部活盆，总 2 份均分');
+state.wateringCanLevel = 4;
 state.water = 1;
 plantDirect(0, 'bird_of_paradise', 1, 0);
 plantDirect(1, 'bird_of_paradise', 1, 0);

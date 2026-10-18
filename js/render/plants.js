@@ -447,39 +447,54 @@ function renderFacilities() {
 
   const thumbLv = getGreenThumbLevel();
   const thumbProg = getGreenThumbProgress();
+  // 绿手指：被动成长卡，与喷壶/水箱同构——说明+本级加成进 desc，下级进度进 nextBlock（2026-10-17 图南）
+  const thumbNextBlock = thumbProg.next === null
+    ? `<span class="font-bold text-purple-500">✨ ${t('facilityMaxed')}</span> · ${t('greenThumbCurrentBonus').replace('{pct}', 25)} · ${t('greenThumbProgress').replace('{n}', thumbProg.current)}`
+    : `<span class="font-bold">Lv${thumbLv + 1}</span> · ${t('greenThumbCurrentBonus').replace('{pct}', (thumbLv + 1) * 5)} · ${t('greenThumbRemaining').replace('{n}', thumbProg.remaining)}（${t('greenThumbProgress').replace('{n}', thumbProg.current)}）`;
   grid.appendChild(renderFacilityCard({
     emoji: '🌿',
     name: t('greenThumb'),
-    desc: thumbLv === 0
-      ? t('greenThumbDesc')
-      : `${t('greenThumbDesc')}（+${thumbLv * 5}%）`,
-    footer: thumbProg.next === null
-      ? t('greenThumbMaxed').replace('{n}', thumbProg.current)
-      : `${t('greenThumbProgress').replace('{n}', thumbProg.current)} · ${t('greenThumbProgress').replace('{n}', thumbProg.next)} → Lv${thumbLv + 1}`,
-    next: null, // 被动成长，不可购买
-    passive: true // 不显示「✅ 已满级」徽标——等级看 footer 的真实进度
+    desc: `${t('greenThumbDesc')}（${t('greenThumbCurrentBonus').replace('{pct}', thumbLv * 5)}）`,
+    nextBlockHtml: thumbNextBlock,
+    passive: true // 不显示「✅ 已满级」徽标——等级看 nextBlock 的真实进度
   }));
 
   section.appendChild(grid);
   return section;
 }
 
-function renderFacilityCard({ emoji, name, desc, footer = null, next = null, canAfford = false, onUpgrade = null, passive = false }) {
+// 设施卡：本级作用 + 下级预览两块常驻（2026-10-17 图南拍板——买之前必须看得见钱花在哪）
+// nextBlockHtml 优先级高于 next def（绿手指被动卡用它塞自定义进度文案）
+function renderFacilityCard({ emoji, name, desc, nextBlockHtml = null, next = null, canAfford = false, onUpgrade = null, passive = false }) {
   const card = document.createElement('div');
   card.className = 'bg-white rounded-xl p-4 border-2 border-teal-200 flex flex-col';
 
-  const btnHtml = next
-    ? `<button class="facility-upgrade-btn px-4 py-1.5 mt-3 rounded-lg text-sm font-bold transition-all ${canAfford ? 'bg-teal-600 text-white hover:shadow-lg' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}">${t('facilityUpgrade').replace('{price}', next.price.toLocaleString())}</button>`
-    : passive ? '' : `<span class="text-xs text-green-600 font-bold mt-3 inline-block">✅ ${t('facilityMaxed')}</span>`;
+  let nextHtml = '';
+  if (nextBlockHtml) {
+    nextHtml = `<div class="mt-2 p-2 rounded-lg bg-teal-50 border border-teal-200">
+      <div class="text-[10px] font-bold text-teal-600 mb-0.5">${t('facilityNextLabel')}</div>
+      <div class="text-xs text-ink leading-relaxed">${nextBlockHtml}</div>
+    </div>`;
+  } else if (next) {
+    nextHtml = `<div class="mt-2 p-2 rounded-lg bg-teal-50 border border-teal-200">
+      <div class="text-[10px] font-bold text-teal-600 mb-0.5">${t('facilityNextLabel')}</div>
+      <div class="text-xs text-ink leading-relaxed"><span class="font-bold">${next.emoji} ${t(next.nameKey)}</span> — ${t(next.descKey)}</div>
+    </div>
+    <button class="facility-upgrade-btn px-4 py-1.5 mt-3 rounded-lg text-sm font-bold transition-all ${canAfford ? 'bg-teal-600 text-white hover:shadow-lg' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}">${t('facilityUpgrade').replace('{price}', next.price.toLocaleString())}</button>`;
+  } else if (!passive) {
+    nextHtml = `<span class="text-xs text-green-600 font-bold mt-3 inline-block">✅ ${t('facilityMaxed')}</span>`;
+  }
 
   card.innerHTML = `
     <div class="flex items-center gap-2 mb-2">
       <span class="text-2xl">${emoji}</span>
       <span class="font-bold text-sm">${name}</span>
     </div>
-    <p class="text-xs text-ink-light leading-relaxed flex-1">${desc}</p>
-    ${footer ? `<p class="text-xs text-teal-700 mt-2">${footer}</p>` : ''}
-    ${btnHtml}
+    <div class="p-2 rounded-lg bg-wood/5 border border-wood/10">
+      <div class="text-[10px] font-bold text-wood/70 mb-0.5">${t('facilityCurrentLabel')}</div>
+      <p class="text-xs text-ink-light leading-relaxed">${desc}</p>
+    </div>
+    ${nextHtml}
   `;
 
   if (next && canAfford && onUpgrade) {
