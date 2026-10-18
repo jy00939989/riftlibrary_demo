@@ -8,6 +8,15 @@ let client = null;
 let ready = false;
 let backendError = null;
 
+const isValidHttpUrl = (u) => {
+  try {
+    const p = new URL(u).protocol;
+    return p === 'http:' || p === 'https:';
+  } catch {
+    return false;
+  }
+};
+
 const isConfigured = () => {
   return Boolean(
     CLOUD_SYNC_ENABLED &&
@@ -21,6 +30,13 @@ const isConfigured = () => {
 async function init() {
   if (!isConfigured()) {
     backendError = 'Supabase not configured';
+    return;
+  }
+  // 配置存在但 URL 非法时给出明确错误并降级（2026-10-17：占位符挡不住「带引号/缺协议」的值，
+  // 那会直接抛给 createClient，变成玩家看不懂的红色报错）
+  if (!isValidHttpUrl(SUPABASE_URL)) {
+    backendError = `SUPABASE_URL 格式无效（必须是 http/https URL）：${SUPABASE_URL}`;
+    console.warn('[backend] SUPABASE_URL 非法，已降级纯本地模式', SUPABASE_URL);
     return;
   }
   try {
