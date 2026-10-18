@@ -694,11 +694,34 @@ const ALL_VISITOR_IDS = Object.keys(VISITOR_DEFS);
 
 // 好感度上限与叙事阈值（ADR-FAVOR-001）
 const FAVOR_CAP = 600;
+export { FAVOR_CAP };
 export const FAVOR_THRESHOLDS = {
   OCCASIONAL: 120,
   RARE: 280,
   POST_RARE: 560
 };
+
+// 好感阶段（2026-10-17 好感可视化：档位对齐上面的叙事阈值，条不再在 100 处饱和）
+export const FAVOR_STAGES = [
+  { key: 'favorStage0', floor: 0, next: FAVOR_THRESHOLDS.OCCASIONAL },
+  { key: 'favorStage1', floor: FAVOR_THRESHOLDS.OCCASIONAL, next: FAVOR_THRESHOLDS.RARE },
+  { key: 'favorStage2', floor: FAVOR_THRESHOLDS.RARE, next: FAVOR_THRESHOLDS.POST_RARE },
+  { key: 'favorStage3', floor: FAVOR_THRESHOLDS.POST_RARE, next: FAVOR_CAP }
+];
+
+/**
+ * 好感阶段查询（纯函数）
+ * @returns {object} { idx, key, floor, next, favor, pct(档内进度0-100), isMax, toNext(距下一档) }
+ */
+export function getFavorStage(favor) {
+  const f = Math.max(0, Math.min(FAVOR_CAP, Math.floor(favor || 0)));
+  let idx = FAVOR_STAGES.findIndex(s => f < s.next);
+  if (idx === -1) idx = FAVOR_STAGES.length - 1;
+  const stage = FAVOR_STAGES[idx];
+  const isMax = f >= FAVOR_CAP;
+  const pct = isMax ? 100 : Math.round(((f - stage.floor) / (stage.next - stage.floor)) * 100);
+  return { idx, key: stage.key, floor: stage.floor, next: stage.next, favor: f, pct, isMax, toNext: isMax ? 0 : stage.next - f };
+}
 
 function addVisitorFavor(charId, amount) {
   if (!state.visitorFavors) {

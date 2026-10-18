@@ -3,7 +3,7 @@ import { state } from '../state.js';
 import { BOOKS } from '../../data/books.js';
 import { el, actions, getBookTitle } from './common.js';
 import { t } from '../i18n/terms.js';
-import { getBorrowLevelConfig, getVisitorCap, getVisitorDef, getDamageChance } from '../visitors.js';
+import { getBorrowLevelConfig, getVisitorCap, getVisitorDef, getDamageChance, getFavorStage, FAVOR_STAGES, VISITOR_DEFS } from '../visitors.js';
 
 function getVisitorBookTitle(bookId, fallback) {
   const book = bookId ? BOOKS[bookId] : null;
@@ -24,20 +24,28 @@ function timeLeft(dueTime) {
 }
 
 // ========== 好感条渲染 ==========
+// 阶段制（2026-10-17 图南好感可视化）：条长 = 当前档内进度（0-120/120-280/280-560/560-600），
+// 不再在 100 处饱和；附档位名与距下一档提示。
+const STAGE_STYLE = [
+  { color: 'bg-gray-400', heartColor: 'text-gray-400', heartEmoji: '🤍' },
+  { color: 'bg-magic-blue', heartColor: 'text-magic-blue', heartEmoji: '💛' },
+  { color: 'bg-magic-gold', heartColor: 'text-magic-gold', heartEmoji: '💛' },
+  { color: 'bg-purple-500', heartColor: 'text-purple-400', heartEmoji: '💖' }
+];
 
 function renderFavorBar(charId, sessionFavor) {
-  const globalFavor = state.visitorFavors?.[charId] || 0;
-  const pct = Math.min(100, globalFavor);
-  let color, heartColor, heartEmoji;
-  if (globalFavor >= 100) { color = 'bg-purple-500'; heartColor = 'text-purple-400'; heartEmoji = '💖'; }
-  else if (globalFavor >= 60) { color = 'bg-magic-gold'; heartColor = 'text-magic-gold'; heartEmoji = '💛'; }
-  else if (globalFavor >= 30) { color = 'bg-magic-blue'; heartColor = 'text-magic-blue'; heartEmoji = '💛'; }
-  else { color = 'bg-gray-400'; heartColor = 'text-gray-400'; heartEmoji = '🤍'; }
+  const st = getFavorStage(state.visitorFavors?.[charId] || 0);
+  const style = STAGE_STYLE[st.idx];
+  const hint = st.isMax
+    ? `<span class="text-[10px] text-purple-400 font-bold">${t('favorMaxTag')}</span>`
+    : `<span class="text-[10px] text-ink-light/70">${t('favorNextHint').replace('{stage}', t(FAVOR_STAGES[st.idx + 1].key)).replace('{n}', st.toNext)}</span>`;
 
   return `<div class="favor-bar-wrapper mt-1">
-    <span class="favor-heart ${heartColor}">${heartEmoji}</span>
-    <span class="favor-bar"><span class="favor-bar-fill ${color}" style="width:${pct}%"></span></span>
-    <span class="text-[10px] text-ink-light">${globalFavor}</span>
+    <span class="favor-heart ${style.heartColor}">${style.heartEmoji}</span>
+    <span class="favor-bar"><span class="favor-bar-fill ${style.color}" style="width:${st.pct}%"></span></span>
+    <span class="text-[10px] font-bold ${style.heartColor}">${t(st.key)}</span>
+    <span class="text-[10px] text-ink-light">${st.favor}</span>
+    ${hint}
     ${sessionFavor > 0 ? `<span class="text-[10px] text-magic-gold">+${sessionFavor}</span>` : ''}
   </div>`;
 }
@@ -232,6 +240,43 @@ export function renderVisitorsPage() {
     });
   }
   card.appendChild(section3);
+
+  // --- 熟客名册：全角色好感一览（2026-10-17 图南好感可视化）---
+  // 已结识（好感>0）按好感降序列出完整阶段条；未结识的压成剪影占位，提示还差几位。
+  const rosterSection = el('div', 'mb-4');
+  const met = [];
+  let unmetCount = 0;
+  Object.entries(VISITOR_DEFS).forEach(([id]) => {
+    const favor = state.visitorFavors?.[id] || 0;
+    if (favor > 0) met.push({ id, favor });
+    else unmetCount += 1;
+  });
+  met.sort((a, b) => b.favor - a.favor);
+
+  const rosterRows = met.map(({ id }) => {
+    const def = getVisitorDef(id);
+    return `<div class="flex items-center gap-3 bg-white/60 rounded-lg p-3 mb-2">
+      ${getVisitorPortrait(id, def?.emoji, 'sm')}
+      <div class="flex-1 min-w-0">
+        <span class="font-bold text-sm">${def?.name || id}</span>
+        <span class="text-xs text-ink-light ml-2">${def?.title || ''}</span>
+        ${renderFavorBar(id, 0)}
+      </div>
+    </div>`;
+  }).join('');
+
+  const unknownCells = Array.from({ length: unmetCount }, () => `
+    <div class="flex items-center justify-center gap-2 bg-wood/5 rounded-lg p-3 min-h-[52px]">
+      <span class="text-ink-light/40 font-bold text-sm">👤 ${t('favorRosterUnknown')}</span>
+    </div>`).join('');
+
+  rosterSection.innerHTML = `
+    <h3 class="font-bold text-sm text-ink-light mb-2 mt-6 pt-4 border-t border-wood/20">${t('favorRosterTitle')} <span class="text-xs font-normal">(${met.length}/${met.length + unmetCount})</span></h3>
+    <p class="text-[11px] text-ink-light/80 mb-2">${t('favorRosterHint')}</p>
+    ${rosterRows}
+    ${unmetCount > 0 ? `<div class="grid grid-cols-2 md:grid-cols-3 gap-2 mt-1">${unknownCells}</div>` : ''}
+  `;
+  card.appendChild(rosterSection);
 
   // 借阅区等级信息
   card.appendChild(el('div', 'text-xs text-ink-light mt-4 pt-4 border-t border-wood/20', {

@@ -155,6 +155,16 @@ const TERM_DATA = Object.freeze({
   speedTooltipAuraNote: { zh: '💡 部分访客光环在专注期间另有加成', en: '💡 Some visitor auras boost speed further during focus' },
   coinsGainLabel: { zh: '智慧之光获取', en: 'Wisdom Light Gain' },
   visitorFavorLabel: { zh: '访客好感', en: 'Visitor Favor' },
+  // 好感阶段可视化（2026-10-17，档位对齐 ADR-FAVOR-001 叙事阈值 120/280/560/600）
+  favorStage0: { zh: '初识', en: 'Acquaintance' },
+  favorStage1: { zh: '熟识', en: 'Familiar' },
+  favorStage2: { zh: '挚友', en: 'Close Friend' },
+  favorStage3: { zh: '知心', en: 'Confidant' },
+  favorNextHint: { zh: '距{stage}还需 {n}', en: '{n} to {stage}' },
+  favorMaxTag: { zh: 'MAX', en: 'MAX' },
+  favorRosterTitle: { zh: '📖 熟客名册', en: '📖 Regulars' },
+  favorRosterHint: { zh: '在馆与访客互动可提升好感；好感达阈值会解锁各角色的专属事件。', en: 'Interact with visitors in the library to raise favor; thresholds unlock each character\'s exclusive events.' },
+  favorRosterUnknown: { zh: '？？？', en: '???' },
   baseline: { zh: '基准', en: 'Baseline' },
 
   // ========== 馆史档案子标签 ==========
