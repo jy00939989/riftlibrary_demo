@@ -248,6 +248,10 @@ const TERM_DATA = Object.freeze({
   festivalSignboardLabel: { zh: '活动限定', en: 'Event Exclusive' },
   cafeRecipeMooncakeTea: { zh: '桂花月饼茶', en: 'Osmanthus Mooncake Tea' },
   diaryFestivalGift: { zh: '🌕 {title}——图书馆挂起了圆月灯，墨墨把一份节日礼物推到你手边：智慧之光、灵感、三样种子，还有一块中秋纪念牌。她说，月亮圆的时候，读书人的笔也会格外稳。', en: '🌕 {title} — the library hung moon lanterns. Momo nudged a festival gift your way: coins, inspiration, three kinds of seeds, and a Mid-Autumn plaque. "The pen writes steadier under a full moon," she says.' },
+  // 2026-10-17 bug 修补补偿 + 10 月礼物（登录自动领，图南指示）
+  festivalOctGiftTitle: { zh: 'Bug 修补补偿 · 10 月礼物', en: 'Bug Fix Compensation · October Gift' },
+  festivalOctGiftDesc: { zh: '这段时间馆里修补了不少 bug，这是给每一位读者的补偿，也是 10 月的小礼物。10 月守护者要闭关备考，不会有大更新；11 月，位面会重建——敬请期待。', en: 'We have patched quite a few bugs lately. This is compensation for every reader — and a small October gift. The keeper is busy with exams this month, so no big updates; in November, the planes will be rebuilt. Stay tuned.' },
+  diaryOctGift: { zh: '🍂 墨墨把一份谢礼推到你手边——bug 修补的补偿，外加 10 月的小礼物。她说，守护者这个月要闭关备考，馆里会安静些；等 11 月的钟声敲响，位面会重建，门后会有新的世界。', en: '🍂 Momo nudged a thank-you gift your way — compensation for the bug fixes, plus a small October gift. The keeper is busy with exams this month, she says; when November bells ring, the planes will be rebuilt, and new worlds will wait behind the doors.' },
   evtMidAutumn: { zh: '中秋节', en: 'Mid-Autumn Festival' },
   evtNationalDay: { zh: '国庆节', en: 'National Day' },
   evtMidAutumnNationalBanner: { zh: '中秋 · 国庆 双节同庆', en: 'Mid-Autumn & National Day' },

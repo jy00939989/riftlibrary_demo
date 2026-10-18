@@ -124,5 +124,28 @@ assert(getMonthBanner(new RealDate('2026-10-08T12:00:00'))?.id === 'midautumn_na
 assert(getMonthBanner(new RealDate('2026-10-09T12:00:00')) === null, '10/9 横幅已结束');
 assert(getMonthBanner(new RealDate('2026-04-10T12:00:00'))?.id === 'book_suzhou_month', '4 月整月横幅旧行为不破');
 
+console.log('\n[6] 10 月修补补偿礼（2026-10-17 图南指示：自动领、无兑换码、数额减半）');
+assert(isFestivalActive('octoberGift2026', at(10, 16, 23)) === false, '10/16 窗口外');
+assert(isFestivalActive('octoberGift2026', at(10, 17, 0)) === true, '10/17 零点开窗');
+assert(isFestivalActive('octoberGift2026', at(10, 31, 23)) === true, '10/31 收官日仍内');
+assert(isFestivalActive('octoberGift2026', at(11, 1, 0)) === false, '11/1 窗口外');
+const OG = FESTIVALS.octoberGift2026;
+assert(OG.diaryKey === 'diaryOctGift', '独立日记词条键');
+assert(!OG.universalCode && !OG.giftRewards.signboards, '无兑换码、无纪念牌（纯自动领）');
+assert(OG.giftRewards.coins === 250 && OG.giftRewards.inspiration === 2, '数额减半：250 币 / 灵感 2');
+
+const coinsBeforeOct = state.coins;
+const grantedOct = festival.checkFestivalGifts(at(10, 20));
+assert(grantedOct.length === 1 && grantedOct[0].key === 'octoberGift2026', '10/20 发放一次');
+assert(state.eventClaims?.octoberGift2026 === at(10, 20), 'claim 标记落档');
+assert(state.coins === coinsBeforeOct + 250, '智慧之光 +250');
+assert(state.inventory?.brush_reed_pen === 1 && state.inventory?.brush_swan_quill === 1, '芦苇笔/天鹅翎管各 ×1');
+assert(state.inventory?.favor_note_targeted === 1 && state.inventory?.favor_note_random === 1, '心意/随机便签各 ×1');
+const coinsAfterOct = state.coins;
+festival.checkFestivalGifts(at(10, 21));
+assert(state.coins === coinsAfterOct, '重复调用不重复发放（幂等）');
+const diaryOct = (state.diaryLogs || []).find(e => (e.text || '').includes('10 月的小礼物'));
+assert(!!diaryOct, '墨墨日记写入 10 月礼条目');
+
 console.log(`\n========== 结果: ${pass} 通过, ${fail} 失败 ==========`);
 process.exit(fail > 0 ? 1 : 0);

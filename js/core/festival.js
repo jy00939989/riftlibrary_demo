@@ -22,7 +22,7 @@ export function checkFestivalGifts(now = (typeof window !== 'undefined' && windo
     applyRedeemRewards(fest.giftRewards, 'festival');
     state.eventClaims[key] = now;
     addDiaryEntry('special_event', {
-      detail: t('diaryFestivalGift').replace('{title}', t(fest.titleKey))
+      detail: t(fest.diaryKey || 'diaryFestivalGift').replace('{title}', t(fest.titleKey))
     });
     saveState();
     granted.push(fest);

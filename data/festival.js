@@ -31,6 +31,29 @@ export const FESTIVALS = {
     // 通用兑换码（C 方案：社媒传播用；SQL 见 scripts/midautumn-2026-code-insert.sql，待图南执行）
     universalCode: 'GIFT-MOON-2026-NATL',
     universalCodeRewards: { coins: 200, inspiration: 5 }
+  },
+  // 2026-10-17 图南指示：bug 修补补偿 + 10 月礼物（登录自动领，无兑换码）。
+  // 背景：①M5 密钥迁移期间云端同步故障；②菜根谭事件（损坏扣字挖穿已完成周期，
+  //       commit e624026 已修根因）。10 月考试季无大更新，11 月位面重建——文案带预告。
+  // 数额按 10-17 指示减半（原拟 500 币/灵感 5/笔 5 支/便签 4）。
+  octoberGift2026: {
+    key: 'octoberGift2026',
+    titleKey: 'festivalOctGiftTitle',
+    descKey: 'festivalOctGiftDesc',
+    diaryKey: 'diaryOctGift',
+    emoji: '🍂',
+    start: { month: 10, day: 17 },
+    end: { month: 10, day: 31 },
+    giftRewards: {
+      coins: 250,
+      inspiration: 2,
+      items: {
+        brush_reed_pen: 1,
+        brush_swan_quill: 1,
+        favor_note_targeted: 1,
+        favor_note_random: 1
+      }
+    }
   }
 };
 
