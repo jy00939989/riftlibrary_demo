@@ -113,7 +113,7 @@ export const IMPROVE_TIERS = [
 // 浇水工具（喷壶）：1 次浇水按档位泼溅多盆。
 //   Lv3 大容量喷壶（2026-10-17 图南加档并拍板水量口径）：1 次浇 3 盆各全额——总水量 3 份，
 //   泼溅自此放量（9-21「总成长恒 ≤2 份」不变式同日作废，扩盆同时赚操作与产量）。
-//   Lv4 花洒：全部活盆均分 3 份——满架温室的总闸，盆再多一键均匀浇透。
+//   Lv4 花洒：全部活盆均分 4 份——满架温室的总闸，盆再多一键均匀浇透（图南 10-17 拍板 4 份）。
 export const WATERING_CANS = [
   {
     level: 1, id: 'watering_can', nameKey: 'canWatering', emoji: '💧', price: 0,
@@ -132,8 +132,8 @@ export const WATERING_CANS = [
   },
   {
     level: 4, id: 'sprinkler_can', nameKey: 'canSprinkler', emoji: '🌧️', price: 2000,
-    splash: Infinity, perPotShare: null, // null = 总 3 份均分（见 totalShares）
-    totalShares: 3,
+    splash: Infinity, perPotShare: null, // null = 总 4 份均分（见 totalShares）
+    totalShares: 4,
     descKey: 'canSprinklerDesc'
   }
 ];

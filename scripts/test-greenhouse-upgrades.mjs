@@ -135,7 +135,7 @@ state.plants[0].growthProgress = 0;
 r = plants.waterPlant(0);
 assert(r.watered.length === 1 && state.plants[0].growthProgress === 25, '1 盆时同浇水壶（全额）');
 
-console.log('\n[4b] 喷壶 Lv4 花洒：1 水浇全部活盆，总 3 份均分');
+console.log('\n[4b] 喷壶 Lv4 花洒：1 水浇全部活盆，总 4 份均分');
 state.wateringCanLevel = 4;
 state.water = 1;
 plantDirect(0, 'bird_of_paradise', 1, 0);
@@ -144,14 +144,14 @@ plantDirect(2, 'bird_of_paradise', 1, 0);
 plantDirect(3, 'bird_of_paradise', 1, 0);
 r = plants.waterPlant(0);
 assert(r.ok && r.watered.length === 4, '一瓢浇全部 4 盆');
-const perPot = Math.round(25 * 3 / 4);
-assert(state.plants.every(p => p.growthProgress === perPot), `每盆均分 3 份（+${perPot}）`);
+const perPot = Math.round(25 * 4 / 4);
+assert(state.plants.every(p => p.growthProgress === perPot), `每盆均分 4 份（+${perPot}）`);
 assert(state.water === 0, '全局池只扣 1');
-// 3 盆时各全额 1 份
+// 3 盆时各 4/3 份（round(33.3)=33）
 state.water = 1;
 state.plants[3] = { ...EMPTY_PLANT };
 r = plants.waterPlant(0);
-assert(r.watered.length === 3 && state.plants.slice(0, 3).every(p => p.growthProgress === perPot + 25), '3 盆时各得全额（25）');
+assert(r.watered.length === 3 && state.plants.slice(0, 3).every(p => p.growthProgress === perPot + Math.round(25 * 4 / 3)), '3 盆时各得 4/3 份（25+33）');
 
 console.log('\n[5] 储水设施：专注档位（番茄钟产水不变，长专注多得）');
 state.waterTankLevel = 1;

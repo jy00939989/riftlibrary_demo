@@ -1078,7 +1078,7 @@ const TERM_DATA = Object.freeze({
   canLarge: { zh: '大容量喷壶', en: 'High-Capacity Can' },
   canLargeDesc: { zh: '1 次浇水浇 3 盆：你点的那盆 + 最缺水的两盆，各得 1 份全额成长——总水量 3 份，同样一次专注攒的水，养出更多绿意。', en: 'One charge waters 3 pots: the tapped pot plus the two thirstiest, each a full share — 3 shares per splash, so the same focus-earned water grows much more.' },
   canSprinkler: { zh: '花洒', en: 'Sprinkler Can' },
-  canSprinklerDesc: { zh: '1 次浇水遍及全部活盆，3 份成长均分——盆再多也是一键均匀浇透。满架温室的最佳拍档：操作最省，株株不偏心。', en: 'One charge reaches every active pot, 3 shares split evenly — one tap soaks all, however many pots. The full-greenhouse partner: least effort, no pot left thirsty.' },
+  canSprinklerDesc: { zh: '1 次浇水遍及全部活盆，4 份成长均分——盆再多也是一键均匀浇透。满架温室的最佳拍档：操作最省，株株不偏心。', en: 'One charge reaches every active pot, 4 shares split evenly — one tap soaks all, however many pots. The full-greenhouse partner: least effort, no pot left thirsty.' },
   tankClayJar: { zh: '陶罐', en: 'Clay Jar' },
   tankClayJarDesc: { zh: '专注的基础回水——每次专注 ≥20 分钟 +1 次浇水机会（不足 20 分钟无）；离线不蓄水。', en: 'Base refill — each focus session ≥20 min earns +1 charge (none under 20 min); no offline storage.' },
   tankCopper: { zh: '铜水箱', en: 'Copper Tank' },

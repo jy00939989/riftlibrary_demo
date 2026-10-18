@@ -287,7 +287,7 @@ export function getSplashTargets(potIndex = 0) {
   return [potIndex, ...rest].slice(0, can.splash);
 }
 
-// 每盆成长份额（Lv1/Lv2/Lv3 各全额；Lv4 花洒总 3 份均分——图南 10-17 拍板水量口径 3 份）
+// 每盆成长份额（Lv1/Lv2/Lv3 各全额；Lv4 花洒总 4 份均分——图南 10-17 拍板水量口径（大容量 3 份、花洒 4 份））
 function getPerPotShare(targetCount) {
   const can = getCanDef();
   if (can.perPotShare != null) return can.perPotShare;
