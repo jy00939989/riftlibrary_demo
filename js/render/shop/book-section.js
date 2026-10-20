@@ -15,6 +15,19 @@ export function renderBookSection(title, slots, isRotating) {
   const section = el('div', 'parchment-bg rounded-2xl p-6 magic-glow');
   section.innerHTML = `<h2 class="font-display text-xl font-bold mb-4">${title}</h2>`;
 
+  // 特价区池底态（2026-10-20 玩家反馈）：普通池买空（含 DLC 锁定/典藏合成消耗）后
+  // 旋转档位无书可刷，裸留白会被当成 bug——给出解释并指路补充包/新书区。
+  if (isRotating) {
+    const displayable = slots.filter(s => s && s.bookId && SHARED_POOL.some(b => b.bookId === s.bookId));
+    if (displayable.length === 0) {
+      section.appendChild(el('div', 'bg-wood/5 rounded-xl p-6 border-2 border-dashed border-wood/20 text-center', {
+        html: `<div class="font-bold text-ink-light mb-1">${t('shopPoolEmptyTitle')}</div>
+               <div class="text-xs text-ink-light/80 leading-relaxed">${t('shopPoolEmptyHint')}</div>`
+      }));
+      return section;
+    }
+  }
+
   const grid = el('div', 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3');
 
   slots.forEach(slot => {

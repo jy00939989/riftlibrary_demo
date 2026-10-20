@@ -919,6 +919,9 @@ const TERM_DATA = Object.freeze({
   openPortal: { zh: '开启传送门', en: 'Open Portal' },
   inPlanning: { zh: '规划中…', en: 'Coming soon…' },
   newBooksRestocking: { zh: '新书上架中…', en: 'Restocking…' },
+  // 特价区池底态（2026-10-20 玩家反馈：普通池买空后特价区裸留白，误以为 bug）
+  shopPoolEmptyTitle: { zh: '📭 特价书架暂时空了', en: '📭 The sale shelf is empty' },
+  shopPoolEmptyHint: { zh: '普通书库的特价书都被你买走啦。解锁上方的书籍补充包可补充货源，或去「新书上架」看看剩下的存货。', en: "You've bought out the discounted stock. Unlock a book pack above to restock, or browse what's left in New Books." },
   free: { zh: '免费', en: 'Free' },
   confirmPurchase: { zh: '确认购买', en: 'Confirm Purchase' },
   purchaseFailed: { zh: '购买失败，请稍后再试。', en: 'Purchase failed. Please try again later.' },
