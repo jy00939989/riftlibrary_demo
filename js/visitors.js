@@ -690,9 +690,8 @@ function getNow() {
   return window.__dev && window.__dev.getNow ? window.__dev.getNow() : Date.now();
 }
 
-const ALL_VISITOR_IDS = Object.keys(VISITOR_DEFS);
+// ========== 好感度上限与叙事阈值（ADR-FAVOR-001） ==========
 
-// 好感度上限与叙事阈值（ADR-FAVOR-001）
 const FAVOR_CAP = 600;
 export { FAVOR_CAP };
 export const FAVOR_THRESHOLDS = {
@@ -724,13 +723,10 @@ export function getFavorStage(favor) {
 }
 
 function addVisitorFavor(charId, amount) {
-  if (!state.visitorFavors) {
-    state.visitorFavors = {};
-    ALL_VISITOR_IDS.forEach(id => { state.visitorFavors[id] = 0; });
-  }
-  if (state.visitorFavors[charId] !== undefined) {
-    state.visitorFavors[charId] = Math.min(FAVOR_CAP, state.visitorFavors[charId] + amount);
-  }
+  // 2026-10-19 热修：缺失键直接创建（旧守卫 !== undefined 会把新档的日常好感全部静默丢弃，
+  // 唯一例外是 redeem.js 的便签路径会自己建键——这正是「只有谷雨显示」的根因）。
+  if (!state.visitorFavors) state.visitorFavors = {};
+  state.visitorFavors[charId] = Math.min(FAVOR_CAP, (state.visitorFavors[charId] || 0) + amount);
 }
 
 // ========== 访客刷新加权（ADR-FAVOR-001） ==========

@@ -120,6 +120,45 @@ test('M4 无叙事记录的角色不动', () => {
   assertEq(state.visitorFavors.peizhou, 33, '无铁证不抬');
 });
 
+// ── 常层铁证阶梯（2026-10-20 图南拍板）：每条常层 ×12，封顶 100 ──
+// 背景：5-27 起拒建键 bug 使偶层以上事件全档从未触发，旧阶梯无凭可捞；
+// 常层事件（还书 40% 触发）是唯一幸存历史记录：每条 ≈ 2.5 次还书 × 5 好感 ≈ 12。
+
+function freshCommonNarratives() {
+  state.visitorFavors = { guyu: 48, jiangyoushu: 0, xierugui: 0, wangxiaolei: 0, peizhou: 0, shenmingyuan: 0 };
+  state.visitorNarratives = {
+    jiangyoushu: { commonTriggered: ['a1','a2','a3','a4','a5'] },
+    xierugui: { commonTriggered: ['x1'] },
+    wangxiaolei: { commonTriggered: Array.from({length: 9}, (_, i) => `w${i}`) },
+    peizhou: { commonTriggered: ['p1','p2'], occasionalCompleted: ['e1'] },
+    shenmingyuan: { commonTriggered: ['s1','s2','s3','s4'] }
+  };
+}
+
+test('M5 常层铁证：条数 ×12，封顶 100', () => {
+  freshCommonNarratives();
+  runMigrations();
+  assertEq(state.visitorFavors.jiangyoushu, 60, '5 条常层 → 60');
+  assertEq(state.visitorFavors.xierugui, 12, '1 条常层 → 12');
+  assertEq(state.visitorFavors.wangxiaolei, 100, '9 条 ×12=108 → 封顶 100');
+});
+
+test('M6 常层与现值/高阶铁证取最大', () => {
+  freshCommonNarratives();
+  runMigrations();
+  assertEq(state.visitorFavors.guyu, 48, '便签现值 48 > 常层证明 24 → 不压');
+  assertEq(state.visitorFavors.peizhou, 120, '偶层铁证 120 压过常层 24');
+  assertEq(state.visitorFavors.shenmingyuan, 48, '4 条常层 → 48');
+});
+
+test('M7 常层回填幂等', () => {
+  freshCommonNarratives();
+  runMigrations();
+  const snapshot = JSON.stringify(state.visitorFavors);
+  runMigrations();
+  assertEq(JSON.stringify(state.visitorFavors), snapshot, '二次迁移不漂移');
+});
+
 console.log(`\nfavor-stages：${passed} 通过, ${failed} 失败`);
 if (failed > 0) {
   failures.forEach(f => console.error('  ✗ ' + f));

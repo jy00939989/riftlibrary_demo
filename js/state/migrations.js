@@ -285,33 +285,9 @@ function migrateV1() {
     }
   });
 
-  // 旧存档迁移：visitorFavors（旧版 4 人 → 新版 10 人）
-  if (!state.visitorFavors) {
-    state.visitorFavors = {
-      shenmingyuan: 0, chengyuan: 0, peizhou: 0, jianan: 0, jiangyoushu: 0,
-      guyu: 0, qiaoyiyi: 0, xierugui: 0, xiachan: 0, wangxiaolei: 0
-    };
-  } else {
-    const ALL_IDS = ['shenmingyuan','chengyuan','peizhou','jianan','jiangyoushu','guyu','qiaoyiyi','xierugui','xiachan','wangxiaolei'];
-    ALL_IDS.forEach(id => {
-      if (state.visitorFavors[id] === undefined) state.visitorFavors[id] = 0;
-    });
-  }
-
-  // 2026-10-17 好感追溯回填（铁证版，图南拍板）：叙事事件是历史好感的铁证——
-  // 偶层完成过 → 曾达 120，稀层触发过 → 曾达 280，终局后触发过 → 曾达 560
-  //（阈值对齐 ADR-FAVOR-001 / visitors.js FAVOR_THRESHOLDS）。全局好感只增不减，
-  // 「触发过 = 永远拥有」，取当前值与证明值的最大者：只抬不压、零通胀、天然幂等。
-  if (state.visitorNarratives && state.visitorFavors) {
-    Object.entries(state.visitorNarratives).forEach(([charId, ns]) => {
-      if (!ns || state.visitorFavors[charId] === undefined) return;
-      let floor = 0;
-      if ((ns.occasionalCompleted || []).length > 0 || (ns.postRareOccasionalCompleted || []).length > 0) floor = 120;
-      if (ns.rareTriggered) floor = 280;
-      if (ns.postRareTriggered) floor = 560;
-      if (floor > state.visitorFavors[charId]) state.visitorFavors[charId] = floor;
-    });
-  }
+  // visitorFavors 归一化与好感铁证回填已移出 migrateV1（2026-10-19 热修）：
+  // 版本 ≥1 的存档永远不会重跑 v1，补丁关在里面等于对真实存档失效。
+  // 现由 initState 每次加载后无条件调用 normalizeVisitorFavors()（幂等）。
 
   // 旧存档迁移：visitorNarratives
   if (!state.visitorNarratives || Object.keys(state.visitorNarratives).length === 0) {
@@ -622,12 +598,47 @@ function migrateBookProgressFromCopiedWords() {
 
 // ========== 公开 API ==========
 
+// visitorFavors 全集（与 VISITOR_DEFS 对齐；migrations 不能 import visitors.js，故此处硬编码）
+const VISITOR_FAVOR_ALL_IDS = ['shenmingyuan','chengyuan','peizhou','jianan','jiangyoushu','guyu','qiaoyiyi','xierugui','xiachan','wangxiaolei'];
+
+/**
+ * visitorFavors 归一化 + 好感铁证回填（2026-10-19 热修：从 migrateV1 移出，改为每次加载无条件运行）。
+ * ① 补缺失键：新档默认 {} 无键，而 addVisitorFavor 旧守卫拒绝建键，导致日常好感全丢、名册只剩便签建过键的角色；
+ * ② 铁证回填（图南 2026-10-17 拍板）：叙事事件是历史好感铁证——偶层完成过→120，稀层触发过→280，
+ *    终局后触发过→560。取当前值与证明值的最大者：只抬不压、零通胀、天然幂等。
+ * ③ 常层铁证（图南 2026-10-20 拍板，补 10-17 阶梯最低档）：5-27 起 addVisitorFavor 拒建键 bug 导致
+ *    偶层以上事件从未有人触发过，旧阶梯无凭可捞；常层事件（还书 40% 触发）是全档唯一幸存的历史记录。
+ *    每条常层 ≈ 2.5 次还书 × 5 好感 ≈ 12，封顶 100——留 20 分让玩家自己冲偶层门槛 120。
+ * 必须幂等：同一存档每次加载运行结果相同。
+ */
+export function normalizeVisitorFavors() {
+  if (!state.visitorFavors || typeof state.visitorFavors !== 'object') state.visitorFavors = {};
+  VISITOR_FAVOR_ALL_IDS.forEach(id => {
+    if (state.visitorFavors[id] === undefined) state.visitorFavors[id] = 0;
+  });
+
+  if (state.visitorNarratives) {
+    Object.entries(state.visitorNarratives).forEach(([charId, ns]) => {
+      if (!ns || state.visitorFavors[charId] === undefined) return;
+      let floor = 0;
+      const commonCount = (ns.commonTriggered || []).length;
+      if (commonCount > 0) floor = Math.min(commonCount * 12, 100);
+      if ((ns.occasionalCompleted || []).length > 0 || (ns.postRareOccasionalCompleted || []).length > 0) floor = 120;
+      if (ns.rareTriggered) floor = 280;
+      if (ns.postRareTriggered) floor = 560;
+      if (floor > state.visitorFavors[charId]) state.visitorFavors[charId] = floor;
+    });
+  }
+}
+
 export function runMigrations() {
   const currentVersion = state._schemaVersion || 0;
   for (let i = currentVersion; i < MIGRATIONS.length; i++) {
     MIGRATIONS[i].up();
     state._schemaVersion = MIGRATIONS[i].version;
   }
+  // 归一化不在任何版本门内：每次迁移链收尾都跑（幂等），直接调用 runMigrations 的路径同样受益。
+  normalizeVisitorFavors();
 }
 
 export function initState() {
@@ -636,6 +647,7 @@ export function initState() {
     try {
       Object.assign(state, saved);
       runMigrations();
+      normalizeVisitorFavors();
       migrateBookProgressFromCopiedWords();
       saveState();
       return true;
