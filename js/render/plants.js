@@ -286,15 +286,14 @@ function renderPotUnlockCard() {
 }
 
 // 浇水按钮文案（温室页与位面商店装潢页共用；喷壶档位决定文案，2026-09-21）
-export function getWaterButtonLabel(def, potIndex = 0) {
+// 2026-10-23 图南拍板：不显示成长值数值——预览数字口径维护成本高
+// （9-21 旧公式残留过一次失真），档位文案（×N盆/全盆）已足够表达泼溅范围。
+export function getWaterButtonLabel() {
   const canLv = getWateringCanLevel();
   if (canLv === 2) return t('waterSplashTwo');
-  if (canLv === 3) {
-    const activeCount = Math.max(1, getSplashTargets(potIndex).length);
-    const per = Math.max(1, Math.round(def.waterGrowth * 2 / activeCount));
-    return t('waterSplashAll').replace('{per}', per);
-  }
-  return `${t('water')} ${t('waterGrowth').replace('{value}', def.waterGrowth)}`;
+  if (canLv === 3) return t('waterSplashThree');
+  if (canLv === 4) return t('waterSplashAll');
+  return t('water');
 }
 
 // 单盆卡：空盆 → 引导提示；活盆 → 立绘/进度/操作（交互与单株时代一致，仅索引化）
@@ -368,7 +367,7 @@ function renderPotCard(plant, potIndex) {
   } else {
     // 浇水按钮（喷壶档位决定泼溅范围，2026-09-21）
     const canWaterNow = canWater(potIndex);
-    const waterLabel = getWaterButtonLabel(def, potIndex);
+    const waterLabel = getWaterButtonLabel();
     const waterBtn = document.createElement('button');
     waterBtn.className = `px-3 py-2 bg-blue-500 text-white rounded-lg text-sm font-bold hover:shadow-lg transition-all ${!canWaterNow ? 'opacity-50 cursor-not-allowed' : ''}`;
     waterBtn.disabled = !canWaterNow;

@@ -3,7 +3,7 @@ export { setActions, updateStatusBar, getBookTitle, getChapterTitle, getBookAuth
 export { formatTime, updateTimerDisplay } from './common.js';
 export { renderFocusPage, showCompletionCard, showActionCards, updateRepairBarLive } from './focus.js';
 export { renderBookshelfPage, showMasteryDetail } from './bookshelf.js';
-export { renderVisitorsPage, showVisitorEventModal } from './visitors.js';
+export { renderVisitorsPage, showVisitorEventModal, showCollectAllModal } from './visitors.js';
 export { renderLibraryPage } from './library.js';
 export { renderArchivePage } from './archive.js';
 export { renderExhibitionPage } from './exhibition.js';

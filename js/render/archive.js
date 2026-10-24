@@ -265,6 +265,22 @@ function renderDiaryTab() {
 
 // ========== 访客纪念 ==========
 
+// 便签底图（2026-10-23 图南：便签用图片底，不要长条）
+// scripts/gen-note-bg.py 生成的纸感底图；按访客性格取底，未映射的轮转
+const NOTE_BGS = ['note_sticky', 'note_paper', 'note_kraft'];
+const NOTE_BG_BY_CHAR = {
+  shenmingyuan: 'note_paper',   // 稿纸
+  jiangyoushu: 'note_paper',    // 笔记本
+  jianan: 'note_paper',         // 公文纸
+  guyu: 'note_paper',           // 撕边笔记本
+  xierugui: 'note_paper',       // 奶白纸
+  chengyuan: 'note_sticky',     // 便利贴
+  xiachan: 'note_sticky',       // 亮粉纸
+  qiaoyiyi: 'note_sticky',      // 水彩纸
+  peizhou: 'note_kraft',        // 收据
+  wangxiaolei: 'note_kraft'     // 牛皮纸板
+};
+
 function renderVisitorMemoryTab() {
   const div = document.createElement('div');
 
@@ -316,6 +332,8 @@ function renderVisitorMemoryTab() {
       const charTotal = (stats.perChar.find(p => p.charId === g.charId) || {}).total || 0;
       const items = [...g.notes, ...g.events].sort((a, b) => b.lastSeen - a.lastSeen);
 
+      // 便签墙布局（2026-10-23）：CSS 多栏瀑布流，便签图片底 + 轻微旋转 + 角色字体配色，
+      // 事件卡保持素底小卡混入同一面墙
       html += `
         <div class="parchment-bg rounded-2xl p-4 mb-4 magic-glow visitor-memory-group" data-char="${g.charId}">
           <div class="flex items-center justify-between mb-3 pb-2 border-b border-wood/20">
@@ -328,19 +346,27 @@ function renderVisitorMemoryTab() {
             </div>
             <div class="text-sm font-bold text-magic-blue">${g.count}/${charTotal}</div>
           </div>
-          <div class="space-y-2">
+          <div class="columns-2 md:columns-3 gap-3">
       `;
 
       items.forEach(item => {
         const title = getVisitorItemTitle(item);
         const text = getVisitorItemText(item);
         const rarityLabel = item.rarity ? t(`vmRarity${item.rarity.charAt(0).toUpperCase() + item.rarity.slice(1).replace(/-([a-z])/g, (_, c) => c.toUpperCase())}`) : '';
+        const isNote = item.kind === 'note';
+        // uid 哈希决定旋转角与兜底底图：同一便签永远长一个样
+        const uidHash = [...item.uid].reduce((s, c) => s + c.charCodeAt(0), 0);
+        const rot = ((uidHash % 23) / 10 - 1.1).toFixed(2);
+        const noteBg = NOTE_BG_BY_CHAR[g.charId] || NOTE_BGS[uidHash % NOTE_BGS.length];
+        const inlineStyle = isNote
+          ? ` style="background-image:url('visual/notes/${noteBg}.jpg');transform:rotate(${rot}deg);"`
+          : '';
         html += `
-          <div class="vm-item relative bg-white/60 rounded-lg p-3 cursor-pointer hover:bg-white transition-colors ${item.isNew ? 'ring-1 ring-magic-gold/40' : ''}" data-uid="${item.uid}" data-kind="${item.kind}">
+          <div class="vm-item relative rounded-md p-3 mb-3 break-inside-avoid cursor-pointer transition-shadow hover:shadow-lg ${isNote ? `bg-cover shadow-md visitor-note-${g.charId}` : 'bg-white/60 hover:bg-white'} ${item.isNew ? 'ring-1 ring-magic-gold/40' : ''}" data-uid="${item.uid}" data-kind="${item.kind}"${inlineStyle}>
             ${item.isNew ? `<span class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">${t('vmNew')}</span>` : ''}
             <div class="flex items-center gap-2 mb-1">
-              <span class="text-xs font-bold px-1.5 py-0.5 rounded ${item.kind === 'note' ? 'bg-wood/20 text-ink' : 'bg-magic-gold/20 text-magic-gold'}">${item.kind === 'note' ? t('vmKindNote') : t('vmKindEvent')}</span>
-              ${rarityLabel ? `<span class="text-xs px-1.5 py-0.5 rounded bg-purple-100 text-purple-700">${rarityLabel}</span>` : ''}
+              <span class="text-xs font-bold px-1.5 py-0.5 rounded ${isNote ? 'bg-black/10 text-ink' : 'bg-magic-gold/20 text-magic-gold'}">${isNote ? t('vmKindNote') : t('vmKindEvent')}</span>
+              ${rarityLabel ? `<span class="text-xs px-1.5 py-0.5 rounded bg-purple-100/80 text-purple-700">${rarityLabel}</span>` : ''}
             </div>
             ${title ? `<div class="font-bold text-sm text-ink mb-1">${title}</div>` : ''}
             <div class="text-sm text-ink-light whitespace-pre-line">${text}</div>

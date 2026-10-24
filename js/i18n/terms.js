@@ -265,6 +265,13 @@ const TERM_DATA = Object.freeze({
   evtMidAutumn: { zh: '中秋节', en: 'Mid-Autumn Festival' },
   evtNationalDay: { zh: '国庆节', en: 'National Day' },
   evtMidAutumnNationalBanner: { zh: '中秋 · 国庆 双节同庆', en: 'Mid-Autumn & National Day' },
+  // 2026-10-22 哥特之夜（万圣周 10/28–11/3）：活动书限时上架
+  evtGothicNightBanner: { zh: '🎃 哥特之夜 · 《红字》《阿芒提拉多的酒桶》限时上架', en: '🎃 Gothic Nights — The Scarlet Letter & The Cask of Amontillado, limited time only' },
+  purchaseEventEnded: { zh: '这场活动的帷幕已经落下，这本书随夜色退场了。', en: 'The curtain has fallen on this event — the book withdrew with the night.' },
+  // 2026-10-23 访客中心改版：一键收书（借阅区 Lv3 解锁）
+  collectAllBtn: { zh: '一键收书（{n}）', en: 'Collect All ({n})' },
+  collectAllLocked: { zh: '一键收书 · 借阅区 Lv.{lv} 解锁', en: 'Collect All · Reading Area Lv.{lv}' },
+  collectAllSummary: { zh: '共收取 {books} 本 · {visitors} 位访客', en: '{books} books · {visitors} visitors' },
   tutorialGreenhouseDesc: { zh: '每一分钟专注都会变成一滴水。在这里种下植物，看它们从幼苗长到绽放。', en: 'Every minute of focus becomes a drop of water. Plant seeds here and watch them grow from sprouts to full bloom.' },
   tutorialGreenhouseWater: { zh: `💧 浇水 — 专注 ≥20 分钟 +1 次，全局累积，可浇任意一盆`, en: `💧 Watering — +1 per 20+ min focus, pooled globally, spendable on any pot` },
   tutorialGreenhouseFacilities: { zh: `🛠️ {facilities} — 喷壶一瓢浇多盆、水箱让长专注多得水、绿手指越种越熟`, en: `🛠️ {facilities} — better cans splash more pots, tanks reward long focus, green thumb grows with harvests` },
@@ -1099,7 +1106,8 @@ const TERM_DATA = Object.freeze({
   facilityCurrentLabel: { zh: '本级作用', en: 'Current Tier' },
   facilityNextLabel: { zh: '下级预览', en: 'Next Tier' },
   waterSplashTwo: { zh: '💧 浇水 ×2盆', en: '💧 Water ×2 pots' },
-  waterSplashAll: { zh: '🌧️ 花洒全盆 (+{per}/盆)', en: '🌧️ Splash all (+{per}/pot)' },
+  waterSplashThree: { zh: '🪣 大容量 ×3盆', en: '🪣 High-capacity ×3 pots' },
+  waterSplashAll: { zh: '🌧️ 花洒全盆', en: '🌧️ Splash all pots' },
   improvedBadge: { zh: '🧬 改良', en: '🧬 Improved' },
   perennialChanceHint: { zh: '多年生：收获后 {p}% 概率回落 Lv3 重长，否则凋谢', en: 'Perennial: {p}% chance to regrow from Lv3 after harvest' },
   harvestPerennialRegrow: { zh: '多年生萌发：回落 Lv3 继续生长', en: 'Perennial regrowth: falls back to Lv3 and keeps growing' },
