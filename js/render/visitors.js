@@ -3,7 +3,7 @@ import { state } from '../state.js';
 import { BOOKS } from '../../data/books.js';
 import { el, actions, getBookTitle } from './common.js';
 import { t } from '../i18n/terms.js';
-import { getBorrowLevelConfig, getVisitorCap, getVisitorDef, getDamageChance, getFavorStage, FAVOR_STAGES, VISITOR_DEFS } from '../visitors.js';
+import { getBorrowLevelConfig, getVisitorCap, getVisitorDef, getDamageChance, getFavorStage, FAVOR_STAGES, VISITOR_DEFS, COLLECT_ALL_UNLOCK_LEVEL } from '../visitors.js';
 
 function getVisitorBookTitle(bookId, fallback) {
   const book = bookId ? BOOKS[bookId] : null;
@@ -50,6 +50,18 @@ function renderFavorBar(charId, sessionFavor) {
   </div>`;
 }
 
+// 名册紧凑版好感条（2026-10-23）：格内只留 心+条+数值+档名，砍掉距下一档提示（页高杀手）
+function renderFavorBarCompact(charId) {
+  const st = getFavorStage(state.visitorFavors?.[charId] || 0);
+  const style = STAGE_STYLE[st.idx];
+  return `<div class="flex items-center gap-1 mt-0.5">
+    <span class="text-[10px] ${style.heartColor}">${style.heartEmoji}</span>
+    <span class="favor-bar flex-1"><span class="favor-bar-fill ${style.color}" style="width:${st.pct}%"></span></span>
+    <span class="text-[9px] font-bold ${style.heartColor}">${t(st.key)}</span>
+    <span class="text-[9px] text-ink-light">${st.favor}</span>
+  </div>`;
+}
+
 function calcProgress(visitor) {
   if (!visitor.borrowTime || !visitor.dueTime) return 0;
   const total = visitor.dueTime - visitor.borrowTime;
@@ -60,7 +72,7 @@ function calcProgress(visitor) {
 // ========== 访客立绘辅助 ==========
 
 function getVisitorPortrait(charId, emoji, size = 'sm') {
-  const sizes = { sm: 'w-10 h-10 text-lg', md: 'w-14 h-14 text-2xl', lg: 'w-20 h-20 text-4xl' };
+  const sizes = { xs: 'w-8 h-8 text-sm', sm: 'w-10 h-10 text-lg', md: 'w-14 h-14 text-2xl', lg: 'w-20 h-20 text-4xl' };
   const sizeClass = sizes[size] || sizes.sm;
   return `<img src="visual/visitors/${charId}.png"
     class="${sizeClass} rounded-lg object-cover flex-shrink-0"
@@ -180,7 +192,7 @@ export function renderVisitorsPage() {
   }
   card.appendChild(section1);
 
-  // --- 借出区 ---
+  // --- 借出区（2026-10-23 紧凑化：单行信息 + 细进度条）---
   const section2 = el('div', 'mb-6');
   section2.innerHTML = `<h3 class="font-bold text-sm text-ink-light mb-2">📤 已借出（${borrowed.length}本）</h3>`;
   if (borrowed.length === 0) {
@@ -189,15 +201,15 @@ export function renderVisitorsPage() {
     borrowed.forEach(v => {
       const pct = calcProgress(v);
       const tl = timeLeft(v.dueTime);
-      const row = el('div', 'flex items-center gap-3 bg-white/60 rounded-lg p-3 mb-2');
-      row.innerHTML = `<span class="text-2xl">${v.emoji}</span>
+      const row = el('div', 'flex items-center gap-2 bg-white/60 rounded-lg p-2 mb-1.5');
+      row.innerHTML = `<span class="text-lg">${v.emoji}</span>
         <div class="flex-1 min-w-0">
-          <div class="flex items-center justify-between">
-            <span class="font-bold text-sm">${v.name}</span>
-            <span class="text-xs text-magic-blue">⏰ ${tl.text}</span>
+          <div class="flex items-center justify-between gap-2">
+            <span class="font-bold text-xs truncate">${v.name}</span>
+            <span class="text-[11px] text-magic-blue flex-shrink-0">⏰ ${tl.text}</span>
           </div>
-          <div class="text-xs text-ink-light truncate">${(v.bookIds && v.bookIds.length ? v.bookIds : [v.bookId]).filter(Boolean).map(id => `《${getVisitorBookTitle(id, '')}》`).join('')}</div>
-          <div class="mt-1.5 h-1.5 bg-wood/10 rounded-full overflow-hidden">
+          <div class="text-[11px] text-ink-light truncate">${(v.bookIds && v.bookIds.length ? v.bookIds : [v.bookId]).filter(Boolean).map(id => `《${getVisitorBookTitle(id, '')}》`).join('')}</div>
+          <div class="mt-1 h-1 bg-wood/10 rounded-full overflow-hidden">
             <div class="h-full rounded-full transition-all duration-[2000ms] ${pct > 80 ? 'bg-magic-gold' : 'bg-magic-blue'}" style="width:${pct}%"></div>
           </div>
         </div>`;
@@ -206,12 +218,40 @@ export function renderVisitorsPage() {
   }
   card.appendChild(section2);
 
-  // --- 待收取区 ---
+  // --- 待收取区（2026-10-23 加一键收书：借阅区 Lv3 解锁）---
   const section3 = el('div', 'mb-4');
-  section3.innerHTML = `<h3 class="font-bold text-sm text-ink-light mb-2">📥 待收取（${due.length}本）</h3>`;
+  section3.innerHTML = `<div class="flex items-center justify-between mb-2">
+      <h3 class="font-bold text-sm text-ink-light">📥 待收取（${due.length}本）</h3>
+      <span class="collect-all-slot"></span>
+    </div>`;
   if (due.length === 0) {
     section3.appendChild(el('div', 'text-sm text-ink-light py-4 text-center border border-dashed border-wood/30 rounded-lg', { text: '暂无待收取书籍' }));
   } else {
+    // 一键收书按钮（≥2 本才显示；单本用行内按钮即可）
+    if (due.length >= 2) {
+      const slot = section3.querySelector('.collect-all-slot');
+      const canUnlock = blv >= COLLECT_ALL_UNLOCK_LEVEL;
+      const collectAllBtn = el('button', `px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${canUnlock ? 'bg-magic-gold text-white hover:shadow-lg' : 'bg-wood/10 text-ink-light/50 cursor-not-allowed'}`);
+      collectAllBtn.textContent = canUnlock
+        ? `📥 ${t('collectAllBtn').replace('{n}', due.length)}`
+        : `🔒 ${t('collectAllLocked').replace('{lv}', COLLECT_ALL_UNLOCK_LEVEL)}`;
+      if (canUnlock) {
+        collectAllBtn.addEventListener('click', () => {
+          const results = [];
+          due.forEach(v => {
+            const r = actions.collectReturn(v.id);
+            if (r) results.push(r);
+          });
+          if (results.length > 0) {
+            showCollectAllModal(results, () => renderVisitorsPage());
+          } else {
+            renderVisitorsPage();
+          }
+        });
+      }
+      slot.appendChild(collectAllBtn);
+    }
+
     due.forEach(v => {
       const row = el('div', 'flex items-center gap-3 bg-magic-gold/10 rounded-lg p-3 mb-2 border border-magic-gold/30 animate-pulse-glow');
       row.innerHTML = `<span class="text-2xl due-book-emoji">${v.emoji}</span>
@@ -241,8 +281,8 @@ export function renderVisitorsPage() {
   }
   card.appendChild(section3);
 
-  // --- 熟客名册：全角色好感一览（2026-10-17 图南好感可视化）---
-  // 已结识（好感>0）按好感降序列出完整阶段条；未结识的压成剪影占位，提示还差几位。
+  // --- 熟客名册：紧凑网格（2026-10-23 图南：不要一长条，页太高）---
+  // 已结识（好感>0）按好感降序 + 未结识剪影，同格同网；格内只留头像/名字/紧凑好感条。
   const rosterSection = el('div', 'mb-4');
   const met = [];
   let unmetCount = 0;
@@ -253,28 +293,26 @@ export function renderVisitorsPage() {
   });
   met.sort((a, b) => b.favor - a.favor);
 
-  const rosterRows = met.map(({ id }) => {
+  const metCells = met.map(({ id }) => {
     const def = getVisitorDef(id);
-    return `<div class="flex items-center gap-3 bg-white/60 rounded-lg p-3 mb-2">
-      ${getVisitorPortrait(id, def?.emoji, 'sm')}
+    return `<div class="flex items-center gap-2 bg-white/60 rounded-lg p-2" title="${def?.title || ''}">
+      ${getVisitorPortrait(id, def?.emoji, 'xs')}
       <div class="flex-1 min-w-0">
-        <span class="font-bold text-sm">${def?.name || id}</span>
-        <span class="text-xs text-ink-light ml-2">${def?.title || ''}</span>
-        ${renderFavorBar(id, 0)}
+        <div class="font-bold text-xs truncate">${def?.name || id}</div>
+        ${renderFavorBarCompact(id)}
       </div>
     </div>`;
   }).join('');
 
   const unknownCells = Array.from({ length: unmetCount }, () => `
-    <div class="flex items-center justify-center gap-2 bg-wood/5 rounded-lg p-3 min-h-[52px]">
-      <span class="text-ink-light/40 font-bold text-sm">👤 ${t('favorRosterUnknown')}</span>
+    <div class="flex items-center justify-center bg-wood/5 rounded-lg p-2 min-h-[44px]">
+      <span class="text-ink-light/40 font-bold text-xs">👤 ${t('favorRosterUnknown')}</span>
     </div>`).join('');
 
   rosterSection.innerHTML = `
     <h3 class="font-bold text-sm text-ink-light mb-2 mt-6 pt-4 border-t border-wood/20">${t('favorRosterTitle')} <span class="text-xs font-normal">(${met.length}/${met.length + unmetCount})</span></h3>
     <p class="text-[11px] text-ink-light/80 mb-2">${t('favorRosterHint')}</p>
-    ${rosterRows}
-    ${unmetCount > 0 ? `<div class="grid grid-cols-2 md:grid-cols-3 gap-2 mt-1">${unknownCells}</div>` : ''}
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-2">${metCells}${unknownCells}</div>
   `;
   card.appendChild(rosterSection);
 
@@ -288,53 +326,48 @@ export function renderVisitorsPage() {
 
 // ========== 访客还书反馈卡 ==========
 
-export function showVisitorEventModal(result, callback) {
-  if (!result) { if (callback) callback(); return; }
-
-  const overlay = el('div', 'fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4');
-
-  // 基础收益行
-  let rewardsHtml = '';
-  if (result.coins > 0 || result.atmosphere > 0) {
-    rewardsHtml = '<div class="flex justify-center gap-3 mt-3 text-xs">';
-    if (result.coins > 0) rewardsHtml += `<span class="bg-magic-gold/10 px-2 py-1 rounded-full">💰 +${result.coins}</span>`;
-    if (result.atmosphere > 0) rewardsHtml += `<span class="bg-magic-blue/10 px-2 py-1 rounded-full">✨ +${result.atmosphere}氛围</span>`;
-    if (result.favor > 0) rewardsHtml += `<span class="bg-wood/10 px-2 py-1 rounded-full">💛 +${result.favor}好感</span>`;
-    rewardsHtml += '</div>';
-  }
-  if (result.collector) {
-    rewardsHtml += `<div class="text-center mt-2 text-[11px] text-magic-gold font-bold">📜 ${t('collectorReturnBonus')}</div>`;
-  }
-
-  // 语录区
-  const quoteHtml = result.quote ? `<p class="text-ink-light italic leading-relaxed mt-3 text-sm">「${result.quote}」</p>` : '';
-
-  // 多本逐本小结（§3.3）：书名并列 + 每本币/损毁状态，首本高亮「主借」
-  const booksList = (result.books && result.books.length)
+// 单还书结果 → 书目清单（多本逐本小结结构，§3.3）
+function buildBooksList(result) {
+  return (result.books && result.books.length)
     ? result.books
     : [{ bookId: result.bookId, title: result.bookTitle, damaged: result.damaged, coins: Math.max(0, (result.coins || 0) - (result.extraCoins || 0)), atmosphere: result.atmosphere || 0, first: true }];
-  const titlesJoined = booksList.map(b => `《${getVisitorBookTitle(b.bookId, b.title)}》`).join('');
-  const perBookHtml = booksList.length > 1
-    ? `<div class="mt-3 space-y-1 text-left">${booksList.map((b, i) => `
+}
+
+function buildTitlesJoined(result) {
+  return buildBooksList(result).map(b => `《${getVisitorBookTitle(b.bookId, b.title)}》`).join('');
+}
+
+// 单还书结果 → 收益/语录/逐本/损坏/事件/叙事 全部内容块（单收与一键收书共用，2026-10-23 抽出）
+function buildVisitorResultBlocks(result) {
+  let html = '';
+
+  // 语录区
+  if (result.quote) html += `<p class="text-ink-light italic leading-relaxed mt-3 text-sm">「${result.quote}」</p>`;
+
+  // 基础收益行
+  if (result.coins > 0 || result.atmosphere > 0) {
+    html += '<div class="flex justify-center gap-3 mt-3 text-xs">';
+    if (result.coins > 0) html += `<span class="bg-magic-gold/10 px-2 py-1 rounded-full">💰 +${result.coins}</span>`;
+    if (result.atmosphere > 0) html += `<span class="bg-magic-blue/10 px-2 py-1 rounded-full">✨ +${result.atmosphere}氛围</span>`;
+    if (result.favor > 0) html += `<span class="bg-wood/10 px-2 py-1 rounded-full">💛 +${result.favor}好感</span>`;
+    html += '</div>';
+  }
+  if (result.collector) {
+    html += `<div class="text-center mt-2 text-[11px] text-magic-gold font-bold">📜 ${t('collectorReturnBonus')}</div>`;
+  }
+
+  // 多本逐本小结（§3.3）
+  const booksList = buildBooksList(result);
+  if (booksList.length > 1) {
+    html += `<div class="mt-3 space-y-1 text-left">${booksList.map((b, i) => `
         <div class="flex items-center justify-between text-xs bg-white/50 rounded px-2 py-1.5">
           <span>${i === 0
             ? `<span class="text-magic-gold font-bold">${t('multiBorrowMain')}</span>`
             : `<span class="text-ink-light">${t('multiBorrowExtra')}</span>`}
             ${getVisitorBookTitle(b.bookId, b.title)}${b.damaged ? ` <span class="text-red-500 font-bold">⚠️${t('bookDamagedShort')}</span>` : ''}</span>
           <span class="text-ink-light">💰+${b.coins}${b.atmosphere > 0 ? ` · ✨+${b.atmosphere}` : ''}</span>
-        </div>`).join('')}</div>`
-    : '';
-
-  // 基础卡内容
-  const charId = result.charId || '';
-  const visitorEmoji = result.visitorEmoji || '👤';
-  let contentHtml = `
-    <div class="flex justify-center mb-2">${getVisitorPortrait(charId, visitorEmoji, 'lg')}</div>
-    <div class="font-bold text-ink">${result.visitorName || '访客'} 归还了${titlesJoined || '书'}</div>
-    ${quoteHtml}
-    ${rewardsHtml}
-    ${perBookHtml}
-  `;
+        </div>`).join('')}</div>`;
+  }
 
   // 损坏提示（逐本列出）
   const damagedBooks = booksList.filter(b => b.damaged);
@@ -344,7 +377,7 @@ export function showVisitorEventModal(result, callback) {
       const pct = Math.round((bs?.repairWords || 0) / ((bs?.repairWords || 0) + (bs?.copiedWords || 0) || 1) * 100);
       return `⚠️ 《${getVisitorBookTitle(b.bookId, b.title)}》轻微损毁（约 ${pct}% 抄写进度）`;
     }).join('<br>');
-    contentHtml += `<div class="mt-3 p-2 bg-amber-50 rounded-lg text-xs text-amber-800 border border-amber-200">
+    html += `<div class="mt-3 p-2 bg-amber-50 rounded-lg text-xs text-amber-800 border border-amber-200">
       ${dmgLines}<br>
       <span class="font-bold">🔧 不用担心！继续在缮写室专注誊抄就是在修复它，修书时速度还会 +5%。</span><br>
       <span class="text-amber-600">修复完成后墨墨会给你额外奖励 ✨</span>
@@ -355,25 +388,25 @@ export function showVisitorEventModal(result, callback) {
   if (result.event) {
     const ev = result.event;
     if (ev.type === 'gift_book') {
-      contentHtml += `<div class="mt-3 p-3 bg-magic-gold/10 rounded-lg">
+      html += `<div class="mt-3 p-3 bg-magic-gold/10 rounded-lg">
         <div class="text-2xl">${ev.emoji}</div>
         <div class="text-magic-gold font-bold text-sm">沈明远赠送了一本旧书！</div>
         <div class="text-ink-light text-sm"><span class="italic">${ev.mysteryTitle}</span></div>
       </div>`;
     } else if (ev.type === 'annotation') {
-      contentHtml += `<div class="mt-3 p-2 bg-wood/10 rounded-lg text-xs text-ink-light">📝 沈明远在书中留下了批注卡片，字迹工整，引经据典。</div>`;
+      html += `<div class="mt-3 p-2 bg-wood/10 rounded-lg text-xs text-ink-light">📝 沈明远在书中留下了批注卡片，字迹工整，引经据典。</div>`;
     } else if (ev.type === 'treasure_map') {
-      contentHtml += `<div class="mt-3 p-2 bg-magic-gold/10 rounded-lg text-xs">🗺️ 小萤发现了一张藏宝图！翻开获得：<b>${ev.reward.text}</b></div>`;
+      html += `<div class="mt-3 p-2 bg-magic-gold/10 rounded-lg text-xs">🗺️ 小萤发现了一张藏宝图！翻开获得：<b>${ev.reward.text}</b></div>`;
     } else if (ev.type === 'poem') {
-      contentHtml += `<div class="mt-3 p-2 bg-wood/10 rounded-lg text-xs text-ink-light italic">🎵 "${ev.poem}"</div>`;
+      html += `<div class="mt-3 p-2 bg-wood/10 rounded-lg text-xs text-ink-light italic">🎵 "${ev.poem}"</div>`;
     } else if (ev.type === 'peizhou_recommend') {
-      contentHtml += `<div class="mt-3 p-3 bg-magic-gold/10 rounded-lg border border-magic-gold/20">
+      html += `<div class="mt-3 p-3 bg-magic-gold/10 rounded-lg border border-magic-gold/20">
         <div class="text-magic-gold font-bold text-sm">📚 裴舟荐书</div>
         <div class="text-ink-light text-sm">《${ev.title}》${ev.emoji} — 24h内在商店购买享额外7折</div>
         <div class="text-xs text-ink-light mt-1">"这本在我书店里摆了好久，一直没人带走。"</div>
       </div>`;
     } else if (ev.type === 'peizhou_preview') {
-      contentHtml += `<div class="mt-3 p-3 bg-magic-gold/10 rounded-lg border border-magic-gold/20">
+      html += `<div class="mt-3 p-3 bg-magic-gold/10 rounded-lg border border-magic-gold/20">
         <div class="text-magic-gold font-bold text-sm">📖 裴舟翻了翻你的手稿箱</div>
         <div class="text-xs text-ink-light mt-1">"这段我熟——以前书店里有这本书，我帮人补过好几页。"</div>
         ${ev.boosted ? '<div class="text-xs text-magic-blue mt-1">✨ 手稿箱中一本未抄完的书进度 +3%</div>' : ''}
@@ -384,23 +417,24 @@ export function showVisitorEventModal(result, callback) {
   // 叙事事件（三层递进：常层便签 → 偶层故事 → 稀层深度 → 终局）
   if (result.narrative) {
     const nar = result.narrative;
+    const charId = result.charId || '';
     // 常层：铅笔信/便签（每次还书都有）
     if (nar.common) {
-      contentHtml += `<div class="mt-3 p-3 rounded-lg text-left visitor-note-${charId}">
+      html += `<div class="mt-3 p-3 rounded-lg text-left visitor-note-${charId}">
         <div class="text-xs text-ink-light mb-1">📝 ${result.visitorName}在书里夹了一张便签：</div>
         <p class="text-sm leading-relaxed italic">"${nar.common.text}"</p>
       </div>`;
     }
     // 偶层：野花标本/特别礼物
     if (nar.occasional) {
-      contentHtml += `<div class="mt-3 p-3 bg-magic-gold/10 rounded-lg border border-magic-gold/20 text-left animate-scale-in">
+      html += `<div class="mt-3 p-3 bg-magic-gold/10 rounded-lg border border-magic-gold/20 text-left animate-scale-in">
         <div class="text-xs text-magic-gold font-bold mb-1">🌸 ${nar.occasional.title}</div>
         <p class="text-sm text-ink leading-relaxed">${nar.occasional.text}</p>
       </div>`;
     }
     // 稀层：深层叙事 + 信件
     if (nar.rare) {
-      contentHtml += `<div class="mt-3 p-4 bg-magic-blue/10 rounded-lg border-2 border-magic-blue/30 text-left animate-scale-in">
+      html += `<div class="mt-3 p-4 bg-magic-blue/10 rounded-lg border-2 border-magic-blue/30 text-left animate-scale-in">
         <div class="text-base text-magic-blue font-bold mb-2">✨ ${nar.rare.title}</div>
         <p class="text-sm text-ink leading-relaxed whitespace-pre-line">${nar.rare.text}</p>
         ${nar.rare.letter ? `<div class="mt-3 p-3 bg-white/60 rounded-lg border border-wood/20">
@@ -412,41 +446,58 @@ export function showVisitorEventModal(result, callback) {
     }
     // 稀层后终局
     if (nar.postRare) {
-      contentHtml += `<div class="mt-3 p-4 bg-magic-gold/10 rounded-lg border-2 border-magic-gold/30 text-left animate-scale-in">
+      html += `<div class="mt-3 p-4 bg-magic-gold/10 rounded-lg border-2 border-magic-gold/30 text-left animate-scale-in">
         <div class="text-base text-magic-gold font-bold mb-2">🎉 ${nar.postRare.title}</div>
         <p class="text-sm text-ink leading-relaxed whitespace-pre-line">${nar.postRare.text}</p>
       </div>`;
     }
     // 终局后常层（终局完成后的新日常事件）
     if (nar.postRareCommon) {
-      contentHtml += `<div class="mt-3 p-3 rounded-lg text-left visitor-note-${charId}">
+      html += `<div class="mt-3 p-3 rounded-lg text-left visitor-note-${charId}">
         <div class="text-xs text-ink-light mb-1">📝 ${result.visitorName} 的消息：</div>
         <p class="text-sm leading-relaxed italic">"${nar.postRareCommon.text}"</p>
       </div>`;
     }
     // 终局后偶层（终局完成后的深度事件）
     if (nar.postRareOccasional) {
-      contentHtml += `<div class="mt-3 p-4 bg-magic-blue/10 rounded-lg border border-magic-blue/20 text-left animate-scale-in">
+      html += `<div class="mt-3 p-4 bg-magic-blue/10 rounded-lg border border-magic-blue/20 text-left animate-scale-in">
         <div class="text-sm text-magic-blue font-bold mb-2">🌟 ${nar.postRareOccasional.title}</div>
         <p class="text-sm text-ink leading-relaxed whitespace-pre-line">${nar.postRareOccasional.text}</p>
       </div>`;
     }
+    // 赠书（三赠书体系：首常层 / 指定偶层 / 终局同刻）
+    if (nar.gifts && nar.gifts.length > 0) {
+      for (const g of nar.gifts) {
+        const sub = g.mode === 'dedication'
+          ? '这本书已在馆中——名字替你留在了扉页上 📜'
+          : g.mode === 'queued'
+            ? '手稿箱满了——这本书先由TA保管，腾出位置后随下次还书送达'
+            : `已放入手稿箱——这是只有${result.visitorName || '这位访客'}会送你的书`;
+        html += `<div class="mt-3 p-3 bg-magic-gold/15 rounded-lg border-2 border-magic-gold/40 text-left animate-scale-in">
+          <div class="text-magic-gold font-bold text-sm">📦 赠书《${g.title}》${g.emoji || ''}</div>
+          <div class="text-xs text-ink-light mt-1">${sub}</div>
+        </div>`;
+      }
+    }
   }
 
-  const card = el('div', 'parchment-bg rounded-2xl p-6 max-w-sm w-full text-center magic-glow animate-scale-in');
+  return html;
+}
+
+// 弹窗外壳（overlay + 卡 + 「知道了」），单收与一键收书共用
+function showVisitorModalShell(contentHtml, callback, wide = false) {
+  const overlay = el('div', 'fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4');
+  const card = el('div', `parchment-bg rounded-2xl p-6 ${wide ? 'max-w-md' : 'max-w-sm'} w-full text-center magic-glow animate-scale-in max-h-[85vh] overflow-y-auto`);
   card.innerHTML = contentHtml;
 
-  // 按钮区
   const btnRow = el('div', 'flex justify-center gap-3 mt-4');
-  {
-    const okBtn = el('button', 'px-6 py-3 bg-magic-gold text-white rounded-lg font-bold');
-    okBtn.textContent = '知道了';
-    okBtn.addEventListener('click', () => {
-      overlay.remove();
-      if (callback) callback();
-    });
-    btnRow.appendChild(okBtn);
-  }
+  const okBtn = el('button', 'px-6 py-3 bg-magic-gold text-white rounded-lg font-bold');
+  okBtn.textContent = '知道了';
+  okBtn.addEventListener('click', () => {
+    overlay.remove();
+    if (callback) callback();
+  });
+  btnRow.appendChild(okBtn);
 
   card.appendChild(btnRow);
   overlay.appendChild(card);
@@ -458,4 +509,50 @@ export function showVisitorEventModal(result, callback) {
       if (callback) callback();
     }
   });
+}
+
+export function showVisitorEventModal(result, callback) {
+  if (!result) { if (callback) callback(); return; }
+
+  const charId = result.charId || '';
+  const visitorEmoji = result.visitorEmoji || '👤';
+  const contentHtml = `
+    <div class="flex justify-center mb-2">${getVisitorPortrait(charId, visitorEmoji, 'lg')}</div>
+    <div class="font-bold text-ink">${result.visitorName || '访客'} 归还了${buildTitlesJoined(result) || '书'}</div>
+    ${buildVisitorResultBlocks(result)}
+  `;
+  showVisitorModalShell(contentHtml, callback);
+}
+
+// 一键收书合并结算（2026-10-23）：总量行 + 逐访客区块堆叠（叙事内容不丢）
+export function showCollectAllModal(results, callback) {
+  if (!results || results.length === 0) { if (callback) callback(); return; }
+
+  const totals = results.reduce((acc, r) => {
+    acc.coins += r.coins || 0;
+    acc.atmosphere += r.atmosphere || 0;
+    acc.favor += r.favor || 0;
+    acc.books += buildBooksList(r).length;
+    if (r.collector) acc.collector = true;
+    return acc;
+  }, { coins: 0, atmosphere: 0, favor: 0, books: 0, collector: false });
+
+  const totalsHtml = `<div class="flex justify-center gap-2 mt-1 mb-3 text-xs flex-wrap">
+      <span class="bg-magic-gold/15 px-2 py-1 rounded-full font-bold">📚 ${t('collectAllSummary').replace('{books}', totals.books).replace('{visitors}', results.length)}</span>
+      ${totals.coins > 0 ? `<span class="bg-magic-gold/10 px-2 py-1 rounded-full">💰 +${totals.coins}</span>` : ''}
+      ${totals.atmosphere > 0 ? `<span class="bg-magic-blue/10 px-2 py-1 rounded-full">✨ +${totals.atmosphere}氛围</span>` : ''}
+      ${totals.favor > 0 ? `<span class="bg-wood/10 px-2 py-1 rounded-full">💛 +${totals.favor}好感</span>` : ''}
+      ${totals.collector ? `<span class="bg-magic-gold/10 px-2 py-1 rounded-full">📜 ${t('collectorReturnBonus')}</span>` : ''}
+    </div>`;
+
+  const sections = results.map((r, i) => `
+    ${i > 0 ? '<div class="border-t border-wood/20 my-3"></div>' : ''}
+    <div class="flex items-center gap-2 mb-1 text-left">
+      ${getVisitorPortrait(r.charId || '', r.visitorEmoji || '👤', 'sm')}
+      <div class="font-bold text-sm text-ink">${r.visitorName || '访客'}<span class="text-xs font-normal text-ink-light ml-2">归还了${buildTitlesJoined(r)}</span></div>
+    </div>
+    ${buildVisitorResultBlocks(r)}
+  `).join('');
+
+  showVisitorModalShell(totalsHtml + `<div class="text-left">${sections}</div>`, callback, true);
 }

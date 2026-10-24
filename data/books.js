@@ -72,6 +72,36 @@ import { meta as b68, chapters as c68, quotes as q68 } from './books/book_033.js
 import { meta as b69, chapters as c69, quotes as q69 } from './books/book_034_vol1.js';
 import { meta as b70, chapters as c70, quotes as q70 } from './books/book_034_vol2.js';
 import { meta as b71, chapters as c71, quotes as q71 } from './books/book_034.js';
+import { meta as b72, chapters as c72, quotes as q72 } from './books/book_047_vol1.js';
+import { meta as b73, chapters as c73, quotes as q73 } from './books/book_047_vol2.js';
+import { meta as b74, chapters as c74, quotes as q74 } from './books/book_047.js';
+import { meta as b75, chapters as c75, quotes as q75 } from './books/book_048.js';
+import { meta as b76, chapters as c76, quotes as q76 } from './books/book_054.js';
+import { meta as b77, chapters as c77, quotes as q77 } from './books/book_055.js';
+import { meta as b78, chapters as c78, quotes as q78 } from './books/book_056.js';
+import { meta as b79, chapters as c79, quotes as q79 } from './books/book_057.js';
+import { meta as b80, chapters as c80, quotes as q80 } from './books/book_058.js';
+import { meta as b81, chapters as c81, quotes as q81 } from './books/book_059.js';
+import { meta as b82, chapters as c82, quotes as q82 } from './books/book_060.js';
+import { meta as b83, chapters as c83, quotes as q83 } from './books/book_061.js';
+import { meta as b84, chapters as c84, quotes as q84 } from './books/book_062.js';
+import { meta as b85, chapters as c85, quotes as q85 } from './books/book_063.js';
+import { meta as b86, chapters as c86, quotes as q86 } from './books/book_064.js';
+import { meta as b87, chapters as c87, quotes as q87 } from './books/book_065.js';
+import { meta as b88, chapters as c88, quotes as q88 } from './books/book_066.js';
+import { meta as b89, chapters as c89, quotes as q89 } from './books/book_067.js';
+import { meta as b90, chapters as c90, quotes as q90 } from './books/book_068.js';
+import { meta as b91, chapters as c91, quotes as q91 } from './books/book_069.js';
+import { meta as b92, chapters as c92, quotes as q92 } from './books/book_070.js';
+import { meta as b93, chapters as c93, quotes as q93 } from './books/book_071.js';
+import { meta as b94, chapters as c94, quotes as q94 } from './books/book_072.js';
+import { meta as b95, chapters as c95, quotes as q95 } from './books/book_073.js';
+import { meta as b96, chapters as c96, quotes as q96 } from './books/book_074.js';
+import { meta as b97, chapters as c97, quotes as q97 } from './books/book_075.js';
+import { meta as b98, chapters as c98, quotes as q98 } from './books/book_076.js';
+import { meta as b99, chapters as c99, quotes as q99 } from './books/book_077.js';
+import { meta as b100, chapters as c100, quotes as q100 } from './books/book_078.js';
+import { meta as b101, chapters as c101, quotes as q101 } from './books/book_079.js';
 
 const ALL_BOOKS = [
   { meta: b1, chapters: c1, quotes: q1 },
@@ -145,6 +175,36 @@ const ALL_BOOKS = [
   { meta: b69, chapters: c69, quotes: q69 },
   { meta: b70, chapters: c70, quotes: q70 },
   { meta: b71, chapters: c71, quotes: q71 },
+  { meta: b72, chapters: c72, quotes: q72 },
+  { meta: b73, chapters: c73, quotes: q73 },
+  { meta: b74, chapters: c74, quotes: q74 },
+  { meta: b75, chapters: c75, quotes: q75 },
+  { meta: b76, chapters: c76, quotes: q76 },
+  { meta: b77, chapters: c77, quotes: q77 },
+  { meta: b78, chapters: c78, quotes: q78 },
+  { meta: b79, chapters: c79, quotes: q79 },
+  { meta: b80, chapters: c80, quotes: q80 },
+  { meta: b81, chapters: c81, quotes: q81 },
+  { meta: b82, chapters: c82, quotes: q82 },
+  { meta: b83, chapters: c83, quotes: q83 },
+  { meta: b84, chapters: c84, quotes: q84 },
+  { meta: b85, chapters: c85, quotes: q85 },
+  { meta: b86, chapters: c86, quotes: q86 },
+  { meta: b87, chapters: c87, quotes: q87 },
+  { meta: b88, chapters: c88, quotes: q88 },
+  { meta: b89, chapters: c89, quotes: q89 },
+  { meta: b90, chapters: c90, quotes: q90 },
+  { meta: b91, chapters: c91, quotes: q91 },
+  { meta: b92, chapters: c92, quotes: q92 },
+  { meta: b93, chapters: c93, quotes: q93 },
+  { meta: b94, chapters: c94, quotes: q94 },
+  { meta: b95, chapters: c95, quotes: q95 },
+  { meta: b96, chapters: c96, quotes: q96 },
+  { meta: b97, chapters: c97, quotes: q97 },
+  { meta: b98, chapters: c98, quotes: q98 },
+  { meta: b99, chapters: c99, quotes: q99 },
+  { meta: b100, chapters: c100, quotes: q100 },
+  { meta: b101, chapters: c101, quotes: q101 },
 ];
 
 // 组装 BOOKS 对象（保持原有访问模式：BOOKS[id]）

@@ -14,6 +14,7 @@ import { setFocusBook } from '../core/focus-session.js';
 import { unlockReCopy, toggleBookStar, markChapterRead } from '../core/book-progress.js';
 import { autoShelveCompletedManuscripts, swapShelfSlots } from '../core/library.js';
 import { getBookCondition, getDamageChance, isBookLentOut } from '../visitors.js';
+import { getReadableChapters, isVolumeDivider } from '../volumes.js';
 
 const SHELF_CAPACITY = 5;
 let currentFilter = 'all';
@@ -533,12 +534,28 @@ function renderChapterList(book) {
   // 2026-09-15 图南拍板：典藏版/分卷书不参与重抄——已完成时「开始誊抄」是重抄的伪装入口，置灰并说明
   const noMasteryCompleted = isCompleted && isNoMasteryBook(book.id);
 
+  // 章节列表：典藏版从卷组单卷拼合（其 def chapters 为空），卷间插分隔条；
+  // 全卷合璧即全章节解锁。章号按真实章节全局连续编号（分隔条不占号）。
+  const chapters = getReadableChapters(book);
+  const isChapterUnlocked = (i) => book.isCollectedEdition || bookState.unlockedChapters.includes(i + 1);
+  const realChapters = chapters.filter(ch => !isVolumeDivider(ch));
+
   content.innerHTML = `
     <div class="flex items-center justify-between mb-4">
       <h2 class="font-display text-xl font-bold">${book.emoji} ${getBookTitle(book)}</h2>
       <button class="text-2xl text-ink-light hover:text-ink close-modal">✕</button>
     </div>
     <div class="text-sm text-ink-light mb-1">${book.author} · ${getCategoryLabel(book.category)} · ${t('wordsCount').replace('{n}', book.totalWords.toLocaleString())}</div>
+    ${(() => {
+      const ded = (state.bookDedications || {})[book.id];
+      if (!ded) return '';
+      const d = new Date(ded.date);
+      const dateStr = `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
+      return `<div class="my-2 p-2.5 bg-magic-gold/10 rounded-lg border border-magic-gold/30">
+        <div class="text-xs font-bold text-magic-gold">📜 ${ded.charEmoji} ${ded.charName} 题赠 · ${dateStr}</div>
+        <div class="text-xs text-ink-light mt-0.5 italic">「这本书你早已有了。那就在这一页留个名字吧。」</div>
+      </div>`;
+    })()}
     ${isCompleted
       ? (isNoMasteryBook(book.id)
         ? `<div class="text-xs text-magic-gold mb-2">${t('noMasteryCompletedLabel')}</div>`
@@ -553,13 +570,20 @@ function renderChapterList(book) {
         : `<button id="start-copy-btn" class="w-full px-4 py-2 mb-4 bg-magic-gold text-white rounded-lg font-bold text-sm hover:shadow-lg transition-all">${t('startTranscribeThisBook')}</button>`
     }
     <div class="space-y-2">
-      ${book.chapters.map((ch, i) => {
-        const unlocked = bookState.unlockedChapters.includes(i + 1);
-        const isRead = bookState.readChapters && bookState.readChapters.includes(i);
-        return `
-          <div class="chapter-item p-3 rounded-lg border ${unlocked ? 'bg-white border-wood cursor-pointer hover:shadow' : 'bg-gray-100 border-gray-200 opacity-60'}">
+      ${(() => {
+        let realIdx = -1;
+        return chapters.map((ch) => {
+          if (isVolumeDivider(ch)) {
+            return `<div class="flex items-center gap-2 py-1 px-1 text-xs text-magic-gold font-bold"><span class="flex-1 border-t border-magic-gold/30"></span>${ch.volumeTitle}<span class="flex-1 border-t border-magic-gold/30"></span></div>`;
+          }
+          realIdx += 1;
+          const i = realIdx;
+          const unlocked = isChapterUnlocked(i);
+          const isRead = bookState.readChapters && bookState.readChapters.includes(i);
+          return `
+          <div class="chapter-item p-3 rounded-lg border ${unlocked ? 'bg-white border-wood cursor-pointer hover:shadow' : 'bg-gray-100 border-gray-200 opacity-60'}" data-ch-idx="${i}">
             <div class="flex items-center justify-between">
-              <div class="font-bold text-sm">${isRead ? '✓ ' : ''}${getChapterTitle(ch)}</div>
+              <div class="font-bold text-sm">${isRead ? '✓ ' : ''}${book.isCollectedEdition ? `${i + 1}. ` : ''}${getChapterTitle(ch)}</div>
               <div class="text-xs ${unlocked ? (isRead ? 'text-magic-gold' : 'text-green-600') : 'text-gray-500'}">
                 ${unlocked ? (isRead ? `📖 ${t('statusRead')}` : `🔓 ${t('statusUnlocked')}`) : `🔒 ${t('needTranscribeWords').replace('{words}', ch.unlockAt.toLocaleString())}`}
               </div>
@@ -567,7 +591,8 @@ function renderChapterList(book) {
             ${unlocked ? `<div class="text-xs text-ink-light mt-1">${getChapterPreview(ch)}</div>` : ''}
           </div>
         `;
-      }).join('')}
+        }).join('');
+      })()}
     </div>
   `;
 
@@ -600,12 +625,10 @@ function renderChapterList(book) {
     });
   }
 
-  // 章节点击进入阅读
-  content.querySelectorAll('.chapter-item.cursor-pointer').forEach((item, i) => {
+  // 章节点击进入阅读（data-ch-idx = 全局连续章号-1，分隔条不占号、不可点击）
+  content.querySelectorAll('.chapter-item.cursor-pointer').forEach((item) => {
     item.addEventListener('click', () => {
-      const unlockedChs = book.chapters.filter((ch, idx) => bookState.unlockedChapters.includes(idx + 1));
-      const realIdx = Array.from(content.querySelectorAll('.chapter-item.cursor-pointer')).indexOf(item);
-      const ch = unlockedChs[realIdx];
+      const ch = realChapters[Number(item.dataset.chIdx)];
       if (ch) {
         modal.remove();
         renderReadingPage(book, ch);
@@ -621,9 +644,12 @@ function renderReadingPage(book, chapter) {
   const bookState = state.books[book.id];
   if (!bookState) return;
 
-  const chapterIndex = book.chapters.indexOf(chapter);
-  const prevChapter = chapterIndex > 0 ? book.chapters[chapterIndex - 1] : null;
-  const nextChapter = chapterIndex < book.chapters.length - 1 ? book.chapters[chapterIndex + 1] : null;
+  const chapters = getReadableChapters(book);
+  // 章号/导航按真实章节全局连续编号，卷分隔条不占号、不参与导航
+  const realChapters = chapters.filter(ch => !isVolumeDivider(ch));
+  const chapterIndex = realChapters.indexOf(chapter);
+  const prevChapter = chapterIndex > 0 ? realChapters[chapterIndex - 1] : null;
+  const nextChapter = chapterIndex < realChapters.length - 1 ? realChapters[chapterIndex + 1] : null;
 
   const chapterContent = getChapterContent(chapter);
   // 分页：按 ---page--- 切分，无标记则全文为 1 页
@@ -637,7 +663,7 @@ function renderReadingPage(book, chapter) {
   const fontLabels = ['A', 'A', 'A'];
 
   function isChapterUnlocked(idx) {
-    return bookState.unlockedChapters.includes(idx + 1);
+    return book.isCollectedEdition || bookState.unlockedChapters.includes(idx + 1);
   }
 
   function onChapterRead() {
@@ -769,7 +795,7 @@ function renderReadingPage(book, chapter) {
 
     const label = el('span', 'reading-chapter-label');
     const readMark = bookState.readChapters.includes(chapterIndex) ? ` ✓${t('statusRead')}` : '';
-    label.textContent = `${chapterIndex + 1}/${book.chapters.length}${readMark}`;
+    label.textContent = `${chapterIndex + 1}/${realChapters.length}${readMark}`;
     chapterNav.appendChild(label);
 
     if (nextChapter && isChapterUnlocked(chapterIndex + 1)) {

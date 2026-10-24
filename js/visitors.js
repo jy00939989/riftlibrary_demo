@@ -4,7 +4,7 @@ import { addCoins, addAtmosphere, addHistory, addPlantLog } from './storage.js';
 import { t } from './i18n/terms.js';
 import { BOOKS } from '../data/books.js';
 import { addDiaryEntry } from './diary.js';
-import { isBookCapacityFull, addToManuscriptBox, createBookRecord, unlockBook, grantRestorationRoom } from './capacity.js';
+import { isBookCapacityFull, addToManuscriptBox, unlockBook, grantRestorationRoom } from './capacity.js';
 import { collectVisitorItem } from './visitorMemory.js';
 import { getCurationBorrowBonus } from './curation.js';
 import { VISITOR_NARRATIVES } from '../data/visitor-events.js';
@@ -33,7 +33,7 @@ export const VISITOR_DEFS = {
     emoji: '👨‍🏫',
     title: '退休文学教授 · 白发圆框眼镜',
     category: ['哲学', '历史', '诗歌'],
-    events: ['gift_book'],
+    events: [], // 2026-10-24 旧赠书事件收编进三赠书体系，不再走 legacy 角色事件
     firstImpression: '这里……曾经是一座很好的图书馆。但现在连一张像样的书桌都没有，真是可惜。',
     aura: { name: '学者之风', desc: '哲学/历史/诗歌类誊抄速度 +10%', type: 'speed', category: ['哲学', '历史', '诗歌'], value: 0.10 }
   },
@@ -127,6 +127,25 @@ export const VISITOR_DEFS = {
     firstImpression: '这地方好……等红灯的时候我总想找地方写东西，这里刚好。',
     aura: { name: '波浪诗笺', desc: '还书获得诗笺，集齐10张解锁王小磊诗集', type: 'poem_collect', value: 10 }
   }
+};
+
+// ========== 访客三赠书体系（2026-10-24 图南拍板） ==========
+// 第一本：首次常层事件同刻送达（继承常层 40%/还书，零门槛）
+// 第二本：偶层事件自带 giftBookId（继承偶层 30%/还书，好感≥120）
+// 第三本：postRare 终局同刻 100% 送达
+// 王小磊终局《红灯》(book_080) 内容未写，占位 null；建成后把 ending 换成 'book_080'
+
+export const VISITOR_GIFT_BOOKS = {
+  shenmingyuan: { common: 'book_021', ending: 'book_022' }, // 偶层 sm_o04 → book_010
+  chengyuan:    { common: 'book_054', ending: 'book_056' }, // cy_o05 → book_055
+  peizhou:      { common: 'book_057', ending: 'book_059' }, // pz_o02 → book_058
+  jianan:       { common: 'book_060', ending: 'book_062' }, // ja_o02 → book_061
+  jiangyoushu:  { common: 'book_063', ending: 'book_065' }, // jy_o05 → book_064
+  guyu:         { common: 'book_066', ending: 'book_068' }, // gy_o03 → book_067
+  qiaoyiyi:     { common: 'book_069', ending: 'book_071' }, // qy_o03 → book_070
+  xierugui:     { common: 'book_072', ending: 'book_074' }, // xr_o01 → book_073
+  xiachan:      { common: 'book_075', ending: 'book_077' }, // xc_o01 → book_076
+  wangxiaolei:  { common: 'book_078', ending: null }       // wl_o01 → book_079；终局《红灯》待写
 };
 
 // ========== 还书语录池 ==========
@@ -366,11 +385,6 @@ const POEMS = [
   '时间是一条河，书籍是漂在河上的纸船，不知会停在谁的手中。',
   '翻书的声音是世上最美妙的音乐，每一页都在等待知音。'
 ];
-
-// ========== 神秘书籍池（沈明远专属） ==========
-
-// 沈明远专属书池 —— 全是真实可抄的书
-const SHENMINGYUAN_BOOKS = ['book_010', 'book_021', 'book_022'];
 
 // ========== 借阅区等级配置（真源见 data/borrow-levels.js） ==========
 
@@ -992,10 +1006,143 @@ export function getNarrativeState(charId) {
       postRareTriggered: false,
       postRareCommonTriggered: [],
       postRareOccasionalCompleted: [],
-      expansionLevel: 0
+      expansionLevel: 0,
+      commonGiftGiven: false,
+      endingGiftGiven: false
     };
   }
-  return state.visitorNarratives[charId];
+  const ns = state.visitorNarratives[charId];
+  // 2026-10-24 三赠书体系：migrations 预填的旧结构缺这两个字段，
+  // 必须无条件补默认（10-19 好感丢失热修的教训：守卫 !== undefined 会对存量档静默失效）
+  if (ns.commonGiftGiven === undefined) ns.commonGiftGiven = false;
+  if (ns.endingGiftGiven === undefined) ns.endingGiftGiven = false;
+  return ns;
+}
+
+/**
+ * 题赠页：赠书撞已拥有时，不补偿数值，把名字留在书的扉页（2026-10-24 图南拍板）
+ * @returns {boolean} 是否新登记（重复撞同一本只记一次）
+ */
+function recordDedication(charId, bookId) {
+  const book = BOOKS[bookId];
+  const def = VISITOR_DEFS[charId] || {};
+  if (!book) return false;
+  if (!state.bookDedications) state.bookDedications = {};
+  if (state.bookDedications[bookId]) return false;
+  state.bookDedications[bookId] = {
+    charId,
+    charName: def.name || charId,
+    charEmoji: def.emoji || '👤',
+    date: getNow()
+  };
+  addHistory('event', `📜 ${def.emoji || ''} ${def.name || charId} 在《${book.title}》上留下了题赠`,
+    '这本书你早已拥有——名字留在了扉页上');
+  addDiaryEntry('special_event', {
+    detail: `${def.name || charId}想把《${book.title}》送给你，见你书架上已有一本，便笑了笑：「那就在扉页上留个名字吧。」从此这本书的扉页多了一行字。`
+  });
+  collectVisitorItem({
+    charId,
+    kind: 'event',
+    eventId: `dedication_${bookId}`,
+    title: `题赠《${book.title}》`,
+    text: '这本书你早已拥有，名字留在了扉页。',
+    rarity: 'special'
+  });
+  return true;
+}
+
+/**
+ * 赠书发放（访客三赠书体系）
+ * 已拥有（仅沈明远旧池可能）→ 题赠页（扉页留名，不补偿数值）；
+ * 手稿箱满 → 由访客暂为保管（state.pendingGifts 排队），腾出位置后随还书送达——
+ * 不免费扩容，护住手稿箱经济（2026-10-24 图南拍板：赠书不许带新位置）。
+ * @param {string} charId
+ * @param {string} bookId
+ * @param {Array} gifts triggerNarrative 结果集，用于弹窗展示
+ */
+function grantGiftBook(charId, bookId, gifts) {
+  const book = BOOKS[bookId];
+  if (!book) return;
+  const def = VISITOR_DEFS[charId] || {};
+  const bs = state.books[bookId];
+
+  // 已拥有：题赠页——名字留在扉页
+  if (bs && bs.status !== 'locked') {
+    recordDedication(charId, bookId);
+    gifts.push({ bookId, title: book.title, emoji: book.emoji, mode: 'dedication' });
+    saveState();
+    return;
+  }
+
+  // 手稿箱满：访客暂为保管，腾出位置后随还书送达
+  if (!unlockBook(bookId)) {
+    if (!state.pendingGifts) state.pendingGifts = [];
+    if (!state.pendingGifts.some(p => p.bookId === bookId)) {
+      state.pendingGifts.push({ charId, bookId, queuedAt: getNow() });
+      addHistory('event', `📦 ${def.emoji || ''} ${def.name || charId} 替你收好了《${book.title}》`,
+        '手稿箱满了——腾出位置后，下次还书时带给你');
+      addDiaryEntry('special_event', {
+        detail: `${def.name || charId}想把《${book.title}》送给你，可手稿箱已经满了。「先放我这儿，你腾出个格子，下次给你带来。」`
+      });
+    }
+    gifts.push({ bookId, title: book.title, emoji: book.emoji, mode: 'queued' });
+    saveState();
+    return;
+  }
+
+  addHistory('event', `📦 ${def.emoji || ''} ${def.name || charId} 赠送了一本《${book.title}》`,
+    `${(book.totalWords || 0).toLocaleString()}字 · ${book.author} · 已放入手稿箱`);
+  addDiaryEntry('special_event', { detail: `${def.name || charId}赠送了一本《${book.title}》——${book.description || ''}` });
+  collectVisitorItem({
+    charId,
+    kind: 'event',
+    eventId: `gift_${bookId}`,
+    title: `赠书《${book.title}》`,
+    text: book.description || '',
+    rarity: 'special'
+  });
+  gifts.push({ bookId, title: book.title, emoji: book.emoji, mode: 'box' });
+  saveState();
+}
+
+/**
+ * 待送赠书结算：手稿箱腾出位置后，随任意还书送达。
+ * 送达时撞已拥有 → 30 灵感；书目未建（二三批）→ 保留排队。
+ */
+function deliverPendingGifts() {
+  if (!state.pendingGifts || state.pendingGifts.length === 0) return;
+  const remaining = [];
+  for (const p of state.pendingGifts) {
+    const book = BOOKS[p.bookId];
+    const def = VISITOR_DEFS[p.charId] || {};
+    if (!book) { remaining.push(p); continue; }
+    const bs = state.books[p.bookId];
+    if (bs && bs.status !== 'locked') {
+      recordDedication(p.charId, p.bookId);
+      continue;
+    }
+    if (unlockBook(p.bookId)) {
+      addHistory('event', `📦 ${def.emoji || ''} ${def.name || p.charId} 带来了替你保管的《${book.title}》`,
+        `${(book.totalWords || 0).toLocaleString()}字 · ${book.author} · 已放入手稿箱`);
+      addDiaryEntry('special_event', {
+        detail: `${def.name || p.charId}上次替你收好的《${book.title}》，这次带来了——「说好的，给你留着的。」`
+      });
+      collectVisitorItem({
+        charId: p.charId,
+        kind: 'event',
+        eventId: `gift_${p.bookId}`,
+        title: `赠书《${book.title}》`,
+        text: book.description || '',
+        rarity: 'special'
+      });
+      continue;
+    }
+    remaining.push(p);
+  }
+  if (remaining.length !== state.pendingGifts.length) {
+    state.pendingGifts = remaining;
+    saveState();
+  }
 }
 
 function getAvailableCommonEvents(charId) {
@@ -1045,7 +1192,7 @@ function triggerNarrative(charId) {
   if (!narrative) return null;
 
   const ns = getNarrativeState(charId);
-  const result = { common: null, occasional: null, rare: null, postRare: null, postRareCommon: null, postRareOccasional: null };
+  const result = { common: null, occasional: null, rare: null, postRare: null, postRareCommon: null, postRareOccasional: null, gifts: [] };
   const favor = state.visitorFavors?.[charId] || 0;
 
   // 1. 常层：每次还书 40% 概率触发
@@ -1058,6 +1205,12 @@ function triggerNarrative(charId) {
         eventId: result.common.id,
         text: result.common.text
       });
+      // 赠书·第一本：首次常层事件同刻送达（2026-10-24 三赠书体系）
+      const commonGiftId = VISITOR_GIFT_BOOKS[charId]?.common;
+      if (commonGiftId && !ns.commonGiftGiven) {
+        ns.commonGiftGiven = true;
+        grantGiftBook(charId, commonGiftId, result.gifts);
+      }
     }
   }
 
@@ -1073,6 +1226,10 @@ function triggerNarrative(charId) {
       if (r) {
         if (r.coins) addCoins(r.coins);
         if (r.atmosphere) addAtmosphere(r.atmosphere);
+      }
+      // 赠书·第二本：指定偶层事件自带 giftBookId，轮到即送
+      if (result.occasional.giftBookId) {
+        grantGiftBook(charId, result.occasional.giftBookId, result.gifts);
       }
       addHistory('event', `🌸 ${result.occasional.title}`,
         `${VISITOR_DEFS[charId]?.emoji || ''} ${VISITOR_DEFS[charId]?.name || charId}在还书中留下了一份特别的礼物`);
@@ -1145,6 +1302,12 @@ function triggerNarrative(charId) {
     addHistory('event', `🎉 终局事件：${narrative.postRare.title}`,
       `${VISITOR_DEFS[charId]?.emoji || ''} ${VISITOR_DEFS[charId]?.name || charId} 的故事迎来了圆满的篇章`);
     addDiaryEntry('special_event', { detail: `${narrative.postRare.title} —— ${narrative.postRare.text}` });
+    // 赠书·第三本：终局同刻 100% 送达
+    const endingGiftId = VISITOR_GIFT_BOOKS[charId]?.ending;
+    if (endingGiftId && !ns.endingGiftGiven) {
+      ns.endingGiftGiven = true;
+      grantGiftBook(charId, endingGiftId, result.gifts);
+    }
     collectVisitorItem({
       charId,
       kind: 'event',
@@ -1230,12 +1393,18 @@ export function getNarrativeProgress(charId) {
 
 // ========== 收取还书 + 事件触发 ==========
 
+// 一键收书解锁等级（2026-10-23 图南：升级到一定等级才能打开）——借阅区 Lv3「开放」
+export const COLLECT_ALL_UNLOCK_LEVEL = 3;
+
 export function collectReturn(visitorId) {
   const idx = state.visitors.findIndex(v => v.id === visitorId);
   if (idx === -1) return null;
 
   const visitor = state.visitors[idx];
   if (visitor.status !== 'due') return null;
+
+  // 待送赠书结算：箱子里腾出位置后，随任意还书送达
+  deliverPendingGifts();
 
   // 多本借阅（§3.2）：整单 bookIds；旧档在途单本由迁移 v9 兜底成数组
   const bookIds = (visitor.bookIds && visitor.bookIds.length)
@@ -1379,45 +1548,14 @@ function triggerEvent(charId, visitor) {
   const eventType = def.events[0]; // 每人目前只有一个事件类型
 
   switch (eventType) {
-    case 'gift_book':      return eventGiftBook(visitor);
     case 'peizhou_action': return eventPeizhouAction(visitor);
     case 'wave_poem':      return eventWavePoem(visitor);
     default:               return eventGeneric(charId, visitor);
   }
 }
 
-// --- 沈明远：赠书 ---
-
-function eventGiftBook(visitor) {
-  const available = SHENMINGYUAN_BOOKS.filter(id => !state.books[id] || state.books[id].status === 'locked');
-  if (available.length === 0) {
-    addCoins(50);
-    addHistory('event', '📝 沈明远在书中留下了新的批注卡片', '三本专属书均已赠予');
-    saveState();
-    return { type: 'annotation', coins: 50 };
-  }
-  const bookId = pick(available);
-  const book = BOOKS[bookId];
-  if (!unlockBook(bookId)) {
-    addCoins(50);
-    addHistory('event', '📝 沈明远留下批注但手稿箱已满', '手稿箱无空位，书籍暂存于借阅区');
-    saveState();
-    return { type: 'annotation', coins: 50 };
-  }
-  addHistory('event', `📦 沈明远赠送了一本《${book.title}》`, `${(book.totalWords || 0).toLocaleString()}字 · ${book.author}`);
-  addDiaryEntry('special_event', { detail: `沈明远赠送了一本《${book.title}》，说是自己珍藏多年的版本。` });
-  collectVisitorItem({
-    charId: 'shenmingyuan',
-    kind: 'event',
-    eventId: 'shen_gift_book',
-    titleKey: 'vmEventShenGiftBookTitle',
-    textKey: 'vmEventShenGiftBookText',
-    vars: { bookTitle: book.title },
-    rarity: 'special'
-  });
-  saveState();
-  return { type: 'gift_book', bookId, mysteryTitle: book.title, emoji: book.emoji };
-}
+// --- 沈明远旧赠书事件已收编进三赠书体系（2026-10-24）：---
+// book_021 常层首送 / book_010 挂偶层 sm_o04 / book_022 终局同送，原 eventGiftBook 移除
 
 // --- 裴舟：荐书折扣 / 赠阅残章 ---
 

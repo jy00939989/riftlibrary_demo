@@ -302,7 +302,9 @@ function migrateV1() {
         postRareTriggered: false,
         postRareCommonTriggered: [],
         postRareOccasionalCompleted: [],
-        expansionLevel: 0
+        expansionLevel: 0,
+        commonGiftGiven: false,
+        endingGiftGiven: false
       };
     });
   } else {
