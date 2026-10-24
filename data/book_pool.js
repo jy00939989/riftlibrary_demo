@@ -816,5 +816,60 @@ export const SHARED_POOL = [
   "emoji": "📖",
   "price": 325,
   "baseWeight": 1
+},
+
+  // ── 哥特之夜活动书池（2026-10-22，english-american-literature-expansion-plan §三）──
+  // eventId 门控：仅在 EVENT_WINDOWS.gothic_night 窗口内刷出/可购（book-shop.js）
+  {
+  "type": "volume",
+  "plane": "astral",
+  "volumeGroupId": "book_047",
+  "bookId": "book_047_vol1",
+  "volumeIndex": 1,
+  "title": "红字",
+  "volumeTitle": "红字 · 卷一",
+  "subtitle": "卷 1 / 2",
+  "author": "纳撒尼尔·霍桑",
+  "category": "小说",
+  "totalWords": 180000,
+  "description": "红字卷一。清教徒波士顿的刑台，与那枚烧了七年的猩红字母。",
+  "emoji": "🥀",
+  "price": 350,
+  "baseWeight": 1,
+  "eventId": "gothic_night"
+},
+
+  {
+  "type": "volume",
+  "plane": "astral",
+  "volumeGroupId": "book_047",
+  "bookId": "book_047_vol2",
+  "volumeIndex": 2,
+  "title": "红字",
+  "volumeTitle": "红字 · 卷二",
+  "subtitle": "卷 2 / 2",
+  "author": "纳撒尼尔·霍桑",
+  "category": "小说",
+  "totalWords": 180000,
+  "description": "红字卷二。林中重逢与逃亡之约，刑台上迟来了七年的告白。",
+  "emoji": "🥀",
+  "price": 350,
+  "baseWeight": 1,
+  "eventId": "gothic_night"
+},
+
+  {
+  "plane": "astral",
+  "bookId": "book_048",
+  "title": "阿芒提拉多的酒桶",
+  "author": "爱伦·坡",
+  "category": "志怪",
+  "totalWords": 30000,
+  "chapterCount": 5,
+  "description": "狂欢节之夜，一句「我怀疑那不是阿芒提拉多」，把自负的品酒师引进了家族墓穴。",
+  "emoji": "🍷",
+  "price": 200,
+  "baseWeight": 1,
+  "eventId": "gothic_night"
 }
 ];

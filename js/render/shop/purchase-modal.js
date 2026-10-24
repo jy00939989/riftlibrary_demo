@@ -82,6 +82,9 @@ export function showPurchaseModal(poolEntry, price, originalPrice, discount) {
           window.showToast(`${t('manuscriptBoxFull')}（${mCount}/${mSlots}${t('slots')}）！${t('expandManuscriptBoxFirst')}`, 'error');
           break;
         }
+        case 'event_ended':
+          window.showToast(t('purchaseEventEnded'), 'error');
+          break;
         default:
           window.showToast(t('purchaseFailed'), 'error');
       }

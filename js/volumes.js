@@ -4,8 +4,38 @@
 import { state, saveState } from './state.js';
 import { addAtmosphere, addCoins, addHistory } from './storage.js';
 import { placeOnShelf, addToManuscriptBox, createBookRecord, isRestorationUnlocked, getRestorationLevel } from './capacity.js';
-import { getVolumeGroupByCollectedId } from '../data/volume_groups.js';
+import { getVolumeGroupByCollectedId, VOLUME_GROUPS } from '../data/volume_groups.js';
 import { BOOKS } from '../data/books.js';
+
+/**
+ * 取一本书可读的章节列表。
+ * 典藏版自身 def 的 chapters 为空数组（内容存在单卷里），需按卷组顺序
+ * 从各单卷 def 拼合（2026-10-22 修复：合成典藏版后章节列表为空，无法阅读）。
+ * 其余书原样返回自身的 chapters。
+ */
+export function getReadableChapters(book) {
+  if (!book) return [];
+  if (book.chapters && book.chapters.length) return book.chapters;
+  if (!book.isCollectedEdition || !book.volumeGroupId) return book.chapters || [];
+  const group = VOLUME_GROUPS[book.volumeGroupId];
+  if (!group) return book.chapters || [];
+  const chapters = [];
+  group.volumeIds.forEach((id, volIdx) => {
+    const volDef = BOOKS[id];
+    if (!volDef || !volDef.chapters) return;
+    // 卷间插分隔条：各卷章号从「第一章」重新开始，不加分隔会在列表里出现重号章节
+    if (volIdx > 0) {
+      chapters.push({ isVolumeDivider: true, volumeTitle: volDef.volumeTitle || `${group.title} · 卷${volIdx + 1}` });
+    }
+    chapters.push(...volDef.chapters);
+  });
+  return chapters;
+}
+
+/** 章节列表中的卷分隔条（不可点击、不计入全局章号） */
+export function isVolumeDivider(ch) {
+  return !!ch && !!ch.isVolumeDivider;
+}
 
 /** 该单卷是否"可被合成"（完成、未损坏、未借出，或已锁入修缮箱） */
 function isVolumeCollectable(volId) {

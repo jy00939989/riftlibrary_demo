@@ -43,13 +43,37 @@ export const EVENT_CALENDAR = [
     effect: { shopDiscount: 0.5 } },
 ];
 
+/**
+ * 区间型活动窗口 —— 数值/门控层判定真源（2026-10-22 哥特之夜书池门控，plan §六 D9）。
+ * 与 MONTH_BANNERS 分工：这里管「能不能买」，横幅管「展示什么」；
+ * 同一窗口的 range 需在两处同步书写（与中秋先例一致）。
+ */
+export const EVENT_WINDOWS = [
+  // 万圣周：红字 + 阿芒提拉多的酒桶 限时上架（english-american-literature-expansion-plan §三）
+  { id: 'gothic_night', start: { month: 10, day: 28 }, end: { month: 11, day: 3 } }
+];
+
+/** 某活动窗口在指定日期是否生效（跨月区间适用；窗口 id 未定义恒为 false） */
+export function isEventWindowActive(eventId, date = new Date()) {
+  const win = EVENT_WINDOWS.find(w => w.id === eventId);
+  if (!win) return false;
+  const m = date.getMonth() + 1;
+  const d = date.getDate();
+  const after = m > win.start.month || (m === win.start.month && d >= win.start.day);
+  const before = m < win.end.month || (m === win.end.month && d <= win.end.day);
+  return after && before;
+}
+
 // 整月展示横幅（monthSpan 仅展示层）：4 月「书香苏州」（苏州市全民阅读系列活动，图南苏州人指定收录）
 export const MONTH_BANNERS = [
   { id: 'book_suzhou_month', month: 4, nameKey: 'evtBookSuzhouMonth' },
   // 2026-09-21 区间型：start/end 限定日区间（双节 9/25–10/8），image 可选挂图（缮写页横幅用）
   { id: 'midautumn_natl_banner', nameKey: 'evtMidAutumnNationalBanner',
     start: { month: 9, day: 25 }, end: { month: 10, day: 8 },
-    image: 'banner_midautumn2026' }
+    image: 'banner_midautumn2026' },
+  // 2026-10-22 哥特之夜（万圣周 10/28–11/3）：活动书限时上架，range 与 EVENT_WINDOWS.gothic_night 同步
+  { id: 'gothic_night_banner', nameKey: 'evtGothicNightBanner',
+    start: { month: 10, day: 28 }, end: { month: 11, day: 3 } }
 ];
 
 /** 某日命中的活动日列表（不设时分秒，纯日历日等值判定） */

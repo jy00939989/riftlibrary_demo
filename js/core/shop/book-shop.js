@@ -9,6 +9,7 @@ import { hasSignboard, getSignboardBuffSum } from './signboards.js';
 import { track } from '../../backend/analytics.js';
 import { isBookLockedByDlc } from './dlc-packs.js';
 import { isVolumeConsumed } from '../../../data/volume_groups.js';
+import { isEventWindowActive } from '../../../data/event_calendar.js';
 import {
   getRefreshWeight,
   getGuaranteedVolumeEntries,
@@ -23,13 +24,20 @@ function rand(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+/** 书池条目是否在自身活动窗口外（窗口外视为不可刷出/不可购买） */
+function isOutsideEventWindow(entry) {
+  return !!entry.eventId && !isEventWindowActive(entry.eventId);
+}
+
 export function getAvailableBooks() {
   return SHARED_POOL.filter(b => {
     const bs = state.books[b.bookId];
     if (bs && bs.status !== 'locked') return false;
     // 已合成典藏版的卷组，其单卷不再作为商品出现
     if (isVolumeConsumed(b.bookId, state.books)) return false;
-    return !isBookLockedByDlc(b.bookId);
+    if (isBookLockedByDlc(b.bookId)) return false;
+    // 活动书：仅在其活动窗口内可刷出（2026-10-22 哥特之夜，plan §六 D9）
+    return !isOutsideEventWindow(b);
   });
 }
 
@@ -45,12 +53,23 @@ export function getShopState() {
 
 export function ensureShopState() {
   const now = getNow();
+
+  // 活动书窗口过期清理：槽位里的活动书在活动结束后不可再购买，
+  // 标记 soldAt 让下方补货路径用窗口内候选替换（2026-10-22 哥特之夜）
+  [...shopState.fixed, ...shopState.rotating].forEach(slot => {
+    if (!slot.bookId || slot.soldAt) return;
+    const entry = SHARED_POOL.find(b => b.bookId === slot.bookId);
+    if (entry && isOutsideEventWindow(entry)) {
+      slot.soldAt = now - 25 * 3600 * 1000;
+    }
+  });
+
   const expired = !shopState.lastRefresh || (now - shopState.lastRefresh) >= 24 * 3600 * 1000;
 
   if (expired) {
     const available = getAvailableBooks();
     const guaranteed = getGuaranteedVolumeEntries(SHARED_POOL, state.books)
-      .filter(e => !isBookLockedByDlc(e.bookId));
+      .filter(e => !isBookLockedByDlc(e.bookId) && !isOutsideEventWindow(e));
 
     const guaranteedIds = new Set(guaranteed.map(e => e.bookId));
     const candidates = available.filter(b => !guaranteedIds.has(b.bookId));
@@ -181,13 +200,17 @@ export function purchaseBook(bookId, price) {
   if (isManuscriptBoxFull()) {
     return { ok: false, reason: 'manuscript_box_full' };
   }
+  // 兜底：活动书窗口外禁止成交（应对刷新前的陈旧槽位/打开中的购买弹窗）
+  const poolEntry = SHARED_POOL.find(b => b.bookId === bookId);
+  if (poolEntry && isOutsideEventWindow(poolEntry)) {
+    return { ok: false, reason: 'event_ended' };
+  }
 
   spendCoins(actualPrice);
 
   state.books[bookId] = createBookRecord();
   addToManuscriptBox(bookId);
 
-  const poolEntry = SHARED_POOL.find(b => b.bookId === bookId);
   const title = poolEntry ? poolEntry.title : bookId;
   const parts = [];
   if (auraDiscount > 0) parts.push('裴舟光环9折');
