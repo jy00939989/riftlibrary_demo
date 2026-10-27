@@ -4,6 +4,7 @@ import { spendCoins } from './storage.js';
 import { t } from './i18n/terms.js';
 import { getSettings, setSetting } from './settings.js';
 import { isDlcPackUnlocked } from './shop.js';
+import { isFestivalActive } from '../data/festival.js';
 import { getMusicSalePrice } from '../data/music.js';
 
 export const AMBIENT_DEFS = [
@@ -17,7 +18,9 @@ export const AMBIENT_DEFS = [
     dlcPackId: 'pack_british_legends'
   },
   // 2026-09-21 图南供曲：暴雪天壁炉（25 分钟循环，常驻 500💰，与维多利亚书房同档）
-  { id: 'blizzard_fireplace', name: t('ambientName_blizzard_fireplace'), emoji: '🔥', price: 500, file: 'audio/ambient/blizzard_fireplace.mp3' }
+  { id: 'blizzard_fireplace', name: t('ambientName_blizzard_fireplace'), emoji: '🔥', price: 500, file: 'audio/ambient/blizzard_fireplace.mp3' },
+  // 2026-10-27 哥特之夜：万圣夜书房（图南供曲 25 分钟循环；festivalKey 门控，窗口内可购）
+  { id: 'halloween_night', name: t('ambientName_halloween_night'), emoji: '🕯️', price: 500, file: 'audio/ambient/halloween-night.mp3', festivalKey: 'gothicNight2026' }
 ];
 
 let currentAudio = null;
@@ -60,6 +63,8 @@ export function buyAmbient(id) {
   if (!def) return { ok: false, reason: 'not_found' };
   const unlocked = getUnlockedAmbientIds();
   if (unlocked.includes(id)) return { ok: false, reason: 'already_owned' };
+  // 2026-10-27 哥特之夜环境音：窗口外禁止成交（限时上架=限时购买；已购保留可用）
+  if (def.festivalKey && !isFestivalActive(def.festivalKey)) return { ok: false, reason: 'event_ended' };
   if (def.dlcPackId && !isDlcPackUnlocked(def.dlcPackId)) {
     return { ok: false, reason: 'dlc_locked', dlcPackId: def.dlcPackId };
   }

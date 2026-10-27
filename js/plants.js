@@ -6,6 +6,7 @@
 import { state, saveState } from './state.js';
 import { spendCoins, addCoins, addAtmosphere, addHistory, addInspiration, addPlantLog } from './storage.js';
 import { markTaskDone } from './dailytasks.js';
+import { bumpEventTask } from './core/event-tasks.js';
 import { PLANT_TYPES, SEED_EXCHANGE, WATERING_CANS, WATER_TANKS, GREEN_THUMB, IMPROVE_TIERS } from '../data/plants.js';
 import { isBookCapacityFull, isManuscriptBoxFull, addToManuscriptBox, getManuscriptSlots, getManuscriptBoxCount } from './capacity.js';
 import { createBookRecord } from './core/book-utils.js';
@@ -190,6 +191,7 @@ export function getPerennialRestartLevel(type) {
 export function canUnlockImproved(type) {
   const next = getNextImproveTier(type);
   if (!next) return false;
+  if (PLANT_TYPES[type] && PLANT_TYPES[type].noImprove) return false; // 限定作物（魔法南瓜）不可嫁接
   return (state.seeds[type] || 0) >= next.seedCost;
 }
 
@@ -197,6 +199,7 @@ export function canUnlockImproved(type) {
 export function unlockImproved(type) {
   const next = getNextImproveTier(type);
   if (!next || !canUnlockImproved(type)) return false;
+  if (PLANT_TYPES[type] && PLANT_TYPES[type].noImprove) return false; // 魔法南瓜等限定作物不可嫁接（2026-10-27 图南拍板）
   if (!spendSeed(type, next.seedCost)) return false;
   const newTier = getImproveTier(type) + 1;
   state.improvedPlants[type] = newTier;
@@ -433,6 +436,9 @@ export function harvestPlant(potIndex = 0) {
 
   // 绿手指：累计收获次数（唯一事实源，等级由阈值推导）
   state.plantHarvests = (state.plantHarvests || 0) + 1;
+
+  // 万圣巡馆任务③：种瓜（魔法南瓜收获；窗口外/已发放均为安全空操作）
+  if (plant.activeType === 'magic_pumpkin') bumpEventTask('harvest_pumpkin');
 
   const seedName = seedDropped ? ` + 获得 ${t(def.nameKey)}种子 ×1` : '';
   addHistory('plant', `收获 ${def.emoji} ${t(def.nameKey)}`, `+${def.harvestAtmosphere}氛围 +${def.harvestCoins}智慧之光${seedName}`);

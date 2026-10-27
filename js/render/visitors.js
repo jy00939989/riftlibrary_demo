@@ -4,6 +4,8 @@ import { BOOKS } from '../../data/books.js';
 import { el, actions, getBookTitle } from './common.js';
 import { t } from '../i18n/terms.js';
 import { getBorrowLevelConfig, getVisitorCap, getVisitorDef, getDamageChance, getFavorStage, FAVOR_STAGES, VISITOR_DEFS, COLLECT_ALL_UNLOCK_LEVEL } from '../visitors.js';
+import { getRestorationRepairSpeedBonus, getServicingSlots } from '../capacity.js';
+import { getServicingUsed } from '../core/servicing.js';
 
 function getVisitorBookTitle(bookId, fallback) {
   const book = bookId ? BOOKS[bookId] : null;
@@ -227,6 +229,8 @@ export function renderVisitorsPage() {
   if (due.length === 0) {
     section3.appendChild(el('div', 'text-sm text-ink-light py-4 text-center border border-dashed border-wood/30 rounded-lg', { text: '暂无待收取书籍' }));
   } else {
+    // 保养预约行内勾选（servicing-room-plan v3）：收取前勾选，collectReturn 同事务原子落锁，零竞态
+    const servicingChecks = new Set();
     // 一键收书按钮（≥2 本才显示；单本用行内按钮即可）
     if (due.length >= 2) {
       const slot = section3.querySelector('.collect-all-slot');
@@ -254,8 +258,38 @@ export function renderVisitorsPage() {
 
     due.forEach(v => {
       const row = el('div', 'flex items-center gap-3 bg-magic-gold/10 rounded-lg p-3 mb-2 border border-magic-gold/30 animate-pulse-glow');
+      // 逐本 chip：磨损书旁出保养预约勾选（默认不勾，决策 ④）；已 pending 的标 📅（收取时自动落锁）
+      const vBookIds = (v.bookIds && v.bookIds.length ? v.bookIds : [v.bookId]).filter(Boolean);
+      const chips = vBookIds.map(id => {
+        const bs = state.books[id];
+        const wear = bs?.wearCount || 0;
+        const title = getVisitorBookTitle(id, '');
+        if (bs?.servicing === 'pending') {
+          return `<span class="inline-flex items-center gap-0.5" title="${t('servicingPendingBadge')}">《${title}》<span class="text-sky-500 text-xs">📅</span></span>`;
+        }
+        if (wear > 0 && !bs?.damaged) {
+          return `<span class="inline-flex items-center gap-0.5">《${title}》<input type="checkbox" class="servicing-check accent-amber-600" data-book="${id}" title="${t('servicingDueToggleTitle')}"></span>`;
+        }
+        return `《${title}》`;
+      }).join('');
       row.innerHTML = `<span class="text-2xl due-book-emoji">${v.emoji}</span>
-        <div class="flex-1"><span class="font-bold">${v.name}</span><span class="text-sm text-ink-light ml-2">${(v.bookIds && v.bookIds.length ? v.bookIds : [v.bookId]).filter(Boolean).map(id => `《${getVisitorBookTitle(id, '')}》`).join('')}</span></div>`;
+        <div class="flex-1"><span class="font-bold">${v.name}</span><span class="text-sm text-ink-light ml-2">${chips}</span></div>`;
+      // 勾选即占格校验：已占 + 本次勾选数 ≤ 总格，满则拒绝
+      row.querySelectorAll('.servicing-check').forEach(cb => {
+        if (servicingChecks.has(cb.dataset.book)) cb.checked = true;
+        cb.addEventListener('change', () => {
+          if (cb.checked) {
+            if (getServicingUsed() + servicingChecks.size >= getServicingSlots()) {
+              cb.checked = false;
+              if (window.showToast) window.showToast(t('servicingFullToast').replace('{n}', String(getServicingSlots())), 'error');
+              return;
+            }
+            servicingChecks.add(cb.dataset.book);
+          } else {
+            servicingChecks.delete(cb.dataset.book);
+          }
+        });
+      });
       const btn = el('button', 'px-4 py-2 bg-magic-gold text-white rounded-lg text-sm font-bold hover:shadow-lg transition-all');
       btn.textContent = '📥 收取';
       btn.addEventListener('click', () => {
@@ -268,7 +302,7 @@ export function renderVisitorsPage() {
             emojiEl.style.opacity = '0';
           }
           setTimeout(() => {
-            const result = actions.collectReturn(v.id);
+            const result = actions.collectReturn(v.id, vBookIds.filter(id => servicingChecks.has(id)));
             if (result) {
               showVisitorEventModal(result, () => renderVisitorsPage());
             }
@@ -364,22 +398,23 @@ function buildVisitorResultBlocks(result) {
           <span>${i === 0
             ? `<span class="text-magic-gold font-bold">${t('multiBorrowMain')}</span>`
             : `<span class="text-ink-light">${t('multiBorrowExtra')}</span>`}
-            ${getVisitorBookTitle(b.bookId, b.title)}${b.damaged ? ` <span class="text-red-500 font-bold">⚠️${t('bookDamagedShort')}</span>` : ''}</span>
+            ${getVisitorBookTitle(b.bookId, b.title)}${b.damaged ? ` <span class="text-red-500 font-bold">⚠️${t('bookDamagedShort')}</span>` : ''}${b.servicing === 'locked' ? ` <span class="text-teal-600 font-bold">${t('servicingLockedShort')}</span>` : ''}${b.servicing === 'cancelled' ? ` <span class="text-ink-light">${t('servicingCancelledShort')}</span>` : ''}</span>
           <span class="text-ink-light">💰+${b.coins}${b.atmosphere > 0 ? ` · ✨+${b.atmosphere}` : ''}</span>
         </div>`).join('')}</div>`;
   }
 
-  // 损坏提示（逐本列出）
+  // 损坏提示（逐本列出）：损失 + 暂停外报 + 预计修复时长（book-maintenance-plan v2）
   const damagedBooks = booksList.filter(b => b.damaged);
   if (damagedBooks.length > 0) {
     const dmgLines = damagedBooks.map(b => {
       const bs = state.books[b.bookId];
       const pct = Math.round((bs?.repairWords || 0) / ((bs?.repairWords || 0) + (bs?.copiedWords || 0) || 1) * 100);
-      return `⚠️ 《${getVisitorBookTitle(b.bookId, b.title)}》轻微损毁（约 ${pct}% 抄写进度）`;
+      const estMin = Math.ceil((bs?.repairWords || 0) / (100 * (1 + getRestorationRepairSpeedBonus())));
+      return `⚠️ 《${getVisitorBookTitle(b.bookId, b.title)}》轻微损毁（约 ${pct}% 抄写进度）· ${t('repairEstimateMinutes').replace('{min}', estMin)}`;
     }).join('<br>');
     html += `<div class="mt-3 p-2 bg-amber-50 rounded-lg text-xs text-amber-800 border border-amber-200">
       ${dmgLines}<br>
-      <span class="font-bold">🔧 不用担心！继续在缮写室专注誊抄就是在修复它，修书时速度还会 +5%。</span><br>
+      <span class="font-bold">🔧 ${t('repairSuspendLending')}。${t('repairKeepFocusHint')}</span><br>
       <span class="text-amber-600">修复完成后墨墨会给你额外奖励 ✨</span>
     </div>`;
   }

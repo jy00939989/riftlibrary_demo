@@ -848,6 +848,19 @@ body {
   height: 1.1em;
 }
 
+/* 万圣笔（哥特之夜 2026 解锁，visual/festival/pen_gothic_night.png，真透明底斜笔）：
+   高 64px，笔尖位于图左下 (~2%, ~96%)，wobble 轴心设笔尖处让摆动像真的在写字。
+   ⚠️ 用 JS 加 --gothic 修饰类而非 :has()——html2canvas（誊抄证书/金光兑现截图）
+   解析样式表遇到 :has 会整个 throw，截图功能当场报废 */
+.writing-quill-inner .writing-quill-img {
+  display: block;
+  height: 64px;
+  width: auto;
+}
+.writing-quill-inner--gothic {
+  transform-origin: 15% 95%;
+}
+
 @keyframes writing-quill-wobble {
   0%, 100% { transform: rotate(-8deg) translateY(0); }
   25% { transform: rotate(-4deg) translateY(-2px); }

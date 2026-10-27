@@ -8,9 +8,10 @@
 // ── Node 环境浏览器桩 ──
 globalThis.window = { __dev: {} };
 const elStub = () => ({
-  style: {}, classList: { add() {}, remove() {}, toggle() {} },
+  style: {}, classList: { add() {}, remove() {}, toggle() {}, contains: () => false },
   addEventListener() {}, appendChild() {}, remove() {},
-  querySelector: () => null, querySelectorAll: () => [], innerHTML: '', textContent: ''
+  // querySelector 递归返回桩：日记装帧升级弹窗等 fire-and-forget UI 在 Node 下不再炸（2026-10-25）
+  querySelector: () => elStub(), querySelectorAll: () => [], innerHTML: '', textContent: ''
 });
 globalThis.document = {
   getElementById: elStub, querySelector: elStub, querySelectorAll: () => [],

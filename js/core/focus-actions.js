@@ -3,6 +3,8 @@ import { state } from '../state.js';
 import { ensureAudioContext, playSfx, pauseMusic, startBgm, isMusicOn } from '../audio.js';
 import { playAmbient, isAmbientEnabled } from '../ambient.js';
 import { startFocus, togglePauseFocus, completeFocus, abandonFocus } from './focus-session.js';
+import { suspendMaintenanceFocus } from './maintenance.js';
+import { renderFocusPage } from '../render/index.js';
 import { runFocusOrchestration } from './focus-orchestrator.js';
 import { checkAchievements } from '../achievements.js';
 import { showAchievementBatch } from '../render/achievements.js';
@@ -92,5 +94,15 @@ export function handleAbandonFocus() {
       target_minutes: sess.targetMinutes
     });
     abandonFocus();
+  }
+}
+
+// 保养批次中途退出 = 挂起（book-maintenance-plan v2：进度全保留，不做 50% 折算）
+export function handleSuspendMaintenance() {
+  const sess = state.currentSession;
+  if (confirm('挂起本次保养？已投入工时会全额保留，可随时续作。')) {
+    track('maintenance_suspend', { minutes: sess.active ? Math.round(sess.elapsedSeconds / 60) : 0 });
+    suspendMaintenanceFocus();
+    renderFocusPage();
   }
 }

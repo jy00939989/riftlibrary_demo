@@ -10,6 +10,7 @@
 //           remainGameMin = max(0, totalMin - doneMin)；remainWallMin = ceil(remainGameMin / speed)
 // 已知保守项：首 5 分钟茶饮 110/分钟快于估算（方向：预估略长，玩家早抄完不投诉）
 
+import './node-env-mock.mjs'; // 必须第一个：为 render 链顶层 window 赋值装桩
 import { estimateRemainingMinutes, getEffectiveCopiedWords, getWordsToNextCompletion, getRepairProgress, shouldHideCopyBarInRepair } from '../js/core/book-utils.js';
 
 let passed = 0;

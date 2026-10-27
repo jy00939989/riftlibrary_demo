@@ -11,6 +11,8 @@ import { showToast } from './shared/toast.js';
 import { getLibraryStage } from '../storage.js';
 import { purchaseSignboard } from '../shop.js';
 import { SIGNBOARDS } from '../../data/signboards.js';
+import { isEventWindowActive } from '../../data/event_calendar.js';
+import { getEventTasks, claimEventTask } from '../core/event-tasks.js';
 import {
   isExhibitionBuilt, canBuildExhibitionHall, buildExhibitionHall,
   getHallUpgradePrice, getHallLevelCap, canUpgradeHall, upgradeHall,
@@ -58,9 +60,98 @@ export function renderExhibitionPage() {
     renderHall(wrapper);
   }
 
+  // 万圣巡馆任务面板（2026-10-27 图南：任务链要有指引；仅活动窗口内显示）
+  const tasksPanel = renderEventTasksPanel();
+  if (tasksPanel) wrapper.appendChild(tasksPanel);
+
   // 标志牌墙（2026-09-21 图南决策：从温室/商店收编进展览厅；不受建成门控，早期可购买）
   wrapper.appendChild(renderSignboardWall());
   container.appendChild(wrapper);
+}
+
+// ========== 万圣巡馆任务面板（哥特之夜 2026，gothic-night-assets-2026.md v4.2 §三.4）==========
+
+function renderEventTasksPanel() {
+  const devNow = (typeof window !== 'undefined' && window.__dev?.getNow?.()) || Date.now();
+  if (!isEventWindowActive('gothic_night', new Date(devNow))) return null;
+
+  const card = document.createElement('div');
+  card.className = 'bg-white/60 rounded-xl p-5 border-2 border-purple-300/60 shadow-lg';
+  const tasks = getEventTasks();
+  const allClaimed = tasks.every(t => t.rewarded);
+  const progress = tasks.filter(t => t.done).length;
+
+  card.innerHTML = `
+    <div class="flex items-center justify-between mb-1">
+      <h3 class="font-display font-bold text-ink">🎃 ${t('evtTasksPanelTitle')}</h3>
+      <span class="text-xs font-bold ${allClaimed ? 'text-magic-gold' : 'text-purple-600'}">${allClaimed ? '🥀' : `${progress}/4`}</span>
+    </div>
+    <p class="text-xs text-ink-light mb-3">${allClaimed ? t('evtTasksPanelDone') : t('evtTasksPanelHint')}</p>
+    <div class="space-y-1.5">
+      ${tasks.map(task => `
+        <div class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg ${task.done ? 'bg-purple-50/80' : 'bg-white/50'}">
+          <span class="text-sm flex-shrink-0">${task.done ? '✅' : '🎃'}</span>
+          <span class="text-xs leading-relaxed flex-1 ${task.done ? 'text-ink-light' : 'text-ink'}">${t(task.nameKey)}</span>
+          ${!task.done && task.need > 1 ? `<span class="text-[10px] font-bold text-purple-500 flex-shrink-0">${(task.mode === 'count' ? task.count : task.set.length)}/${task.need}</span>` : ''}
+          ${task.claimable ? `<button class="evt-claim-btn flex-shrink-0 px-2.5 py-1 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded text-[10px] font-bold hover:shadow transition-all" data-task="${task.id}">${task.reward.emoji} ${t('evtTaskClaim')}</button>` : ''}
+          ${task.rewarded ? `<span class="text-[10px] text-ink-light flex-shrink-0">${task.reward.emoji} ${t('evtTaskClaimed')}</span>` : ''}
+        </div>`).join('')}
+    </div>`;
+  // 领取（2026-10-27 图南拍板领取制 + 领取确认弹窗：不开自动弹窗，面板手动领，但领取瞬间要有确认感）
+  card.querySelectorAll('.evt-claim-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const task = getEventTasks().find(x => x.id === btn.dataset.task);
+      if (task && task.claimable) showEvtClaimModal(task);
+    });
+  });
+  return card;
+}
+
+// 领取确认弹窗（图南 2026-10-27：领取奖品要有确认弹窗，不是只有跳出文字）
+// 确认 → claimEventTask 发放 → 弹窗切获得态（大图标展示奖励），点「收下」关闭并刷新面板
+function showEvtClaimModal(task) {
+  const overlay = document.createElement('div');
+  overlay.className = 'fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4';
+
+  const content = document.createElement('div');
+  content.className = 'parchment-bg rounded-2xl p-6 max-w-xs w-full magic-glow animate-scale-in text-center';
+  content.innerHTML = `
+    <p class="text-xs font-bold text-purple-600 mb-1">🎃 ${t('evtTasksPanelTitle')}</p>
+    <h3 class="font-display text-lg font-bold mb-3">${t(task.nameKey)}</h3>
+    <div class="bg-white/60 rounded-xl p-4 mb-4">
+      <div class="text-5xl mb-1">${task.reward.emoji}</div>
+      <p class="text-sm font-bold text-ink">${task.reward.label}</p>
+    </div>
+    <div class="claim-confirm-zone">
+      <p class="text-xs text-ink-light mb-3">${t('evtTaskClaimConfirmHint')}</p>
+      <div class="flex justify-center gap-3">
+        <button class="claim-cancel-btn px-5 py-2 bg-wood/20 text-ink-light rounded-lg font-bold hover:bg-wood/30 transition-all">${t('cancel')}</button>
+        <button class="claim-ok-btn px-5 py-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-lg font-bold hover:shadow-lg transition-all">${t('evtTaskClaimConfirm')}</button>
+      </div>
+    </div>
+    <div class="claim-got-zone" style="display:none;">
+      <p class="text-sm font-bold text-magic-gold mb-3">🎉 ${t('evtTaskClaimGot')}</p>
+      <button class="claim-close-btn px-6 py-2 bg-magic-gold text-white rounded-lg font-bold hover:shadow-lg transition-all">${t('evtTaskClaimClose')}</button>
+    </div>`;
+
+  overlay.appendChild(content);
+  document.body.appendChild(overlay);
+  const close = () => { overlay.remove(); renderExhibitionPage(); };
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+
+  content.querySelector('.claim-cancel-btn').addEventListener('click', close);
+  content.querySelector('.claim-close-btn').addEventListener('click', close);
+  content.querySelector('.claim-ok-btn').addEventListener('click', () => {
+    const res = claimEventTask(task.id);
+    if (res.ok) {
+      playSfx('buy_success');
+      content.querySelector('.claim-confirm-zone').style.display = 'none';
+      content.querySelector('.claim-got-zone').style.display = 'block';
+    } else if (window.showToast) {
+      window.showToast(t('evtTaskClaimFail'), 'error');
+      close();
+    }
+  });
 }
 
 // ========== 标志牌墙：展览（已拥有）+ 购买（未拥有）一体 ==========

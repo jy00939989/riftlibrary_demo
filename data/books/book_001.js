@@ -10,6 +10,8 @@ export const meta = {
   totalWords: 28000,
   description: '一个来自小行星B-612的小王子的星际旅行故事，关于爱、责任与生命的意义。',
   emoji: '🤴',
+
+  cover: 'visual/books/book_001.png',
   certMessage: '你驯服了这些文字，它们也驯服了你。',
   // mastery 解锁内容
   authorBio: '安托万·德·圣-埃克苏佩里（1900-1944），法国作家、飞行员。曾从事航空邮政飞行，二战期间加入自由法国空军。1944年执行侦察任务时失踪，成为文学史上的传奇。',

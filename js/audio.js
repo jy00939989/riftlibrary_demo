@@ -3,6 +3,7 @@ import { state, saveState } from './state.js';
 import { initAmbient, setAmbientEnabled, isAmbientEnabled, playAmbient, stopAmbient } from './ambient.js';
 import { getSettings, setSettings, setSetting, initSettings } from './settings.js';
 import { TRACK_DEFS, getMusicSalePrice } from '../data/music.js';
+import { isFestivalActive } from '../data/festival.js';
 import { resolveStageLevel } from '../data/atmosphere.js';
 import { spendCoins } from './storage.js';
 
@@ -121,6 +122,10 @@ export function purchaseTrack(trackId) {
   const def = TRACK_DEFS.find(t => t.id === trackId);
   if (!def) return { ok: false, reason: 'not_found' };
   if (isTrackPurchased(trackId)) return { ok: false, reason: 'already_owned' };
+  // 任务专属音轨（哥特之夜《猩红血夜》=开卷奖励，图南拍板不上架）
+  if (def.giftOnly) return { ok: false, reason: 'gift_only' };
+  // 2026-10-27 哥特之夜音轨：窗口外禁止成交（限时上架=限时购买；已购保留可听）
+  if (def.festivalKey && !isFestivalActive(def.festivalKey)) return { ok: false, reason: 'event_ended' };
   const purchaseState = getTrackPurchaseState(def);
   if (purchaseState.status !== 'purchasable') return { ok: false, reason: purchaseState.reason || 'locked' };
   const sale = getMusicSalePrice(def.price);

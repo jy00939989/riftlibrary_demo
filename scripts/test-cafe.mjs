@@ -105,7 +105,10 @@ assert(cafe.canCraftRecipe('starlight_special') && cafe.craftRecipe('starlight_s
 
 // 92-98%：每颗种子产出对照该种子最优可重复兑换率
 // 容差 ±0.5pp：plan §2.3 表内 92%/94%/98% 为展示四舍五入值（星蕨实际 91.67%，表记 92%）
+// 2026-10-27 豁免：魔法南瓜种子无 SEED_EXCHANGE 条目（图南拍板：限定作物不进兑换表），
+// 其食谱（哥特之夜限定）不适用常驻 92-98% 经济纪律
 CAFE_RECIPES.forEach(r => {
+  if (r.festivalKey && !SEED_EXCHANGE[r.material.seedType]) return;
   const eff = r.price / r.material.count;
   const rates = (SEED_EXCHANGE[r.material.seedType] || [])
     .filter(e => e.type === 'coins' && e.repeatable !== false)
@@ -219,7 +222,7 @@ delete state.plants;
 delete state.cafe;
 state.plant = { activeType: 'magic_rose', level: 2, growthProgress: 5 };
 runMigrations();
-assert(state._schemaVersion === 16, 'schemaVersion 升到 15');
+assert(state._schemaVersion === 17, 'schemaVersion 升到 17（v17 保养预约）');
 assert(state.exhibition && state.exhibition.built === false && state.exhibition.level === 0
   && state.exhibition.rooms && state.exhibition.rooms.archive === 'ruined',
   'v10 exhibition 同档默认态（A5）');

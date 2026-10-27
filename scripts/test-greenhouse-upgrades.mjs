@@ -73,7 +73,7 @@ function plantDirect(potIndex, type, level = 1, growthProgress = 0) {
 console.log('\n[1] 迁移 v16 默认值（幂等）');
 state._schemaVersion = 15;
 runMigrations();
-assert(state._schemaVersion === 16, 'schema 升到 v16');
+assert(state._schemaVersion === 17, 'schema 升到 v17');
 assert(state.wateringCanLevel === 1 && state.waterTankLevel === 1, '喷壶/水箱默认 Lv1');
 assert(state.improvedPlants && typeof state.improvedPlants === 'object' && !Object.keys(state.improvedPlants).length, '改良品种表默认空');
 assert(state.plantHarvests === 0, '绿手指计数默认 0');

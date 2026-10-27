@@ -2,11 +2,22 @@
 // 模块级单例
 
 import { getBookTitle, getBookQuotes, getChapterContent } from './common.js';
+import { state } from '../state.js';
 
 const BASE_SPEED = 150;  // ms/字
 const PEN_DELAY = 40;    // 羽笔到位后延迟出字
 
 let currentAnim = null;
+
+// 当前笔样式：默认 SVG 羽笔；解锁过万圣笔（festival.js 窗口内自动发放，已得终身）则换真羽毛笔图
+function hasGothicPen() {
+  return (state.unlockedPenStyles || []).includes('gothic_night');
+}
+function quillInnerHTML() {
+  return hasGothicPen()
+    ? `<img class="writing-quill-img writing-quill-gothic" src="visual/festival/pen_gothic_night.png" alt="">`
+    : FEATHER_ICON;
+}
 
 // 羽毛笔 SVG 图标（Windows 10 不支持 🪶 emoji，用 SVG 替代）
 const FEATHER_ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-icon"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"></path><line x1="16" y1="8" x2="2" y2="22"></line><line x1="17.5" y1="15" x2="9" y2="15"></line></svg>`;
@@ -148,7 +159,7 @@ class WritingAnim {
           </div>
         </div>
         <div class="writing-quill-container" id="writing-quill" style="display:none;">
-          <div class="writing-quill-inner">${FEATHER_ICON}</div>
+          <div class="${hasGothicPen() ? 'writing-quill-inner writing-quill-inner--gothic' : 'writing-quill-inner'}">${quillInnerHTML()}</div>
         </div>
       </div>
     `;

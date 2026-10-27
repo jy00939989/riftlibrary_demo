@@ -3,6 +3,7 @@ import { state } from '../../state.js';
 import { BOOKS } from '../../../data/books.js';
 import { el, animateNumber, getBookTitle } from '../common.js';
 import { getEffectiveCopiedWords, getRepairProgress, estimateRemainingMinutes, getChapterInfo, shouldHideCopyBarInRepair } from '../../core/book-utils.js';
+import { getMaintenanceLiveProgress } from '../../core/maintenance.js';
 import { getFocusSpeedMultiplier } from '../../core/shop/library-upgrades.js';
 import { getAuraSpeedBonus } from '../../visitors.js';
 import { getCurationFocusSpeed } from '../../curation.js';
@@ -65,6 +66,8 @@ export function getLiveRepairProgress(sess) {
 /** 每秒实况刷新修复条（timer tick 调用；DOM 缺失时静默跳过） */
 export function updateRepairBarLive(sess) {
   if (typeof document === 'undefined') return;
+  // 保养会话没有修复条；批次条由 renderFocusPage 按分钟重建 + 下方 updateMaintenanceBarDOM 刷新
+  if (sess && sess.activity === 'maintenance') return;
   const live = getLiveRepairProgress(sess);
   const fill = document.getElementById('book-progress-repair-fill');
   if (!fill) return;
@@ -77,6 +80,56 @@ export function updateRepairBarLive(sess) {
   if (doneEl) doneEl.textContent = live.done.toLocaleString();
   const boostEl = document.getElementById('book-progress-repair-boost');
   if (boostEl) boostEl.textContent = t('repairSpeedBoost').replace('{pct}', live.pct).replace('{n}', Math.round(getRestorationRepairSpeedBonus() * 100));
+}
+
+/**
+ * 保养批次进度条（book-maintenance-plan v2）：整批一体，视觉分段但不逐本落账。
+ * 实时值走 getMaintenanceLiveProgress（会话内未入账估算 + 池内已入账）。
+ */
+export function renderMaintenanceProgress(sess) {
+  const ms = state.maintenanceSession;
+  const div = el('div', 'mt-4 pt-4 border-t border-wood/20');
+  div.id = 'maintenance-progress-bar';
+  if (!ms) {
+    div.innerHTML = `<div class="text-xs text-ink-light">${t('maintenanceBatchGone')}</div>`;
+    return div;
+  }
+  const total = ms.bookIds.reduce((s, id) => s + (ms.perBook[id] || 0), 0);
+  const live = getMaintenanceLiveProgress(sess) || { done: 0, total, pct: 0 };
+  const titles = ms.bookIds.map(id => BOOKS[id] ? (BOOKS[id].volumeTitle || BOOKS[id].title) : id);
+  div.innerHTML = `
+    <div class="flex items-center justify-between mb-1.5">
+      <span class="text-xs font-bold text-teal-700">🧴 ${t('maintenanceSessionLabel').replace('{n}', ms.bookIds.length)}</span>
+      <span class="text-xs text-ink-light"><span id="maint-progress-done">${live.done.toLocaleString()}</span> / <span id="maint-progress-total">${live.total.toLocaleString()}</span> ${t('wordsUnit')}</span>
+    </div>
+    <div class="h-2.5 bg-wood/20 rounded-full overflow-hidden">
+      <div id="maint-progress-fill" class="h-full bg-gradient-to-r from-teal-500 to-teal-400 rounded-full transition-all duration-500" style="width:${live.pct}%"></div>
+    </div>
+    <div id="maint-progress-pct" class="text-right text-xs text-teal-700 mt-0.5" data-value="${live.pct}">${live.pct}%</div>
+    <div class="text-[11px] text-ink-light mt-1 truncate">${titles.map(x => '《' + x + '》').join('、')}</div>
+  `;
+  return div;
+}
+
+/** 暂停/恢复时刷新批次条 DOM（updateActiveControlsDOM 的保养分支调用） */
+export function updateMaintenanceBarDOM(sess) {
+  const live = getMaintenanceLiveProgress(sess);
+  const fill = document.getElementById('maint-progress-fill');
+  if (!fill) return;
+  if (!live) { fill.style.width = '0%'; return; }
+  fill.style.width = `${live.pct}%`;
+  const doneEl = document.getElementById('maint-progress-done');
+  if (doneEl) doneEl.textContent = live.done.toLocaleString();
+  const totalEl = document.getElementById('maint-progress-total');
+  if (totalEl) totalEl.textContent = live.total.toLocaleString();
+  const pctEl = document.getElementById('maint-progress-pct');
+  if (pctEl) {
+    const prevPct = parseInt(pctEl.dataset.value || '0', 10);
+    if (prevPct !== live.pct) {
+      animateNumber(pctEl, prevPct, live.pct, 400, (n) => `${Math.round(n)}%`);
+      pctEl.dataset.value = String(live.pct);
+    }
+  }
 }
 
 export function renderBookProgress(sess, book) {

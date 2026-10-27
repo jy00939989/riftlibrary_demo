@@ -10,6 +10,8 @@ export const meta = {
   totalWords: 225000,
   description: '以哥白尼革命式勇气追问人类理性边界与认识何以可能的哲学经典',
   emoji: '🤔',
+
+  cover: 'visual/books/book_010.png',
   certMessage: '你越过了理性的边界，在康德的星空下驻足凝望。',
   // mastery 解锁内容
   authorBio: '伊曼努尔·康德（1724-1804），德国古典哲学创始人，启蒙运动最后一位主要哲学家。一生从未离开家乡柯尼斯堡，生活规律如钟表，却在思想领域掀起哥白尼式革命，深刻影响了后世所有哲学流派。',

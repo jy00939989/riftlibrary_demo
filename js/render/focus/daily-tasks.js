@@ -7,14 +7,18 @@ import { t } from '../../i18n/terms.js';
 export function renderDailyTasks() {
   ensureDailyTasks();
   const dt = state.dailyTasks;
-  const done = (dt.focusDone ? 1 : 0) + (dt.returnDone ? 1 : 0) + (dt.waterDone ? 1 : 0);
-  const allDone = done === 3;
-
   const tasks = [
     { icon: '🖋️', label: t('dailyFocus25Min'), done: dt.focusDone, reward: '💰 30' },
     { icon: '📥', label: t('dailyReturnBook'), done: dt.returnDone, reward: '✨ +1氛围' },
-    { icon: '🌱', label: t('dailyWaterPlant'), done: dt.waterDone, reward: '💰 10' }
-  ];
+    { icon: '🌱', label: t('dailyWaterPlant'), done: dt.waterDone, reward: '💰 10' },
+    // 古籍保养 v2：修缮日任（保养或修复任一计数）；无磨损书且无损毁书的日子自动隐藏
+    { icon: '🧴', label: t('dailyMaintainBook'), done: dt.maintainDone, reward: '✨ +2氛围', optional: true }
+  ].filter(task => !task.optional || dt.maintainDone || hasRestorationWork());
+  const done = tasks.filter(task => task.done).length;
+  const total = tasks.length;
+  // 4 选 3：任务数 ≥4 时完成 3 项即全勤（任务数 3 的旧行为 = 全做）
+  const need = Math.min(3, total);
+  const allDone = done >= need;
 
   const card = el('div', 'mb-4 rounded-xl overflow-hidden border border-wood/20 flex flex-row items-center');
   card.style.background = 'linear-gradient(180deg, rgba(245,230,200,0.75) 0%, rgba(232,213,168,0.55) 100%)';
@@ -33,14 +37,14 @@ export function renderDailyTasks() {
     <div class="flex items-center gap-2 px-4 pt-3 pb-1">
       <span class="text-sm">📜</span>
       <span class="text-xs font-bold tracking-wider" style="color:#6b5010">${t('dailyTask')}</span>
-      <span class="text-[11px] ml-auto font-bold" style="color:${allDone ? '#c9a227' : '#2c2419'}">${allDone ? t('allDoneText') : `${done}/3`}</span>
+      <span class="text-[11px] ml-auto font-bold" style="color:${allDone ? '#c9a227' : '#2c2419'}">${allDone ? t('allDoneText') : `${done}/${need}`}</span>
     </div>
     <div class="px-3 pb-1">
       ${tasks.map((task, i) => `
         <div class="flex items-center gap-3 px-2 py-2 rounded-lg transition-all duration-500 ${task.done ? '' : ''}"
              style="${task.done
                ? 'background:linear-gradient(90deg, rgba(201,162,39,0.1) 0%, transparent 100%);'
-               : ''}${i < 2 ? 'margin-bottom:2px;' : ''}">
+               : ''}${i < tasks.length - 1 ? 'margin-bottom:2px;' : ''}">
           <div class="flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center text-base transition-all duration-500"
                style="${task.done
                  ? 'background:rgba(201,162,39,0.18); box-shadow:0 0 8px rgba(201,162,39,0.12);'
@@ -85,4 +89,15 @@ export function renderDailyTasks() {
   }
 
   return card;
+}
+
+// 修缮日任的显示条件：存在可保养书或损毁书（book-maintenance-plan v2 §五）
+function hasRestorationWork() {
+  const books = state.books || {};
+  for (const [id, bs] of Object.entries(books)) {
+    if (!bs || bs.status === 'locked') continue;
+    if (bs.damaged) return true;
+    if ((bs.wearCount || 0) > 0) return true;
+  }
+  return false;
 }

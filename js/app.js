@@ -14,9 +14,10 @@ import { addCoins, addHistory, updateStreak, addAtmosphere, updateBodyBackground
 import { renderFocusPage, renderBookshelfPage, renderLibraryPage,
   renderVisitorsPage, renderArchivePage, renderShopPage, setActions,
   updateStatusBar, initBagEntry, renderGuideQuestWidget, showPlantLossPopup,
-  showFestivalGiftPopup
+  showFestivalGiftPopup, showEventSplash
 } from './render/index.js';
-import { checkFestivalGifts } from './core/festival.js';
+import { checkFestivalGifts, markEventSplash } from './core/festival.js';
+import { recoverEventPlants } from './core/event-tasks.js';
 import { setCompleteCallback, syncTimer } from './timer.js';
 import { isNoMasteryBook } from './core/book-eligibility.js';
 import { spawnVisitor, tickVisitorBrowsing, checkDueVisitors, getStageWitnesses, tryTriggerGuyuPlantCare, tryTriggerTyphoonDisaster } from './visitors.js';
@@ -37,7 +38,7 @@ import { showWitnessToast } from './render/shared/visitor-cards.js';
 import { showAchievementBatch } from './render/achievements.js';
 import { initMusicSelector } from './render/music-selector.js';
 import { renderMomoSuggestion, resetMomoSuggestion } from './render/momo-suggestion.js';
-import { handleStartFocus, handleTogglePause, handleCompleteFocus, handleAbandonFocus } from './core/focus-actions.js';
+import { handleStartFocus, handleTogglePause, handleCompleteFocus, handleAbandonFocus, handleSuspendMaintenance } from './core/focus-actions.js';
 import { checkDayRollover } from './core/day-boundary.js';
 import { checkEventDayDiary } from './core/exhibition.js';
 import './core/offsite.js'; // 寄读日结：onNewDay 订阅副作用注册（borrow-demand-deepening §4）
@@ -58,6 +59,7 @@ setActions({
   togglePause: handleTogglePause,
   completeFocus: handleCompleteFocus,
   abandonFocus: handleAbandonFocus,
+  suspendMaintenance: handleSuspendMaintenance,
   buyShelf: handleBuyShelf,
   collectReturn: handleCollectReturn,
   upgradeBorrowLevel: handleUpgradeBorrowLevel,
@@ -116,12 +118,28 @@ function init() {
   try { grantOfflineWater(); } catch (e) { console.warn('[app] offline water grant failed', e); }
 
   // 双节活动：窗口内首次启动自动发登录礼（幂等，app 启动链单点触发）
+  // 2026-10-27 哥特之夜开幕：先看大图弹窗（每人一次），关闭后再串行礼物弹窗
   try {
     const granted = checkFestivalGifts();
-    if (granted.length) {
-      setTimeout(() => granted.forEach(f => showFestivalGiftPopup(f)), 600);
+    const showGiftPopups = () => {
+      if (granted.length) setTimeout(() => granted.forEach(f => showFestivalGiftPopup(f)), 400);
+    };
+    const splashDue = markEventSplash('gothicNight2026');
+    if (splashDue) {
+      setTimeout(() => showEventSplash({
+        titleKey: 'gothicSplashTitle',
+        introKey: 'gothicSplashIntro',
+        featuresKey: 'gothicSplashFeatures',
+        image: 'visual/festival/banner_gothic2026.jpg',
+        emoji: '🎃'
+      }, showGiftPopups), 500);
+    } else {
+      showGiftPopups();
     }
   } catch (e) { console.warn('[app] festival gift check failed', e); }
+
+  // 哥特之夜收尾：窗口结束后回收地里未收获的魔法南瓜（全株限时，v4.1 图南拍板）
+  try { recoverEventPlants(); } catch (e) { console.warn('[app] event plant recovery failed', e); }
 
   initAuth().catch(err => console.warn('[app] backend auth init failed', err));
 

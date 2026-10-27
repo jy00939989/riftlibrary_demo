@@ -95,6 +95,15 @@ test('R4 笔类道具目标：损坏书一律不可选（防同款伪完成）',
   assertEq(isBookEligibleForBrush('book_026', state.books['book_026']), true, '未损坏的已上架书可刷');
 });
 
+// 2026-10-26 玩家报告：修复完成后磨损应清零（此前残留「借出N次破旧」状态）
+test('R5 修复完成恢复崭新：wearCount 清零', () => {
+  freshShelvedDamaged();
+  state.books['book_026'].wearCount = 14; // 模拟借出 14 次的旧书
+  runSession(20); // 修满
+  assertEq(state.books['book_026'].damaged, false, '修满后 damaged');
+  assertEq(state.books['book_026'].wearCount, 0, '修复后磨损清零（恢复崭新）');
+});
+
 console.log(`\nrepair-session：${passed} 通过, ${failed} 失败`);
 if (failed > 0) {
   failures.forEach(f => console.error('  ✗ ' + f));

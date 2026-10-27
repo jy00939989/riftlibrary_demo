@@ -27,6 +27,8 @@ export function showPurchaseModal(poolEntry, price, originalPrice, discount) {
     : '';
   const bookDef = BOOKS[poolEntry.bookId];
   const chapterCount = bookDef?.chapters?.length || poolEntry.chapterCount || 0;
+  // 2026-10-27 兑换券结算确认（图南拍板）：持券时双按钮，玩家自选用券免费 or 花币留券
+  const hasVoucher = (state.bookVoucher || 0) > 0;
 
   const content = el('div', 'parchment-bg rounded-2xl p-6 max-w-sm w-full magic-glow animate-scale-in');
   content.innerHTML = `
@@ -41,11 +43,24 @@ export function showPurchaseModal(poolEntry, price, originalPrice, discount) {
       <p class="text-sm text-ink-light">${shortDesc}</p>
     </div>
     <div class="text-center mb-4">${priceLine}</div>
-    <div class="flex justify-center gap-3">
-      <button class="cancel-btn px-6 py-2.5 bg-wood/20 text-ink-light rounded-lg font-bold hover:bg-wood/30 transition-all">${t('cancel')}</button>
-      <button class="confirm-btn px-6 py-2.5 bg-magic-gold text-white rounded-lg font-bold hover:shadow-lg transition-all ${state.coins < price ? 'opacity-50 cursor-not-allowed' : ''}">${t('confirmPurchase')}</button>
-    </div>
-    ${state.coins < price ? `<p class="text-xs text-red-500 text-center mt-2">${t('insufficientCoins')} 💰</p>` : ''}
+    ${hasVoucher ? `
+      <div class="bg-orange-50 border border-orange-200 rounded-lg p-2.5 mb-3 text-center">
+        <span class="text-xs font-bold text-orange-700">🎃 ${t('bookVoucherLabel').replace('{n}', state.bookVoucher)}</span>
+        <span class="text-xs text-orange-600 block mt-0.5">${t('voucherChooseHow')}</span>
+      </div>
+      <div class="flex justify-center gap-2">
+        <button class="cancel-btn px-4 py-2.5 bg-wood/20 text-ink-light rounded-lg font-bold hover:bg-wood/30 transition-all">${t('cancel')}</button>
+        <button class="pay-btn px-4 py-2.5 bg-magic-blue text-white rounded-lg font-bold hover:shadow-lg transition-all ${state.coins < price ? 'opacity-50 cursor-not-allowed' : ''}">💰 ${t('voucherPayCoins')}</button>
+        <button class="voucher-btn px-4 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-lg font-bold hover:shadow-lg transition-all">🎃 ${t('voucherUseFree')}</button>
+      </div>
+      ${state.coins < price ? `<p class="text-xs text-red-500 text-center mt-2">${t('insufficientCoins')} 💰</p>` : ''}
+    ` : `
+      <div class="flex justify-center gap-3">
+        <button class="cancel-btn px-6 py-2.5 bg-wood/20 text-ink-light rounded-lg font-bold hover:bg-wood/30 transition-all">${t('cancel')}</button>
+        <button class="confirm-btn px-6 py-2.5 bg-magic-gold text-white rounded-lg font-bold hover:shadow-lg transition-all ${state.coins < price ? 'opacity-50 cursor-not-allowed' : ''}">${t('confirmPurchase')}</button>
+      </div>
+      ${state.coins < price ? `<p class="text-xs text-red-500 text-center mt-2">${t('insufficientCoins')} 💰</p>` : ''}
+    `}
   `;
 
   overlay.appendChild(content);
@@ -56,9 +71,8 @@ export function showPurchaseModal(poolEntry, price, originalPrice, discount) {
   content.querySelector('.cancel-btn').addEventListener('click', close);
   overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
 
-  const confirmBtn = content.querySelector('.confirm-btn');
-  confirmBtn.addEventListener('click', () => {
-    const result = purchaseBook(poolEntry.bookId, price);
+  const doPurchase = (useVoucher) => {
+    const result = purchaseBook(poolEntry.bookId, price, { useVoucher });
     if (result.ok) {
       updateStatusBar();
       playSfx('buy_success');
@@ -89,5 +103,13 @@ export function showPurchaseModal(poolEntry, price, originalPrice, discount) {
           window.showToast(t('purchaseFailed'), 'error');
       }
     }
-  });
+  };
+
+  // 绑定：普通单按钮 or 持券双按钮
+  const confirmBtn = content.querySelector('.confirm-btn');
+  if (confirmBtn) confirmBtn.addEventListener('click', () => doPurchase(true));
+  const voucherBtn = content.querySelector('.voucher-btn');
+  if (voucherBtn) voucherBtn.addEventListener('click', () => doPurchase(true));
+  const payBtn = content.querySelector('.pay-btn');
+  if (payBtn) payBtn.addEventListener('click', () => doPurchase(false));
 }

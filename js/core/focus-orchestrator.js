@@ -6,6 +6,7 @@ import { state, saveState } from '../state.js';
 import { t } from '../i18n/terms.js';
 import { addCoins, addHistory, addInspiration, addAtmosphere, getAtmosphereLevel, addFocusSession } from '../storage.js';
 import { markTaskDone } from '../dailytasks.js';
+import { bumpEventTask } from './event-tasks.js';
 import { checkAchievements, getAchievementBonuses } from '../achievements.js';
 import { getAuraCoinsMultiplier, getAuraSpawnBonus, getBorrowSpawnBonus, spawnVisitor } from '../visitors.js';
 import { getCurationCoinsBonus } from '../curation.js';
@@ -25,7 +26,7 @@ import {
 } from '../render/index.js';
 import { showCertificate } from '../render/certificate.js';
 import { getBookTitle, getChapterTitle } from '../render/common.js';
-import { getChapterInfo, getNextChapterPreview } from './book-utils.js';
+import { getChapterInfo } from './book-utils.js';
 import { calculateMilestoneTriggers, getNextMilestone } from './focus-rewards.js';
 import { showMilestoneReward } from '../render/shared/milestone-card.js';
 import { showRepairCompleteCard } from '../render/shared/repair-card.js';
@@ -41,7 +42,7 @@ export function runFocusOrchestration(result, isAuto) {
   if (!result || !result.ok) return;
 
   const {
-    minutes, wordsGained, prevTotalWords, bookId,
+    minutes, wordsGained, prevTotalWords, bookId, waterGained,
     bookProgressResult, repairResult
   } = result;
 
@@ -88,6 +89,7 @@ export function runFocusOrchestration(result, isAuto) {
     if (taskResult) {
       addHistory('task', `📜 今日馆务：${taskResult.name}`, taskResult.reward);
     }
+    bumpEventTask('focus3'); // 万圣巡馆任务②：执灯（≥25min ×3，窗口外安全空操作）
   }
 
   // ── 成就检测
@@ -125,17 +127,17 @@ export function runFocusOrchestration(result, isAuto) {
   const isFirstBookComplete = bookCompleted && !state.tutorialFlags.firstBookComplete;
   const currentBook = bookId ? state.books[bookId] : null;
   const chapterInfo = currentBook ? getChapterInfo(BOOKS[bookId], currentBook) : null;
-  const nextPreview = currentBook ? getNextChapterPreview(BOOKS[bookId], currentBook) : null;
+  // 2026-10-26 图南拍板：结算卡去掉下章预告，不再预取 nextPreview
 
   // ── 结算卡弹窗链 + 访客 + 引导任务
   try {
     handlePostFocusEffects({
-      minutes, wordsGained, coinsEarned, bookId,
+      minutes, wordsGained, coinsEarned, bookId, waterGained,
       unlockedChapter,
       bookCompleted, completedBook, copyCount, bookMastery,
       isFirstBookComplete,
       newMilestones,
-      chapterInfo, nextPreview,
+      chapterInfo,
       repairCompleted,
       isRepairSession: !!repairResult, // applyRepairProgress 非 null 即结算时书在损坏修复中
       repairBookTitle: repairResult ? repairResult.repairBookTitle : ''
@@ -210,12 +212,12 @@ export function runFocusOrchestration(result, isAuto) {
 
 function handlePostFocusEffects(effects) {
   const {
-    minutes, wordsGained, coinsEarned, bookId,
+    minutes, wordsGained, coinsEarned, bookId, waterGained,
     unlockedChapter,
     bookCompleted, completedBook, copyCount, bookMastery,
     isFirstBookComplete,
     newMilestones,
-    chapterInfo, nextPreview,
+    chapterInfo,
     repairCompleted, isRepairSession, repairBookTitle
   } = effects;
 
@@ -229,8 +231,8 @@ function handlePostFocusEffects(effects) {
       totalWords: state.focus.totalWords,
       nextMilestone: nextMs,
       chapterInfo,
-      nextPreview,
-      slim: !!isRepairSession // 修复会话：结算卡走精简版（图南 9/30 拍板，无下章预告等冗余内容）
+      waterGained: waterGained || 0,
+      slim: !!isRepairSession // 修复会话：结算卡走精简版（图南 9/30 拍板，无章节块等冗余内容）
     }, (label) => {
       // 玩家已提交 label（可能为空），写入历史、会话记录、墨墨日志
       const labelText = label ? ` · ${label}` : '';

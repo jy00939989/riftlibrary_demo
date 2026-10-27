@@ -4,7 +4,7 @@ import { addCoins, addAtmosphere, addInspiration } from './storage.js';
 import { getTodayKey, onNewDay } from './core/day-boundary.js';
 
 function resetDailyTasks(today) {
-  state.dailyTasks = { date: today, focusDone: false, returnDone: false, waterDone: false, allClaimed: false };
+  state.dailyTasks = { date: today, focusDone: false, returnDone: false, waterDone: false, maintainDone: false, allClaimed: false };
   saveState();
 }
 
@@ -40,14 +40,22 @@ export function markTaskDone(task, stateCtx) {
     saveState();
     return { name: '给植物浇水', reward: '💰 +10' };
   }
+  // 古籍保养 v2 决策 4：修缮日任（保养或修复任一计数，每日一次 +2 氛围）
+  if (task === 'maintain' && !dt.maintainDone) {
+    dt.maintainDone = true;
+    addAtmosphere(2);
+    saveState();
+    return { name: '修缮一本古籍', reward: '✨ +2氛围' };
+  }
   return null;
 }
 
-// 全勤奖励
+// 全勤奖励（2026-10-24 v2：4 选 3 —— 新增修缮任务后，完成任意 3 项即全勤）
 export function claimAllDoneBonus(stateCtx) {
   ensureDailyTasks();
   const dt = stateCtx ? stateCtx.dailyTasks : state.dailyTasks;
-  if (dt.focusDone && dt.returnDone && dt.waterDone && !dt.allClaimed) {
+  const doneCount = [dt.focusDone, dt.returnDone, dt.waterDone, dt.maintainDone].filter(Boolean).length;
+  if (doneCount >= 3 && !dt.allClaimed) {
     dt.allClaimed = true;
     addCoins(20);
     addAtmosphere(3);

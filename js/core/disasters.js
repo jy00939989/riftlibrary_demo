@@ -80,12 +80,13 @@ const DAY = 1000 * 60 * 60 * 24;
 
 // ========== 工具 ==========
 
-/** 免疫规则：典藏版（indestructible）、修缮箱中、已在损毁修复中的书不再受灾；失窃中的书也不在馆内 */
+/** 免疫规则：典藏版（indestructible）、卷册匣中、已打保养预约（servicing）、已在损毁修复中的书不再受灾；失窃中的书也不在馆内 */
 function pickVictims(maxCount) {
   const eligible = Object.entries(state.books || {}).filter(([bookId, bs]) => {
     if (!bs || bs.status !== 'completed' || bs.damaged) return false;
     if ((bs.copiedWords || 0) <= 0) return false;
     if (bs.stolenAt) return false;
+    if (bs.servicing) return false; // servicing-room-plan v3 P0：锁定/预约书如同在卷册匣，免疫架上灾难
     const book = BOOKS[bookId];
     if (!book || book.indestructible) return false;
     if ((state.restorationBox || []).includes(bookId)) return false;
@@ -105,6 +106,7 @@ function pickColdBooks(graceDays) {
   return Object.entries(state.books || {})
     .filter(([bookId, bs]) => {
       if (!bs || bs.status !== 'completed' || bs.damaged || bs.stolenAt) return false;
+      if (bs.servicing) return false; // servicing-room-plan v3 P0：保养预约书免蛀虫
       const book = BOOKS[bookId];
       if (!book || book.indestructible) return false;
       if ((state.restorationBox || []).includes(bookId)) return false;
@@ -304,6 +306,11 @@ function triggerTheft() {
   const now = getNow();
   v.bs.stolenAt = now;
   v.bs.stolenReturnAt = now + THEFT.returnDays * DAY;
+  // servicing-room-plan v3：在借书被打过保养预约又遭失窃 → 预约自动清除（格位释放）
+  if (v.bs.servicing) {
+    delete v.bs.servicing;
+    addHistory('maintenance', `🔓 《${v.book.title}》失窃，保养预约自动取消`, '书寻回后可重新预约');
+  }
   const title = v.book.title;
   addHistory('disaster', `🥷 《${title}》失窃了！`, `${THEFT.returnDays}天后寻回，期间无法借阅`);
   addDiaryEntry('special_event', { detail: `🥷 今早开馆，《${title}》不在架位上。窗锁完好，现场只留下一片黑色的羽毛。墨墨把图书馆翻了个底朝天，在借阅登记簿夹页发现一张字条：「借去看看，几日后奉还。」` });
@@ -324,6 +331,7 @@ function pickWindowShelfVictims(maxCount) {
   const eligible = Object.entries(state.books || {}).filter(([bookId, bs]) => {
     if (!slots.has(bookId)) return false;
     if (!bs || bs.status !== 'completed' || bs.damaged || bs.stolenAt) return false;
+    if (bs.servicing) return false; // servicing-room-plan v3 P0：保养预约书免台风波及
     if ((bs.copiedWords || 0) <= 0) return false;
     const book = BOOKS[bookId];
     if (!book || book.indestructible) return false;

@@ -71,6 +71,30 @@ export const CAFE_RECIPES = [
     favor: 12,
     unlockLevel: 1,
     festivalKey: 'midAutumn2026'
+  },
+  // 2026-10-27 哥特之夜限定（gothic-night-assets-2026.md v4.2）：窗口外不出现在咖啡角；
+  // 材料用魔法南瓜种子，把「种瓜 → 待客」串成一条 loop
+  {
+    id: 'gothic_moon_drink',
+    emoji: '🍷',
+    image: 'visual/cafe/drink_gothic_moon.png',
+    nameKey: 'cafeRecipeGothicMoon',
+    material: { seedType: 'magic_pumpkin', count: 2 },
+    price: 88,
+    favor: 6,
+    unlockLevel: 1,
+    festivalKey: 'gothicNight2026'
+  },
+  {
+    id: 'pumpkin_tart',
+    emoji: '🥧',
+    image: 'visual/cafe/dessert_pumpkin_tart.png',
+    nameKey: 'cafeRecipePumpkinTart',
+    material: { seedType: 'magic_pumpkin', count: 3 },
+    price: 96,
+    favor: 7,
+    unlockLevel: 1,
+    festivalKey: 'gothicNight2026'
   }
 ];
 

@@ -4,10 +4,11 @@ import { el, updateStatusBar } from './common.js';
 import { t } from '../i18n/terms.js';
 import { MUSIC_ROOM_UNLOCK_PRICE, getMusicSalePrice } from '../../data/music.js';
 import { getEventsOnDate, getEventEffectMults, fmtZhe, fmtOff } from '../../data/event_calendar.js';
+import { isFestivalActive } from '../../data/festival.js';
 import { playSfx } from '../audio.js';
 import {
   getAllTrackDefs, getCurrentTrackId, isBgmPlaying,
-  selectTrack, purchaseTrack, toggleMusic, isMusicOn, updateToggleIcon
+  selectTrack, purchaseTrack, toggleMusic, isMusicOn, updateToggleIcon, isTrackPurchased
 } from '../audio.js';
 import {
   getAmbientDefs, buyAmbient, selectAmbient,
@@ -67,7 +68,11 @@ export function renderMusicRoomPage(container = null) {
     return;
   }
 
-  const tracks = getAllTrackDefs();
+  const tracks = getAllTrackDefs()
+    // 2026-10-27 限定/专属音轨门控：giftOnly 未拥有不显示（任务奖励获得）；
+    // festivalKey 窗口外隐藏未购曲目，已购保留可听（限时购买 ≠ 限时收听）
+    .filter(tr => (!tr.giftOnly || isTrackPurchased(tr.id)) &&
+                  (!tr.festivalKey || isTrackPurchased(tr.id) || isFestivalActive(tr.festivalKey)));
   const currentId = getCurrentTrackId();
   const playing = isBgmPlaying();
   const musicOn = isMusicOn();
@@ -181,7 +186,9 @@ export function renderMusicRoomPage(container = null) {
   container.appendChild(shelf);
 
   // 环境音陈列架
-  const ambients = getAmbientDefs();
+  // 2026-10-27 限定环境音门控：窗口外隐藏未购条目；已购保留（限时购买 ≠ 限时收听）
+  const ambients = getAmbientDefs()
+    .filter(a => !a.festivalKey || a.unlocked || isFestivalActive(a.festivalKey));
   const currentAmbientId = getCurrentAmbientId();
   const ambientOn = isAmbientEnabled();
 

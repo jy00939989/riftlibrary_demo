@@ -4,7 +4,7 @@ import { addCoins, addAtmosphere, addHistory, addPlantLog } from './storage.js';
 import { t } from './i18n/terms.js';
 import { BOOKS } from '../data/books.js';
 import { addDiaryEntry } from './diary.js';
-import { isBookCapacityFull, addToManuscriptBox, unlockBook, grantRestorationRoom } from './capacity.js';
+import { isBookCapacityFull, addToManuscriptBox, unlockBook, grantRestorationRoom, getRestorationRepairSpeedBonus } from './capacity.js';
 import { collectVisitorItem } from './visitorMemory.js';
 import { getCurationBorrowBonus } from './curation.js';
 import { VISITOR_NARRATIVES } from '../data/visitor-events.js';
@@ -860,7 +860,7 @@ export function getCompletedBooks() {
     const bs = state.books[book.id];
     const inRestoration = (state.restorationBox || []).includes(book.id);
     // 积灰/失窃中的书暂不可借（book-damage-events 批次二）
-    return bs && bs.status === 'completed' && !bs.damaged && !inRestoration &&
+    return bs && bs.status === 'completed' && !bs.damaged && !inRestoration && !bs.servicing &&
            !bs.dustyAt && !bs.stolenAt &&
            !isBookLentOut(book.id);
   });
@@ -1396,7 +1396,7 @@ export function getNarrativeProgress(charId) {
 // 一键收书解锁等级（2026-10-23 图南：升级到一定等级才能打开）——借阅区 Lv3「开放」
 export const COLLECT_ALL_UNLOCK_LEVEL = 3;
 
-export function collectReturn(visitorId) {
+export function collectReturn(visitorId, lockBookIds = []) {
   const idx = state.visitors.findIndex(v => v.id === visitorId);
   if (idx === -1) return null;
 
@@ -1444,7 +1444,10 @@ export function collectReturn(visitorId) {
     const inRestoration = (state.restorationBox || []).includes(bid);
     const damageChance = getDamageChance(state.library.borrowLevel || 0, (state.signboards || []).includes('care_for_books'), bs?.wearCount || 0);
     const title = bDef ? (bDef.volumeTitle || bDef.title) : bid;
-    if (Math.random() < damageChance && bs && !bDef?.indestructible && !inRestoration) {
+    // 保养保护期（2026-10-26 图南拍板）：每次还书消耗 1 次保护并跳过损毁 roll
+    const shielded = !!bs && (bs.damageShield || 0) > 0;
+    if (shielded) bs.damageShield -= 1;
+    if (!shielded && Math.random() < damageChance && bs && !bDef?.indestructible && !inRestoration) {
       // 首次受灾自动免费开放修复室（2026-09-21 图南拍板：撤销 300 币解锁，杜绝金币软锁）
       grantRestorationRoom();
       bs.damaged = true;
@@ -1457,10 +1460,31 @@ export function collectReturn(visitorId) {
           bs.status = 'copying';
         }
       }
-      addHistory('damage', `⚠️ 《${title}》在归还时发现损毁`, `损失${bs.repairWords.toLocaleString()}字，需专注修复`);
+      addHistory('damage', `⚠️ 《${title}》在归还时发现损毁`,
+        `损失${bs.repairWords.toLocaleString()}字 · 修复期间暂停外借 · 预计约${Math.ceil(bs.repairWords / (100 * (1 + getRestorationRepairSpeedBonus())))}分钟`);
       damaged = true;
     }
-    return { bookId: bid, title, damaged, coins, atmosphere: atmo, collector: isCollector, first: isFirst };
+    // 保养预约（servicing-room-plan v3）：还回瞬间兑现/取消（同事务，零竞态）
+    let servicing = null;
+    if (bs) {
+      if (bs.servicing) {
+        if (damaged) {
+          // R6 写死：损毁命中 → 清预约，绝不写 'locked'
+          delete bs.servicing;
+          addHistory('maintenance', `🔓 《${title}》还回时已损毁`, '保养预约自动取消——先送修复室修复');
+          servicing = 'cancelled';
+        } else {
+          bs.servicing = 'locked'; // pending → locked 兑现（含入口二勾选）
+          addHistory('maintenance', `🔒 《${title}》已锁定待保养`, '预约兑现：还回自动锁定，访客不会再借走它');
+          servicing = 'locked';
+        }
+      } else if (!damaged && lockBookIds.includes(bid)) {
+        bs.servicing = 'locked'; // 入口二：收取行内勾选，原子落锁
+        addHistory('maintenance', `🔒 《${title}》已锁定待保养`, '收取时勾选锁定，访客不会再借走它');
+        servicing = 'locked';
+      }
+    }
+    return { bookId: bid, title, damaged, servicing, coins, atmosphere: atmo, collector: isCollector, first: isFirst };
   });
 
   const finalCoins = books.reduce((sum, b) => sum + b.coins, 0) + extraCoins;

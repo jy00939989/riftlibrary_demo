@@ -18,6 +18,7 @@ export const state = {
   currentSession: {
     active: false,
     mode: 'pomodoro',
+    activity: null,   // 'copy' | 'repair' | 'maintenance'（book-maintenance-plan v2 活动类型轴；旧会话懒推导）
     bookId: null,
     targetMinutes: 25,
     elapsedSeconds: 0,
@@ -255,6 +256,9 @@ export const state = {
   restorationBoxSlots: 3,
   restorationLevel: 0,
   restorationUnlocked: false,
+
+  // 保养预约（锁定待修格位，servicing-room-plan v3）：总格 = min(6, 2+修复室等级+已购)
+  servicingSlotsPurchased: 0,
 
   // 环境音
   ambientSounds: {

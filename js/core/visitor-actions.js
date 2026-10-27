@@ -14,8 +14,8 @@ function getNow() {
   return window.__dev && window.__dev.getNow ? window.__dev.getNow() : Date.now();
 }
 
-export function handleCollectReturn(visitorId) {
-  const result = collectReturn(visitorId);
+export function handleCollectReturn(visitorId, lockBookIds = []) {
+  const result = collectReturn(visitorId, lockBookIds);
   if (result) {
     playSfx('book_return');
     const hour = new Date(getNow()).getHours();

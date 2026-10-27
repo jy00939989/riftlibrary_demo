@@ -61,6 +61,17 @@ export const ITEMS = {
     description: '没有署名的便签，会随机送到某位已解锁角色手中。',
     category: 'favor',
     effect: { type: 'add_favor', value: 20, target: 'random' }
+  },
+  // 2026-10-27 哥特之夜任务「种瓜」奖励：吃下获得浇水机会（克克设计，图南拍板领取制）
+  pumpkin_candy: {
+    id: 'pumpkin_candy',
+    name: '南瓜糖',
+    nameEn: 'Pumpkin Candy',
+    emoji: '🍬',
+    icon: '🍬',
+    description: '魔法南瓜熬煮的琥珀糖，含在嘴里手心微凉。使用后立即获得 3 次浇水机会。',
+    category: 'candy',
+    effect: { type: 'add_water', value: 3 }
   }
 };
 
@@ -73,7 +84,7 @@ export function getItemDef(itemId) {
 export function isItemUsable(itemId) {
   const def = ITEMS[itemId];
   if (!def) return false;
-  return ['brush', 'repair', 'favor'].includes(def.category);
+  return ['brush', 'repair', 'favor', 'candy'].includes(def.category);
 }
 
 /** 判断道具是否需要选择目标 */

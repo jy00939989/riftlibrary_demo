@@ -4,6 +4,7 @@
 // Borrow（visitors.js attemptBorrow）只读 pendingBorrowBuff，互不直写对方内部计算。
 import { state, saveState } from '../state.js';
 import { spendCoins, addCoins, addHistory } from '../storage.js';
+import { bumpEventTask } from './event-tasks.js';
 import { getTodayKey } from './day-boundary.js';
 import { spendSeed } from '../plants.js';
 import { PLANT_TYPES } from '../../data/plants.js';
@@ -146,6 +147,9 @@ function serveVisitor(visitor, now) {
   visitor.cafeEnterTime = now;
   state.cafe.totalServed += 1;
   state.cafe.lastServeDay = getTodayKey(now);
+
+  // 万圣巡馆任务④：待客（限定时饮/甜品各一份；窗口外安全空操作）
+  bumpEventTask('serve_halloween', recipeId);
 
   addHistory('cafe', `☕ ${visitor.emoji} ${visitor.name} 进店点了${recipe.emoji} ${t(recipe.nameKey)}`,
     `+${recipe.price}智慧之光 · 好感+${favorGain} · 借书概率增益生效`);

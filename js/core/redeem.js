@@ -47,6 +47,12 @@ export function applyRedeemRewards(rewards, codeType, serialNumbers) {
     });
   }
 
+  // 万圣节书籍兑换券（2026-10-27 哥特之夜：窗口内登录自动领，purchaseBook 抵扣任意一本书）
+  if (rewards.bookVoucher) {
+    state.bookVoucher = (state.bookVoucher || 0) + rewards.bookVoucher;
+    addHistory('event', `🎃 获得万圣节书籍兑换券 ×${rewards.bookVoucher}`, '可在商店免费兑换任意一本在售的书');
+  }
+
   // 纪念标志牌
   if (rewards.signboards) {
     if (!state.signboardSerials) state.signboardSerials = {};
@@ -55,6 +61,7 @@ export function applyRedeemRewards(rewards, codeType, serialNumbers) {
         state.signboards.push(signboardId);
       }
       // 记录限量编号（如有）
+
       if (serialNumbers[signboardId] !== undefined) {
         state.signboardSerials[signboardId] = serialNumbers[signboardId];
       }
@@ -87,6 +94,10 @@ export function formatRewardSummary(rewards) {
       const def = getItemDef(id);
       parts.push(`${count}${def ? def.name : id}`);
     });
+  }
+  // 万圣节书籍兑换券（2026-10-27 哥特之夜登录礼；不渲染则弹窗显示「空」）
+  if (rewards.bookVoucher) {
+    parts.push(`万圣节书籍兑换券×${rewards.bookVoucher}`);
   }
   if (rewards.signboards) {
     rewards.signboards.forEach(id => {
@@ -142,6 +153,15 @@ export function useItem(itemId, target) {
   }
   if (category === 'favor') {
     return useFavorNote(itemId, target);
+  }
+  if (category === 'candy') {
+    // 2026-10-27 南瓜糖：吃下获得浇水机会（全局池，2026-09-15 起口径）；状态栏由背包刷新链路更新
+    const gain = def.effect?.value || 0;
+    state.water = (state.water || 0) + gain;
+    spendItem(itemId, 1);
+    addHistory('item', `🍬 吃下一颗南瓜糖`, `手心微凉——浇水机会 +${gain}`);
+    saveState();
+    return { ok: true, message: `浇水机会 +${gain}` };
   }
 
   return { ok: false, message: '该道具无法直接使用' };

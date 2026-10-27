@@ -6,6 +6,7 @@ import { getAuraShopDiscount } from '../../visitors.js';
 import { SIGNBOARDS } from '../../../data/signboards.js';
 import { isManuscriptBoxFull, addToManuscriptBox, createBookRecord } from '../../capacity.js';
 import { hasSignboard, getSignboardBuffSum } from './signboards.js';
+import { bumpEventTask } from '../event-tasks.js';
 import { track } from '../../backend/analytics.js';
 import { isBookLockedByDlc } from './dlc-packs.js';
 import { isVolumeConsumed } from '../../../data/volume_groups.js';
@@ -27,6 +28,20 @@ function rand(min, max) {
 /** 书池条目是否在自身活动窗口外（窗口外视为不可刷出/不可购买） */
 function isOutsideEventWindow(entry) {
   return !!entry.eventId && !isEventWindowActive(entry.eventId);
+}
+
+/**
+ * 万圣节特供常驻直购位（2026-10-27 图南拍板：哥特之书不用等刷新，窗口内随时可买）。
+ * 窗口外空数组；已购得/已消耗的单卷自动消失。
+ * @returns {Array<{bookId:string, soldAt:null}>} 可复用 renderBookSection 的槽位
+ */
+export function getEventDirectSlots() {
+  if (!isEventWindowActive('gothic_night', new Date(getNow()))) return [];
+  return SHARED_POOL
+    .filter(e => e.eventId === 'gothic_night')
+    .filter(e => !(state.books[e.bookId] && state.books[e.bookId].status !== 'locked'))
+    .filter(e => !isVolumeConsumed(e.bookId, state.books))
+    .map(e => ({ bookId: e.bookId, soldAt: null, price: e.price }));
 }
 
 export function getAvailableBooks() {
@@ -184,7 +199,7 @@ export function getBookActualPrice(bookId, basePrice) {
   return { actualPrice, auraDiscount, signboardDiscount, peizhouDiscount };
 }
 
-export function purchaseBook(bookId, price) {
+export function purchaseBook(bookId, price, { useVoucher = true } = {}) {
   const { actualPrice, auraDiscount, signboardDiscount, peizhouDiscount } = getBookActualPrice(bookId, price);
 
   if (state.books[bookId] && state.books[bookId].status !== 'locked') {
@@ -194,7 +209,9 @@ export function purchaseBook(bookId, price) {
   if (isVolumeConsumed(bookId, state.books)) {
     return { ok: false, reason: 'already_owned' };
   }
-  if (state.coins < actualPrice) {
+  // 2026-10-27 万圣节书籍兑换券：默认自动抵扣；弹窗里玩家可改选「花币购买」留住券（useVoucher=false）
+  const voucherUsed = useVoucher && (state.bookVoucher || 0) > 0;
+  if (!voucherUsed && state.coins < actualPrice) {
     return { ok: false, reason: 'insufficient_coins', actualPrice };
   }
   if (isManuscriptBoxFull()) {
@@ -206,18 +223,25 @@ export function purchaseBook(bookId, price) {
     return { ok: false, reason: 'event_ended' };
   }
 
-  spendCoins(actualPrice);
+  // 成交：用券则免币销券，否则扣币
+  if (voucherUsed) {
+    state.bookVoucher -= 1;
+  } else {
+    spendCoins(actualPrice);
+  }
 
   state.books[bookId] = createBookRecord();
   addToManuscriptBox(bookId);
+  bumpEventTask('open_gothic', bookId); // 万圣巡馆任务①：开卷（内部限定哥特书 id，非活动书安全空操作）
 
   const title = poolEntry ? poolEntry.title : bookId;
   const parts = [];
+  if (voucherUsed) parts.push('🎃兑换券抵扣');
   if (auraDiscount > 0) parts.push('裴舟光环9折');
   if (signboardDiscount > 0) parts.push('馆长推荐98折');
   if (peizhouDiscount > 0) parts.push('裴舟荐书7折');
   const discountNote = parts.length > 0 ? ` (${parts.join('+')})` : '';
-  addHistory('purchase', `购买《${title}》${discountNote}`, `花费${actualPrice}智慧之光`);
+  addHistory('purchase', `购买《${title}》${discountNote}`, voucherUsed ? '使用万圣节书籍兑换券 · 免费获得' : `花费${actualPrice}智慧之光`);
 
   if (peizhouDiscount > 0) {
     state.peizhouRec = null;

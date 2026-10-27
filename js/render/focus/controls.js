@@ -30,12 +30,20 @@ export function renderControls(sess) {
 
     const abandonBtn = el('button',
       'px-5 py-2 bg-red-700/60 text-white rounded-lg font-bold text-sm hover:bg-red-700 transition-all');
-    abandonBtn.textContent = '✋ ' + t('abandon');
-    abandonBtn.addEventListener('click', () => {
-      if (confirm(t('confirmAbandonFocus').replace('{pct}', 50))) {
-        if (actions.abandonFocus) actions.abandonFocus();
-      }
-    });
+    // 保养会话：中途退出 = 挂起（进度全保留），不是 50% 折算的放弃
+    if (sess.activity === 'maintenance') {
+      abandonBtn.textContent = '📦 ' + t('maintenanceSuspend');
+      abandonBtn.addEventListener('click', () => {
+        if (actions.suspendMaintenance) actions.suspendMaintenance();
+      });
+    } else {
+      abandonBtn.textContent = '✋ ' + t('abandon');
+      abandonBtn.addEventListener('click', () => {
+        if (confirm(t('confirmAbandonFocus').replace('{pct}', 50))) {
+          if (actions.abandonFocus) actions.abandonFocus();
+        }
+      });
+    }
 
     div.appendChild(pauseBtn);
     div.appendChild(doneBtn);

@@ -44,7 +44,8 @@ const MIGRATIONS = [
   { version: 13, up: migrateV13 },
   { version: 14, up: migrateV14 },
   { version: 15, up: migrateV15 },
-  { version: 16, up: migrateV16 }
+  { version: 16, up: migrateV16 },
+  { version: 17, up: migrateV17 }
 ];
 
 function migrateV12() {
@@ -79,6 +80,12 @@ function migrateV16() {
   if (!state.improvedPlants) state.improvedPlants = {};
   if (!state.plantHarvests) state.plantHarvests = 0;
   if (!state.waterOfflineAt) state.waterOfflineAt = Date.now();
+}
+
+function migrateV17() {
+  // 2026-10-25 保养预约（锁定待修，servicing-room-plan v3）：已购格计数补缺省。
+  // 幂等：仅补缺省。bs.servicing 无需迁移——读时 undefined 兜底即正常态。
+  if (state.servicingSlotsPurchased === undefined) state.servicingSlotsPurchased = 0;
 }
 
 function migrateV14() {

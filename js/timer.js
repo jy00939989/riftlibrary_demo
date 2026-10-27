@@ -143,7 +143,8 @@ function tick() {
       const wordsNeeded = book.totalWords - effectiveWords;
       // 已上架书损坏修复 = 纯修复会话：誊抄自动完成判定不适用（否则修复修到 totalWords 就自动结算）
       const repairOnly = bookState.damaged && (bookState.copyCount || 0) >= 1;
-      if (!repairOnly && wordsNeeded > 0 && wordsGained >= wordsNeeded) {
+      // 保养会话同样跳过誊抄判定（words 全进批次进度池）
+      if (!repairOnly && sess.activity !== 'maintenance' && wordsNeeded > 0 && wordsGained >= wordsNeeded) {
         stopTimer();
         if (onComplete) {
           try { onComplete(true); } catch (e) {
@@ -168,6 +169,32 @@ function tick() {
             getChapterInfo, book, bookState,
           });
           if (repair.done + settleWords >= repair.total) {
+            stopTimer();
+            if (onComplete) {
+              try { onComplete(true); } catch (e) {
+                renderFocusPage();
+              }
+            }
+            return;
+          }
+        }
+      }
+
+      // 保养批次：进度将达 100% 时自动结算（book-maintenance-plan v2；口径同 completeFocus）
+      if (sess.activity === 'maintenance' && state.maintenanceSession) {
+        const ms = state.maintenanceSession;
+        const mTotal = (ms.bookIds || []).reduce((s, id) => s + (ms.perBook ? (ms.perBook[id] || 0) : 0), 0);
+        if (mTotal > 0 && minutes >= 1) {
+          const settleWords = calculateWordsGained({
+            minutes,
+            teaBoost: !!sess.teaBoost,
+            focusSpeedMultiplier: getFocusSpeedMultiplier(),
+            auraSpeed: getAuraSpeedBonus(sess.bookCategory),
+            curationSpeed: getCurationFocusSpeed(),
+            repairSpeedBonus: isRestorationUnlocked() ? getRestorationRepairSpeedBonus() : 0,
+            getChapterInfo, book, bookState,
+          });
+          if ((ms.progressPool || 0) + settleWords >= mTotal) {
             stopTimer();
             if (onComplete) {
               try { onComplete(true); } catch (e) {
@@ -214,6 +241,7 @@ function stopTimer() {
     timerInterval = null;
   }
 }
+export { stopTimer };
 
 export function abandonTimer() {
   const sess = state.currentSession;

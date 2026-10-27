@@ -147,7 +147,7 @@ export function isInManuscriptBox(bookId) {
   return state.manuscriptBox ? state.manuscriptBox.includes(bookId) : false;
 }
 
-// ========== 修缮箱（古籍修复室）==========
+// ========== 卷册匣（原修缮箱；古籍修复室）==========
 
 import { isVolumeBookId } from '../data/volume_groups.js';
 
@@ -196,7 +196,7 @@ export function isInRestorationBox(bookId) {
   return state.restorationBox ? state.restorationBox.includes(bookId) : false;
 }
 
-/** 修缮箱扩容价格 */
+/** 卷册匣扩容价格 */
 export function getRestorationSlotPrice() {
   const current = getRestorationBoxSlots();
   if (current >= MAX_RESTORATION_SLOTS) return 0;
@@ -216,7 +216,7 @@ export function expandRestorationBoxSlots() {
   if (price > 0 && !spendCoins(price)) return false;
   state.restorationBoxSlots = current + 1;
   if (price > 0) {
-    addHistory('purchase', `📦 扩充修缮箱至 ${state.restorationBoxSlots} 格`, `花费${price}智慧之光`);
+    addHistory('purchase', `📦 扩充卷册匣至 ${state.restorationBoxSlots} 格`, `花费${price}智慧之光`);
   }
   saveState();
   return true;
@@ -263,9 +263,12 @@ export function upgradeRestorationLevel() {
   const price = getRestorationUpgradePrice();
   if (price > 0 && !spendCoins(price)) return false;
   state.restorationLevel = level + 1;
+  // 保养预约冲抵（servicing-room-plan v3 图南拍板）：等级多送的格冲抵已购格，防"先买后升"双付。
+  // 早买=提前支取：总格全程不缩水（如 Lv0 买满 4 格升到 Lv4 → purchased 归 0，总格仍 6）。
+  state.servicingSlotsPurchased = Math.max(0, (state.servicingSlotsPurchased || 0) - 1);
   const exp = state.restorationLevel * FACILITY_EXP_PER_LEVEL; // D19 等级×20
   addAtmosphere(exp);
-  addHistory('purchase', `📜 古籍修复室升至 Lv.${state.restorationLevel}`, `花费${price}智慧之光 · 修复速度 +10% · +${exp}氛围`);
+  addHistory('purchase', `📜 古籍修复室升至 Lv.${state.restorationLevel}`, `花费${price}智慧之光 · 修复速度 +10% · 保养预约 ${getServicingSlots()} 格 · +${exp}氛围`);
   saveState();
   return true;
 }
@@ -277,4 +280,49 @@ export function upgradeRestorationLevel() {
 export function getRestorationRepairSpeedBonus() {
   if (!state.restorationUnlocked) return 0;
   return (getRestorationLevel() || 0) * 0.10;
+}
+
+/**
+ * 保养批次上限（book-maintenance-plan v2 决策 3）：Lv0→1 / Lv1→2 / Lv2→3 / Lv3+→4。
+ * Lv4/Lv5 封顶 4 是设计意图（plan v2 评审钉子#2）：等级收益集中在修复速度，批次只开到 4。
+ */
+export function getMaintenanceBatchCap() {
+  const lv = getRestorationLevel() || 0;
+  if (lv <= 0) return 1;
+  if (lv === 1) return 2;
+  if (lv === 2) return 3;
+  return 4;
+}
+
+// ========== 保养预约格位（锁定待修，servicing-room-plan v3）==========
+// 与卷册匣（restorationBox，卷组收纳）正交；占用数在 core/servicing.js 维护。
+
+const BASE_SERVICING_SLOTS = 2;
+const MAX_SERVICING_SLOTS = 6;
+
+/** 总格数 = min(6, 2 + 修复室等级 + 已购格数)；升级送格不改升级价（v1 拍板），升级时冲抵已购格（v3 拍板防双付） */
+export function getServicingSlots() {
+  const lv = getRestorationLevel();
+  const purchased = state.servicingSlotsPurchased || 0;
+  return Math.min(MAX_SERVICING_SLOTS, BASE_SERVICING_SLOTS + lv + purchased);
+}
+
+/** 扩容价目：按当前总格数的下一格取值（3→30 / 4→80 / 5→200 / 6→500）；满 6 返回 0 */
+export function getServicingSlotPrice() {
+  const current = getServicingSlots();
+  if (current >= MAX_SERVICING_SLOTS) return 0;
+  if (current <= 2) return 30;
+  if (current === 3) return 80;
+  if (current === 4) return 200;
+  return 500;
+}
+
+export function expandServicingSlots() {
+  const price = getServicingSlotPrice();
+  if (price === 0) return false;
+  if (!spendCoins(price)) return false;
+  state.servicingSlotsPurchased = (state.servicingSlotsPurchased || 0) + 1;
+  addHistory('purchase', `📅 扩充保养预约至 ${getServicingSlots()} 格`, `花费${price}智慧之光`);
+  saveState();
+  return true;
 }

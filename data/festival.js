@@ -54,6 +54,22 @@ export const FESTIVALS = {
         favor_note_random: 1
       }
     }
+  },
+  // 2026-10-27 哥特之夜（万圣周延长 10/27–11/13，终点 11-13 图南拍板，gothic-night-assets-2026.md v4.2）：
+  // 登录礼 = 万圣节书籍兑换券 1 张（任意换一本书；徽章不走登录礼，改任务链 event-tasks 发放）
+  gothicNight2026: {
+    key: 'gothicNight2026',
+    titleKey: 'festivalGothicNightTitle',
+    descKey: 'festivalGothicNightDesc',
+    diaryKey: 'diaryGothicNightGift',
+    emoji: '🎃',
+    start: { month: 10, day: 27 },
+    end: { month: 11, day: 13 },
+    giftRewards: {
+      bookVoucher: 1
+    },
+    // 2026-10-27 图南拍板：窗口内登录自动解锁万圣笔（已得终身、不上架；festival.js 消费此字段）
+    penStyle: 'gothic_night'
   }
 };
 

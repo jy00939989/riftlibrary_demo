@@ -4,9 +4,10 @@ import { el, getBookTitle, getBookQuotes, getChapterTitle, getChapterPreview } f
 import { getMomoReview } from '../../../data/momo-reviews.js';
 import { t } from '../../i18n/terms.js';
 
-export function showCompletionCard({ minutes, words, coins, book, streak, totalWords, nextMilestone, chapterInfo, nextPreview, slim }, callback) {
+export function showCompletionCard({ minutes, words, coins, book, streak, totalWords, nextMilestone, chapterInfo, waterGained = 0, slim }, callback) {
   // slim：修复会话结算（图南 2026-09-30 拍板）——已上架的书只剩「修了xx字」这一件事，
-  // 不展示里程碑/章节/摘录/下章预告/墨墨点评/引文，只留三格统计 + 标注输入 + 继续按钮。
+  // 不展示里程碑/章节/摘录/墨墨点评/引文，只留三格统计 + 浇水条 + 标注输入 + 继续按钮。
+  // 2026-10-26 图南拍板：下章预告整块移除，原位置改显本次浇水机会数（浇水条全模式显示）。
   const momoReview = slim ? '' : getMomoReview(book);
   let quoteText = '';
   let quoteSource = '';
@@ -44,12 +45,10 @@ export function showCompletionCard({ minutes, words, coins, book, streak, totalW
 
   // Chapter progress for this book
   const currentChapter = chapterInfo && book && book.chapters[chapterInfo.current - 1] ? book.chapters[chapterInfo.current - 1] : null;
-  const nextChapter = chapterInfo && book && book.chapters[chapterInfo.current] ? book.chapters[chapterInfo.current] : null;
   const localizedChapterTitle = currentChapter ? getChapterTitle(currentChapter) : (chapterInfo ? chapterInfo.title : '');
   const localizedHighlight = currentChapter
     ? (currentChapter.highlight || getChapterPreview(currentChapter))
     : (chapterInfo ? chapterInfo.highlight : '');
-  const localizedNextPreview = nextChapter ? getChapterPreview(nextChapter) : nextPreview;
 
   let chapterHtml = '';
   if (!slim && chapterInfo && book) {
@@ -81,13 +80,13 @@ export function showCompletionCard({ minutes, words, coins, book, streak, totalW
     `;
   }
 
-  // Next chapter preview
-  let nextPreviewHtml = '';
-  if (!slim && localizedNextPreview) {
-    nextPreviewHtml = `
-      <div class="bg-stone-50/80 border-l-4 border-stone-300 rounded-r-lg p-3 mb-3 text-left">
-        <div class="text-xs text-ink-light font-bold mb-1">${t('nextChapterQuotePreview')}</div>
-        <p class="text-sm text-ink-light leading-relaxed">${localizedNextPreview}</p>
+  // Watering chances earned this session（2026-10-26 图南拍板：替换原下章预告位）
+  let waterHtml = '';
+  if (waterGained > 0) {
+    waterHtml = `
+      <div class="bg-sky-50/80 border-l-4 border-sky-400 rounded-r-lg p-2.5 mb-3 text-left flex items-center justify-between">
+        <span class="text-xs font-bold text-sky-700">💧 ${t('waterGainedLabel')}</span>
+        <span class="text-sm font-bold text-sky-600">+${waterGained}</span>
       </div>
     `;
   }
@@ -139,7 +138,7 @@ export function showCompletionCard({ minutes, words, coins, book, streak, totalW
     ${milestoneHtml}
     ${chapterHtml}
     ${echoHtml}
-    ${nextPreviewHtml}
+    ${waterHtml}
     ${momoHtml}
     <div class="bg-white/60 rounded-lg p-2.5 mb-2 text-left">
       <label class="text-[10px] text-ink-light block mb-0.5" for="focus-session-label">${t('focusSessionLabelPrompt')}</label>

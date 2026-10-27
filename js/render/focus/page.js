@@ -12,7 +12,7 @@ import { renderBookSelector } from './book-selector.js';
 import { renderTimerOrAnimation } from './timer-display.js';
 import { renderControls } from './controls.js';
 import { renderQuestChapterIndicator, updateQuestChapterIndicatorDOM } from './quest-indicator.js';
-import { renderBookProgress, updateBookProgressDOM } from './progress-bar.js';
+import { renderBookProgress, updateBookProgressDOM, renderMaintenanceProgress, updateMaintenanceBarDOM } from './progress-bar.js';
 import { renderAuraIndicator } from './aura-indicator.js';
 import { renderCopyPreview } from './copy-preview.js';
 
@@ -105,8 +105,10 @@ export function renderFocusPage() {
     if (indicator) card.appendChild(indicator);
   }
 
-  // Book copy progress bar
-  if (sess.bookId && book) {
+  // Book copy progress bar（保养会话显示批次进度条，不显示单书誊抄/修复条）
+  if (sess.activity === 'maintenance') {
+    card.appendChild(renderMaintenanceProgress(sess));
+  } else if (sess.bookId && book) {
     card.appendChild(renderBookProgress(sess, book));
   }
 
@@ -128,6 +130,10 @@ function updateActiveControlsDOM(sess) {
     pauseBtn.innerHTML = sess.paused ? t('resume') : t('pause');
   }
   if (sess.paused) pauseWriting(); else resumeWriting();
+  if (sess.activity === 'maintenance') {
+    updateMaintenanceBarDOM(sess);
+    return;
+  }
   if (sess.bookId) {
     updateBookProgressDOM(sess);
     updateQuestChapterIndicatorDOM(sess);
@@ -144,4 +150,7 @@ function updateFocusBackground() {
   container.style.backgroundAttachment = 'fixed';
 }
 
-window.renderFocusPage = renderFocusPage;
+// 调试钩子：node 测试环境无 window，加守卫防止纯函数测试被模块求值期炸掉
+if (typeof window !== 'undefined') {
+  window.renderFocusPage = renderFocusPage;
+}

@@ -17,7 +17,13 @@ export const TRACK_DEFS = [
   { id: 'spring',   name: '维瓦尔第·春·意象曲', emoji: '🌸', tier: 'any', price: 500, file: 'audio/music/spring-reverie.mp3' },
   { id: 'rhapsody', name: '蓝色狂想曲',     emoji: '🎷', tier: 'any',     price: 600, file: 'audio/music/rhapsody-jazz.mp3' },
   { id: 'lakespring', name: '湖边早春',     emoji: '🌅', tier: 'any',     price: 400, file: 'audio/music/lakeside-spring.mp3' },
-  { id: 'arthur',   name: '湖边临终的亚瑟王', emoji: '🛶', tier: 'any',    price: 800, file: 'audio/music/arthur-lakeside.mp3', requiresBook: 'book_031' }
+  { id: 'arthur',   name: '湖边临终的亚瑟王', emoji: '🛶', tier: 'any',    price: 800, file: 'audio/music/arthur-lakeside.mp3', requiresBook: 'book_031' },
+  // 2026-10-27 哥特之夜音轨三条（festivalKey 门控：窗口内可购、窗外下架、已购保留可听）：
+  // 猩红血夜=任务「开卷」专属奖励（图南 10-27 拍板：不上架售卖，giftOnly）；
+  // 海妖吟唱=图南加制第四轨；死神邀舞=德语人声（Suno 成品）
+  { id: 'gothic_moon', name: '猩红血夜', emoji: '🌘', tier: 'any', price: 600, file: 'audio/music/gothic-moon.mp3', festivalKey: 'gothicNight2026', giftOnly: true },
+  { id: 'siren_song', name: '海妖吟唱', emoji: '🧜', tier: 'any', price: 700, file: 'audio/music/siren-song.mp3', festivalKey: 'gothicNight2026' },
+  { id: 'death_waltz', name: '死神邀舞', emoji: '💀', tier: 'any', price: 800, file: 'audio/music/death-waltz.mp3', festivalKey: 'gothicNight2026' }
 ];
 
 // ── 活动日折扣价（2026-09-20 音乐节日，图南拍板：半价、单日、留音阁两架通用）──

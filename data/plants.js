@@ -93,6 +93,42 @@ export const PLANT_TYPES = {
     seedType: 'starlight_fern',
     seedDropRate: 0.6,
     levelNames: ['', '孢子', '嫩芽', '舒展', '流光', '星瀑']
+  },
+
+  // 2026-10-27 魔法南瓜（哥特之夜限定，gothic-night-assets-2026.md v4.1 图南拍板）：
+  // 全株限时——种子仅窗口内售卖（festivalKey 门控）、窗口关闭未收获由 event-tasks 回收、
+  // 收获不掉种子（seedDropRate 0）、不进 SEED_EXCHANGE、不可嫁接（noImprove）。
+  magic_pumpkin: {
+    id: 'magic_pumpkin',
+    nameKey: 'plant.magicPumpkin.name',
+    descKey: 'plant.magicPumpkin.description',
+    emoji: '🎃',
+    art: {
+      0: 'visual/plants/plant_16_empty_pot.png',
+      1: 'visual/plants/plant_17_magicpumpkin_sprout.png',
+      2: 'visual/plants/plant_18_magicpumpkin_vine.png',
+      3: 'visual/plants/plant_19_magicpumpkin_leafy.png',
+      4: 'visual/plants/plant_20_magicpumpkin_flower.png',
+      5: 'visual/plants/plant_21_magicpumpkin_fruit.png'
+    },
+    description: '叶片泛着幽蓝微光的异世界南瓜，果实上流淌着柔和的魔法符文。据说只在万圣周回应归墟的召唤。',
+    growthPerLevel: 90,
+    fertilizeCosts: {
+      1: 120,
+      2: 120,
+      3: 160,
+      4: 220,
+      5: 300
+    },
+    waterGrowth: 20,
+    fertilizeGrowth: 40,
+    harvestAtmosphere: 6,
+    harvestCoins: 80,
+    seedType: 'magic_pumpkin',
+    seedDropRate: 0,
+    noImprove: true,
+    festivalKey: 'gothicNight2026',
+    levelNames: ['', '魔芽', '藤蔓', '茂叶', '星花', '魔法南瓜']
   }
 };
 

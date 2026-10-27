@@ -6,7 +6,7 @@ import { el, actions, updateStatusBar, getBookTitle, getChapterTitle, getChapter
 import { playSfx } from '../audio.js';
 import { cleanBookDust } from '../core/disasters.js';
 import { checkTaskCompletion } from '../quests.js';
-import { getManuscriptSlots, getManuscriptBoxCount, getManuscriptSlotPrice, expandManuscriptSlots, getBookCapacity, getOwnedBookCount } from '../capacity.js';
+import { getManuscriptSlots, getManuscriptBoxCount, getManuscriptSlotPrice, expandManuscriptSlots, getBookCapacity, getOwnedBookCount, getServicingSlots } from '../capacity.js';
 import { calcCurationEffects } from '../curation.js';
 import { getEffectiveCopiedWords, getRepairProgress } from '../core/book-utils.js';
 import { isNoMasteryBook } from '../core/book-eligibility.js';
@@ -15,6 +15,7 @@ import { unlockReCopy, toggleBookStar, markChapterRead } from '../core/book-prog
 import { autoShelveCompletedManuscripts, swapShelfSlots } from '../core/library.js';
 import { getBookCondition, getDamageChance, isBookLentOut } from '../visitors.js';
 import { getReadableChapters, isVolumeDivider } from '../volumes.js';
+import { canMarkServicing, markServicing, cancelServicing, returnToShelf } from '../core/servicing.js';
 
 const SHELF_CAPACITY = 5;
 let currentFilter = 'all';
@@ -386,7 +387,39 @@ function renderBookCondition(bookId) {
   const dmg = (getDamageChance(state.library.borrowLevel || 0, (state.signboards || []).includes('care_for_books'), wear) * 100).toFixed(1);
   // §4.3：wearCount 具体数字让玩家看见寄读的隐性账
   const wearNote = wear > 0 ? ` · ${t('wearCountN').replace('{n}', wear)} · ${t('wearDamageRate').replace('{rate}', dmg)}` : '';
-  return `<div class="text-[10px] mt-1 ${condClass}">📖 ${t('bookConditionLabel')}:${t('condition_' + condKey)}${wearNote}</div>`;
+  // 保养保护期徽记（2026-10-26 图南拍板）
+  const shieldNote = (bs.damageShield || 0) > 0 ? ` · 🛡${t('damageShieldBadge').replace('{n}', bs.damageShield)}` : '';
+  return `<div class="text-[10px] mt-1 ${condClass}">📖 ${t('bookConditionLabel')}:${t('condition_' + condKey)}${wearNote}${shieldNote}</div>`;
+}
+
+// 保养预约控制（servicing-room-plan v3）：书卡开关 + 待回架按钮
+function renderServicingControl(book, bookState, isLentOut) {
+  const servicing = bookState.servicing;
+  // 已保养待回架（§五.4）：手动回架（决策 ③）
+  if (servicing === 'locked' && (bookState.wearCount || 0) <= 0) {
+    return `<button class="servicing-shelf-btn w-full mt-2 px-2 py-1.5 bg-teal-50 border border-teal-300 rounded-lg text-[10px] font-bold hover:shadow transition-all">
+      <div class="text-teal-600">✨ ${t('servicingAwaitingShelf')}</div>
+      <div class="text-teal-500 text-[9px]">👉 ${t('servicingReturnToShelf')}</div>
+    </button>`;
+  }
+  if (servicing === 'locked') {
+    return `<button class="servicing-toggle-btn w-full mt-2 px-2 py-1.5 bg-amber-50 border border-amber-300 rounded-lg text-[10px] font-bold hover:shadow transition-all">
+      <div class="text-amber-600">🔒 ${t('servicingLockedBadge')}</div>
+      <div class="text-amber-500/80 text-[9px]">${t('servicingCancel')}</div>
+    </button>`;
+  }
+  const chk = canMarkServicing(book.id);
+  if (!chk.ok || (bookState.wearCount || 0) <= 0) return '';
+  if (servicing === 'pending') {
+    return `<button class="servicing-toggle-btn w-full mt-2 px-2 py-1.5 bg-sky-50 border border-sky-300 rounded-lg text-[10px] font-bold hover:shadow transition-all">
+      <div class="text-sky-600">📅 ${t('servicingPendingBadge')}</div>
+      <div class="text-sky-500/80 text-[9px]">${t('servicingCancel')}</div>
+    </button>`;
+  }
+  return `<button class="servicing-toggle-btn w-full mt-2 px-2 py-1.5 bg-white border border-amber-300 text-amber-700 rounded-lg text-[10px] font-bold hover:shadow transition-all">
+    <div>${t('servicingReserveBtn')}</div>
+    ${isLentOut ? `<div class="text-[9px] text-ink-light/70 font-normal">${t('servicingLentHint')}</div>` : ''}
+  </button>`;
 }
 
 function renderBookCard(book) {
@@ -445,6 +478,7 @@ function renderBookCard(book) {
           <button class="repair-card-btn w-full px-2 py-1 bg-red-400/90 text-white rounded text-[10px] font-bold hover:shadow transition-all">${t('goRepair')}</button>
         </div>` : ''}
       ${isCompleted && !book.indestructible ? renderBookCondition(book.id) : ''}
+      ${isCompleted ? renderServicingControl(book, bookState, isLentOut) : ''}
       ${isCompleted && bookState.dustyAt ? `
         <div class="mt-2 rounded-lg bg-stone-100 border border-stone-300 px-2 py-1.5 text-center">
           <div class="text-[10px] text-stone-500 font-bold mb-1">🌫️ ${t('dustyBadge')}</div>
@@ -454,7 +488,7 @@ function renderBookCard(book) {
         <div class="mt-2 rounded-lg bg-ink/80 px-2 py-1.5 text-center">
           <div class="text-[10px] text-amber-200 font-bold">🥷 ${t('stolenBadge').replace('{days}', Math.max(0, Math.ceil((bookState.stolenReturnAt - Date.now()) / 86400000)))}</div>
         </div>` : ''}
-      ${isCompleted && !bookState.reCopyUnlocked && !isNoMasteryBook(book.id)
+      ${isCompleted && !bookState.reCopyUnlocked && !bookState.servicing && !isNoMasteryBook(book.id)
         ? `<button class="re-copy-card-btn w-full mt-2 px-3 py-1.5 bg-purple-600/90 text-white rounded-lg text-[10px] font-bold hover:shadow-lg transition-all flex items-center justify-center gap-1">
              ${t('unlockReCopyCost').replace('{cost}', 1)}
            </button>`
@@ -501,6 +535,37 @@ function renderBookCard(book) {
       e.stopPropagation();
       setFocusBook(book.id);
       document.getElementById('tab-focus').click();
+    });
+  }
+
+  // 保养预约开关 / 待回架（servicing-room-plan v3）
+  const servicingToggleBtn = cardDiv.querySelector('.servicing-toggle-btn');
+  if (servicingToggleBtn) {
+    servicingToggleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (bookState.servicing) {
+        if (cancelServicing(book.id)) { playSfx('button_click'); renderBookshelfPage(); }
+      } else {
+        const res = markServicing(book.id, { lent: isBookLentOut(book.id) });
+        if (res.ok) {
+          playSfx('buy_success');
+          if (window.showToast) window.showToast(t('servicingMarkedToast'), 'success');
+        } else if (res.reason === 'full' && window.showToast) {
+          window.showToast(t('servicingFullToast').replace('{n}', String(getServicingSlots())), 'error');
+        }
+        renderBookshelfPage();
+      }
+    });
+  }
+  const servicingShelfBtn = cardDiv.querySelector('.servicing-shelf-btn');
+  if (servicingShelfBtn) {
+    servicingShelfBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (returnToShelf(book.id)) {
+        playSfx('button_click');
+        if (window.showToast) window.showToast(t('servicingReturnedToast').replace('{title}', getBookTitle(book)), 'success');
+        renderBookshelfPage();
+      }
     });
   }
 

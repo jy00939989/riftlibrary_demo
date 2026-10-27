@@ -11,7 +11,9 @@ import { TIER_GOALS, getTierStatus, countTierGoalsComplete } from '../../data/ti
 import { BOOKS } from '../../data/books.js';
 import { VOLUME_GROUPS, getVolumeGroupProgress, isVolumeBookId } from '../../data/volume_groups.js';
 import { canCollectVolumeGroup, collectVolumeGroup } from '../volumes.js';
-import { storeInRestorationBox, removeFromRestorationBox, getRestorationBoxSlots, getRestorationBoxCount, getRestorationSlotPrice, expandRestorationBoxSlots, getRestorationLevel, getRestorationUpgradePrice, upgradeRestorationLevel, getRestorationRepairSpeedBonus, isRestorationUnlocked, grantRestorationRoom } from '../capacity.js';
+import { storeInRestorationBox, removeFromRestorationBox, getRestorationBoxSlots, getRestorationBoxCount, getRestorationSlotPrice, expandRestorationBoxSlots, getRestorationLevel, getRestorationUpgradePrice, upgradeRestorationLevel, getRestorationRepairSpeedBonus, isRestorationUnlocked, grantRestorationRoom, getMaintenanceBatchCap, getServicingSlots, getServicingSlotPrice, expandServicingSlots } from '../capacity.js';
+import { getAwaitingShelfReturnBooks, returnToShelf, getServicingUsed } from '../core/servicing.js';
+import { getMaintainableBooks, startMaintenanceSession, startMaintenanceFocus, cancelMaintenanceSession, getMaintenanceSessionTotal } from '../core/maintenance.js';
 import { dispatchTutorialUI } from './tutorial-ui.js';
 import { checkAndShowTutorial } from '../tutorial.js';
 import { updateStatusBar, getBookTitle } from './common.js';
@@ -467,6 +469,163 @@ function renderCollectionTab(container) {
 
 // ========== 古籍修复室子标签 ==========
 
+// ========== 保养台（book-maintenance-plan v2） ==========
+
+function renderMaintenanceBench(rerender) {
+  const card = document.createElement('div');
+  card.className = 'bg-white/60 rounded-xl p-5 border border-wood/20';
+  const cap = getMaintenanceBatchCap();
+  const ms = state.maintenanceSession;
+  const condClass = c => ({
+    pristine: 'text-green-600', good: 'text-green-600',
+    worn: 'text-amber-600', fragile: 'text-orange-600', critical: 'text-red-500'
+  }[c] || 'text-ink-light');
+
+  // 保养预约面板 + 待回架条带（servicing-room-plan v3 拍板 B：servicing 操作全聚在保养台）
+  const sPrice = getServicingSlotPrice();
+  const prefixHTML = `
+    <div class="flex items-center justify-between mb-2 px-2 py-1.5 bg-amber-50 border border-amber-200 rounded-lg">
+      <span class="text-xs font-bold text-amber-700">📅 ${t('servicingPanelTitle')} ${getServicingUsed()}/${getServicingSlots()}</span>
+      ${sPrice > 0
+        ? `<button class="servicing-expand-btn px-2 py-1 bg-magic-gold text-white rounded text-[10px] font-bold hover:shadow transition-all">${t('servicingExpandBtn').replace('{price}', sPrice)}</button>`
+        : `<span class="text-[10px] text-ink-light/70">${t('servicingMaxed')}</span>`}
+    </div>` + (() => {
+      const awaiting = getAwaitingShelfReturnBooks();
+      if (awaiting.length === 0) return '';
+      return `<div class="mb-3 space-y-1">${awaiting.map(b => `
+        <div class="flex items-center gap-2 px-2 py-1.5 bg-teal-50 border border-teal-200 rounded-lg">
+          <span class="text-sm">${b.emoji}</span>
+          <span class="text-xs font-bold text-teal-700 flex-1 min-w-0 truncate">✨ 《${b.title}》 ${t('servicingAwaitingShelf')}</span>
+          <button class="servicing-shelf-btn px-2 py-1 bg-teal-500 text-white rounded text-[10px] font-bold hover:shadow transition-all" data-book="${b.bookId}">${t('servicingReturnToShelf')}</button>
+        </div>`).join('')}</div>`;
+    })();
+
+  function bindServicing() {
+    const expandBtn = card.querySelector('.servicing-expand-btn');
+    if (expandBtn) {
+      expandBtn.addEventListener('click', () => {
+        if (expandServicingSlots()) { playSfx('buy_success'); rerender(); }
+        else if (window.showToast) window.showToast(t('insufficientCoinsExclamation') + ' 💰', 'error');
+      });
+    }
+    card.querySelectorAll('.servicing-shelf-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (returnToShelf(btn.dataset.book)) { playSfx('button_click'); rerender(); }
+      });
+    });
+  }
+
+  const headerHTML = `
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="font-display font-bold text-ink">🧴 ${t('maintenanceBenchTitle')}</h3>
+      <span class="text-xs text-ink-light">${t('maintenanceBatchCap').replace('{n}', cap)}</span>
+    </div>`;
+
+  // 进行中 / 挂起批次：一体结算，续作或取消
+  if (ms) {
+    const total = getMaintenanceSessionTotal(ms);
+    const pool = Math.min(ms.progressPool || 0, total);
+    const pct = total > 0 ? Math.min(100, Math.round((pool / total) * 100)) : 0;
+    const titles = ms.bookIds.map(id => BOOKS[id] ? (BOOKS[id].volumeTitle || BOOKS[id].title) : id);
+    card.innerHTML = headerHTML + prefixHTML + `
+      <div class="text-xs text-ink-light mb-2">${t('maintenanceBatchBooks').replace('{n}', ms.bookIds.length)}：${titles.map(x => '《' + x + '》').join('、')}</div>
+      <div class="flex items-center justify-between mb-1.5">
+        <span class="text-xs font-bold text-ink">${t('maintenanceProgress')}</span>
+        <span class="text-xs text-ink-light">${pool.toLocaleString()} / ${total.toLocaleString()} ${t('wordsUnit')}</span>
+      </div>
+      <div class="h-2.5 bg-wood/20 rounded-full overflow-hidden mb-4">
+        <div class="h-full bg-gradient-to-r from-teal-500 to-teal-400 rounded-full transition-all duration-500" style="width:${pct}%"></div>
+      </div>
+      <div class="flex gap-2">
+        <button class="resume-maintenance-btn flex-1 px-4 py-2 bg-magic-gold text-white text-sm font-bold rounded-lg hover:shadow-lg transition-all">${t('maintenanceResume')}</button>
+        <button class="cancel-maintenance-btn px-4 py-2 bg-wood/20 text-ink-light text-sm font-bold rounded-lg hover:shadow transition-all">${t('maintenanceCancel')}</button>
+      </div>
+      <p class="text-[11px] text-ink-light/70 mt-2">${t('maintenanceSuspendHint')}</p>`;
+    card.querySelector('.resume-maintenance-btn').addEventListener('click', () => {
+      const res = startMaintenanceFocus('pomodoro', 25);
+      if (res.ok) { playSfx('buy_success'); if (window.showToast) window.showToast(t('maintenanceStarted'), 'success'); }
+      else if (window.showToast) window.showToast(t('maintenanceBusy'), 'error');
+    });
+    card.querySelector('.cancel-maintenance-btn').addEventListener('click', () => {
+      if (window.confirm(t('maintenanceCancelConfirm'))) { cancelMaintenanceSession(); rerender(); }
+    });
+    bindServicing();
+    return card;
+  }
+
+  // 组建批次：勾选可保养书
+  const list = getMaintainableBooks();
+  if (list.length === 0) {
+    card.innerHTML = headerHTML + prefixHTML + `
+      <div class="text-center py-4">
+        <div class="text-2xl mb-1">✨</div>
+        <p class="text-xs text-ink-light">${t('maintenanceEmpty')}</p>
+      </div>`;
+    bindServicing();
+    return card;
+  }
+
+  card.innerHTML = headerHTML + prefixHTML + `
+    <div class="space-y-1 mb-3 max-h-56 overflow-y-auto">
+      ${list.map(b => `
+        <label class="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-white/70 cursor-pointer transition-colors">
+          <input type="checkbox" class="maint-check accent-amber-600" data-book="${b.bookId}">
+          <span class="text-base">${b.emoji}</span>
+          <span class="text-xs font-bold text-ink flex-1 min-w-0 truncate">${b.servicing ? '🔒 ' : ''}《${b.title}》</span>
+          <span class="text-[10px] ${condClass(b.condition)}">${t('condition_' + b.condition)} · ${t('wearCountN').replace('{n}', b.wearCount)}</span>
+          <span class="text-[10px] text-ink-light">${b.words.toLocaleString()}${t('wordsUnit')}</span>
+        </label>`).join('')}
+    </div>
+    <div class="flex items-center justify-between mb-2">
+      <span class="maint-sel text-xs text-ink-light"></span>
+      <span class="maint-total text-xs font-bold text-magic-gold"></span>
+    </div>
+    <button class="start-maintenance-btn w-full px-4 py-2 bg-magic-gold text-white text-sm font-bold rounded-lg hover:shadow-lg transition-all opacity-50 pointer-events-none">${t('maintenanceStart')}</button>
+    <p class="text-[11px] text-ink-light/70 mt-2">${t('maintenanceBenchHint').replace('{n}', cap)}</p>`;
+
+  const byId = Object.fromEntries(list.map(b => [b.bookId, b]));
+  const checks = [...card.querySelectorAll('.maint-check')];
+  const selEl = card.querySelector('.maint-sel');
+  const totalEl = card.querySelector('.maint-total');
+  const startBtn = card.querySelector('.start-maintenance-btn');
+
+  function refresh() {
+    const picked = checks.filter(c => c.checked).map(c => c.dataset.book);
+    const total = picked.reduce((s, id) => s + (byId[id] ? byId[id].words : 0), 0);
+    selEl.textContent = t('maintenanceSelected').replace('{n}', picked.length).replace('{cap}', cap);
+    totalEl.textContent = picked.length > 0 ? `${t('maintenanceTotalWords')}${total.toLocaleString()}${t('wordsUnit')}` : '';
+    const ok = picked.length >= 1 && picked.length <= cap;
+    startBtn.classList.toggle('opacity-50', !ok);
+    startBtn.classList.toggle('pointer-events-none', !ok);
+    return picked;
+  }
+  checks.forEach(c => c.addEventListener('change', () => {
+    const picked = checks.filter(x => x.checked);
+    if (picked.length > cap) {
+      c.checked = false;
+      if (window.showToast) window.showToast(t('maintenanceOverCap').replace('{n}', cap), 'error');
+      return;
+    }
+    refresh();
+  }));
+  refresh();
+
+  startBtn.addEventListener('click', () => {
+    const picked = refresh();
+    const res = startMaintenanceSession(picked);
+    if (!res.ok) {
+      if (window.showToast) window.showToast(t('maintenanceStartFail'), 'error');
+      return;
+    }
+    const focus = startMaintenanceFocus('pomodoro', 25);
+    if (focus.ok) { playSfx('buy_success'); if (window.showToast) window.showToast(t('maintenanceStarted'), 'success'); }
+    else if (window.showToast) window.showToast(t('maintenanceBatchReady'), 'success');
+  });
+
+  bindServicing();
+  return card;
+}
+
 function renderRestorationTab(container) {
   container.innerHTML = '';
   const wrapper = document.createElement('div');
@@ -540,7 +699,10 @@ function renderRestorationTab(container) {
   }
   wrapper.appendChild(levelCard);
 
-  // 1. 卷组进度与合成
+  // 2. 保养台（book-maintenance-plan v2：主动保养层——批次一体结算，可挂起续作）
+  wrapper.appendChild(renderMaintenanceBench(() => renderRestorationTab(container)));
+
+  // 3. 卷组进度与合成
   const groupsSection = document.createElement('div');
   groupsSection.className = 'bg-white/60 rounded-xl p-5 border border-wood/20';
   groupsSection.innerHTML = `<h3 class="font-display text-lg font-bold mb-4">${t('volumeGroupsTitle')}</h3>`;

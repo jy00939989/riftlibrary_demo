@@ -12,6 +12,7 @@ import { getFocusSpeedMultiplier } from '../shop.js';
 import { getChapterInfo } from './book-utils.js';
 import { calculateWordsGained, calculateCoinsEarned } from './focus-rewards.js';
 import { applyWords, completeBook, applyRepairProgress } from './book-progress.js';
+import { applyMaintenanceProgress } from './maintenance.js';
 import { BOOKS } from '../../data/books.js';
 import { track } from '../backend/analytics.js';
 
@@ -112,7 +113,9 @@ export function completeFocus(isAuto = false) {
   const auraSpeed = getAuraSpeedBonus(bookCategory);
   const curationSpeed = getCurationFocusSpeed();
   const bookIsDamaged = sess.bookId && state.books[sess.bookId] && state.books[sess.bookId].damaged;
-  const repairSpeedBonus = (bookIsDamaged && isRestorationUnlocked()) ? getRestorationRepairSpeedBonus() : 0;
+  // 活动类型轴（book-maintenance-plan v2）：maintenance 吃修复室加成但绕开 damaged 门槛
+  const repairSpeedBonus = ((bookIsDamaged || sess.activity === 'maintenance') && isRestorationUnlocked())
+    ? getRestorationRepairSpeedBonus() : 0;
 
   const wordsGained = calculateWordsGained({
     minutes,
@@ -133,20 +136,25 @@ export function completeFocus(isAuto = false) {
   updateStreak();
 
   // 植物浇水机会（番茄钟 / 倒计时 / 正计时 均触发；储水设施按档位给长专注额外 +1）
+  // waterGained 随结算结果透传给结算弹窗展示（2026-10-26 图南：去掉下章预告、改显浇水数）
+  let waterGained = 0;
   if (minutes >= 20) {
-    addWaterOpportunity(minutes);
+    waterGained = addWaterOpportunity(minutes);
   }
 
-  // 书籍进度
+  // 书籍进度（活动类型轴：copy / repair / maintenance；旧会话无 activity 字段时懒推导）
   let bookProgressResult = null;
   let repairResult = null;
+  let maintenanceResult = null;
   if (sess.bookId) {
     const bs = state.books[sess.bookId];
     // 已上架的书（copyCount≥1）损坏修复 = 纯修复会话：不再推进誊抄进度。
     // effectiveWords = copiedWords % totalWords 回卷为 0，修复字数累计过 totalWords 会触发
     // 伪「重抄完成」→ copyCount+1 → 误升典藏（2026-09-30 玩家报告，探针实证）
     const repairOnly = bs && bs.damaged && (bs.copyCount || 0) >= 1;
-    if (!repairOnly) {
+    const activity = sess.activity || (repairOnly ? 'repair' : 'copy');
+
+    if (activity === 'copy') {
       const applied = applyWords(sess.bookId, wordsGained);
       bookProgressResult = {
         bookId: sess.bookId,
@@ -156,9 +164,13 @@ export function completeFocus(isAuto = false) {
       if (applied.didComplete) {
         bookProgressResult.completion = completeBook(sess.bookId);
       }
+      repairResult = applyRepairProgress(sess.bookId, wordsGained);
+    } else if (activity === 'repair') {
+      repairResult = applyRepairProgress(sess.bookId, wordsGained);
+    } else if (activity === 'maintenance') {
+      // 保养批次：誊抄与修复都不碰，words 全进批次进度池
+      maintenanceResult = applyMaintenanceProgress(wordsGained);
     }
-
-    repairResult = applyRepairProgress(sess.bookId, wordsGained);
   }
 
   // 金币计算保留给调用方（app.js / focus-orchestrator），因为需要 aura/curation/achievement 加成
@@ -175,10 +187,12 @@ export function completeFocus(isAuto = false) {
     ok: true,
     minutes,
     wordsGained,
+    waterGained,
     bookId: sess.bookId,
     prevTotalWords,
     currentTotalWords: state.focus.totalWords,
     bookProgressResult,
-    repairResult
+    repairResult,
+    maintenanceResult
   };
 }

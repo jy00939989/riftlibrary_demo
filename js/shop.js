@@ -1,7 +1,7 @@
 // 商店业务逻辑统一入口 —— 薄 shim，向后兼容
 export {
   getAvailableBooks, ensureShopState, getShopState, purchaseBook,
-  getBookActualPrice, getActivePeizhouRec
+  getBookActualPrice, getActivePeizhouRec, getEventDirectSlots
 } from './core/shop/book-shop.js';
 
 export {

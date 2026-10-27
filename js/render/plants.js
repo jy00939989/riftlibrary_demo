@@ -5,6 +5,7 @@ import { getPlantLogs } from '../storage.js';
 import { updateStatusBar, showImagePreview } from './common.js';
 import { playSfx } from '../audio.js';
 import { PLANT_TYPES, SEED_EXCHANGE, WATERING_CANS, WATER_TANKS } from '../../data/plants.js';
+import { isFestivalActive } from '../../data/festival.js';
 import { canHarvest, harvestPlant, canExchangeSeed, exchangeSeed, getActivePlantDef, canWater, canFertilize, abandonPlant, getSeedExchanges, waterPlant, fertilizePlant, unlockPot, canUnlockPot, getPotCount, getNextPotPrice, MAX_POTS, getWaterCount, getWateringCanLevel, getWaterTankLevel, getNextCanUpgrade, getNextTankUpgrade, canUpgradeCan, canUpgradeTank, upgradeCan, upgradeTank, getGreenThumbLevel, getGreenThumbProgress, getImproveTier, getEffectiveSeedDropRate, getPerennialChance, getNextImproveTier, canUnlockImproved, unlockImproved, getSplashTargets, plantSeed } from '../plants.js';
 import { t } from '../i18n/terms.js';
 import { suppressGuideWidget } from './guidequests.js';
@@ -657,6 +658,8 @@ function renderPlantShop() {
   grid.className = 'grid grid-cols-1 md:grid-cols-3 gap-3';
 
   Object.values(PLANT_TYPES).forEach(pt => {
+    // 2026-10-27 限定作物窗口门控：festivalKey 不在窗口内不上架（魔法南瓜等）
+    if (pt.festivalKey && !isFestivalActive(pt.festivalKey)) return;
     const card = document.createElement('div');
     card.className = 'bg-white rounded-xl p-4 border-2 border-green-200 flex gap-3 items-center hover:shadow-lg transition-all';
     const cost = pt.fertilizeCosts[1];

@@ -50,7 +50,7 @@ export const EVENT_CALENDAR = [
  */
 export const EVENT_WINDOWS = [
   // 万圣周：红字 + 阿芒提拉多的酒桶 限时上架（english-american-literature-expansion-plan §三）
-  { id: 'gothic_night', start: { month: 10, day: 28 }, end: { month: 11, day: 3 } }
+  { id: 'gothic_night', start: { month: 10, day: 27 }, end: { month: 11, day: 13 } }
 ];
 
 /** 某活动窗口在指定日期是否生效（跨月区间适用；窗口 id 未定义恒为 false） */
@@ -71,9 +71,10 @@ export const MONTH_BANNERS = [
   { id: 'midautumn_natl_banner', nameKey: 'evtMidAutumnNationalBanner',
     start: { month: 9, day: 25 }, end: { month: 10, day: 8 },
     image: 'banner_midautumn2026' },
-  // 2026-10-22 哥特之夜（万圣周 10/28–11/3）：活动书限时上架，range 与 EVENT_WINDOWS.gothic_night 同步
+  // 2026-10-27 哥特之夜（万圣周延长 10/27–11/13，终点 11-13 图南拍板）：活动书限时上架，range 与 EVENT_WINDOWS.gothic_night 同步
   { id: 'gothic_night_banner', nameKey: 'evtGothicNightBanner',
-    start: { month: 10, day: 28 }, end: { month: 11, day: 3 } }
+    start: { month: 10, day: 27 }, end: { month: 11, day: 13 },
+    image: 'banner_gothic2026' }
 ];
 
 /** 某日命中的活动日列表（不设时分秒，纯日历日等值判定） */

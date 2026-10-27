@@ -149,5 +149,19 @@ export const SIGNBOARDS = {
     giftOnly: true,
     page: 'focus',
     buff: { type: 'focus_speed', value: 0.02, desc: '缮写速率 +2%' }
+  },
+  // 2026-10-27 哥特之夜纪念牌：牌面铸 2026 与以后年份区分；giftOnly 且不走登录礼——
+  // 须完成四任务「万圣巡馆」才发放（js/core/event-tasks.js，gothic-night-assets-2026.md v4.2 §三.4）
+  gothic_night_plaque: {
+    id: 'gothic_night_plaque',
+    name: '哥特之夜 2026',
+    emoji: '🥀',
+    icon: '🥀',
+    image: 'visual/signboards/sign_gothic_night.png',
+    description: '猩红满月下的野玫瑰与荆棘，铜牌角铸着 2026——万圣巡馆四任务全部完成的见证。错过了这一周，就要再等一年。',
+    price: 0,
+    giftOnly: true,
+    page: 'focus',
+    buff: { type: 'focus_speed', value: 0.02, desc: '缮写速率 +2%' }
   }
 };

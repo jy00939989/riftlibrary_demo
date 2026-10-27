@@ -9,6 +9,7 @@ import { addAtmosphere, addCoins, addHistory, addInspiration, spendInspiration }
 import { placeOnShelf, removeFromManuscriptBox, isBookCapacityFull } from '../capacity.js';
 import { addDiaryEntry } from '../diary.js';
 import { checkTaskCompletion } from '../quests.js';
+import { markTaskDone } from '../dailytasks.js';
 
 /**
  * 将字数应用到指定书籍，更新 copiedWords 并解锁章节。
@@ -145,6 +146,8 @@ export function applyRepairProgress(bookId, wordsGained) {
     bookState.repairProgress = 0;
     bookState.repairWords = 0;
     bookState.wormLevel = 0; // 修复即驱虫（book-damage-events 批次二）
+    // 2026-10-26 玩家报告：修复完书应恢复崭新——磨损一并清零（此前 wearCount 残留，修完仍是「借出N次破旧」）
+    bookState.wearCount = 0;
 
     if (book.totalWords > 0 && bookState.copiedWords > 0 && (bookState.copiedWords % book.totalWords) === 0) {
       bookState.status = 'completed';
@@ -153,8 +156,11 @@ export function applyRepairProgress(bookId, wordsGained) {
     addCoins(30);
     addInspiration(1);
     addAtmosphere(1);
-    addHistory('repair', `🩹 《${repairBookTitle}》修复完成！`, `+30智慧之光 · +1✨灵感 · +1氛围`);
+    addHistory('repair', `🩹 《${repairBookTitle}》修复完成！`, `书况恢复崭新 · +30智慧之光 · +1✨灵感 · +1氛围`);
     addDiaryEntry('special_event', { detail: `🩹 墨墨检查了《${repairBookTitle}》——损毁的页面已经补好了，墨迹新鲜，羊皮纸平整。你比上一任守护者用心。` });
+    // 修缮日任（book-maintenance-plan v2 决策 4）：修复完成同样计数「修缮一本古籍」
+    const maintainTask = markTaskDone('maintain');
+    if (maintainTask) addHistory('event', `📜 每日任务「${maintainTask.name}」完成`, maintainTask.reward);
 
     saveState();
     return { repairCompleted: true, repairBookTitle };
