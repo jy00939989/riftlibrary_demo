@@ -11,7 +11,7 @@ import {
   selectTrack, purchaseTrack, toggleMusic, isMusicOn, updateToggleIcon, isTrackPurchased
 } from '../audio.js';
 import {
-  getAmbientDefs, buyAmbient, selectAmbient,
+  getAmbientDefs, buyAmbient, selectAmbient, isAmbientReleased,
   getCurrentAmbientId, isAmbientEnabled, setAmbientEnabled
 } from '../ambient.js';
 import { isDlcPackUnlocked, getDlcPack } from '../shop.js';
@@ -187,8 +187,10 @@ export function renderMusicRoomPage(container = null) {
 
   // 环境音陈列架
   // 2026-10-27 限定环境音门控：窗口外隐藏未购条目；已购保留（限时购买 ≠ 限时收听）
+  // 2026-10-28 延后上架门控：未到 availableFrom 日期隐藏未购条目
   const ambients = getAmbientDefs()
-    .filter(a => !a.festivalKey || a.unlocked || isFestivalActive(a.festivalKey));
+    .filter(a => (!a.festivalKey || a.unlocked || isFestivalActive(a.festivalKey)) &&
+                 (a.unlocked || isAmbientReleased(a)));
   const currentAmbientId = getCurrentAmbientId();
   const ambientOn = isAmbientEnabled();
 

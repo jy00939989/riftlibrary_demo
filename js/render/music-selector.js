@@ -5,7 +5,7 @@ import {
   toggleMusic, isMusicOn, toggleSfx, isSfxOn, updateToggleIcon, isBgmPlaying,
   purchaseTrack
 } from '../audio.js';
-import { getAmbientDefs, getCurrentAmbientId, selectAmbient, isAmbientEnabled, setAmbientEnabled, getAmbientVolume, setAmbientVolume } from '../ambient.js';
+import { getAmbientDefs, getCurrentAmbientId, selectAmbient, isAmbientEnabled, setAmbientEnabled, getAmbientVolume, setAmbientVolume, isAmbientReleased } from '../ambient.js';
 import { t } from '../i18n/terms.js';
 import { getSettings, setSetting } from '../settings.js';
 
@@ -42,7 +42,8 @@ function open() {
   const visibleTracks = tracks.filter(tr => tr.unlocked || tr.purchasable);
   const currentId = getCurrentTrackId();
   const manual = isManualMode();
-  const ambients = getAmbientDefs();
+  // 未到延后上架日期的环境音不显示（已购保留）
+  const ambients = getAmbientDefs().filter(a => a.unlocked || isAmbientReleased(a));
   const currentAmbientId = getCurrentAmbientId();
   const ambientOn = isAmbientEnabled();
   const musicOn = isMusicOn();

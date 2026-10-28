@@ -21,11 +21,19 @@ export const AMBIENT_DEFS = [
   { id: 'blizzard_fireplace', name: t('ambientName_blizzard_fireplace'), emoji: '🔥', price: 500, file: 'audio/ambient/blizzard_fireplace.mp3' },
   // 2026-10-27 哥特之夜：万圣夜书房（图南供曲 25 分钟循环；festivalKey 门控，窗口内可购）
   { id: 'halloween_night', name: t('ambientName_halloween_night'), emoji: '🕯️', price: 500, file: 'audio/ambient/halloween-night.mp3', festivalKey: 'gothicNight2026' },
-  // 2026-10-12 图南供曲：湖畔木屋清晨（25 分钟循环，常驻 500💰）
-  { id: 'lakeside_cabin', name: t('ambientName_lakeside_cabin'), emoji: '🌅', price: 500, file: 'audio/ambient/lakeside_cabin.mp3' },
-  // 2026-10-12 图南供曲：复古爵士酒吧（25 分钟循环，常驻 500💰）
-  { id: 'jazz_bar', name: t('ambientName_jazz_bar'), emoji: '🎷', price: 500, file: 'audio/ambient/jazz_bar.mp3' }
+  // 2026-10-12 图南供曲：湖畔木屋清晨（25 分钟循环，常驻 500💰；延后上架，2026-11-14 起售）
+  { id: 'lakeside_cabin', name: t('ambientName_lakeside_cabin'), emoji: '🌅', price: 500, file: 'audio/ambient/lakeside_cabin.mp3', availableFrom: '2026-11-14' },
+  // 2026-10-12 图南供曲：复古爵士酒吧（25 分钟循环，常驻 500💰；延后上架，2026-11-14 起售）
+  { id: 'jazz_bar', name: t('ambientName_jazz_bar'), emoji: '🎷', price: 500, file: 'audio/ambient/jazz_bar.mp3', availableFrom: '2026-11-14' }
 ];
+
+/** 氛围音是否已到上架日期（availableFrom 字段，YYYY-MM-DD，按本地日期；未设置=常驻） */
+export function isAmbientReleased(def) {
+  if (!def?.availableFrom) return true;
+  const today = new Date();
+  const from = new Date(def.availableFrom + 'T00:00:00');
+  return today >= from;
+}
 
 let currentAudio = null;
 let currentId = null;
@@ -69,6 +77,8 @@ export function buyAmbient(id) {
   if (unlocked.includes(id)) return { ok: false, reason: 'already_owned' };
   // 2026-10-27 哥特之夜环境音：窗口外禁止成交（限时上架=限时购买；已购保留可用）
   if (def.festivalKey && !isFestivalActive(def.festivalKey)) return { ok: false, reason: 'event_ended' };
+  // 延后上架：未到 availableFrom 日期禁止成交
+  if (!isAmbientReleased(def)) return { ok: false, reason: 'not_released' };
   if (def.dlcPackId && !isDlcPackUnlocked(def.dlcPackId)) {
     return { ok: false, reason: 'dlc_locked', dlcPackId: def.dlcPackId };
   }
