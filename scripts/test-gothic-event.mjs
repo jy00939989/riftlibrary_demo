@@ -157,7 +157,7 @@ ok(!pt.ok && pt.reason === 'event_ended', '死神邀舞：窗口外禁售');
 console.log('\n=== 4. 魔法南瓜 ===');
 const mp = PLANT_TYPES.magic_pumpkin;
 ok(!!mp, 'magic_pumpkin 定义存在');
-ok(mp.seedDropRate === 0, '收获不掉种子（seedDropRate=0）');
+ok(mp.seedDropRate === 0.6, '收获 60% 掉 1 种子（2026-10-28 图南拍板：与常规品种同口径，软回流）');
 ok(mp.noImprove === true, '不可嫁接（noImprove）');
 ok(mp.festivalKey === 'gothicNight2026', '种子窗口门控 festivalKey');
 ok(mp.levelNames[5] === '魔法南瓜', '满级名=魔法南瓜');

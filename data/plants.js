@@ -96,8 +96,10 @@ export const PLANT_TYPES = {
   },
 
   // 2026-10-27 魔法南瓜（哥特之夜限定，gothic-night-assets-2026.md v4.1 图南拍板）：
-  // 全株限时——种子仅窗口内售卖（festivalKey 门控）、窗口关闭未收获由 event-tasks 回收、
-  // 收获不掉种子（seedDropRate 0）、不进 SEED_EXCHANGE、不可嫁接（noImprove）。
+  // 全株限时——种子仅窗口内温室商店售卖（festivalKey 门控，价格=fertilizeCosts[1]=120）、
+  // 窗口关闭未收获由 event-tasks 回收、不进 SEED_EXCHANGE、不可嫁接（noImprove）。
+  // 2026-10-28 图南改版：收获 60% 掉 1 种子（旧 seedDropRate 0 无回流；与常规品种 0.6 同口径，
+  // 种子主入口是 120 智慧之光购买，掉率是软回流而非产能本体）
   magic_pumpkin: {
     id: 'magic_pumpkin',
     nameKey: 'plant.magicPumpkin.name',
@@ -125,7 +127,7 @@ export const PLANT_TYPES = {
     harvestAtmosphere: 6,
     harvestCoins: 80,
     seedType: 'magic_pumpkin',
-    seedDropRate: 0,
+    seedDropRate: 0.6,
     noImprove: true,
     festivalKey: 'gothicNight2026',
     levelNames: ['', '魔芽', '藤蔓', '茂叶', '星花', '魔法南瓜']
