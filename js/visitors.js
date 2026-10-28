@@ -18,6 +18,9 @@ import { getTodayKey } from './core/day-boundary.js';
 import { applyCycleSafeWordLoss } from './core/book-utils.js';
 import { cafeTick, cafeOnTimeSkip } from './core/cafe.js';
 import { getEventBorrowFavorMult } from './core/exhibition.js';
+// 好感写路径单一真源（cap 车道/咖啡角入账在 core/favor-ledger.js，避免 visitors↔cafe 循环依赖）
+import { FAVOR_CAP, gainActionFavor } from './core/favor-ledger.js';
+export { FAVOR_CAP };
 
 // 台风灾难参数：新植物保护期 + 触发概率 + 冷却时间
 const TYPHOON_PROBABILITY = 0.0005; // 每分钟判定概率
@@ -705,9 +708,6 @@ function getNow() {
 }
 
 // ========== 好感度上限与叙事阈值（ADR-FAVOR-001） ==========
-
-const FAVOR_CAP = 600;
-export { FAVOR_CAP };
 export const FAVOR_THRESHOLDS = {
   OCCASIONAL: 120,
   RARE: 280,
@@ -734,13 +734,6 @@ export function getFavorStage(favor) {
   const isMax = f >= FAVOR_CAP;
   const pct = isMax ? 100 : Math.round(((f - stage.floor) / (stage.next - stage.floor)) * 100);
   return { idx, key: stage.key, floor: stage.floor, next: stage.next, favor: f, pct, isMax, toNext: isMax ? 0 : stage.next - f };
-}
-
-function addVisitorFavor(charId, amount) {
-  // 2026-10-19 热修：缺失键直接创建（旧守卫 !== undefined 会把新档的日常好感全部静默丢弃，
-  // 唯一例外是 redeem.js 的便签路径会自己建键——这正是「只有谷雨显示」的根因）。
-  if (!state.visitorFavors) state.visitorFavors = {};
-  state.visitorFavors[charId] = Math.min(FAVOR_CAP, (state.visitorFavors[charId] || 0) + amount);
 }
 
 // ========== 访客刷新加权（ADR-FAVOR-001） ==========
@@ -838,10 +831,9 @@ export function tickVisitorBrowsing(now) {
   state.visitors.forEach(visitor => {
     if (visitor.status !== 'browsing') return;
 
-    // 浏览中缓慢增加好感度（含等级加成）
+    // 浏览中缓慢增加好感度（含等级加成）；2026-10-28 起走每日 cap（免费流水车道）
     const browseFavor = Math.round(1 * (1 + blvCfg.favorBonus / 100));
-    visitor.favorability = (visitor.favorability || 0) + browseFavor;
-    addVisitorFavor(visitor.charId, browseFavor);
+    gainActionFavor(visitor, browseFavor);
 
     // 每次 tick 实时计算可用书籍（避免同一 tick 内多个访客借走同一本书）
     const completedBooks = getCompletedBooks();
@@ -933,8 +925,7 @@ function attemptBorrow(visitor, completedBooks, now) {
   maybeComplainOldBooks(visitor, candidates);
 
   const borrowFavor = Math.round(3 * (1 + getBorrowLevelConfig().favorBonus / 100) * getEventBorrowFavorMult(now));
-  visitor.favorability = (visitor.favorability || 0) + borrowFavor;
-  addVisitorFavor(visitor.charId, borrowFavor);
+  gainActionFavor(visitor, borrowFavor);
 
   const titlesJoined = picked.map(b => `《${b.volumeTitle || b.title}》`).join('');
   const wholeHours = Math.max(3, Math.round((maxDue - now) / 3600000));
@@ -1495,8 +1486,7 @@ export function collectReturn(visitorId, lockBookIds = []) {
   const favorBonus = getAuraReturnFavorBonus();
   const baseFavor = Math.round(5 * (1 + retCfg.favorBonus / 100));
   const returnFavor = Math.round(baseFavor * (1 + favorBonus));
-  visitor.favorability = (visitor.favorability || 0) + returnFavor;
-  addVisitorFavor(charId, returnFavor);
+  gainActionFavor(visitor, returnFavor);
 
   // 王小磊光环：每次还书获得诗笺（整单一次）
   let wavePoem = null;

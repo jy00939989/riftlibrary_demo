@@ -241,6 +241,12 @@ function useFavorNote(itemId, charId) {
     return { ok: false, message: '请先选择一名角色' };
   }
 
+  const charName = VISITOR_DEFS[charId].name || charId;
+  // 2026-10-28 满好感拒用：道具是稀缺资源，绝不允许打空枪（不消耗库存）
+  if ((state.visitorFavors?.[charId] || 0) >= MAX_FAVOR) {
+    return { ok: false, message: `「${charName}」的心意已经满了，这张便签留给别人吧` };
+  }
+
   if (!state.visitorFavors) state.visitorFavors = {};
   const current = state.visitorFavors[charId] || 0;
   state.visitorFavors[charId] = Math.min(MAX_FAVOR, current + amount);
@@ -249,7 +255,6 @@ function useFavorNote(itemId, charId) {
   saveState();
   updateStatusBar();
 
-  const charName = VISITOR_DEFS[charId].name || charId;
   return {
     ok: true,
     message: `「${charName}」好感度 +${amount}（当前 ${state.visitorFavors[charId]}）`,

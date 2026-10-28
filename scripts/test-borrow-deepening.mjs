@@ -193,6 +193,9 @@ console.log('\n=== 5. 吐槽护栏 ===');
 resetLibrary(1); // 单本槽：8 本书够 4 人各借 1 本
 poolIds.forEach(id => { state.books[id].borrowTimes = 7; }); // 全部老旧
 state.visitors = [mkVisitor('k1'), mkVisitor('k2'), mkVisitor('k3'), mkVisitor('k4')];
+// 2026-10-28 好感每日 cap 上线：前几节 tick 已花光 shenmingyuan 当日额度，
+// 吐槽断言测的是抱怨机制而非 cap——清空日账恢复「浏览+1 借书+3」的旧口径
+state.visitorFavorDaily = {};
 roll(0); // 借书判定过 + 吐槽 30% 过
 visitors.tickVisitorBrowsing(T0);
 restoreRoll();

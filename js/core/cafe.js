@@ -6,6 +6,7 @@ import { state, saveState } from '../state.js';
 import { spendCoins, addCoins, addHistory } from '../storage.js';
 import { bumpEventTask } from './event-tasks.js';
 import { getTodayKey } from './day-boundary.js';
+import { gainCafeFavor } from './favor-ledger.js';
 import { spendSeed } from '../plants.js';
 import { PLANT_TYPES } from '../../data/plants.js';
 import {
@@ -141,7 +142,11 @@ function serveVisitor(visitor, now) {
   state.cafe.stock[recipeId] -= 1;
   addCoins(recipe.price);
   const favorGain = Math.round(recipe.favor * (1 + CAFE_FAVOR_MULT_STEP * (level - 1)));
-  visitor.favorability = (visitor.favorability || 0) + favorGain;
+  // 2026-10-28 修复生产bug：旧逻辑只写 session 实例 visitor.favorability（离场即丢、进场归零），
+  // 咖啡角好感从未落过持久账本；改走 gainCafeFavor（材料闸门限流，豁免每日 cap）。
+  // 满好感时溢出心意 ×3 转小费智慧之光，咖啡角永无「白做」时刻。
+  const { grant, tip } = gainCafeFavor(visitor, favorGain);
+  if (tip > 0) addCoins(tip);
   visitor.pendingBorrowBuff = CAFE_BORROW_BUFF_PER_LEVEL * level;
   visitor.status = 'cafe';
   visitor.cafeEnterTime = now;
@@ -151,8 +156,11 @@ function serveVisitor(visitor, now) {
   // 万圣巡馆任务④：待客（限定时饮/甜品各一份；窗口外安全空操作）
   bumpEventTask('serve_halloween', recipeId);
 
+  const tipLine = tip > 0
+    ? `心意化作小费+${tip}智慧之光（好感已满）`
+    : `好感+${grant}`;
   addHistory('cafe', `☕ ${visitor.emoji} ${visitor.name} 进店点了${recipe.emoji} ${t(recipe.nameKey)}`,
-    `+${recipe.price}智慧之光 · 好感+${favorGain} · 借书概率增益生效`);
+    `+${recipe.price}智慧之光 · ${tipLine} · 借书概率增益生效`);
   return true;
 }
 
