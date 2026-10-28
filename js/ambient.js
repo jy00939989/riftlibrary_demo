@@ -20,7 +20,11 @@ export const AMBIENT_DEFS = [
   // 2026-09-21 图南供曲：暴雪天壁炉（25 分钟循环，常驻 500💰，与维多利亚书房同档）
   { id: 'blizzard_fireplace', name: t('ambientName_blizzard_fireplace'), emoji: '🔥', price: 500, file: 'audio/ambient/blizzard_fireplace.mp3' },
   // 2026-10-27 哥特之夜：万圣夜书房（图南供曲 25 分钟循环；festivalKey 门控，窗口内可购）
-  { id: 'halloween_night', name: t('ambientName_halloween_night'), emoji: '🕯️', price: 500, file: 'audio/ambient/halloween-night.mp3', festivalKey: 'gothicNight2026' }
+  { id: 'halloween_night', name: t('ambientName_halloween_night'), emoji: '🕯️', price: 500, file: 'audio/ambient/halloween-night.mp3', festivalKey: 'gothicNight2026' },
+  // 2026-10-12 图南供曲：湖畔木屋清晨（25 分钟循环，常驻 500💰）
+  { id: 'lakeside_cabin', name: t('ambientName_lakeside_cabin'), emoji: '🌅', price: 500, file: 'audio/ambient/lakeside_cabin.mp3' },
+  // 2026-10-12 图南供曲：复古爵士酒吧（25 分钟循环，常驻 500💰）
+  { id: 'jazz_bar', name: t('ambientName_jazz_bar'), emoji: '🎷', price: 500, file: 'audio/ambient/jazz_bar.mp3' }
 ];
 
 let currentAudio = null;

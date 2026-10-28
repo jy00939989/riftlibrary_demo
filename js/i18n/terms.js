@@ -1067,6 +1067,8 @@ const TERM_DATA = Object.freeze({
   ambientName_medieval_monastery: { zh: '中世纪修道院', en: 'Medieval Monastery' },
   ambientName_blizzard_fireplace: { zh: '暴雪天壁炉', en: 'Blizzard Hearth' },
   ambientName_halloween_night: { zh: '万圣夜书房', en: 'Halloween Night Study' },
+  ambientName_lakeside_cabin: { zh: '湖畔木屋清晨', en: 'Lakeside Cabin Morning' },
+  ambientName_jazz_bar: { zh: '复古爵士酒吧', en: 'Vintage Jazz Bar' },
   ambientLockedByPackHint: { zh: '解锁「{pack}」补充包后开放购买', en: 'Available after unlocking the "{pack}" DLC pack' },
   musicVolume: { zh: '音乐音量', en: 'Music Volume' },
   ambientVolume: { zh: '环境音音量', en: 'Ambient Volume' },
