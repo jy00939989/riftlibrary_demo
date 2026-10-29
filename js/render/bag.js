@@ -124,6 +124,11 @@ function renderItemCard(itemId) {
     const useBtn = el('button', 'btn btn-primary btn-sm', { text: t('item_use') || '使用' });
     useBtn.addEventListener('click', () => useItemWithConfirm(itemId));
     actions.appendChild(useBtn);
+  } else if (def?.category === 'candy') {
+    // 2026-10-28 修复玩家反馈：南瓜糖无使用按钮（candy 类无 targetType 也不走 random 特例，被按钮渲染漏掉）
+    const useBtn = el('button', 'btn btn-primary btn-sm', { text: t('item_use') || '使用' });
+    useBtn.addEventListener('click', () => useItemWithConfirm(itemId));
+    actions.appendChild(useBtn);
   }
 
   body.appendChild(actions);
