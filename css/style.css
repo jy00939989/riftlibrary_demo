@@ -691,7 +691,7 @@ body {
   right: 10%;
   width: 30%;
   height: 50%;
-  background: radial-gradient(circle, rgba(255,180,80,0.25) 0%, transparent 70%);
+  background: radial-gradient(circle, var(--writing-glow, rgba(255,180,80,0.25)) 0%, transparent 70%);
   pointer-events: none;
   animation: writing-candle-flicker 3s ease-in-out infinite;
 }
@@ -730,7 +730,8 @@ body {
 .writing-page {
   flex: 1;
   position: relative;
-  background: linear-gradient(175deg, #f5e6c8 0%, #ede0c1 30%, #f0e4ca 60%, #e8d5a8 100%);
+  /* 2026-10-30 皮肤变量注入：底图/纹理/栏线/墨色/烛光均由 data-writing-skin 驱动，缺省=羊皮纸 */
+  background: var(--writing-page-bg, linear-gradient(175deg, #f5e6c8 0%, #ede0c1 30%, #f0e4ca 60%, #e8d5a8 100%));
   overflow: hidden;
 }
 
@@ -751,9 +752,9 @@ body {
   content: '';
   position: absolute;
   inset: 0;
-  opacity: 0.07;
+  opacity: var(--writing-page-lines-opacity, 0.07);
   background-image: repeating-linear-gradient(
-    0deg, transparent, transparent 26px, rgba(139,105,20,0.3) 26px, rgba(139,105,20,0.3) 27px
+    0deg, transparent, transparent 26px, var(--writing-page-line-color, rgba(139,105,20,0.3)) 26px, var(--writing-page-line-color, rgba(139,105,20,0.3)) 27px
   );
   pointer-events: none;
 }
@@ -765,7 +766,7 @@ body {
   top: 20px;
   bottom: 20px;
   width: 1px;
-  background: rgba(139,105,20,0.1);
+  background: var(--writing-rule-color, rgba(139,105,20,0.1));
 }
 
 .writing-page-right::after {
@@ -775,7 +776,7 @@ body {
   top: 20px;
   bottom: 20px;
   width: 1px;
-  background: rgba(139,105,20,0.1);
+  background: var(--writing-rule-color, rgba(139,105,20,0.1));
 }
 
 .writing-area {
@@ -788,7 +789,7 @@ body {
   font-size: 17px;
   line-height: 1.9;
   letter-spacing: 0.04em;
-  color: #2c2419;
+  color: var(--writing-ink, #2c2419);
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
 }
@@ -1750,3 +1751,57 @@ body {
 }
 .exh-spot.resto-flash .exh-spot-dim { animation: exhDimOut 1.2s ease forwards; }
 @keyframes exhDimOut { to { opacity: 0; } }
+
+/* ========== 缮写室底版皮肤（2026-10-30 图南拍板）==========
+   变量口径：--writing-page-bg 底图(图到后 url 叠加在渐变前) · --writing-ink 墨色 ·
+   --writing-glow 烛光 · --writing-page-lines-opacity/--writing-page-line-color 横线纹理 ·
+   --writing-rule-color 栏线。缺省值=羊皮纸（原观感不动）。 */
+
+/* 🎃 哥特之夜：窗口内自动启用（festivalKey 门控），过窗玩家永久保留 */
+.writing-scene[data-writing-skin='gothic'] {
+  /* 图到即换：url('../visual/writing/skin_gothic_pages.png') center/cover no-repeat, */
+  --writing-page-bg: radial-gradient(ellipse at 50% 30%, #2a2140 0%, #1a1426 55%, #120e1c 100%);
+  --writing-ink: #d8d4e8;
+  --writing-glow: rgba(110, 95, 220, 0.30);
+  --writing-page-lines-opacity: 0.05;
+  --writing-page-line-color: rgba(180, 170, 230, 0.25);
+  --writing-rule-color: rgba(180, 170, 230, 0.12);
+}
+
+/* 📜 中世纪手抄本：泥金装饰感暖羊皮（解锁=修复室 Lv3） */
+.writing-scene[data-writing-skin='manuscript'] {
+  --writing-page-bg: linear-gradient(175deg, #f0dfae 0%, #e6cf96 30%, #ecd9a4 60%, #dfc186 100%);
+  --writing-ink: #4a2f18;
+  --writing-glow: rgba(255, 170, 60, 0.28);
+  --writing-page-lines-opacity: 0.09;
+  --writing-page-line-color: rgba(122, 72, 20, 0.35);
+  --writing-rule-color: rgba(160, 40, 30, 0.25);
+}
+
+/* 🏮 中国风：洒金宣纸 + 朱栏（解锁=展览厅建成；竖排二期见 planner t_20261030_vertical_writing） */
+.writing-scene[data-writing-skin='chinese'] {
+  /* 图到即换：url('../visual/writing/skin_chinese_pages.png') center/cover no-repeat, */
+  --writing-page-bg:
+    radial-gradient(1.5px 1.5px at 20% 30%, rgba(201,169,106,0.5) 50%, transparent 51%),
+    radial-gradient(1px 1px at 70% 60%, rgba(201,169,106,0.4) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 45% 80%, rgba(201,169,106,0.45) 50%, transparent 51%),
+    radial-gradient(1px 1px at 85% 20%, rgba(201,169,106,0.35) 50%, transparent 51%),
+    linear-gradient(175deg, #f7f0dd 0%, #f0e6cc 50%, #eaddbe 100%);
+  --writing-ink: #26221c;
+  --writing-glow: rgba(255, 190, 90, 0.22);
+  --writing-page-lines-opacity: 0;
+  --writing-rule-color: rgba(180, 50, 40, 0.35);
+}
+
+/* 🎨 油画风：帆布肌理厚涂（解锁=位面商店 800 智慧之光） */
+.writing-scene[data-writing-skin='oilpaint'] {
+  --writing-page-bg:
+    repeating-linear-gradient(90deg, rgba(0,0,0,0.03) 0 2px, transparent 2px 5px),
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.04) 0 3px, transparent 3px 7px),
+    linear-gradient(160deg, #e9dcc0 0%, #d9c8a4 40%, #cdb891 100%);
+  --writing-ink: #3a2a1a;
+  --writing-glow: rgba(255, 160, 60, 0.30);
+  --writing-page-lines-opacity: 0.04;
+  --writing-page-line-color: rgba(90, 60, 30, 0.3);
+  --writing-rule-color: rgba(90, 60, 30, 0.15);
+}

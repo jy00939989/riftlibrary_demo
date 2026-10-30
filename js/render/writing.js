@@ -3,8 +3,11 @@
 
 import { getBookTitle, getBookQuotes, getChapterContent } from './common.js';
 import { state } from '../state.js';
+import { getSettings } from '../settings.js';
+import { WRITING_SPEEDS, DEFAULT_WRITING_SPEED, resolveWritingSkin } from '../../data/writing-skins.js';
+import { saveState } from '../state.js';
 
-const BASE_SPEED = 150;  // ms/字
+const BASE_SPEED = 150;  // ms/字（现状基准；速度档见 data/writing-skins.js WRITING_SPEEDS）
 const PEN_DELAY = 40;    // 羽笔到位后延迟出字
 
 let currentAnim = null;
@@ -165,6 +168,10 @@ class WritingAnim {
     `;
 
     this.sceneEl = this.container.querySelector('.writing-scene');
+    // 2026-10-30 底版皮肤：哥特窗口内自动启用并永久入账；窗口外玩家自选（未解锁回退羊皮纸）
+    const resolved = resolveWritingSkin(state, getSettings().writingSkin);
+    if (resolved.newlyOwned) saveState();
+    this.sceneEl.dataset.writingSkin = resolved.skin;
     this.areaLeft = this.container.querySelector('#writing-area-left');
     this.areaRight = this.container.querySelector('#writing-area-right');
     this.pageLeft = this.container.querySelector('#writing-page-left');
@@ -481,7 +488,8 @@ class WritingAnim {
   scheduleTick() {
     if (!this.running) return;
     if (this.timerId) clearTimeout(this.timerId);
-    this.timerId = setTimeout(() => this.tick(), this.speed);
+    // 2026-10-30 玩家可调速度：每次 tick 实时读设置（拖档即时生效，无需重启缮写）
+    this.timerId = setTimeout(() => this.tick(), WRITING_SPEEDS[getSettings().writingSpeed] || this.speed);
   }
 
   updateStatus(text) {
