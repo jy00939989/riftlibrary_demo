@@ -132,7 +132,7 @@ assert(state.dailyTasks.waterDone && state.coins === 40, 'water 任务 +10 币')
 state.library.atmosphere = 0;
 const bonus = dailytasks.claimAllDoneBonus(state);
 assert(bonus && state.dailyTasks.allClaimed && state.coins === 60 && state.library.atmosphere === 3, '全勤奖 +20币/+3氛围');
-assert(state.inspiration === 3, '全勤奖 +3 灵感');
+assert(state.inspiration === 2, '全勤奖 +2 灵感（2026-10-30 图南拍板 3→2）');
 assert(dailytasks.claimAllDoneBonus(state) === null, '全勤奖不可重复领');
 
 // ═══ S3. 基线：墨墨点评日限 ═══

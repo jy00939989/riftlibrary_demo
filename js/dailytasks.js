@@ -59,9 +59,10 @@ export function claimAllDoneBonus(stateCtx) {
     dt.allClaimed = true;
     addCoins(20);
     addAtmosphere(3);
-    addInspiration(3);
+    // 2026-10-30 图南拍板：每日馆务灵感 3→2（自出版执照上线前的灵感流速校准）
+    addInspiration(2);
     saveState();
-    return { coins: 20, atmo: 3, inspiration: 3 };
+    return { coins: 20, atmo: 3, inspiration: 2 };
   }
   return null;
 }
