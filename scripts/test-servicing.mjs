@@ -46,7 +46,7 @@ const { BOOKS } = await import('../data/books.js');
 const cap = await import('../js/capacity.js');
 const svc = await import('../js/core/servicing.js');
 const dis = await import('../js/core/disasters.js');
-const { getCompletedBooks, collectReturn } = await import('../js/visitors.js');
+const { getCompletedBooks, collectReturn, tickVisitorBrowsing } = await import('../js/visitors.js');
 const { getMaintainableBooks, startMaintenanceSession, applyMaintenanceProgress } = await import('../js/core/maintenance.js');
 const { getSettings, setSetting } = await import('../js/settings.js');
 
@@ -91,6 +91,19 @@ function dueVisitor(bookIds) {
     id: 'v1', charId: 'xiaoying', emoji: '🦊', name: '小萤', status: 'due',
     bookIds: [...bookIds], favorability: 0, borrowTime: now - DAY, dueTime: now - 1000
   }];
+}
+
+// 真实借出管线：browsing 访客走 tickVisitorBrowsing 全链（attemptBorrow 借出侧磨损自增在此触发）
+// 调用前保证只有目标书在可借池；seq(0,0,0)=[借书判定过, 选书idx=0, 时长浮动]
+function lendViaPipeline() {
+  state.visitors = [{
+    id: 'v1', charId: 'shenmingyuan', emoji: '🧑‍🏫', name: '沈教授', status: 'browsing',
+    bookIds: [], bookId: null, bookTitle: null, favorability: 0,
+    arriveTime: Date.now(), borrowTime: null, dueTime: null, eventTriggered: false
+  }];
+  seq(0, 0, 0);
+  tickVisitorBrowsing(Date.now());
+  return state.visitors[0];
 }
 
 // ═══ 1. 容量公式 / 价目 / 封顶 ═══
@@ -244,27 +257,43 @@ ok(svc.returnToShelf(A) === true && state.books[A].servicing === undefined, '回
 ok(svc.getAwaitingShelfReturnBooks().length === 0, '待回架条带清空');
 ok(svc.returnToShelf(A) === false, '非 locked 不可回架');
 
-// 保养保护期（2026-10-26 图南拍板）：结算赠 10 次借还保护，期间还书损毁 roll 消耗 1 次并跳过
-ok(state.books[A].damageShield === 10, '保养结算赠 damageShield=10');
-ok(state.books[B].damageShield === 10, '批次内每本都获赠');
+// 保养保护期（2026-10-30 图南拍板修订：10→5 次，保护=完全无损：借出不掉磨损+还书跳过损毁 roll）
+ok(state.books[A].damageShield === 5, '保养结算赠 damageShield=5');
+ok(state.books[B].damageShield === 5, '批次内每本都获赠');
+// 收窄可借池到只剩 A（B/C 若在池调离 completed），保证真管线借出的必是 A
+if (state.books[B]) state.books[B].status = 'copying';
+if (state.books[C]) state.books[C].status = 'copying';
+// 借出侧：保护期内磨损自增跳过（完全不掉完好度）
+state.books[A].wearCount = 7;
+let v = lendViaPipeline();
+ok((v.bookIds || []).includes(A), '真管线借出 A');
+ok(state.books[A].wearCount === 7, '保护期内借出不掉完好度（磨损自增跳过）');
+ok(state.books[A].damageShield === 5, '借出侧不消耗保护（消耗在还书侧）');
 // 第 1 次还书：强制损毁队列也命中不了
 dueVisitor([A]);
 seq(0, 0.9999); // [0]若 roll 必中
 ret = collectReturn('v1');
 ok(ret.books[0].damaged === false && state.books[A].damaged !== true, '保护期内损毁 roll 跳过');
-ok(state.books[A].damageShield === 9, '消耗 1 次保护（10→9）');
-// 连续消耗到 0 后第 11 次还书恢复可损
+ok(state.books[A].damageShield === 4, '消耗 1 次保护（5→4）');
+ok(state.books[A].wearCount === 7, '保护周期内完好度全程不动');
+// 最后 1 次保护：仍全程无损
 state.books[A].damageShield = 1;
+v = lendViaPipeline();
+ok(state.books[A].wearCount === 7, '最后 1 次保护：借出仍不掉磨损');
 dueVisitor([A]);
 seq(0, 0.9999);
 ret = collectReturn('v1');
 ok(ret.books[0].damaged === false, '最后 1 次保护仍生效（消耗后归 0）');
 ok((state.books[A].damageShield || 0) === 0, '保护归 0');
-state.books[A].damaged = false; delete state.books[A].repairWords; // 重置损毁态再验下一段
+// 保护耗尽：借出侧磨损恢复自增 + 损毁 roll 恢复命中
+state.books[A].wearCount = 3;
+v = lendViaPipeline();
+ok(state.books[A].wearCount === 4, '保护耗尽后借出侧磨损恢复 +1');
 dueVisitor([A]);
 seq(0, 0.9999);
 ret = collectReturn('v1');
 ok(ret.books[0].damaged === true, '保护耗尽后损毁 roll 恢复命中');
+state.books[A].damaged = false; delete state.books[A].repairWords;
 
 // ═══ 9. pending 死锁（intended：懒收占格）═══
 console.log('\n=== 9. pending 占格 ===');

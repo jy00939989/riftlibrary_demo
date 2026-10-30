@@ -65,7 +65,12 @@ export function settleOffsite(today) {
       addInspiration(1);
       inspirationGained += 1;
     }
-    bs.wearCount = (bs.wearCount || 0) + 1;
+    // 2026-10-30 图南拍板：保养保护期覆盖寄读——shield>0 时跳过磨损自增并消耗 1 次保护
+    if ((bs.damageShield || 0) > 0) {
+      bs.damageShield -= 1;
+    } else {
+      bs.wearCount = (bs.wearCount || 0) + 1;
+    }
     bs.borrowTimes = (bs.borrowTimes || 0) + 1;
     circulated += 1;
     coinsTotal += coins;

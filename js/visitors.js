@@ -908,10 +908,13 @@ function attemptBorrow(visitor, completedBooks, now) {
   visitor.pendingBorrowBuff = 0;
 
   // 每本照常 wearCount+1（典藏版不磨损，Phase 3 链）；borrowTimes+1（馆内借阅口径）
+  // 2026-10-30 图南拍板：保养保护期内借出不掉完好度——shield>0 跳过磨损自增（消耗发生在还书侧）
   picked.forEach(b => {
     const bs = state.books[b.id];
     if (bs && !b.indestructible) {
-      bs.wearCount = (bs.wearCount || 0) + 1;
+      if ((bs.damageShield || 0) <= 0) {
+        bs.wearCount = (bs.wearCount || 0) + 1;
+      }
     }
     if (bs) {
       bs.borrowTimes = (bs.borrowTimes || 0) + 1;
@@ -1435,7 +1438,8 @@ export function collectReturn(visitorId, lockBookIds = []) {
     const inRestoration = (state.restorationBox || []).includes(bid);
     const damageChance = getDamageChance(state.library.borrowLevel || 0, (state.signboards || []).includes('care_for_books'), bs?.wearCount || 0);
     const title = bDef ? (bDef.volumeTitle || bDef.title) : bid;
-    // 保养保护期（2026-10-26 图南拍板）：每次还书消耗 1 次保护并跳过损毁 roll
+    // 保养保护期（2026-10-30 图南拍板修订）：每次还书消耗 1 次保护并跳过损毁 roll；
+    // 保护期内磨损自增也在借出侧被跳过（visitors.js 借出链）——5 次周期内完全无损
     const shielded = !!bs && (bs.damageShield || 0) > 0;
     if (shielded) bs.damageShield -= 1;
     if (!shielded && Math.random() < damageChance && bs && !bDef?.indestructible && !inRestoration) {

@@ -165,8 +165,10 @@ function settleMaintenanceSession() {
     const book = BOOKS[id];
     if (!bs || !book) continue;
     bs.wearCount = 0;
-    // 2026-10-26 图南拍板：保养完成赠 10 次借还保护期——期间还书损毁 roll 消耗 1 次并跳过
-    bs.damageShield = 10;
+    // 2026-10-30 图南拍板（修订 10-26 口径）：保养完成赠 **5 次**借还保护期——
+    // 保护期内该书**完全不掉完好度**：借出时磨损自增跳过（visitors.js 借出侧），
+    // 还书/寄读结算时消耗 1 次保护并跳过损毁 roll；归 0 后恢复常规磨损/损毁。
+    bs.damageShield = 5;
     titles.push(book.volumeTitle || book.title);
     addHistory('maintenance', `🧴 《${book.volumeTitle || book.title}》保养完成`, '磨损清零 · 书况焕然一新');
   }
