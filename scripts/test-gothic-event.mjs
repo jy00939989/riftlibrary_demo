@@ -58,6 +58,14 @@ ok(isFestivalActive('gothicNight2026', IN_WINDOW), '窗口内 isFestivalActive=t
 ok(!isFestivalActive('gothicNight2026', OUT_WINDOW), '窗口外 isFestivalActive=false');
 ok(isEventWindowActive('gothic_night', new Date(IN_WINDOW)), 'EVENT_WINDOWS.gothic_night 窗口内');
 ok(!isEventWindowActive('gothic_night', new Date(OUT_WINDOW)), 'EVENT_WINDOWS.gothic_night 窗口外');
+// 终点精确到 05:00（2026-10-30 图南拍板，旧为 11-13 全天）
+ok(isEventWindowActive('gothic_night', new Date(2026, 10, 12, 23, 59)), '终点前一日 23:59 仍有效');
+ok(isEventWindowActive('gothic_night', new Date(2026, 10, 13, 4, 59)), '终点日 04:59 仍有效');
+ok(!isEventWindowActive('gothic_night', new Date(2026, 10, 13, 5, 0)), '终点日 05:00 准时关闸');
+ok(isFestivalActive('gothicNight2026', new Date(2026, 10, 13, 4, 59).getTime()), 'festival 终点日 04:59 仍有效');
+ok(!isFestivalActive('gothicNight2026', new Date(2026, 10, 13, 5, 0).getTime()), 'festival 终点日 05:00 准时关闸');
+ok(isFestivalActive('midAutumn2026', new Date(2026, 9, 8, 23, 59).getTime()), '无 hour 的旧窗口 end 当日仍全天有效（兼容性）');
+ok(!isFestivalActive('midAutumn2026', new Date(2026, 9, 9, 0, 0).getTime()), '无 hour 的旧窗口 end 次日归零');
 
 // ═══ 2. 登录兑换券 ═══
 console.log('\n=== 2. 登录兑换券 ===');
@@ -179,6 +187,19 @@ ok(et.recoverEventPlants() === 1, '窗口外回收 1 株魔法南瓜');
 ok(state.plants[0].activeType === null && state.plants[0].level === 0, '魔法南瓜盆位清空');
 ok(state.plants[1].activeType === 'magic_rose', '常驻植物不受影响');
 ok(et.recoverEventPlants() === 0, '回收幂等');
+// 剩余种子化作光尘（2026-10-30 图南拍板：每颗 15 智慧之光，低于咖啡馆万圣品路线 32~44/颗）
+state.seeds = { magic_pumpkin: 7 };
+const coinsBefore = state.coins;
+window.__dev.getNow = () => IN_WINDOW;
+et.recoverEventPlants();
+ok(state.seeds.magic_pumpkin === 7, '窗口内剩余种子不动');
+window.__dev.getNow = () => OUT_WINDOW;
+et.recoverEventPlants();
+ok(state.seeds.magic_pumpkin === 0, '窗口外剩余种子清零');
+ok(state.coins === coinsBefore + 105, '7 颗种子 ×15 = +105 智慧之光');
+et.recoverEventPlants();
+ok(state.coins === coinsBefore + 105, '种子转化幂等（重复启动不再发）');
+state.seeds = {};
 
 // ═══ 6. 万圣节特供常驻直购（2026-10-27 图南拍板：不用等刷新）═══
 console.log('\n=== 6. 万圣节特供直购位 ===');

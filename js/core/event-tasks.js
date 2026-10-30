@@ -4,10 +4,14 @@
 // 挂点：purchaseBook（开卷）/ runFocusOrchestrator（执灯）/ harvestPlant（种瓜）/ serveVisitor（待客）
 import { state, saveState } from '../state.js';
 import { isEventWindowActive } from '../../data/event_calendar.js';
-import { addHistory } from '../storage.js';
+import { addHistory, addCoins } from '../storage.js';
 
 export const GOTHIC_EVENT_ID = 'gothic_night';
 export const GOTHIC_PLAQUE_ID = 'gothic_night_plaque';
+
+// 2026-10-30 图南拍板：窗口结束时没种完的魔法南瓜种子化作光尘，每颗凝成 15 智慧之光——
+// 低于做成咖啡馆万圣品（种子路线 32~44/颗：特饮 88/2 颗、南瓜挞 96/3 颗），但不让种子烂在手里。
+const LEFTOVER_SEED_TO_COINS = 15;
 
 // 测试/dev 控制台可注时（与 focus-session 等同款口径）
 function getNow() {
@@ -128,7 +132,8 @@ export function claimEventTask(taskId) {
 }
 
 /**
- * 窗口过期回收：地里未收获的魔法南瓜化作光尘（v4.1 图南拍板：全株限时）。
+ * 窗口过期回收：地里未收获的魔法南瓜化作光尘（v4.1 图南拍板：全株限时）；
+ * 顺带把没种完的魔法南瓜种子化作光尘凝成智慧之光（2026-10-30 图南拍板，汇率见上）。
  * app 启动链调用（checkFestivalGifts 旁），幂等——只在窗口结束后执行一次回收。
  * @returns {number} 回收盆数
  */
@@ -144,6 +149,15 @@ export function recoverEventPlants() {
       recovered += 1;
     }
   });
+  let seedCoins = 0;
+  const leftoverSeeds = (state.seeds && state.seeds.magic_pumpkin) || 0;
+  if (leftoverSeeds > 0) {
+    state.seeds.magic_pumpkin = 0;
+    seedCoins = leftoverSeeds * LEFTOVER_SEED_TO_COINS;
+    addCoins(seedCoins); // 内部 saveState
+    addHistory('plant', `🎃 万圣夜落幕，${leftoverSeeds} 颗没种完的魔法南瓜种子化作光尘`,
+      `每颗凝成 ${LEFTOVER_SEED_TO_COINS} 智慧之光，共 +${seedCoins} 智慧之光`);
+  }
   if (recovered > 0) {
     addHistory('plant', `🎃 万圣夜落幕，${recovered} 株魔法南瓜化作光尘回位面去了`, '哥特之夜的魔法只驻留一周——期待明年的重逢');
     saveState();

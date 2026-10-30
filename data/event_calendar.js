@@ -44,24 +44,32 @@ export const EVENT_CALENDAR = [
 ];
 
 /**
+ * 区间判定（本地时区；start 按日起点，end 可带 hour/minute 精确到时刻——
+ * 2026-10-30 图南拍板哥特终点 11-13 05:00。end 不带 hour 保持旧行为：end 当日全天有效）。
+ */
+export function isWithinWindow(date, start, end) {
+  const y = date.getFullYear();
+  const startDt = new Date(y, start.month - 1, start.day);
+  const endDt = new Date(y, end.month - 1, end.day, end.hour ?? 24, end.minute ?? 0);
+  return date >= startDt && date < endDt;
+}
+
+/**
  * 区间型活动窗口 —— 数值/门控层判定真源（2026-10-22 哥特之夜书池门控，plan §六 D9）。
  * 与 MONTH_BANNERS 分工：这里管「能不能买」，横幅管「展示什么」；
  * 同一窗口的 range 需在两处同步书写（与中秋先例一致）。
  */
 export const EVENT_WINDOWS = [
   // 万圣周：红字 + 阿芒提拉多的酒桶 限时上架（english-american-literature-expansion-plan §三）
-  { id: 'gothic_night', start: { month: 10, day: 27 }, end: { month: 11, day: 13 } }
+  // 2026-10-30 图南拍板终点精确到 05:00（公告同口径；旧为 11-13 全天）
+  { id: 'gothic_night', start: { month: 10, day: 27 }, end: { month: 11, day: 13, hour: 5 } }
 ];
 
 /** 某活动窗口在指定日期是否生效（跨月区间适用；窗口 id 未定义恒为 false） */
 export function isEventWindowActive(eventId, date = new Date()) {
   const win = EVENT_WINDOWS.find(w => w.id === eventId);
   if (!win) return false;
-  const m = date.getMonth() + 1;
-  const d = date.getDate();
-  const after = m > win.start.month || (m === win.start.month && d >= win.start.day);
-  const before = m < win.end.month || (m === win.end.month && d <= win.end.day);
-  return after && before;
+  return isWithinWindow(date, win.start, win.end);
 }
 
 // 整月展示横幅（monthSpan 仅展示层）：4 月「书香苏州」（苏州市全民阅读系列活动，图南苏州人指定收录）
@@ -71,9 +79,9 @@ export const MONTH_BANNERS = [
   { id: 'midautumn_natl_banner', nameKey: 'evtMidAutumnNationalBanner',
     start: { month: 9, day: 25 }, end: { month: 10, day: 8 },
     image: 'banner_midautumn2026' },
-  // 2026-10-27 哥特之夜（万圣周延长 10/27–11/13，终点 11-13 图南拍板）：活动书限时上架，range 与 EVENT_WINDOWS.gothic_night 同步
+  // 2026-10-27 哥特之夜（万圣周延长 10/27–11/13，终点 11-13 05:00 图南 10-30 拍板）：活动书限时上架，range 与 EVENT_WINDOWS.gothic_night 同步
   { id: 'gothic_night_banner', nameKey: 'evtGothicNightBanner',
-    start: { month: 10, day: 27 }, end: { month: 11, day: 13 },
+    start: { month: 10, day: 27 }, end: { month: 11, day: 13, hour: 5 },
     image: 'banner_gothic2026' }
 ];
 
@@ -95,11 +103,7 @@ export function getMonthBanner(date = new Date()) {
   const d = date.getDate();
   return MONTH_BANNERS.find(b => {
     if (b.month) return b.month === m;
-    if (b.start && b.end) {
-      const after = m > b.start.month || (m === b.start.month && d >= b.start.day);
-      const before = m < b.end.month || (m === b.end.month && d <= b.end.day);
-      return after && before;
-    }
+    if (b.start && b.end) return isWithinWindow(date, b.start, b.end);
     return false;
   }) || null;
 }

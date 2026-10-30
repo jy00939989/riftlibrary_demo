@@ -1,15 +1,11 @@
 // 双节活动单一真源（2026 中秋+国庆）：日期窗判定 + 节日礼定义
 // 纯数据/纯函数模块，不依赖游戏状态。日期按本地时区的月/日判定（玩家体感口径）。
+// 区间判定与 event_calendar 共用 isWithinWindow（end 可带 hour/minute，哥特终点 11-13 05:00 图南 10-30 拍板）。
+
+import { isWithinWindow } from './event_calendar.js';
 
 function getNow() {
   return (typeof window !== 'undefined' && window.__dev?.getNow?.()) || Date.now();
-}
-
-// 月/日比较：start ≤ (m,d) ≤ end（同年内；本活动 9/25–10/8 不跨年）
-function within(m, d, start, end) {
-  const after = m > start.month || (m === start.month && d >= start.day);
-  const before = m < end.month || (m === end.month && d <= end.day);
-  return after && before;
 }
 
 export const FESTIVALS = {
@@ -55,7 +51,7 @@ export const FESTIVALS = {
       }
     }
   },
-  // 2026-10-27 哥特之夜（万圣周延长 10/27–11/13，终点 11-13 图南拍板，gothic-night-assets-2026.md v4.2）：
+  // 2026-10-27 哥特之夜（万圣周延长 10/27–11/13 05:00，终点图南 10-30 拍板精确到时刻，gothic-night-assets-2026.md v4.2）：
   // 登录礼 = 万圣节书籍兑换券 1 张（任意换一本书；徽章不走登录礼，改任务链 event-tasks 发放）
   gothicNight2026: {
     key: 'gothicNight2026',
@@ -64,7 +60,7 @@ export const FESTIVALS = {
     diaryKey: 'diaryGothicNightGift',
     emoji: '🎃',
     start: { month: 10, day: 27 },
-    end: { month: 11, day: 13 },
+    end: { month: 11, day: 13, hour: 5 },
     giftRewards: {
       bookVoucher: 1
     },
@@ -77,6 +73,5 @@ export const FESTIVALS = {
 export function isFestivalActive(key, now = getNow()) {
   const fest = FESTIVALS[key];
   if (!fest) return false;
-  const d = new Date(now);
-  return within(d.getMonth() + 1, d.getDate(), fest.start, fest.end);
+  return isWithinWindow(new Date(now), fest.start, fest.end);
 }
