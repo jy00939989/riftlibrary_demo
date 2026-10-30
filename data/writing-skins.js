@@ -2,6 +2,8 @@
 // 玩家反馈：缮写动画文字出现速度希望可调；皮肤四款（哥特之夜/中世纪手抄本/中国风/油画风）。
 // 技术口径：皮肤 = CSS 变量注入（data/writing-skin 属性），底图槽位 visual/writing/skin_<id>_pages.png
 // 缺图时 CSS 手绘兜底，图到即换；竖排（中国风二期）已记入 riftlib-planner（t_20261030_vertical_writing）。
+// 命名扩展规则（2026-10-30 图南定）：同风格后续出不同内页时，默认页保持 skin_<id>_pages.png，
+// 变体页用 skin_<id>_pages_<variant>.png（如 skin_gothic_pages_night.png）；选用逻辑届时在代码侧扩展。
 
 import { isFestivalActive } from './festival.js';
 
