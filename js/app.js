@@ -37,6 +37,7 @@ import { playVideoOverlay } from './render/shared/video-overlay.js';
 import { showWitnessToast } from './render/shared/visitor-cards.js';
 import { showAchievementBatch } from './render/achievements.js';
 import { initMusicSelector } from './render/music-selector.js';
+import { initWritingSettings } from './render/writing-settings.js';
 import { renderMomoSuggestion, resetMomoSuggestion } from './render/momo-suggestion.js';
 import { handleStartFocus, handleTogglePause, handleCompleteFocus, handleAbandonFocus, handleSuspendMaintenance } from './core/focus-actions.js';
 import { checkDayRollover } from './core/day-boundary.js';
@@ -259,6 +260,7 @@ function init() {
 
   initAudio();
   initMusicSelector();
+  initWritingSettings();
   initSfx();
 
   renderFocusPage();

@@ -1561,6 +1561,7 @@ const TERM_DATA = Object.freeze({
   writingSpeedCalm: { zh: '舒缓', en: 'Calm' },
   writingSpeedNormal: { zh: '标准', en: 'Normal' },
   writingSpeedSwift: { zh: '轻快', en: 'Swift' },
+  writingSettingsTitle: { zh: '✍️ 缮写设置', en: '✍️ Writing Settings' },
   writingSkinTitle: { zh: '缮写底版', en: 'Scriptorium Skin' },
   writingSkinDesc: { zh: '更换缮写室的书页风格，下次缮写生效', en: 'Page style of the scriptorium, next session' },
   writingSkinParchment: { zh: '羊皮纸', en: 'Parchment' },

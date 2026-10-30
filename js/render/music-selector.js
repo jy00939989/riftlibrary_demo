@@ -8,14 +8,6 @@ import {
 import { getAmbientDefs, getCurrentAmbientId, selectAmbient, isAmbientEnabled, setAmbientEnabled, getAmbientVolume, setAmbientVolume, isAmbientReleased } from '../ambient.js';
 import { t } from '../i18n/terms.js';
 import { getSettings, setSetting } from '../settings.js';
-// 2026-10-30 缮写速度档 + 底版皮肤
-import {
-  WRITING_SPEEDS, DEFAULT_WRITING_SPEED, DEFAULT_WRITING_SKIN,
-  WRITING_SKINS, getWritingSkinDef, isWritingSkinUnlocked, getWritingSkinLockKey
-} from '../../data/writing-skins.js';
-import { isFestivalActive } from '../../data/festival.js';
-import { state, saveState } from '../state.js';
-import { spendCoins } from '../storage.js';
 
 let panelEl = null;
 let globalEscHandler = null;
@@ -61,27 +53,6 @@ function open() {
   const sfxVol = Math.round(getSfxVolume() * 100);
   const skipAnimOn = getSettings().skipSeenAnimations;
   const disastersOn = getSettings().disastersEnabled !== false;
-  // 2026-10-30 缮写速度档 + 底版皮肤
-  const writingSpeed = getSettings().writingSpeed || DEFAULT_WRITING_SPEED;
-  const chosenSkin = getSettings().writingSkin || DEFAULT_WRITING_SKIN;
-  const gothicAuto = isFestivalActive('gothicNight2026');
-  // 底版皮肤行：已解锁=可点选；锁定=🔒+条件；直购=💰按钮（data-writing-skins.js 单一真源）
-  const speedBtn = (key) =>
-    `<button data-wspeed="${key}" class="text-[10px] px-2 py-1 rounded-full border transition-all ${writingSpeed === key ? 'border-magic-gold bg-magic-gold/10 text-magic-gold' : 'border-wood/30 bg-white/50 text-ink-light'}">${t('writingSpeed' + key[0].toUpperCase() + key.slice(1))}</button>`;
-  const skinRow = (def) => {
-    const unlocked = isWritingSkinUnlocked(def, state);
-    const active = chosenSkin === def.id;
-    const autoTag = (def.id === 'gothic' && gothicAuto) ? ` <span class="text-magic-gold">·${t('writingSkinAuto')}</span>` : '';
-    if (unlocked) {
-      return `<button data-wskin="${def.id}" class="text-[10px] px-2 py-1 rounded-full border transition-all ${active ? 'border-magic-gold bg-magic-gold/10 text-magic-gold' : 'border-wood/30 bg-white/50 text-ink-light'}">${t(def.nameKey)}${autoTag}</button>`;
-    }
-    const lockKey = getWritingSkinLockKey(def);
-    if (def.unlock.type === 'purchase') {
-      return `<button data-wskin-buy="${def.id}" class="text-[10px] px-2 py-1 rounded-full border border-wood/30 bg-white/50 text-ink-light hover:border-magic-gold" ${state.coins < def.unlock.price ? 'disabled' : ''}>🔒${t(def.nameKey)} 💰${def.unlock.price}</button>`;
-    }
-    return `<span class="text-[10px] px-2 py-1 rounded-full border border-wood/20 bg-white/30 text-ink-light/50">🔒${t(def.nameKey)} · ${t(lockKey)}</span>`;
-  };
-  const writingSkinRows = WRITING_SKINS.map(skinRow).join(' ');
 
   panelEl = document.createElement('div');
   panelEl.id = 'music-selector-panel';
@@ -222,19 +193,7 @@ function open() {
         </button>
       </div>
 
-      <!-- 缮写速度档（2026-10-30 玩家反馈可调；即时生效） -->
-      <div class="mt-3 pt-3 border-t border-wood/20 px-1">
-        <div class="text-xs font-bold text-ink-light tracking-wider">✍️ ${t('writingSpeedTitle')}</div>
-        <div class="text-[10px] text-ink-light/70 mt-0.5">${t('writingSpeedDesc')}</div>
-        <div class="flex gap-2 mt-1.5">${speedBtn('calm')}${speedBtn('normal')}${speedBtn('swift')}</div>
-      </div>
-
-      <!-- 缮写底版皮肤（data/writing-skins.js 单一真源；哥特窗口内自动启用） -->
-      <div class="mt-3 px-1">
-        <div class="text-xs font-bold text-ink-light tracking-wider">📖 ${t('writingSkinTitle')}</div>
-        <div class="text-[10px] text-ink-light/70 mt-0.5">${t('writingSkinDesc')}</div>
-        <div class="flex flex-wrap gap-2 mt-1.5">${writingSkinRows}</div>
-      </div>
+      <!-- 缮写速度档+底版皮肤已拆至独立 ✍️ 缮写设置面板（js/render/writing-settings.js） -->
     </div>
   `;
 
@@ -346,36 +305,7 @@ function open() {
     });
   }
 
-  // 2026-10-30 缮写速度档：即时生效（动画每 tick 实时读设置）
-  panelEl.querySelectorAll('[data-wspeed]').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      setSetting('writingSpeed', btn.dataset.wspeed);
-      open();
-    });
-  });
-  // 底版皮肤：选已解锁的
-  panelEl.querySelectorAll('[data-wskin]').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      setSetting('writingSkin', btn.dataset.wskin);
-      open();
-    });
-  });
-  // 直购皮肤（油画风 800 智慧之光）：扣款 → 入账所有权 → 自动选中
-  panelEl.querySelectorAll('[data-wskin-buy]').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const def = getWritingSkinDef(btn.dataset.wskinBuy);
-      if (!def || def.unlock.type !== 'purchase') return;
-      if (!spendCoins(def.unlock.price)) return;
-      state.writingSkinsOwned = { ...(state.writingSkinsOwned || {}), [def.id]: true };
-      saveState();
-      setSetting('writingSkin', def.id);
-      open();
-    });
-  });
-
+  // 缮写速度/皮肤交互已迁至 writing-settings.js 面板
   document.body.appendChild(panelEl);
 
   // ESC 键关闭面板（使用模块级 handler，确保 close() 能正确解绑）
