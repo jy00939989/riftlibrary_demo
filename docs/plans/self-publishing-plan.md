@@ -22,6 +22,10 @@ anchors:
 > 图南 2026-10-30 拍板清单：① 有奖励不隔离，但苛刻门槛 ② 每书需出版执照，自抄便宜、公共流传难
 > ③ 自抄本要可借阅（不然没劲），另设「可借阅执照」再抬门槛 ④ 自抄/刊行本都需自购纸墨消耗品，
 > **西洋风**（羽毛笔世界观配犊皮纸+墨水）⑤ 耗材按专注时间消耗，**每次打底 1+1**。
+> **2026-10-30 评审一轮 REVISE 后修订**：经济数字全部核实属实；架构按两条 P0 重写
+> （进度状态全走 state.books 默认形状 + BOOKS 运行时注入配 isCustom 守卫清单）；
+> 叙事护栏修正为「char 驱动零过滤，唯一闸门=借阅池」；云同步体积方案落定
+> （customBooks 独立于 state，V2 行级同步）；遗留两拍板点入 §七。
 
 ---
 
@@ -34,8 +38,11 @@ anchors:
 2. **专注过程收益**（`focus-orchestrator.js:49`）：`分钟 × 0.8 币`，**book-neutral**——抄什么书
    同时长入账相同，0.8 币/分钟由真实时间封顶。不计入执照锚（不推高定价），但消除
    「花钱抄自己的字」的心理阻力：过程收益一分不少。
-3. **借阅收益**是 curated 书真正的长尾（每趟借还 30~60 币，生涯可达 1000+ 币）——所以
-   **可借阅执照必须贵**，且自定义书磨损/损毁/修复规则与馆藏完全同口径（物理刹车）。
+3. **借阅收益**是 curated 书真正的长尾。评审修正口径（`visitors.js:1413-1431`）：单趟不止
+   returnCoins 30~60——每满 6 小时计划时长 +3 币（10 万字书借满 = **+60**），Lv5+ 多本借阅
+   额外书 ×0.6 币，单趟合计可达 **~120 币**，外加 returnAtmo 1~7/趟。单书借阅生涯
+   「500~1500」按真实公式是**低估**，M2 验收必须按含时长/多本加成的完整公式重测回本账。
+   防刷方向不变：借阅总吞吐受访客生成速率封顶，自定义书只是分走馆藏份额，不增量发币。
 4. **灵感真实流速**：每日任务 +2/天（`dailytasks.js` 全勤奖，**2026-10-30 图南拍板 3→2**——
    自出版执照上线前的流速校准），修复/种子兑换/连专注/节日礼叠加，
    活跃玩家月产 120+。灵感分量按此校准（40 ≈ 20 天日常，150 ≈ 10 周）。
@@ -62,8 +69,14 @@ anchors:
 9. v2 刊行后，**其他玩家抄你的漂流书同样自备纸墨**——纸墨铺是所有自出版者的共同上游出口。
 
 ### 内容与叙事护栏
-10. **可借阅自定义书的访客叙事钩子（题赠/诗笺/narrative）一律不触发**——借还走纯经济链。
-    curated 事件引用具体书目 id，任意文本会产生「给《大学物理笔记》题诗」穿帮，结构上禁掉。
+10. **叙事层零过滤（评审修正）**：`triggerNarrative`/`triggerEvent` 是 **charId 驱动**——叙事池/
+    赠书表/诗笺全是静态 curated id，**从不接收被借书的 bookId**，自定义书在结构上就不可能
+    进叙事输入，不存在「按书过滤的钩子」。真正引用被借书的只有 `pickReturnQuote`
+    （`visitors.js:368-381`，纯标题插值，对《大学物理笔记》说「好书」是无害梗）。
+    **唯一闸门 = 借阅池的 license.lendable 过滤器**（单一收口 `getCompletedBooks`）。
+    ⚠️ 遗留拍板点：访客归还**整单**以自定义书为主时，char 驱动的整单叙事照常触发
+    （无法按书 suppress）——是接受（推荐：叙事是角色内容，照发）还是整单 suppress
+    （等于对自出版玩家额外削一刀），需图南显式拍板，见 §七。
 11. **字数门槛**：手稿 ≥5000 字才发执照，杜绝一页书刷藏书数/位面门。
 12. **多卷制支持**（M3）：复用 VOLUME_GROUPS 集齐联动；第 1 卷标准价，第 2 卷起每卷
     +150 币 +10 灵感；全卷集齐给典藏边框 + 套装氛围奖励。
@@ -76,10 +89,23 @@ anchors:
 **导入器**（自出版司页签，挂大书库子标签第三位：📚藏书格 / 📜古籍修复室 / 🖋️自出版司）
 - 粘贴文本 + .txt/.md 文件导入；空行/章节标题自动分章，可手动调分章点
 - 单书 ≤10 万字（localStorage 预算），超限提示拆书；草稿态 → 申请执照 → 准印态
-- state.customBooks = { [custom_id]: { title, totalWords, chapters[], license:{copy,lendable},
-  copyCount, masteryLevel, copiedWords, wearCount, status } }，懒初始化 + migrations 补默认
-- 书籍查询入口加 resolveBook(id)（BOOKS 静态注册表 → state.customBooks 回退），
-  只接缮写室/书架/借阅池三处调用点，**叙事层不碰**
+- **数据形状（评审 P0-B1 修正）**：进度状态与内容分离——
+  - `state.customBooks`（内容/元数据仓，**独立于 state 走单独 localStorage key**）：
+    `{ [custom_id]: { title, totalWords, chapters[], license:{copy,lendable}, isCustom:true } }`，
+    **不含任何进度字段**（copyCount/copiedWords/wearCount 等一律不放——双写必裂）
+  - **进度状态全走 `state.books[custom_id]`**，用默认书形状工厂建条目（`state.js` DEFAULT
+    形状 11 个必需字段：unlockedChapters/copyCount/masteryLevel/copiedWords/status/starred/
+    damaged/repairWords/repairProgress/readChapters/reCopyUnlocked）——引擎（applyWords/
+    completeBook/磨损/保养/修复）零改动自动同口径
+- **BOOKS 运行时注入（评审 P0-B2 修正）**：加载时（render 前同步 + 云档合并后重注入）
+  `Object.assign(BOOKS, 自定义 defs)`——BOOKS 全仓 36 处消费、7 处全局迭代（藏书格渲染/
+  借阅池/缮写选书/收藏/兑换码）零改动接通，「resolveBook 只接三处」不可行的判断正确，弃用
+- **`isCustom` 守卫清单（注入方案的必配件，漏一条=免费发书漏洞）**：
+  1. `books.js:10` `tryUnlockNewBook`（locked 判定只看 state.books——会把未购执照自定义书
+     当「待解锁新书」**随机白送，直接绕过 300+40 执照闸**）→ 行动卡/事件调它就送，守卫第一优先
+  2. `collection.js:67` 图鉴百分比（owned/total）——自定义书会稀释 curated 收集率，见 §七拍板
+  3. 里程碑候选 / 兑换码 / 任务完成检查（book_completed 计数口径）
+  4. 商店管线为 SHARED_POOL 驱动（天然安全，但需回归确认）
 
 **缮写接入**
 - writing.js 的书对象已是标准形状（chapters + unlockAt 推导），custom book 补 quotes=空集即可
@@ -91,12 +117,15 @@ anchors:
 ## 三、M2：流通准印执照 + 借阅池准入
 
 - 已准印书可加价升流通执照；升后入借阅候选池（与馆藏同 wear/damage/repair 规则）
-- 借阅池准入过滤器：status==='completed' 且 license.lendable；叙事钩子按 decision 10 过滤
+- 借阅池准入过滤器（单一收口 `visitors.js:851` getCompletedBooks）：
+  `status==='completed' 且 license.lendable`——**这是自定义书进流通的唯一闸门**
 - 纸墨只在抄写消耗；借阅循环零耗材（磨损是它的成本）
 
 ## 四、M3：多卷巨著 → V2：刊行漂流 + 审核
 
-- M3：多卷书导入（卷间手动切分）+ VOLUME_GROUPS 动态组 + 集齐联动（decision 12）
+- M3：多卷书导入（卷间手动切分）+ VOLUME_GROUPS **运行时注入**（静态 const 对象可变，
+  注入点与 BOOKS 同批；持久化从 state.customBooks 重建——刷新后内存态丢失需重建机制，
+  否则集齐联动/典藏合成在自定义组上静默失效——评审 P1-B4）+ 集齐联动（decision 12）
 - V2：Supabase `community_books` 表（uploader_id / status: pending→approved / report_count /
   字数与卷数 jsonb）+ RLS 只读已审 + **发布前人工审核队列（图南后台，AI 预审只做辅助）**；
   刊行执照（decision表③）+ 举报/下架 + 上传者权利声明勾选；防刷：pending ≤3/人、上传冷却
@@ -104,7 +133,13 @@ anchors:
 ## 五、防刷与合规清单（评审逐条过）
 
 - [ ] 执照费 > 单书边际收益回收（M1 抄本券 300+40 对 100 币+氛围：净沉没 ✓）
-- [ ] 可借阅全套价（1100+100）≥ 期望借阅生涯回本周期 ≥ 数月（M2 验收测真实借阅频次）
+- [ ] 可借阅全套价（1100+100）≥ 期望借阅生涯回本周期——**M2 按完整借阅公式重测**
+  （returnCoins + 时长加成 `visitors.js:1413` + 多本 ×0.6 `visitors.js:1429` + returnAtmo）
+- [ ] `isCustom` 守卫清单全落地（tryUnlockNewBook 白送漏洞封死 + 图鉴百分比 + 里程碑/兑换码过滤）
+- [ ] **云同步体积（评审 P1-D1）**：sync.js 每 3 秒 debounce 全量 upsert 整个 state——
+  customBooks 独立于 state（单独 localStorage key）→ v1 同步**零 payload**；
+  V2 刊行走 Supabase 独立行级同步（一书一行），永不进 saves.save_data jsonb
+- [ ] BOOKS 注入时序：render 前同步注入 + 云档合并（sync 下载覆盖 state.books）后重注入
 - [ ] 耗材摩擦：自定义书时段净收益 < 馆藏时段净收益（16 < 48 ✓）
 - [ ] ≥5000 字门槛 + 单书 ≤10 万字 + 上架格数占用手稿箱/书架容量（不吃免费格）
 - [ ] 自定义书不占访客叙事池；题赠/诗笺/narrative 钩子零触发
@@ -119,6 +154,12 @@ anchors:
 
 ## 七、未决与二期坑
 
+- **⚠️ 待图南拍板（评审遗留两决策）**：
+  1. 自定义书为主角的还书整单，char 驱动的叙事事件**照发还是 suppress**？
+     （叙事是角色内容与被借书无关；suppress = 对自出版玩家额外削一刀。克克建议：照发）
+  2. **图鉴百分比（collection.js:67）是否计入自定义书**？
+     （计入 = 全收集党被迫买执照补齐非 curated 项；不计入 = curated 图鉴纯度保持。
+     克克建议：不计入，自定义书走独立陈列位）
 - 氪金通道（¥6 刊行执照）依赖支付方案选型，V2 前单独立项
 - 灵感值若日后开放更多产出，执照灵感分量需按流速再校准
 - 竖排支持自定义中文书？与 planner `t_20261030_vertical_writing` 联动评估
