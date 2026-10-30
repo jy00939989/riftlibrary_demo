@@ -1810,17 +1810,17 @@ body {
    图规格见 docs/prompts/writing-skin-assets-2026.md（2400×1600 横版对开，正中书脊带）。 */
 .writing-scene[data-writing-skin='gothic'] .writing-page {
   background:
-    url('../visual/writing/skin_gothic_pages.png') var(--writing-page-half, center) / 200% 100% no-repeat,
+    url('../visual/writing/skin_gothic_yinman_pages.png') var(--writing-page-half, center) / 200% 100% no-repeat,
     var(--writing-page-bg);
 }
 .writing-scene[data-writing-skin='manuscript'] .writing-page {
   background:
-    url('../visual/writing/skin_manuscript_pages.png') var(--writing-page-half, center) / 200% 100% no-repeat,
+    url('../visual/writing/skin_manuscript_nijin_pages.png') var(--writing-page-half, center) / 200% 100% no-repeat,
     var(--writing-page-bg);
 }
 .writing-scene[data-writing-skin='chinese'] .writing-page {
   background:
-    url('../visual/writing/skin_chinese_pages.png') var(--writing-page-half, center) / 200% 100% no-repeat,
+    url('../visual/writing/skin_chinese_suya_pages.png') var(--writing-page-half, center) / 200% 100% no-repeat,
     var(--writing-page-bg);
 }
 .writing-scene[data-writing-skin='oilpaint'] .writing-page {

@@ -1,9 +1,9 @@
 // 缮写室底版皮肤 + 书写速度档（2026-10-30 图南拍板）
 // 玩家反馈：缮写动画文字出现速度希望可调；皮肤四款（哥特之夜/中世纪手抄本/中国风/油画风）。
-// 技术口径：皮肤 = CSS 变量注入（data/writing-skin 属性），底图槽位 visual/writing/skin_<id>_pages.png
+// 技术口径：皮肤 = CSS 变量注入（data/writing-skin 属性），底图槽位 visual/writing/skin_<id>_<variant>_pages.png
 // 缺图时 CSS 手绘兜底，图到即换；竖排（中国风二期）已记入 riftlib-planner（t_20261030_vertical_writing）。
-// 命名扩展规则（2026-10-30 图南定）：同风格后续出不同内页时，默认页保持 skin_<id>_pages.png，
-// 变体页用 skin_<id>_pages_<variant>.png（如 skin_gothic_pages_night.png）；选用逻辑届时在代码侧扩展。
+// 变体命名（2026-10-30 图南定）：每款内页都有独立名字，同风格再出新内页=新变体名——
+// 哥特风·银蔓 yinman / 中世纪·泥金 nijin / 中国风·素雅 suya（油画风本次无图不上架）。
 
 import { isFestivalActive } from './festival.js';
 
@@ -58,23 +58,23 @@ export function getWritingSkinLockKey(def) {
 
 /**
  * 解析当前生效皮肤：
- * ① 哥特之夜窗口内自动强制启用（节日氛围广告位），并把所有权写入 state.writingSkinsOwned（过窗保留）
- * ② 窗口外回退玩家自选皮肤，未解锁/非法选择回退默认羊皮纸
+ * ① 哥特窗口内：自动入账哥特所有权（过窗保留凭据），但哥特只是「窗口默认」——
+ *    玩家有显式自选且已解锁时必须尊重自选（2026-10-30 图南实测：强制覆盖让选择器失效）
+ * ② 无自选/自选未解锁/非法：窗口内回退哥特，窗口外回退默认羊皮纸
  * @returns {{skin: string, newlyOwned: boolean}}
  */
 export function resolveWritingSkin(state, chosenId, now = Date.now()) {
   const gothicDef = getWritingSkinDef('gothic');
   const gothicKey = gothicDef.unlock.festivalKey;
-  if (isFestivalActive(gothicKey, now)) {
-    const newlyOwned = !state.writingSkinsOwned?.gothic;
-    if (newlyOwned) {
-      state.writingSkinsOwned = { ...(state.writingSkinsOwned || {}), gothic: true };
-    }
-    return { skin: 'gothic', newlyOwned };
+  const windowActive = isFestivalActive(gothicKey, now);
+  let newlyOwned = false;
+  if (windowActive && !state.writingSkinsOwned?.gothic) {
+    state.writingSkinsOwned = { ...(state.writingSkinsOwned || {}), gothic: true };
+    newlyOwned = true;
   }
   const def = getWritingSkinDef(chosenId);
   if (def && isWritingSkinUnlocked(def, state, now)) {
-    return { skin: def.id, newlyOwned: false };
+    return { skin: def.id, newlyOwned };
   }
-  return { skin: DEFAULT_WRITING_SKIN, newlyOwned: false };
+  return { skin: windowActive ? 'gothic' : DEFAULT_WRITING_SKIN, newlyOwned };
 }

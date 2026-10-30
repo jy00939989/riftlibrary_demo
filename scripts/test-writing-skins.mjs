@@ -84,13 +84,28 @@ test('S2g 锁定原因 key 齐全', () => {
 });
 
 // ── 3. 解析规则 ──
-test('S3a 窗口内自动哥特 + 首次入账', () => {
+test('S3a 窗口内无自选 → 哥特默认 + 首次入账', () => {
   const s = mkState();
-  const r1 = resolveWritingSkin(s, 'parchment', IN_WINDOW);
+  const r1 = resolveWritingSkin(s, undefined, IN_WINDOW);
   assert(r1.skin === 'gothic' && r1.newlyOwned === true, `r1=${JSON.stringify(r1)}`);
   assert(s.writingSkinsOwned.gothic === true, '所有权必须落账（过窗保留凭据）');
-  const r2 = resolveWritingSkin(s, 'parchment', IN_WINDOW);
+  const r2 = resolveWritingSkin(s, undefined, IN_WINDOW);
   assert(r2.skin === 'gothic' && r2.newlyOwned === false, '二次解析不应重复入账');
+});
+
+test('S3a2 窗口内有已解锁自选 → 尊重自选（2026-10-30 图南实测修复）', () => {
+  const s1 = mkState();
+  const r1 = resolveWritingSkin(s1, 'parchment', IN_WINDOW);
+  assert(r1.skin === 'parchment', `自选羊皮纸应生效, 实=${r1.skin}`);
+  assert(r1.newlyOwned === true, '哥特所有权仍应首次入账');
+  const s2 = mkState({ exhibition: { built: true } });
+  const r2 = resolveWritingSkin(s2, 'chinese', IN_WINDOW);
+  assert(r2.skin === 'chinese', `自选中国风应生效, 实=${r2.skin}`);
+});
+
+test('S3a3 窗口内自选未解锁 → 回退哥特默认', () => {
+  const r = resolveWritingSkin(mkState(), 'oilpaint', IN_WINDOW);
+  assert(r.skin === 'gothic', `应回退哥特, 实=${r.skin}`);
 });
 
 test('S3b 窗口外回退玩家自选（已解锁）', () => {
