@@ -1759,7 +1759,6 @@ body {
 
 /* 🎃 哥特之夜：窗口内自动启用（festivalKey 门控），过窗玩家永久保留 */
 .writing-scene[data-writing-skin='gothic'] {
-  /* 图到即换：url('../visual/writing/skin_gothic_pages.png') center/cover no-repeat, */
   --writing-page-bg: radial-gradient(ellipse at 50% 30%, #2a2140 0%, #1a1426 55%, #120e1c 100%);
   --writing-ink: #d8d4e8;
   --writing-glow: rgba(110, 95, 220, 0.30);
@@ -1780,7 +1779,6 @@ body {
 
 /* 🏮 中国风：洒金宣纸 + 朱栏（解锁=展览厅建成；竖排二期见 planner t_20261030_vertical_writing） */
 .writing-scene[data-writing-skin='chinese'] {
-  /* 图到即换：url('../visual/writing/skin_chinese_pages.png') center/cover no-repeat, */
   --writing-page-bg:
     radial-gradient(1.5px 1.5px at 20% 30%, rgba(201,169,106,0.5) 50%, transparent 51%),
     radial-gradient(1px 1px at 70% 60%, rgba(201,169,106,0.4) 50%, transparent 51%),
@@ -1805,3 +1803,30 @@ body {
   --writing-page-line-color: rgba(90, 60, 30, 0.3);
   --writing-rule-color: rgba(90, 60, 30, 0.15);
 }
+
+/* ── 对开整幅图 split 槽位（四皮肤统一）：左页取图左半、右页取右半 ──
+   background-size: 200% 100% 把整幅对开图横向铺满两页，position split 各取半幅；
+   PNG 未到位时该层透明，--writing-page-bg 渐变兜底照常显示，图到即显、零代码改动。
+   图规格见 docs/prompts/writing-skin-assets-2026.md（2400×1600 横版对开，正中书脊带）。 */
+.writing-scene[data-writing-skin='gothic'] .writing-page {
+  background:
+    url('../visual/writing/skin_gothic_pages.png') var(--writing-page-half, center) / 200% 100% no-repeat,
+    var(--writing-page-bg);
+}
+.writing-scene[data-writing-skin='manuscript'] .writing-page {
+  background:
+    url('../visual/writing/skin_manuscript_pages.png') var(--writing-page-half, center) / 200% 100% no-repeat,
+    var(--writing-page-bg);
+}
+.writing-scene[data-writing-skin='chinese'] .writing-page {
+  background:
+    url('../visual/writing/skin_chinese_pages.png') var(--writing-page-half, center) / 200% 100% no-repeat,
+    var(--writing-page-bg);
+}
+.writing-scene[data-writing-skin='oilpaint'] .writing-page {
+  background:
+    url('../visual/writing/skin_oilpaint_pages.png') var(--writing-page-half, center) / 200% 100% no-repeat,
+    var(--writing-page-bg);
+}
+.writing-scene .writing-page-left  { --writing-page-half: left; }
+.writing-scene .writing-page-right { --writing-page-half: right; }
