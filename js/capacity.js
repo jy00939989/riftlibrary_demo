@@ -26,6 +26,15 @@ export function unlockBook(bookId, overrides = {}) {
 
 const SHELF_CAPACITY = 5;
 
+/**
+ * 新书架价格（2026-11-09 图南拍板）：恒定 3000 智慧之光，不再递增。
+ * 价目单一来源：购买扣费（core/shop-actions.js）与书架页显示（render/bookshelf.js）共用，防两处漂移。
+ * @param {number} [_n] - 现有书架数（保留参数兼容旧调用，已不参与计价）
+ */
+export function getShelfPrice(_n) {
+  return 3000;
+}
+
 /** 确保 shelves 是新格式 [[null,...], ...]，兼容旧数据 */
 export function normalizeShelves() {
   if (!state.library.shelves || state.library.shelves.length === 0) {

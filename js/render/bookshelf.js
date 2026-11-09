@@ -6,7 +6,7 @@ import { el, actions, updateStatusBar, getBookTitle, getChapterTitle, getChapter
 import { playSfx } from '../audio.js';
 import { cleanBookDust } from '../core/disasters.js';
 import { checkTaskCompletion } from '../quests.js';
-import { getManuscriptSlots, getManuscriptBoxCount, getManuscriptSlotPrice, expandManuscriptSlots, getBookCapacity, getOwnedBookCount, getServicingSlots, storeInRestorationBox, removeFromRestorationBox, getRestorationBoxSlots, getRestorationBoxCount, getRestorationSlotPrice, expandRestorationBoxSlots, getRestorationLevel, getRestorationUpgradePrice, upgradeRestorationLevel, getRestorationRepairSpeedBonus, isRestorationUnlocked, grantRestorationRoom, getMaintenanceBatchCap, getServicingSlotPrice, expandServicingSlots } from '../capacity.js';
+import { getManuscriptSlots, getManuscriptBoxCount, getManuscriptSlotPrice, expandManuscriptSlots, getBookCapacity, getOwnedBookCount, getServicingSlots, storeInRestorationBox, removeFromRestorationBox, getRestorationBoxSlots, getRestorationBoxCount, getRestorationSlotPrice, expandRestorationBoxSlots, getRestorationLevel, getRestorationUpgradePrice, upgradeRestorationLevel, getRestorationRepairSpeedBonus, isRestorationUnlocked, grantRestorationRoom, getMaintenanceBatchCap, getServicingSlotPrice, expandServicingSlots, getShelfPrice } from '../capacity.js';
 import { calcCurationEffects } from '../curation.js';
 import { getEffectiveCopiedWords, getRepairProgress } from '../core/book-utils.js';
 import { isNoMasteryBook } from '../core/book-eligibility.js';
@@ -137,7 +137,7 @@ function renderShelfTab(container) {
   const shelfCountText = t('bookCount').replace('{n}', allShelfBookIds.size);
   header.innerHTML = `<h2 class="font-display text-xl font-bold">${t('myBookshelf')} <span class="text-sm font-normal text-ink-light">(${shelfCountText})</span></h2>`;
   const n = state.library.shelves.length;
-  const price = Math.min(4800, 300 * Math.pow(2, n - 1));
+  const price = getShelfPrice(n);
   const buyBtn = el('button', 'px-4 py-2 bg-magic-gold text-white rounded-lg text-sm font-bold shadow hover:shadow-lg transition-all');
   buyBtn.textContent = t('purchaseNewShelf').replace('{price}', price.toLocaleString());
   buyBtn.addEventListener('click', () => {

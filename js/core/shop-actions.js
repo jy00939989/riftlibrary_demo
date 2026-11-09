@@ -11,10 +11,11 @@ import { showBorrowAreaUpgrade } from '../render/tutorial-ui.js';
 import { showMomoBorrowReadyCard } from '../render/shared/visitor-cards.js';
 import { track } from '../backend/index.js';
 import { getFacilityLevelCap, getFacilityRequiredStage } from '../../data/atmosphere.js';
+import { getShelfPrice } from '../capacity.js';
 
 export function handleBuyShelf() {
   const n = state.library.shelves.length;
-  const price = Math.min(4800, 300 * Math.pow(2, n - 1));
+  const price = getShelfPrice(n);
   if (spendCoins(price)) {
     state.library.shelves.push([null, null, null, null, null]);
     addAtmosphere(5);
