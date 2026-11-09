@@ -175,5 +175,21 @@ assert(state.plantLossAlert.savedByGuyu === true && state.plantLossAlert.downgra
   '通报位写入（抢救降级）');
 assert(state.diaryLogs.length === 1, '墨墨日记记一笔（抢救）');
 
+// ═══ 5. 满级末段施肥费用（2026-11-05 玩家反馈 bug 回归：Lv.5 后施肥显示 💰0）═══
+// 根因：targetLevel = level+1 = 6，fertilizeCosts 无键 6 → || 0 变免费。
+// 修复：targetLevel 封顶 5，满级末段按 Lv5 价收费。
+console.log('\n=== 5. 满级末段施肥费用 ===');
+fresh({ plants: [livePot(typeA, 5)] }); // growthProgress=10 < growthPerLevel(80)，未满不可收
+const lv5Cost = PLANT_TYPES[typeA].fertilizeCosts[5];
+assert(plants.canFertilize(0), 'Lv.5 未满可施肥（按 Lv5 价门槛）');
+const coinsBefore = state.coins;
+const fr = plants.fertilizePlant(0);
+assert(fr.ok && coinsBefore - state.coins === lv5Cost, `Lv.5 施肥扣 💰${lv5Cost}（修复前为 0）`);
+state.coins = lv5Cost - 1;
+assert(!plants.canFertilize(0), '金币不足 Lv5 价不可施');
+state.coins = 99999;
+state.plants[0].growthProgress = PLANT_TYPES[typeA].growthPerLevel;
+assert(!plants.canFertilize(0), '满进度可收获后不可施');
+
 console.log(`\n${pass} 通过, ${fail} 失败`);
 process.exit(fail > 0 ? 1 : 0);

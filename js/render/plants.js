@@ -387,7 +387,8 @@ function renderPotCard(plant, potIndex) {
     const fertBtn = document.createElement('button');
     fertBtn.className = `px-3 py-2 bg-amber-600 text-white rounded-lg text-sm font-bold hover:shadow-lg transition-all ${!canFertNow ? 'opacity-50 cursor-not-allowed' : ''}`;
     fertBtn.disabled = !canFertNow;
-    fertBtn.innerHTML = `✨ 施肥 (+${def.fertilizeGrowth} 💰${def.fertilizeCosts[plant.level + 1] || 0})`;
+    const fertTargetLevel = Math.min(plant.level + 1, 5);
+    fertBtn.innerHTML = `✨ 施肥 (+${def.fertilizeGrowth} 💰${def.fertilizeCosts[fertTargetLevel] || 0})`;
     fertBtn.addEventListener('click', () => {
       const result = fertilizePlant(potIndex);
       if (result.ok && result.justMatured) showPlantMaturityToast(def);

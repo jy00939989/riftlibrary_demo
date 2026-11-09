@@ -363,7 +363,7 @@ export function canFertilize(potIndex = 0) {
   if (plant.level === 0) return false;
   if (plant.level >= 5 && plant.growthProgress >= def.growthPerLevel) return false;
   if (plant.harvested) return false;
-  const targetLevel = plant.level + 1;
+  const targetLevel = Math.min(plant.level + 1, 5);
   const cost = def.fertilizeCosts[targetLevel] || 0;
   return state.coins >= cost;
 }
@@ -375,7 +375,7 @@ export function fertilizePlant(potIndex = 0) {
   if (!plant || !def || !canFertilize(potIndex)) return { ok: false, justMatured: false };
 
   const wasHarvestable = canHarvest(potIndex);
-  const targetLevel = plant.level + 1;
+  const targetLevel = Math.min(plant.level + 1, 5);
   const cost = def.fertilizeCosts[targetLevel] || 0;
   if (!spendCoins(cost)) return { ok: false, justMatured: false };
 
